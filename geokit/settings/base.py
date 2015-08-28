@@ -48,7 +48,8 @@ INSTALLED_APPS = (
     'wagtail.wagtailforms',
 
     'search',
-    'gkadmin',
+    'builder',
+    'account',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -93,8 +94,12 @@ WSGI_APPLICATION = 'geokit.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'geokit',
+        'USER': 'geokit',
+        'PASSWORD': 'geokitp4ss',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
     }
 }
 
