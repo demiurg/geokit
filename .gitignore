@@ -1,0 +1,11 @@
+.idea/*
+*.pyc
+*.swp
+*.sqlite
+*~
+._*
+.venv/*
+venv/*
+static/CACHE/*
+public/*
+!*.gitkeep
