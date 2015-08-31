@@ -2,7 +2,7 @@ from .base import *
 
 
 DEBUG = False
-TEMPLATE_DEBUG = False
+TEMPLATES[0]['OPTIONS']['debug'] = False
 
 
 try:
