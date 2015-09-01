@@ -11,23 +11,19 @@ import config
 from pdb import set_trace
 
 
-def run_gips_project(variables, locations, times):
 
+def run_gips_project(variables, locations, times):
     print "variables", variables
     print "locations", locations
     print "times", times
-
     # collect by unique asset name and loop over assets
     # because asset determines the command that will be used
-
     daterange = times[0]
     dates = str(daterange)
     key = str(config.locations[locations[0]]['key'])
     site = str(config.locations[locations[0]]['path'])
     where = str(locations[1])
-
     commandparams = defaultdict(dict)
-
     for variable in variables:
         asset = str(config.variables[variable]['asset'])
         product = str(config.variables[variable]['product_name'])
@@ -37,22 +33,15 @@ def run_gips_project(variables, locations, times):
             commandparams[asset]['products'].append(product)
         except:
             commandparams[asset]['products'] = [product]
-
-
     inventories = dict()
-
     for asset in commandparams.keys():
-
         products = commandparams[asset]['products']
         res = commandparams[asset]['res']
-
         print asset, products, dates, key, site, where, res
-
         project = GIPSproject()
         project.set(asset, products, dates, key, site, where, res)
         inventory = project.run()
         inventories[asset] = project.run()
-
     return inventories
 
 

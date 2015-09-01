@@ -14,6 +14,7 @@ from pdb import set_trace
 
 OUTDIR = '/atlas/projects/geokit/data'
 
+
 class GIPSproject(object):
 
     def __init__(self):
@@ -75,6 +76,7 @@ class GIPSproject(object):
             invs.append(inv)
             inv.pprint()
         return invs
+
 
 if __name__ == "__main__":
     # see example.py

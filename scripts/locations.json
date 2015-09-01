@@ -1,5 +1,6 @@
 {
     "GADM2":{
+        // temporarily using just VT and NH
         "description":"Global administrative units",
         "type":"patch",
         "path":"/atlas/projects/geokit/locations/gadm2_vtnh_3410.shp",
