@@ -43,51 +43,50 @@ def run_gips_project(variables, locations, times):
         inventory = project.run()
         inventories[asset] = project.run()
     return inventories
+   
+
+# def spatial_aggregation():
 
 
-def main():
-
-    # variable set
-    # variables = "ndvi_large,lswi_large"
-    # variables = "tmin_conus"
-    variables = "tave_global"
-    # variables = "ndvi_large, tmax_conus"
-    # variables = "ndvi_large"
+# def temporal_aggregation():
 
 
+
+def example1():
     # location set
     source = "GADM2"
-    # query = "uuid=4b14eba8-b36b-4170-81b6-6924c3f4b9d3"
-    # query = "uuid=e14610af-4577-4681-b2ea-e29b0a887a2c"
-    #query = "283dfff2-018a-49fa-8a34-09a62f29b8fb"
     query = "HASC_1='US.NH'"
-    # time set
-    daterange = "2015-201"
-    interval = "1-day"
-
-
-    # location set
     locations = (source, query)
     # variable set
+    variables = "ndvi_large,lswi_large"
     variables = variables.split(',')
     variables = [v.strip() for v in variables]
     # time set
+    daterange = "2015-201"
+    interval = "1-day"
     times = (daterange, interval)
-
-    # dates = daterange.split(',')
-    # startdate = datetime.datetime.strptime(dates[0], '%Y-%m-%d')
-    # if len(dates) == 2:
-    #     enddate = datetime.datetime.strptime(dates[1], '%Y-%m-%d')
-    # else:
-    #     enddate = startdate
-    # interval = datetime.timedelta(int(interval))
-    # times = (startdate, enddate, interval)
+    # create images
+    run_gips_project(variables, locations, times)
 
 
-
+def example2():
+    # location set
+    source = "LargeLakesUS"
+    query = "uuid=4b14eba8-b36b-4170-81b6-6924c3f4b9d3"
+    locations = (source, query)
+    # variable set
+    variables = "tmin_conus,tmax_conus"
+    variables = variables.split(',')
+    variables = [v.strip() for v in variables]
+    # time set
+    daterange = "2015-201"
+    interval = "1-day"
+    times = (daterange, interval)
+    # create images
     run_gips_project(variables, locations, times)
 
 
 if __name__ == "__main__":
-    main()
+    example1()
+
 
