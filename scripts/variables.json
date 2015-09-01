@@ -1,0 +1,73 @@
+{
+    "prcp_conus":{
+        "description":"daily total precipitation",
+        "units":"mm",
+        "product_name":"prcp",
+        "asset":"daymet"
+    },
+    "tmax_conus":{
+        "description":"daily maximum air temperature",
+        "units":"deg C",
+        "product_name":"tmax",
+        "asset":"daymet"
+    },
+    "tmin_conus":{
+        "description":"daily minimum air temperature",
+        "units":"deg C",
+        "product_name":"tmin",
+        "asset":"daymet"
+    },
+    "srad_conus":{
+        "description":"daily total solar irradiance",
+        "units":"W m-2",
+        "product_name":"srad",
+        "asset":"daymet"
+    },
+    "prcp_global":{
+        "description":"daily total precipitation",
+        "units":"mm",
+        "product_name":"prcp",
+        "asset":"merra"
+    },
+    "tave_global":{
+        "description":"daily average air temperature",
+        "units":"deg C",
+        "product_name":"tave",
+        "asset":"merra"
+    },
+    "ndvi_large":{
+        "description":"normalized difference vegetation index",
+        "units":null,
+        "product_name":"indices",
+        "layer":"ndvi",
+        "asset":"modis"
+    },
+    "lswi_large":{
+        "description":"land surface water index",
+        "units":null,
+        "product_name":"indices",
+        "layer":"lswi",
+        "asset":"modis"
+    },
+    "vari_large":{
+        "description":"vegetation atmospherically resistant index",
+        "units":null,
+        "product_name":"indices",
+        "layer":"vari",
+        "asset":"modis"
+    },
+    "brgt_large":{
+        "description":"brightness index",
+        "units":null,
+        "product_name":"indices",
+        "layer":"brgt",
+        "asset":"modis"
+    },
+    "satvi_large":{
+        "description":"soil adjusted total vegetation index",
+        "units":null,
+        "product_name":"indices",
+        "layer":"satvi",
+        "asset":"modis"
+    }
+}

@@ -1,0 +1,29 @@
+{
+    "daymet":{
+        "description": "Meteorological synthesis products",
+        "frequency":1,
+        "frequency_units":"day",
+        "resolution":[1000, 1000],
+        "resolution_units":"m",
+        "domain":"/titan/data/daymet/vectors/tiles.shp",
+        "domain_description":"CONUS and southern Canada"
+    },
+    "merra":{
+        "description": "Meteorological assimilation products",
+        "frequency":1,
+        "frequency_units":"day",
+        "resolution":[0.666666666666667, 0.5],
+        "resolution_units":"degree",
+        "domain":"/titan/data/merra/vectors/tiles.shp",
+        "domain_description":"Global"
+    },
+    "modis":{
+        "description":"Satellite derived surface products",
+        "frequency":8,
+        "frequency_units":"day",
+        "resolution":[500, 500],
+        "resolution_units":null,
+        "domain":"/titan/data/modis/vectors/tiles.shp",        
+        "domain_description":"Global"
+    }
+}
