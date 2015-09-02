@@ -1,0 +1,30 @@
+{
+    "variables":{
+        "units":{
+            "mm":"millimeter",
+            "m":"meter",
+            "deg C":"degrees Celsius",
+            "W m-2":"Watts per square meter"
+        }
+    },
+    "locations":{
+        "type":{
+            "grid":"spatial lattice grid described by adjacent square polygons",
+            "patch":"arbitrary non-overlapping polygons"
+        },
+        "key_type":{
+            "int":"integer",
+            "str":"string"
+        }
+    },
+    "assets":{
+        "frequency_units":{
+            "day":"one 24 hour day",
+            "8-day":"eight days"
+        },
+        "resolution_units":{
+            "m":"meter",
+            "deg":"degree"
+        }
+    }
+}
