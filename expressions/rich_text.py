@@ -1,5 +1,3 @@
-import sympy
-
 from expressions.models import Expression
 
 
@@ -15,10 +13,10 @@ class ExpressionEmbedHandler(object):
 
             if for_editor:
                 tag_attrs = 'data-embedtype="expression" data-id="{0}"'.format(expression.id)
-                value = expression.expression_text
+                value = expression.name
             else:
                 tag_attrs = 'class="expression-result"'
-                value = sympy.sympify(expression.expression_text)
+                value = expression.evaluate()
             return "<span {0}><code>{1}</code></span>".format(tag_attrs, value)
         except Expression.DoesNotExist:
             return "<span>Expression does not exist</span>"

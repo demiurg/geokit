@@ -29,7 +29,7 @@
                                 code = document.createElement('code');
                                 code.setAttribute('data-id', expData.id);
                                 code.setAttribute('data-embedtype', 'expression');
-                                code.appendChild(document.createTextNode(expData.expression_text));
+                                code.appendChild(document.createTextNode(expData.name));
                                 lastSelection.insertNode(code);
 
                                 return widget.options.editable.element.trigger('change');
