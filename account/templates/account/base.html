@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>title</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <style>
+      .navbar-default {
+        background-color: transparent;
+        border: 0;
+      }
+      .navbar-default a.navbar-brand, .navbar-default a.navbar-brand:hover, .navbar-default a.navbar-brand:active, .navbar-default a.navbar-brand:focus {
+        color: #ffffff;
+      }
+      .navbar-default .navbar-nav li a, .navbar-default .navbar-nav li a:hover, .navbar-default .navbar-nav li a:active, .navbar-default .navbar-nav li a:focus {
+        color: #ffffff;
+      }
+      .navbar-collapse {
+        border: 0;
+      }
+      {% block styles %}
+      
+      {% endblock %}
+    </style>
+  </head>
+  <body>
+    {% block content %}
+    
+    {% endblock %}
+  </body>
+</html>
