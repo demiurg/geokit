@@ -3,71 +3,84 @@
         "description":"daily total precipitation",
         "units":"mm",
         "product_name":"prcp",
+        "layer":null,
         "asset":"daymet"
     },
     "tmax_conus":{
         "description":"daily maximum air temperature",
         "units":"deg C",
         "product_name":"tmax",
+        "layer":null,
         "asset":"daymet"
     },
     "tmin_conus":{
         "description":"daily minimum air temperature",
         "units":"deg C",
         "product_name":"tmin",
+        "layer":null,
         "asset":"daymet"
     },
     "srad_conus":{
         "description":"daily total solar irradiance",
         "units":"W m-2",
         "product_name":"srad",
+        "layer":null,
         "asset":"daymet"
     },
     "prcp_global":{
         "description":"daily total precipitation",
         "units":"mm",
         "product_name":"prcp",
+        "layer":null,
         "asset":"merra"
     },
     "tave_global":{
         "description":"daily average air temperature",
         "units":"deg C",
         "product_name":"tave",
+        "layer":null,
         "asset":"merra"
     },
     "ndvi_large":{
         "description":"normalized difference vegetation index",
         "units":null,
         "product_name":"indices",
-        "layer":"ndvi",
+        "layer":"NDVI",
         "asset":"modis"
     },
     "lswi_large":{
         "description":"land surface water index",
         "units":null,
         "product_name":"indices",
-        "layer":"lswi",
+        "layer":"LSWI",
         "asset":"modis"
     },
     "vari_large":{
         "description":"vegetation atmospherically resistant index",
         "units":null,
         "product_name":"indices",
-        "layer":"vari",
+        "layer":"VARI",
         "asset":"modis"
     },
     "brgt_large":{
         "description":"brightness index",
         "units":null,
         "product_name":"indices",
-        "layer":"brgt",
+        "layer":"BRGT",
         "asset":"modis"
     },
     "satvi_large":{
         "description":"soil adjusted total vegetation index",
         "units":null,
         "product_name":"indices",
-        "layer":"satvi",
+        "layer":"SATVI",
+        "asset":"modis"
+    },
+    "tsurf_large":{
+        "description":"surface temperature",
+        "units":"K",
+        "product_name":"temp8td",
+        "layer":null,
         "asset":"modis"
     }
 }

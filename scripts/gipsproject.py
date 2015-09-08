@@ -40,7 +40,6 @@ class GIPSproject(object):
 
     def get_pid(self):
         dirs = glob.glob(os.path.join(OUTDIR, '*'))
-        print dirs
         pids = [int(os.path.split(d)[1]) for d in dirs]
         try:
             pid = str(max(pids) + 1)
@@ -72,7 +71,10 @@ class GIPSproject(object):
             if inv.numfiles > 0:
                 inv.mosaic(datadir=datadir, tree=self.tree, overwrite=self.overwrite, res=self.res,
                            interpolation=self.interpolation, crop=self.crop)
-            inv = ProjectInventory(datadir)
+                if os.path.exists(datadir):
+                    inv = ProjectInventory(datadir)
+                else:
+                    continue
             invs.append(inv)
             inv.pprint()
         return invs
