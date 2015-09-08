@@ -1,0 +1,35 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% block titletag %}Expressions{% endblock %}
+{% block bodyclass %}menu-expressions{% endblock %}
+
+{% block content %}
+{% include "wagtailadmin/shared/header.html" with title="Expressions" add_link="expressions:add" add_text="Add Expession" icon="code" %}
+
+<div class="nice-padding">
+    <div id="expressions-results" class="expressions">
+        {% if expressions.exists %}
+        <table class="listing">
+            <col />
+            <col />
+            <thead>
+                <tr class="table-headers">
+                    <th>Name</th>
+                    <th>Expression text</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expression in expressions %}
+                <tr>
+                    <td class="title">{{ expression.name }}</td>
+                    <td>{{ expression.expression_text }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>You haven't created any expressions yet. Why not <a href="{% url "expressions:add" %}">create one now?</a></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

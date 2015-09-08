@@ -50,6 +50,7 @@ INSTALLED_APPS = (
     'search',
     'builder',
     'account',
+    'expressions',
 )
 
 MIDDLEWARE_CLASSES = (
