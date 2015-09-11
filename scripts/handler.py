@@ -52,6 +52,10 @@ class Datacube(object):
     def load(self, filepath):
         self._data = np.load(filepath)
 
+    def mask(self, value):
+        wmask = np.where(self._mask == 0)
+        self._data[wmask] = value
+
     def __getitem__(self, key):
         ivar = self.variables.index(key)
         return self._data[ivar,:,:].squeeze()
@@ -150,10 +154,13 @@ class Datarequest(object):
         lookup = {'day':rrule.DAILY, 'week':rrule.WEEKLY, 'month':rrule.MONTHLY}
         dates = list(rrule.rrule(lookup[step], dtstart=startdate, until=enddate, interval=int(interval)))
         dates = [d.date() for d in dates]
+
         # get locationnames from the sql-filtered source
         # this will need to change when the data are in a database
         locationpath = self.filtered_locations()
         records = fiona.open(locationpath)
+        os.remove(locationpath)
+
         key = str(config.locations[self.locations[0]]['key'])
         locationnames = []
         for record in records:
@@ -202,12 +209,13 @@ class Datarequest(object):
                             break
                 # there still might be missing values in the output grid so fill them
                 wvalid = np.where(count != 0)[0]
-                for idxdate, date in enumerate(dates):
-                    if count[idxdate] > 0:
-                        value = data[idxdate]/count[idxdate]
-                    else:
-                        value = np.interp(idxdate, wvalid, data[wvalid])  
-                    self.datacube.set(variable, locationname, date, value)
+                if len(wvalid) > 0:
+                    for idxdate, date in enumerate(dates):
+                        if count[idxdate] > 0:
+                            value = data[idxdate]/count[idxdate]
+                        else:
+                            value = np.interp(idxdate, wvalid, data[wvalid])
+                        self.datacube.set(variable, locationname, date, value)
 
     def handle(self):
         # use GIPS to create image outputs; create self.inventories
@@ -250,11 +258,11 @@ def example2():
 
     # location set
     source = "LargeLakesUS"
-    query = "uuid=4b14eba8-b36b-4170-81b6-6924c3f4b9d3"
+    query = "uuid='4b14eba8-b36b-4170-81b6-6924c3f4b9d3'"
     locations = (source, query)
 
     # time set
-    daterange = "2014-180,2014-200"
+    daterange = "2014-178,2014-182"
     interval = "1-day"
     times = (daterange, interval)
 
@@ -262,10 +270,13 @@ def example2():
     datarequest = Datarequest(variables, locations, times)
     datarequest.handle()
     datarequest.datacube.dump('handler_test2.pkl')
+    datarequest.datacube.mask(-9999.)
     print datarequest.datacube['tave_global']
     print datarequest.datacube['lswi_large']
 
+    set_trace()
+
 
 if __name__ == "__main__":
-    example1()
+    # example1()
     example2()
