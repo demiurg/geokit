@@ -18,7 +18,7 @@
     "LargeLakesUS": {
         "description":"Large lakes (US)",
         "type":"patch",
-        "path":"/atlas/projects/cyanomap/vectors/largelakes_3857.shp",
+        "path":"/atlas/projects/cyanomap/vectors/greatlakes_3857.shp",
         "key":"uuid",
         "key_type":"str",
         "domain_description":"US Lakes larger than 1 Ha"

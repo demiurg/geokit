@@ -4,7 +4,8 @@
             "mm":"millimeter",
             "m":"meter",
             "deg C":"degrees Celsius",
-            "W m-2":"Watts per square meter"
+            "W m-2":"Watts per square meter",
+            "K":"Degrees Kelvin"
         }
     },
     "locations":{

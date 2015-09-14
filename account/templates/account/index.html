@@ -1,0 +1,85 @@
+{% extends 'account/base.html' %}
+
+{% load static %}
+
+{% block styles %}
+  .cover {
+    background-color: rgba(112,87,91,.76);
+    display: table;
+    height: 100vh;
+    width: 100vw;
+  }
+  div.cover:before {
+    background-image: url({% static 'img/istockphoto-coal-geologist-46975590.jpg' %});
+    background-size: cover;
+    background-repeat: no-repeat;
+    content: "";
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    z-index: -1;
+  }
+  .get-started {
+    display: table-cell;
+    min-width: 500px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .get-started h1 {
+    color: #fffeed;
+    font-weight: lighter;
+    margin-bottom: 60px;
+    text-shadow: 1px 1px 1px #000000;
+  }
+  .get-started .search-form {
+    border-radius: 5px;
+    box-shadow: 1px 1px 3px 0px rgba(0,0,0,0.25);
+    display: inline-block;
+    margin-right: auto;
+    margin-left: auto;
+  }
+  .get-started input {
+    background-color: #ffffff;
+    border: 0;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    color: rgba(0,0,0,.60);
+    font-size: 20px;
+    margin: 0;
+    padding: 0;
+    padding-left: 10px;
+    height: 45px;
+    width: 400px;
+  }
+  .get-started button {
+    background-color: #707277;
+    border: 0;
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+    color: #ffffff;
+    font-size: 20px;
+    line-height: 45px;
+    margin: 0;
+    padding: 0 15px 0 15px;
+    height: 45px;
+  }
+{% endblock %}
+
+{% block content %}
+  <script>
+    function submit() {
+      console.log('user is {% if user.is_authenticated %}logged in{% else %}not logged in{% endif %}');
+      console.log('searched for: ' + $("#search").val());
+    }
+  </script>
+  <div class="cover">
+    {% include 'account/header.html' %}
+    <div class="get-started">
+      <h1>Get started with site creation.</h1>
+      <div class="search-form">
+        <input type="text" name="search" id="search" placeholder="Check availability of your site name" /><button onclick="submit()">Let's go</input>
+      </div>
+    </div>
+  </div>
+{% endblock %}
