@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% load wagtailcore_tags %}
+{% load expression_tags %}
 
 {% block body_class %}template-homepage{% endblock %}
 
 {% block content %}
-    {{ self.body|richtext }}
+    {{ self.body|richtext_with_expression:request }}
 {% endblock %}
