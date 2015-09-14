@@ -12,8 +12,14 @@ class FormVariable(models.Model):
     value = models.TextField()
     user = models.ForeignKey(User)
 
-    class Meta:
-        unique_together = ('name', 'user',)
+    def save(self, *args, **kwargs):
+        """
+        If a user resubmits a form, the new bindings should overwrite the
+        existing ones.
+        """
+        FormVariable.objects.filter(name=self.name, user=self.user).delete()
+
+        super(FormVariable, self).save(*args, **kwargs)
 
 
 def validate_expression_text(expression_text):
