@@ -1,0 +1,81 @@
+<div id="graph-{{ self.id }}"></div>
+
+<style>
+.axis path,
+.axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    font-family: sans-serif;
+    size: 11px;
+}
+</style>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+<script>
+var data = [
+    [new Date(2015, 1, 1), 12.3],
+    [new Date(2015, 1, 15), 11.8],
+    [new Date(2015, 2, 1), 10.2],
+    [new Date(2015, 2, 15), 10.9],
+    [new Date(2015, 3, 1), 13.1],
+    [new Date(2015, 3, 15), 12.9],
+    [new Date(2015, 4, 1), 11.5]
+];
+
+var margin = {top: 20, right: 40, bottom: 30, left: 40},
+    width  = 500 - margin.left - margin.right,
+    height = 300 - margin.top - margin.bottom;
+
+var x_scale = d3.time.scale()
+                     .domain([d3.min(data, function(d) { return d[0]; }),
+                              d3.max(data, function(d) { return d[0]; })])
+                     .range([0, width]);
+
+var y_scale = d3.scale.linear()
+                      .domain([0, d3.max(data, function(d) {
+                           return d[1];
+                       })])
+                       .range([height, 0]);
+
+var graph = d3.select("#graph-{{ self.id }}")
+            .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+graph.selectAll("circle")
+    .data(data)
+    .enter()
+        .append("circle")
+        .attr("cx", function(d) {
+            return x_scale(d[0]);
+        })
+        .attr("cy", function(d) {
+            return y_scale(d[1]);
+        })
+        .attr("r", 3);
+
+var x_axis = d3.svg.axis()
+                .scale(x_scale)
+                .ticks(5)
+                .tickFormat(d3.time.format("%b %Y"));
+
+var y_axis = d3.svg.axis()
+                .scale(y_scale)
+                .orient("left");
+
+graph.append("g")
+    .attr("class", "axis")
+    .attr("transform", "translate(0, " + height + ")")
+    .call(x_axis);
+
+graph.append("g")
+    .attr("class", "axis")
+    .call(y_axis);
+
+
+</script>

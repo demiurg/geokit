@@ -15,6 +15,8 @@ from wagtail.wagtailforms.forms import FormBuilder
 from wagtail.wagtailforms.models import AbstractFormField
 from wagtail.wagtailimages.blocks import ImageChooserBlock
 
+from builder.blocks import GraphBlock
+
 
 class HomePage(Page):
     body = RichTextField(blank=True)
@@ -29,6 +31,7 @@ class CustomPage(Page):
         ('paragraph', blocks.RichTextBlock()),
         ('image', ImageChooserBlock()),
         ('embed', EmbedBlock()),
+        ('graph', GraphBlock()),
     ])
 
     content_panels = [
