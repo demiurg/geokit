@@ -15,12 +15,14 @@ from wagtail.wagtailforms.forms import FormBuilder
 from wagtail.wagtailforms.models import AbstractFormField
 from wagtail.wagtailimages.blocks import ImageChooserBlock
 
+from builder.blocks import GraphBlock
+
 
 class HomePage(Page):
     body = RichTextField(blank=True)
 
     content_panels = Page.content_panels + [
-        FieldPanel('body', classname="full")
+        FieldPanel('body', classname="full"),
     ]
 
 
@@ -29,6 +31,7 @@ class CustomPage(Page):
         ('paragraph', blocks.RichTextBlock()),
         ('image', ImageChooserBlock()),
         ('embed', EmbedBlock()),
+        ('graph', GraphBlock()),
     ])
 
     content_panels = [
@@ -66,7 +69,7 @@ class CustomFormPage(CustomPage):
 
             if form.is_valid():
                 # Save form variables
-                for var, value in form.cleaned_data.iteritems():
+                for var, value in form.cleaned_data.items():
                     FormVariable = apps.get_model(app_label='expressions', model_name='FormVariable')
                     var = FormVariable(name=var, value=value, user=request.user)
                     var.save()
@@ -80,7 +83,7 @@ class CustomFormPage(CustomPage):
             'form': form,
         })
 
-CustomFormPage.content_panels += [
-    InlinePanel('form_fields', label="Form fields"),
-    PageChooserPanel('redirect_page'),
-]
+    content_panels = CustomPage.content_panels + [
+        InlinePanel('form_fields', label="Form fields"),
+        PageChooserPanel('redirect_page'),
+    ]
