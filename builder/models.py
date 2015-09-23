@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from modelcluster.fields import ParentalKey
 
 from django.apps import apps
-from django.db import models
+from django.contrib.gis.db import models
 from django.shortcuts import render, redirect
 
 from wagtail.wagtailcore import blocks
