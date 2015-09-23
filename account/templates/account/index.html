@@ -3,11 +3,61 @@
 {% load static %}
 
 {% block styles %}
+  #signup {
+    background-color: rgba(250, 242, 225, 1.00);
+    font-size: 28px;
+    padding-top: 70px;
+    padding-bottom: 70px;
+  }
+  #signup h1 {
+    color: rgba(131, 107, 100, 1.00);
+  }
+  #signup p {
+    color: rgba(64, 64, 64, 0.65);
+  }
+  .signup-form {
+    border-bottom: 1px solid #a8958c;
+    border-right: 0
+    font-size: .8em;
+    padding-bottom: 25px;
+  }
+  .signup-form input {
+    border: 0;
+    border-radius: 10px;
+    box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25);
+    color: rgba(0, 0, 0, 0.65);
+    display: block;
+    height: 50px;
+    margin-bottom: 50px;
+    padding-left: 10%;
+    width: 100%;
+  }
+  .signup-form input:focus {
+    border: 1px solid rgba(131, 107, 100, 1.00);
+  }
+  .signup-form button {
+    background-color: rgba(131, 107, 100, 1.00);
+    border: 0;
+    border-radius: 10px;
+    color: rgba(255, 255, 255, 1.00);
+    box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25);
+    display: block;
+    height: 50px;
+    width: 100%;
+  }
+  .signup-form-site-notification {
+    display: none;
+  }
+  #signup .signup-form-site-notification p {
+    color: rgba(117, 127, 100, 1.00);
+    font-size: .75em;
+    margin: 0 25px 25px 25px;
+  }
   .cover {
     background-color: rgba(112,87,91,.76);
     display: table;
     height: 100vh;
-    width: 100vw;
+    width: 100%;
   }
   div.cover:before {
     background-image: url({% static 'img/istockphoto-coal-geologist-46975590.jpg' %});
@@ -15,9 +65,9 @@
     background-repeat: no-repeat;
     content: "";
     display: block;
-    width: 100vw;
     height: 100vh;
     position: absolute;
+    width: 100%;
     z-index: -1;
   }
   .get-started {
@@ -31,6 +81,13 @@
     font-weight: lighter;
     margin-bottom: 60px;
     text-shadow: 1px 1px 1px #000000;
+  }
+  .get-started .search-alert {
+    color: #fffeed;
+    font-size: 1.5em;
+    text-shadow: 1px 1px 1px #000000;
+    display: none;
+    font-weight: bold;
   }
   .get-started .search-form {
     border-radius: 5px;
@@ -59,26 +116,121 @@
     border-bottom-right-radius: 5px;
     color: #ffffff;
     font-size: 20px;
-    line-height: 45px;
     margin: 0;
     padding: 0 15px 0 15px;
     height: 45px;
   }
-{% endblock %}
-
-{% block content %}
-  <script>
-    function submit() {
-      console.log('user is {% if user.is_authenticated %}logged in{% else %}not logged in{% endif %}');
-      console.log('searched for: ' + $("#search").val());
+  @media (min-width: 768px) {
+    .signup-form {
+      border-bottom: 0;
+      border-right: 1px solid #a8958c;
+      padding-right: 15px;
+      padding-bottom: 0;
     }
-  </script>
-  <div class="cover">
-    {% include 'account/header.html' %}
+  }
+{% endblock %}
+{% block scripts %}
+      function setNavBackgroundColor() {
+        if (($(document).scrollTop() + $("nav").height()) >= $("#search").height() && $("nav").css("background-color") === "transparent") {
+          $("nav").css("background-color", "rgba(112, 87, 91, 0.85)");
+        } else if (($(document).scrollTop() + $("nav").height()) < $("#search").height() && $("nav").css("background-color") != "transparent") {
+          $("nav").css("background-color", "transparent");
+        }
+      }
+      function searchSite() {
+        if ($("#search-input").val() != "") {
+          $.ajax({
+            url: 'accounts/availability/',
+            method: 'POST',
+            data: {'search-input': $("#search-input").val()},
+            beforeSend: function(xhr) {
+              xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+          })
+            .done(function(data) {
+              if (data.available === true) {
+                $("#signup-name-site").val(data.site_name);
+                $(".signup-form-site-notification").css("display", "block");
+                $('html, body').animate({
+                  scrollTop: $("#signup").offset().top
+                }, {
+                  duration: 500,
+                  complete: function() {
+                    $("#signup-email").focus();
+                  }
+                });
+              }
+            });
+        } else {
+          $(".search-alert").css("display", "block");
+          $(".search-alert p").text("Enter a site name to search.");
+        }
+      }
+      function searchSiteSignup() {
+      
+      }
+      $(document).ready(function() {
+        $("button").click(function(e) {
+          e.preventDefault();
+        });
+        $("#search-input").keypress(function() {
+          if ($("#search-input").val() != "") {
+            $(".search-alert").css("display", "none");
+          }
+        });
+      });
+{% endblock %}
+{% block content %}
+{% include 'account/header.html' %}
+  <div id="search" class="cover">
     <div class="get-started">
       <h1>Get started with site creation.</h1>
+      <div class="search-alert">
+        <p></p>
+      </div>
       <div class="search-form">
-        <input type="text" name="search" id="search" placeholder="Check availability of your site name" /><button onclick="submit()">Let's go</input>
+        <form id="search-site" name="search-site" method="post" action="">
+          {% csrf_token %}
+          <input type="text" name="search-input" id="search-input" placeholder="Check availability of your site name" /><button type="submit" id="search-submit" onclick="searchSite()">Let's go</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div id="signup" class="container-fluid">
+    <div class="row">
+      <div class="col-sm-4 col-lg-3">
+        <div class="signup-form">
+          <form id="signup-form" name="signup-form" method="post" action="">
+            <div class="signup-form-site-notification">
+              <p><i class="fa fa-check-circle"></i> Your site name is available. Finish signing up to get started.</p>
+            </div>
+            <input type="text" name="email" id="signup-email" placeholder="Email address" />
+            <input type="text" name="name-first" id="signup-name-first" placeholder="First name" />
+            <input type="text" name="name-last" id="signup-name-last" placeholder="Last name" />
+            <input type="text" name="name-site" id="signup-name-site" placeholder="Site name" onchange="searchSiteSignup()" />
+            <button type="submit" id="signup-submit" onclick="signup()">Sign up</button>
+          </form>
+        </div>
+      </div>
+      <div class="col-sm-8 col-lg-9">
+        <div class="row">
+          <div class="col-md-12 col-lg-6">
+            <h1>Need custom features?</h1>
+            <p>Interdum et malesuada fames ac ante ipsum primis in faucibus. Suspendisse et felis semper, tempus enim et, aliquam dolor. Cras.</p>
+          </div>
+          <div class="col-md-12 col-lg-6">
+            <div style="background-color: #ffffff; box-shadow: 1px 1px 1px rgba(131, 107, 100, 0.25); padding: 10px;">
+              <img src="{% static 'img/graph.png' %}" style="width: 100%;" />
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 col-lg-8 pull-right">
+            <div class="text-right">
+              <h1>Have custom products?</h1>
+              <p>Aenean sit amet luctus turpis. Nulla consequat feugiat tempus. Phasellus tempor eu sem vitae porttitor. Cras ac dui ipsum. Vivamus.</p>
+            </div>
+          </div>
       </div>
     </div>
   </div>

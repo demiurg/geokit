@@ -4,9 +4,35 @@
     <meta charset="utf-8">
     <title>title</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
     <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <script>
+      // using jQuery
+      function getCookie(name) {
+          var cookieValue = null;
+          if (document.cookie && document.cookie != '') {
+              var cookies = document.cookie.split(';');
+              for (var i = 0; i < cookies.length; i++) {
+                  var cookie = jQuery.trim(cookies[i]);
+                  // Does this cookie string begin with the name we want?
+                  if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                      cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                      break;
+                  }
+              }
+          }
+          return cookieValue;
+      }
+      var csrftoken = getCookie('csrftoken');
+    {% block scripts %}
+    
+    {% endblock %}
+    </script>
     <style>
+      nav {
+        background-color: transparent;
+      }
       .navbar-default {
         background-color: transparent;
         border: 0;
@@ -19,6 +45,33 @@
       }
       .navbar-collapse {
         border: 0;
+      }
+      .navbar-default .nav-geokit > .open > a,
+        .navbar-default .nav-geokit > .open > a:focus,
+        .navbar-default .nav-geokit > .open > a:active,
+        .navbar-default .nav-geokit > .open > a:hover {
+        background-color: rgba(134,155,136, 0.65);
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+        color: #ffffff;
+        font-weight: bold;
+        margin-top: 5px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+      }
+      .navbar-default .nav-geokit li a {
+        font-weight: bold;
+      }
+      .nav-geokit  li ul {
+        background-color: rgba(134, 155, 136, 0.65);
+        border: 0;
+        box-shadow: none;
+      }
+      .nav-geokit > li > .dropdown-menu {
+        border-top-left-radius: 5px;
+      }
+      .nav-geokit > li > .dropdown-menu a:hover {
+        background-color: rgba(94,115,96, 0.55);
       }
       {% block styles %}
       
