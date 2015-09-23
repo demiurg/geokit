@@ -1,4 +1,13 @@
+{% load static %}
+
 <!-- Fixed navbar -->
+<script>
+  $(document).ready(function() {
+    $(document).scroll(function() {
+      setNavBackgroundColor();
+    });
+  });
+</script>
 <nav class="navbar navbar-default navbar-fixed-top">
   <div class="container">
     <div class="navbar-header">

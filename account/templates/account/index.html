@@ -3,12 +3,6 @@
 {% load static %}
 
 {% block styles %}
-  @media (min-width: 768px) {
-    .signup-form {
-      border-right: 1px solid #a8958c;
-      padding-right: 15px;
-    }
-  }
   #signup {
     background-color: rgba(250, 242, 225, 1.00);
     font-size: 28px;
@@ -22,8 +16,10 @@
     color: rgba(64, 64, 64, 0.65);
   }
   .signup-form {
+    border-bottom: 1px solid #a8958c;
     border-right: 0
     font-size: .8em;
+    padding-bottom: 25px;
   }
   .signup-form input {
     border: 0;
@@ -48,6 +44,14 @@
     display: block;
     height: 50px;
     width: 100%;
+  }
+  .signup-form-site-notification {
+    display: none;
+  }
+  #signup .signup-form-site-notification p {
+    color: rgba(117, 127, 100, 1.00);
+    font-size: .75em;
+    margin: 0 25px 25px 25px;
   }
   .cover {
     background-color: rgba(112,87,91,.76);
@@ -116,8 +120,23 @@
     padding: 0 15px 0 15px;
     height: 45px;
   }
+  @media (min-width: 768px) {
+    .signup-form {
+      border-bottom: 0;
+      border-right: 1px solid #a8958c;
+      padding-right: 15px;
+      padding-bottom: 0;
+    }
+  }
 {% endblock %}
 {% block scripts %}
+      function setNavBackgroundColor() {
+        if (($(document).scrollTop() + $("nav").height()) >= $("#search").height() && $("nav").css("background-color") === "transparent") {
+          $("nav").css("background-color", "rgba(112, 87, 91, 0.85)");
+        } else if (($(document).scrollTop() + $("nav").height()) < $("#search").height() && $("nav").css("background-color") != "transparent") {
+          $("nav").css("background-color", "transparent");
+        }
+      }
       function searchSite() {
         if ($("#search-input").val() != "") {
           $.ajax({
@@ -131,16 +150,24 @@
             .done(function(data) {
               if (data.available === true) {
                 $("#signup-name-site").val(data.site_name);
+                $(".signup-form-site-notification").css("display", "block");
                 $('html, body').animate({
-                    scrollTop: $("#signup").offset().top
-                }, 500);
-                $("#signup-name-site").focus();
+                  scrollTop: $("#signup").offset().top
+                }, {
+                  duration: 500,
+                  complete: function() {
+                    $("#signup-email").focus();
+                  }
+                });
               }
             });
         } else {
           $(".search-alert").css("display", "block");
           $(".search-alert p").text("Enter a site name to search.");
         }
+      }
+      function searchSiteSignup() {
+      
       }
       $(document).ready(function() {
         $("button").click(function(e) {
@@ -174,10 +201,13 @@
       <div class="col-sm-4 col-lg-3">
         <div class="signup-form">
           <form id="signup-form" name="signup-form" method="post" action="">
+            <div class="signup-form-site-notification">
+              <p><i class="fa fa-check-circle"></i> Your site name is available. Finish signing up to get started.</p>
+            </div>
             <input type="text" name="email" id="signup-email" placeholder="Email address" />
             <input type="text" name="name-first" id="signup-name-first" placeholder="First name" />
             <input type="text" name="name-last" id="signup-name-last" placeholder="Last name" />
-            <input type="text" name="name-site" id="signup-name-site" placeholder="Site name" />
+            <input type="text" name="name-site" id="signup-name-site" placeholder="Site name" onchange="searchSiteSignup()" />
             <button type="submit" id="signup-submit" onclick="signup()">Sign up</button>
           </form>
         </div>
