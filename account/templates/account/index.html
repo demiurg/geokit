@@ -3,6 +3,12 @@
 {% load static %}
 
 {% block styles %}
+  @media (min-width: 768px) {
+    .signup-form {
+      border-right: 1px solid #a8958c;
+      padding-right: 15px;
+    }
+  }
   #signup {
     background-color: rgba(250, 242, 225, 1.00);
     font-size: 28px;
@@ -16,7 +22,7 @@
     color: rgba(64, 64, 64, 0.65);
   }
   .signup-form {
-    border-right: 1px solid #a8958c;
+    border-right: 0
     font-size: .8em;
   }
   .signup-form input {
@@ -28,7 +34,10 @@
     height: 50px;
     margin-bottom: 50px;
     padding-left: 10%;
-    width: 90%;
+    width: 100%;
+  }
+  .signup-form input:focus {
+    border: 1px solid rgba(131, 107, 100, 1.00);
   }
   .signup-form button {
     background-color: rgba(131, 107, 100, 1.00);
@@ -38,7 +47,7 @@
     box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25);
     display: block;
     height: 50px;
-    width: 90%;
+    width: 100%;
   }
   .cover {
     background-color: rgba(112,87,91,.76);
@@ -125,6 +134,7 @@
                 $('html, body').animate({
                     scrollTop: $("#signup").offset().top
                 }, 500);
+                $("#signup-name-site").focus();
               }
             });
         } else {
@@ -174,21 +184,18 @@
       </div>
       <div class="col-sm-8 col-lg-9">
         <div class="row">
-          <div class="col-sm-5">
-            <div class="signup-pitch">
-              <h1>Need custom features?</h1>
-              <p>Interdum et malesuada fames ac ante ipsum primis in faucibus. Suspendisse et felis semper, tempus enim et, aliquam dolor. Cras.</p>
-            </div>
+          <div class="col-md-12 col-lg-6">
+            <h1>Need custom features?</h1>
+            <p>Interdum et malesuada fames ac ante ipsum primis in faucibus. Suspendisse et felis semper, tempus enim et, aliquam dolor. Cras.</p>
           </div>
-          <div class="col-sm-7">
+          <div class="col-md-12 col-lg-6">
             <div style="background-color: #ffffff; box-shadow: 1px 1px 1px rgba(131, 107, 100, 0.25); padding: 10px;">
               <img src="{% static 'img/graph.png' %}" style="width: 100%;" />
             </div>
           </div>
         </div>
         <div class="row">
-          <div class="col-sm-4"></div>
-          <div class="col-sm-8">
+          <div class="col-md-12 col-lg-8 pull-right">
             <div class="text-right">
               <h1>Have custom products?</h1>
               <p>Aenean sit amet luctus turpis. Nulla consequat feugiat tempus. Phasellus tempor eu sem vitae porttitor. Cras ac dui ipsum. Vivamus.</p>
