@@ -4,9 +4,11 @@ from django.contrib import admin
 
 from builder import urls as builder_urls
 from account import urls as account_urls
+from account import views as account_views
 
 urlpatterns = [
-    url(r'^$', include(account_urls)),
+    url(r'^$', account_views.index),
+    url(r'^accounts/', include(account_urls)),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^builder/', include(builder_urls)),
 ]
