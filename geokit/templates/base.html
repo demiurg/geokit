@@ -12,6 +12,13 @@
         <meta name="description" content="" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+        {# Global javascript #}
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+
+        {% block extra_js %}
+            {# Override this in templates to add extra javascript #}
+        {% endblock %}
+
         {# Global stylesheets #}
         <link rel="stylesheet" type="text/css" href="{% static 'css/geokit.css' %}">
 
@@ -24,12 +31,5 @@
         {% wagtailuserbar %}
 
         {% block content %}{% endblock %}
-
-        {# Global javascript #}
-        <script type="text/javascript" src="{% static 'js/geokit.js' %}"></script>
-
-        {% block extra_js %}
-            {# Override this in templates to add extra javascript #}
-        {% endblock %}
     </body>
 </html>

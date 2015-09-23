@@ -1,0 +1,13 @@
+/* D3 graph styles */
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: black;
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+  font-family: sans-serif;
+  size: 11px;
+}

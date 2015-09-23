@@ -1,29 +1,10 @@
+{% load geokit_blocks_tags %}
+
+<h3>{{ self.start_date }} to {{ self.end_date }}</h3>
 <div id="graph-{{ self.id }}"></div>
 
-<style>
-.axis path,
-.axis line {
-    fill: none;
-    stroke: black;
-    shape-rendering: crispEdges;
-}
-
-.axis text {
-    font-family: sans-serif;
-    size: 11px;
-}
-</style>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
 <script>
-var data = [
-    [new Date(2015, 1, 1), 12.3],
-    [new Date(2015, 1, 15), 11.8],
-    [new Date(2015, 2, 1), 10.2],
-    [new Date(2015, 2, 15), 10.9],
-    [new Date(2015, 3, 1), 13.1],
-    [new Date(2015, 3, 15), 12.9],
-    [new Date(2015, 4, 1), 11.5]
-];
+var data = {% graph_data self %};
 
 var margin = {top: 20, right: 40, bottom: 30, left: 40},
     width  = 500 - margin.left - margin.right,
