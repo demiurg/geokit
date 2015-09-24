@@ -59,7 +59,11 @@ class Expression(models.Model):
             if subexp:
                 val = subexp.evaluate(request)
             else:
+                if not request.user.is_authenticated():
+                    return 'undefined'
                 form_var = FormVariable.objects.filter(name=str(symbol), user=request.user).first()
+                if not form_var:
+                    return 'undefined'
                 val = form_var.value
             substitutions.append((symbol, val))
 
