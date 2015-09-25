@@ -11,3 +11,9 @@
   font-family: sans-serif;
   size: 11px;
 }
+
+/* Leaflet map styles */
+
+.leaflet-map {
+  height: 300px;
+}

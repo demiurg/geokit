@@ -15,7 +15,7 @@ from wagtail.wagtailforms.forms import FormBuilder
 from wagtail.wagtailforms.models import AbstractFormField
 from wagtail.wagtailimages.blocks import ImageChooserBlock
 
-from builder.blocks import GraphBlock
+from builder.blocks import GraphBlock, MapBlock
 
 
 class HomePage(Page):
@@ -32,6 +32,7 @@ class CustomPage(Page):
         ('image', ImageChooserBlock()),
         ('embed', EmbedBlock()),
         ('graph', GraphBlock()),
+        ('map', MapBlock()),
     ])
 
     content_panels = [
