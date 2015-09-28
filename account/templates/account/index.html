@@ -128,12 +128,42 @@
       padding-bottom: 0;
     }
   }
+  @media (max-width: 768px) {
+      .get-started {
+        min-width: 60vw;
+        text-align: center;
+        vertical-align: middle;
+      }
+      .get-started .search-form {
+        border-radius: 5px;
+        box-shadow: 1px 1px 3px 0px rgba(0,0,0,0.25);
+        display: inline-block;
+        margin-right: auto;
+        margin-left: auto;
+        width: 60vw;
+      }
+      #search-input {
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+        border-bottom-left-radius: 0;
+        width: 60vw;
+      }
+      #search-submit {
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
+        border-top-right-radius: 0;
+        display: block
+        margin-top: 0;
+        overflow: hidden;
+        width: 60vw;
+      }
+  }
 {% endblock %}
 {% block scripts %}
       function setNavBackgroundColor() {
-        if (($(document).scrollTop() + $("nav").height()) >= $("#search").height() && $("nav").css("background-color") === "transparent") {
+        if ($(document).scrollTop() > 0 && $("nav").css("background-color") === "transparent") {
           $("nav").css("background-color", "rgba(112, 87, 91, 0.85)");
-        } else if (($(document).scrollTop() + $("nav").height()) < $("#search").height() && $("nav").css("background-color") != "transparent") {
+        } else if ($(document).scrollTop() == 0 && $("#search").height() && $("nav").css("background-color") != "transparent") {
           $("nav").css("background-color", "transparent");
         }
       }
@@ -150,6 +180,20 @@
             .done(function(data) {
               if (data.available === true) {
                 $("#signup-name-site").val(data.site_name);
+                $(".signup-form-site-notification p").css("color", "rgba(117, 127, 100, 1.00)");
+                $(".signup-form-site-notification p").html("<i class='fa fa-check-circle'></i> Your site name is available. Finish signing up to get started.");
+                $(".signup-form-site-notification").css("display", "block");
+                $('html, body').animate({
+                  scrollTop: $("#signup").offset().top
+                }, {
+                  duration: 500,
+                  complete: function() {
+                    $("#signup-email").focus();
+                  }
+                });
+              } else {
+                $(".signup-form-site-notification p").css("color", "rgba(131, 107, 100, 1.00)");
+                $(".signup-form-site-notification p").html("<i class='fa fa-times-circle'></i> That name is currently in use.");
                 $(".signup-form-site-notification").css("display", "block");
                 $('html, body').animate({
                   scrollTop: $("#signup").offset().top
@@ -167,7 +211,30 @@
         }
       }
       function searchSiteSignup() {
-      
+        if ($("#signup-name-site").val() != "") {
+          $.ajax({
+            url: 'accounts/availability/',
+            method: 'POST',
+            data: {'search-input': $("#signup-name-site").val()},
+            beforeSend: function(xhr) {
+              xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+          })
+            .done(function(data) {
+              if (data.available === true) {
+                $(".signup-form-site-notification p").css("color", "rgba(117, 127, 100, 1.00)");
+                $(".signup-form-site-notification p").html("<i class='fa fa-check-circle'></i> Your site name is available. Finish signing up to get started.");
+                $(".signup-form-site-notification").css("display", "block");
+              } else {
+                $(".signup-form-site-notification p").css("color", "rgba(131, 107, 100, 1.00)");
+                $(".signup-form-site-notification p").html("<i class='fa fa-times-circle'></i> That name is currently in use.");
+                $(".signup-form-site-notification").css("display", "block");
+              }
+            });
+        } else {
+          $(".signup-form-site-notification p").html("<i class='fa fa-info-circle'></i> Enter a site name to begin registration.");
+          $(".signup-form-site-notification").css("display", "block");
+        }
       }
       $(document).ready(function() {
         $("button").click(function(e) {
@@ -202,12 +269,12 @@
         <div class="signup-form">
           <form id="signup-form" name="signup-form" method="post" action="">
             <div class="signup-form-site-notification">
-              <p><i class="fa fa-check-circle"></i> Your site name is available. Finish signing up to get started.</p>
+              <p></p>
             </div>
             <input type="text" name="email" id="signup-email" placeholder="Email address" />
             <input type="text" name="name-first" id="signup-name-first" placeholder="First name" />
             <input type="text" name="name-last" id="signup-name-last" placeholder="Last name" />
-            <input type="text" name="name-site" id="signup-name-site" placeholder="Site name" onchange="searchSiteSignup()" />
+            <input type="text" name="name-site" id="signup-name-site" placeholder="Site name" onkeyup="searchSiteSignup()" />
             <button type="submit" id="signup-submit" onclick="signup()">Sign up</button>
           </form>
         </div>
