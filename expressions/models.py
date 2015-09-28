@@ -2,7 +2,7 @@ import sympy
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.db import models
+from django.contrib.gis.db import models
 
 from builder.models import FormVariableField
 
@@ -59,7 +59,11 @@ class Expression(models.Model):
             if subexp:
                 val = subexp.evaluate(request)
             else:
+                if not request.user.is_authenticated():
+                    return 'undefined'
                 form_var = FormVariable.objects.filter(name=str(symbol), user=request.user).first()
+                if not form_var:
+                    return 'undefined'
                 val = form_var.value
             substitutions.append((symbol, val))
 

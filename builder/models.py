@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from modelcluster.fields import ParentalKey
 
 from django.apps import apps
-from django.db import models
+from django.contrib.gis.db import models
 from django.shortcuts import render, redirect
 
 from wagtail.wagtailcore import blocks
@@ -15,7 +15,7 @@ from wagtail.wagtailforms.forms import FormBuilder
 from wagtail.wagtailforms.models import AbstractFormField
 from wagtail.wagtailimages.blocks import ImageChooserBlock
 
-from builder.blocks import GraphBlock
+from builder.blocks import GraphBlock, MapBlock
 
 
 class HomePage(Page):
@@ -32,6 +32,7 @@ class CustomPage(Page):
         ('image', ImageChooserBlock()),
         ('embed', EmbedBlock()),
         ('graph', GraphBlock()),
+        ('map', MapBlock()),
     ])
 
     content_panels = [

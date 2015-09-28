@@ -1,0 +1,5 @@
+[
+{% for datum in data %}
+[new Date({{ datum.0.year}}, {{ datum.0.month|add:"-1" }}, {{ datum.0.day }}), {{ datum.1}}],
+{% endfor %}
+]
