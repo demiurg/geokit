@@ -3,9 +3,11 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 import random
 
+
 @ensure_csrf_cookie
 def index(request):
     return render(request, 'account/index.html')
+
 
 @csrf_protect
 def availability(request):

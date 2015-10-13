@@ -1,0 +1,53 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% block titletag %}Layers{% endblock %}
+{% block bodyclass %}menu-layers{% endblock %}
+
+{% block content %}
+{% include "wagtailadmin/shared/header.html" with title="Layers" add_link="layers:add" add_text="Add Layer" icon="code" %}
+
+<div class="nice-padding">
+    <div id="layers-results" class="layers">
+        {% if layers.exists %}
+        <table class="listing">
+            <col />
+            <col />
+            <thead>
+                <tr class="table-headers">
+                    <th>Name</th>
+                    <th>Bounds</th>
+                    <th>Features</th>
+                    <th>Created</th>
+                    <th>Modified</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for layer in layers %}
+                <tr>
+                    <td class="title">
+                        <h2>
+                            <a href="{% url 'layers:edit' layer.pk %}">{{ layer.name }}</a>
+                        </h2>
+                    </td>
+                    <td>{{layer.bounds}}</td>
+                    <td>{{layer.feature_set.all.count}}</td>
+                    <td>
+                        <div class="human-readable-date" title="{{ layer.created|date:"d M Y H:i" }}">
+                        {{ layer.created|timesince }} ago
+                        </div>
+                    </td>
+                    <td>
+                        <div class="human-readable-date" title="{{ layer.modified|date:"d M Y H:i" }}">
+                        {{ layer.modified|timesince }} ago
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>You haven't created any layers yet. Why not <a href="{% url "layers:add" %}">create one now?</a></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

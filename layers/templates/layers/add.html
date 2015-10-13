@@ -1,0 +1,19 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% block titletag %}Add Layer{% endblock %}
+
+{% block content %}
+{% include "wagtailadmin/shared/header.html" with title="Layer" add_link="layers:add" add_text="Add Layer" icon="code" %}
+
+<div class="nice-padding">
+    <form action="{% url 'layers:add' %}" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <ul class="fields">
+            {% for field in form %}
+                {% include "wagtailadmin/shared/field_as_li.html" with field=field %}
+            {% endfor %}
+            <li><input type="submit" value="Save" /></li>
+        </ul>
+    </form>
+</div>
+{% endblock %}

@@ -35,6 +35,7 @@ INSTALLED_APPS = (
     'taggit',
     'compressor',
     'modelcluster',
+    'django_hstore',
 
     'wagtail.wagtailcore',
     'wagtail.wagtailadmin',
@@ -53,6 +54,7 @@ INSTALLED_APPS = (
     'builder',
     'account',
     'expressions',
+    'layers',
 )
 
 MIDDLEWARE_CLASSES = (
