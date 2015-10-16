@@ -70,7 +70,7 @@
             self.featurelayer = L.geoJson(geojson).addTo(self.map);
             {% endcomment %}
 
-            var jsonURL = '/admin/layers/{{layer.name}}/{z}/{x}/{y}.json';
+            var jsonURL = '/builder/admin/layers/{{layer.name}}/{z}/{x}/{y}.json';
             var tiled = this.tiled = new L.TileLayer.GeoJSON(jsonURL, {
                     clipTiles: false,
                     unique: function (feature) {
