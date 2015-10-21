@@ -11,7 +11,7 @@
 
 {% block extra_js %}
     <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
-    <script src="/static/js/TileLayer.GeoJSON.js"></script>
+    <script src="/static/js/Leaflet.MapboxVectorTile.js"></script>
     <script>
 
         function info(data){
@@ -51,9 +51,9 @@
                 "Satellite": self.satellite
             };
 
-            self.selector = L.control.layers(
+            /*self.selector = L.control.layers(
                 self.baseLayers
-            ).addTo(self.map);
+            ).addTo(self.map);*/
 
             {% comment %}
             var geojson = {
@@ -70,17 +70,13 @@
             self.featurelayer = L.geoJson(geojson).addTo(self.map);
             {% endcomment %}
 
-            var jsonURL = '/builder/admin/layers/{{layer.name}}/{z}/{x}/{y}.json';
-            var tiled = this.tiled = new L.TileLayer.GeoJSON(jsonURL, {
-                    clipTiles: false,
-                    unique: function (feature) {
-                        return feature.properties.id;
-                    }
-                }, {
-                    style: self.defaultStyle,
-                    onEachFeature: self.featureHandler
-                }
-            ).addTo(map);
+            var mvtURL = '/builder/admin/layers/{{ layer.name }}/{z}/{x}/{y}.pbf';
+            var config = {
+                url: mvtURL,
+                getIDForLayerFeature: function(feature) { return feature.properties.id; }
+                //filter: function(feature) { return true; }
+            };
+            var tiled = this.tiled = new L.TileLayer.MVTSource(config).addTo(map);
 
             self.featureHandler = function(feature, layer){
                 layer.on({
@@ -124,7 +120,7 @@
 
 {% block content %}
 
-{% include "wagtailadmin/shared/header.html" with title="Layers" add_link="layers:add" add_text="Add Layer" icon="code" %}
+{% include "wagtailadmin/shared/header.html" with title="Layers" add_link="layers:add" add_text="Add Layer" icon="site" %}
 
 <div class="nice-padding">
     <form action="{% url 'layers:edit' layer.pk %}" method="POST" enctype="multipart/form-data">

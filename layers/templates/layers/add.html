@@ -3,7 +3,7 @@
 {% block titletag %}Add Layer{% endblock %}
 
 {% block content %}
-{% include "wagtailadmin/shared/header.html" with title="Layer" add_link="layers:add" add_text="Add Layer" icon="code" %}
+{% include "wagtailadmin/shared/header.html" with title="Layer" add_link="layers:add" add_text="Add Layer" icon="site" %}
 
 <div class="nice-padding">
     <form action="{% url 'layers:add' %}" method="POST" enctype="multipart/form-data">

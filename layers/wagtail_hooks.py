@@ -16,4 +16,4 @@ def register_admin_urls():
 
 @hooks.register('register_admin_menu_item')
 def register_layers_menu_item():
-    return MenuItem('Layers', reverse('layers:index'), classnames="icon icon-code")
+    return MenuItem('Layers', reverse('layers:index'), classnames="icon icon-site")

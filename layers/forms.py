@@ -74,6 +74,11 @@ class LayerForm(forms.ModelForm):
                     self._collection = zip_collection(tmp.name)
                 else:
                     self._collection = fiona.open(tmp.name, 'r')
+
+                # When this function is over, the crs of the collection can't be
+                # accessed unless it is done so here first.
+                self._crs = self._collection.crs
+
             except Exception as e:
                 print e
                 er = str(e)
@@ -87,6 +92,13 @@ class LayerForm(forms.ModelForm):
             return self._collection
         except AttributeError:
             return []
+
+    # Use this instead of trying to get the crs of the collection
+    def layer_crs(self):
+        try:
+            return self._crs
+        except AttributeError:
+            return None
 
     class Meta:
         model = Layer

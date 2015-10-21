@@ -1,20 +1,20 @@
+import subprocess
+
 from django.shortcuts import redirect, render, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.contrib.gis.geos import GeometryCollection, GEOSGeometry
+from django.contrib.gis.gdal import SpatialReference
 from django.http import HttpResponse
-from django.conf import settings
+from django.template.loader import render_to_string
 
 from wagtail.wagtailadmin import messages
 
 from models import Layer, Feature
 from forms import LayerForm, LayerEditForm
 
+from fiona.crs import to_string
 from shapely.geometry import shape
-from TileStache.Goodies.VecTiles import mvt
-from cStringIO import StringIO
-import ModestMaps
-import TileStache
 import json
 import os
 import md5
@@ -39,98 +39,74 @@ def layer_json(request, layer_name):
     return HttpResponse(geojson)
 
 
-def tile_json(request, layer_name, z, x, y):
+#def tile_json(request, layer_name, z, x, y):
+    #x, y, z = int(x), int(y), int(z)
+    #mimetype, data = stache(request, layer_name, z, x, y, "mvt")
+
+    #mvt_features = mvt.decode(StringIO(data))
+    #features = []
+    #for wkb, props in mvt_features:
+        #geom = GEOSGeometry(buffer(wkb))
+
+        #feature  = '{ "type": "Feature", "geometry": '  + geom.json + ","
+        #feature += json.dumps(props)[1:-1]
+        #feature += '}'
+        #features.append(feature)
+
+    #features = ",".join(features)
+    #response = '{"type": "FeatureCollection", "features": [' + features + ']}'
+    #return HttpResponse(response, content_type=mimetype)
+
+
+def tile_mvt(request, layer_name, z, x, y, extension=None):
     x, y, z = int(x), int(y), int(z)
-    mimetype, data = stache(request, layer_name, z, x, y, "mvt")
 
-    mvt_features = mvt.decode(StringIO(data))
-    features = []
-    for wkb, props in mvt_features:
-        geom = GEOSGeometry(buffer(wkb))
+    tile_cache_path = os.path.realpath(os.path.dirname(__file__) + "/../static/tiles")
+    layer_cache_path = os.path.realpath(os.path.dirname(__file__) + "/../static/layers")
 
-        feature  = '{ "type": "Feature", "geometry": '  + geom.json + ","
-        feature += json.dumps(props)[1:-1]
-        feature += '}'
-        features.append(feature)
-
-    features = ",".join(features)
-    response = '{"type": "FeatureCollection", "features": [' + features + ']}'
-    return HttpResponse(response, content_type="application/json")
-
-
-def stache(request, layer_name, z, x, y, extension):
-    x, y, z = int(x), int(y), int(z)
-
-    cache_path = os.path.realpath(os.path.dirname(__file__) + "/../static/tiles")
-
-    SELECT = """SELECT * FROM(
+    SELECT = """(
                     SELECT
-                        ST_CollectionExtract(geometry, 1) AS __geometry__,
-                        id AS __id__,
-                        properties
+                        ST_CollectionExtract(geometry, 1) AS geometry,
+                        id AS id
                     FROM layers_feature
                     WHERE layer_id = '{0}'
                     UNION
                     SELECT
-                        ST_CollectionExtract(geometry, 2) AS __geometry__,
-                        id AS __id__,
-                        properties
+                        ST_CollectionExtract(geometry, 2) AS geometry,
+                        id AS id
                     FROM layers_feature
                     WHERE layer_id = '{0}'
                     UNION
                     SELECT
-                        ST_CollectionExtract(geometry, 3) AS __geometry__,
-                        id AS __id__,
-                        properties
+                        ST_CollectionExtract(geometry, 3) AS geometry,
+                        id AS id
                     FROM layers_feature
                     WHERE layer_id = '{0}'
-                ) as extr WHERE NOT ST_isEmpty(__geometry__)""".format(layer_name)
+                ) as extr""".format(layer_name)
 
     name = md5.md5(SELECT).hexdigest()
+    tile_path = tile_cache_path + '/{}/{}/{}/{}.pbf'.format(name, z, x, y)
+    layer_path = layer_cache_path + '/%s.xml' % name
 
-    config = {
-        "cache": {
-            "name": "Disk",
-            "path": cache_path,
-            "umask": "0000",
-            "dirs": "portable"
-        },
-        "layers": {
-            name: {
-                "allowed origin": "*",
-                "provider": {
-                    "class": "TileStache.Goodies.VecTiles:Provider",
-                    "projection": "spherical mercator",
-                    "kwargs": {
-                        "srid": 3857,
-                        "clip": True,
-                        "simplify": 0,
-                        "dbinfo": {
-                            'host': settings.DATABASES['default']['HOST'],
-                            'user': settings.DATABASES['default']['USER'],
-                            'password': settings.DATABASES['default']['PASSWORD'],
-                            'database': settings.DATABASES['default']['NAME'],
-                        },
-                        "queries": [SELECT]
-                    },
-                },
-            },
-        },
-    }
+    if not os.path.isfile(tile_path):
+        if not os.path.isfile(layer_path):
+            mapnik_config = render_to_string(
+                'layers/mapnik/mapnik_config.xml',
+                {'layer_name': layer_name, 'query': SELECT}
+            )
 
-    if "cfg" in request.GET:
-        return HttpResponse(json.dumps(config, indent=4 * ' '))
+            with open(layer_path, 'w') as f:
+                f.write(mapnik_config)
 
-    # like http://tile.openstreetmap.org/1/0/0.png
-    coord = ModestMaps.Core.Coordinate(y, x, z)
+        if not os.path.isdir(os.path.dirname(tile_path)):
+            os.makedirs(os.path.dirname(tile_path))
+        subprocess.check_call(['avecado', 'vector', '-o', tile_path, layer_path, str(z), str(x), str(y)])
 
-    config = TileStache.Config.buildConfiguration(config)
+    response = HttpResponse(content_type='application/octet-stream')
+    with open(tile_path, 'rb') as f:
+        response.write(f.read())
 
-    mimetype, data = TileStache.getTile(
-        config.layers[name], coord, extension
-    )
-
-    return mimetype, data
+    return response
 
 
 def index(request):
@@ -159,12 +135,14 @@ def add(request):
             try:
                 col = form.get_collection()
                 l.bounds = col.bounds
+                srs = to_string(form.layer_crs())
+                sr = SpatialReference(srs)
                 for record in col:
                     count += 1
                     geom = shape(record['geometry'])
                     f = Feature(
                         layer=l,
-                        geometry=GeometryCollection(GEOSGeometry(geom.wkt)),
+                        geometry=GeometryCollection(GEOSGeometry(geom.wkt), srid=sr.srid),
                         properties=record['properties']
                     )
                     f.save()
