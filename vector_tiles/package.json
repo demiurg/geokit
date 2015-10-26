@@ -1,0 +1,17 @@
+{
+  "name": "geokit_vectortile_server",
+  "version": "0.0.0",
+  "description": "Mapnik Vector Tile server using node-mapnik bindings.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Applied GeoSolutions",
+  "dependencies": {
+    "express": "4.13.3",
+    "mapnik": "3.4.9",
+    "mkdirp": "0.5.1",
+    "sphericalmercator": "1.0.4"
+  }
+}

@@ -1,4 +1,5 @@
-import subprocess
+import mimetypes
+import urllib2
 
 from django.shortcuts import redirect, render, get_object_or_404
 from django.core.urlresolvers import reverse
@@ -6,6 +7,7 @@ from django.utils.translation import ugettext as _
 from django.contrib.gis.geos import GeometryCollection, GEOSGeometry
 from django.contrib.gis.gdal import SpatialReference
 from django.http import HttpResponse
+from django.middleware.gzip import GZipMiddleware
 from django.template.loader import render_to_string
 
 from wagtail.wagtailadmin import messages
@@ -97,14 +99,32 @@ def tile_mvt(request, layer_name, z, x, y, extension=None):
 
             with open(layer_path, 'w') as f:
                 f.write(mapnik_config)
+        url = 'http://localhost:3001/{}/{}/{}/{}'.format(name, z, x, y)
+        
+        try:
+            # Proxy request to Node.js MVT server
+            request = urllib2.Request(url, headers={
+                'Content-Type': request.META['CONTENT_TYPE'],
+                'Accept-Encoding': request.META['HTTP_ACCEPT_ENCODING'],
+            })
+            proxied_request = urllib2.urlopen(request)
+            status_code = proxied_request.code
+            mimetype = proxied_request.headers.typeheader or mimetypes.guess_type(url)
+            content = proxied_request.read()
+        except urllib2.HTTPError as e:
+            response = HttpResponse(e.msg, status=e.code, content_type='text/plain')
+        else:
+            response = HttpResponse(content, status=status_code, content_type=mimetype)
+            response['Content-Encoding'] = 'deflate'
 
-        if not os.path.isdir(os.path.dirname(tile_path)):
-            os.makedirs(os.path.dirname(tile_path))
-        subprocess.check_call(['avecado', 'vector', '-o', tile_path, layer_path, str(z), str(x), str(y)])
+    else:
+        print "Sending cached tile..."
+        response = HttpResponse(content_type='application/x-protobuf')
+        with open(tile_path, 'rb') as f:
+            response.write(f.read())
 
-    response = HttpResponse(content_type='application/octet-stream')
-    with open(tile_path, 'rb') as f:
-        response.write(f.read())
+        gzip_middleware = GZipMiddleware()
+        response = gzip_middleware.process_response(request, response)
 
     return response
 

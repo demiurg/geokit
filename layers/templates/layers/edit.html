@@ -74,7 +74,6 @@
             var config = {
                 url: mvtURL,
                 getIDForLayerFeature: function(feature) { return feature.properties.id; }
-                //filter: function(feature) { return true; }
             };
             var tiled = this.tiled = new L.TileLayer.MVTSource(config).addTo(map);
 
