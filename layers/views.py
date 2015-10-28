@@ -66,27 +66,8 @@ def tile_mvt(request, layer_name, z, x, y, extension=None):
     tile_cache_path = os.path.realpath(os.path.dirname(__file__) + "/../static/tiles")
     layer_cache_path = os.path.realpath(os.path.dirname(__file__) + "/../static/layers")
 
-    SELECT = """(
-                    SELECT
-                        ST_CollectionExtract(geometry, 1) AS geometry,
-                        id AS id
-                    FROM layers_feature
-                    WHERE layer_id = '{0}'
-                    UNION
-                    SELECT
-                        ST_CollectionExtract(geometry, 2) AS geometry,
-                        id AS id
-                    FROM layers_feature
-                    WHERE layer_id = '{0}'
-                    UNION
-                    SELECT
-                        ST_CollectionExtract(geometry, 3) AS geometry,
-                        id AS id
-                    FROM layers_feature
-                    WHERE layer_id = '{0}'
-                ) as extr""".format(layer_name)
-
-    name = md5.md5(SELECT).hexdigest()
+    layer = Layer.objects.get(name=layer_name)
+    name = layer.query_hash()
     tile_path = tile_cache_path + '/{}/{}/{}/{}.pbf'.format(name, z, x, y)
     layer_path = layer_cache_path + '/%s.xml' % name
 
@@ -94,13 +75,13 @@ def tile_mvt(request, layer_name, z, x, y, extension=None):
         if not os.path.isfile(layer_path):
             mapnik_config = render_to_string(
                 'layers/mapnik/mapnik_config.xml',
-                {'layer_name': layer_name, 'query': SELECT}
+                {'layer_name': layer_name, 'query': layer.mapnik_query}
             )
 
             with open(layer_path, 'w') as f:
                 f.write(mapnik_config)
         url = 'http://localhost:3001/{}/{}/{}/{}'.format(name, z, x, y)
-        
+
         try:
             # Proxy request to Node.js MVT server
             request = urllib2.Request(url, headers={

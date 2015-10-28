@@ -1,7 +1,20 @@
 <div class="leaflet-map" id="map-{{ self.id }}"></div>
 
 <script>
-var map = L.map('map-{{ self.id}}').fitBounds([[{{ self.bbox.minLat }}, {{ self.bbox.minLon }}], [{{ self.bbox.maxLat }}, {{ self.bbox.maxLon }}]]);
+var map = L.map('map-{{ self.id}}');
+{% if self.layer.bounds %}
+map.fitBounds([
+    [{{ self.layer.bounds.1 }}, {{ self.layer.bounds.0 }}],
+    [{{ self.layer.bounds.3 }}, {{ self.layer.bounds.2 }}]
+]);
+{% endif %}
 
 L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
+
+var mvtURL = '/builder/admin/layers/{{ self.layer.name }}/{z}/{x}/{y}.pbf';
+var config = {
+    url: mvtURL,
+    getIDForLayerFeature: function(feature) { return feature.properties.id; }
+};
+var tiled = this.tiled = new L.TileLayer.MVTSource(config).addTo(map);
 </script>

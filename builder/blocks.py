@@ -1,8 +1,8 @@
 import random
 
-from django import forms
+from wagtail.wagtailcore.blocks import DateBlock, StructBlock
 
-from wagtail.wagtailcore.blocks import DateBlock, FieldBlock, StructBlock
+from layers.blocks import LayerChooserBlock
 
 
 # Inherits from StructBlock to reuse form rendering logic.
@@ -20,21 +20,8 @@ class GraphBlock(StructBlock):
         return super(GraphBlock, self).render(value)
 
 
-class FloatBlock(FieldBlock):
-    def __init__(self, required=True, help_text=None, **kwargs):
-        self.field = forms.FloatField(required=required, help_text=help_text)
-        super(FloatBlock, self).__init__(**kwargs)
-
-
-class BBoxBlock(StructBlock):
-    minLon = FloatBlock()
-    minLat = FloatBlock()
-    maxLon = FloatBlock()
-    maxLat = FloatBlock()
-
-
 class MapBlock(StructBlock):
-    bbox = BBoxBlock()
+    layer = LayerChooserBlock()
 
     class Meta:
         template = 'builder/blocks/map.html'

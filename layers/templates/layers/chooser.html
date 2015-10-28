@@ -1,46 +1,8 @@
-{% include "wagtailadmin/shared/header.html" with title="Choose an expression" tabbed=1 merged=1 icon="site" %}
+{% extends "wagtailadmin/widgets/chooser.html" %}
+{% block chooser_class%}layer-chooser{% endblock %}
 
-{% if uploadform %}
-<ul class="tab-nav merged">
-    <li class="{% if not uploadform.errors %}active {% endif %}"><a href="#choose">Choose</a></li>
-    <li class="{% if uploadform.errors %}active {% endif %}"><a href="#upload">Upload</a></li>
-</ul>
-{% endif %}
+{% block chosen_state_view %}
+    <span class="title">{{ layer.name }}</span>
+{% endblock %}
 
-<div class="tab-content">
-    <section id="search" class="{% if not uploadform.errors %}active {% endif %}nice-padding">
-        <div id="search-results" class="listing expressions">
-            <table class="listing">
-                <col />
-                <col />
-                <thead>
-                    <tr class="table-headers">
-                        <th>Name</th>
-                        <th>Expression text</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for expression in expressions %}
-                    <tr>
-                        <td class="title"><a href="{% url 'expressions:expression_chosen' expression.id %}" class="expression-choice">{{ expression.name }}</a></td>
-                        <td>{{ expression.expression_text }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-    {% if uploadform %}
-    <section id="upload" class="{% if uploadform.errors %}active {% endif %}nice-padding">
-        <form class="expressions-upload" action="{% url 'expressions:chooser' %}" method="POST">
-            {% csrf_token %}
-            <ul class="fields">
-                {% for field in uploadform %}
-                    {% include "wagtailadmin/shared/field_as_li.html" with field=field %}
-                {% endfor %}
-                <li><input type="submit" value="Save" /></li>
-            </ul>
-        </form>
-    </section>
-    {% endif %}
-</div>
+{% block edit_chosen_item %}{% if layer %}{% url 'layers:edit' layer.id %}{% endif %}{% endblock %}
