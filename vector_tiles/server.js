@@ -24,7 +24,7 @@ app.get('/:layer/:z/:x/:y', function(req, res) {
 
     var map = new mapnik.Map(256, 256);
 
-    map.load('../static/layers/' + req.params.layer + '.xml', function(err, map) {
+    map.load(__dirname+'/../static/layers/' + req.params.layer + '.xml', function(err, map) {
         if (err) throw err;
 
         sm = new SphericalMercator();
@@ -34,7 +34,7 @@ app.get('/:layer/:z/:x/:y', function(req, res) {
         map.render(tile, {}, function(err, tile) {
             if (err) throw err;
 
-            var filePath = '../static/tiles/'+req.params.layer+'/'+z+'/'+x+'/'
+            var filePath = __dirname+'/../static/tiles/'+req.params.layer+'/'+z+'/'+x+'/'
             mkdirp.sync(filePath);
             var tileFile = fs.openSync(filePath+y+'.pbf', 'w');
 
@@ -55,7 +55,13 @@ app.get('/:layer/:z/:x/:y', function(req, res) {
     });
 });
 
-var server = app.listen(3001, function() {
+var port;
+if (typeof process.argv[2] === 'undefined')
+    port = 3001;
+else
+    port = process.argv[2];
+
+var server = app.listen(port, 'localhost', function() {
     var host = server.address().address;
     var port = server.address().port;
 

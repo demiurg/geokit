@@ -4,6 +4,7 @@ import urllib2
 from django.shortcuts import redirect, render, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
+from django.conf import settings
 from django.contrib.gis.geos import GeometryCollection, GEOSGeometry
 from django.contrib.gis.gdal import SpatialReference
 from django.http import HttpResponse
@@ -19,7 +20,6 @@ from fiona.crs import to_string
 from shapely.geometry import shape
 import json
 import os
-import md5
 
 
 def layer_json(request, layer_name):
@@ -75,12 +75,12 @@ def tile_mvt(request, layer_name, z, x, y, extension=None):
         if not os.path.isfile(layer_path):
             mapnik_config = render_to_string(
                 'layers/mapnik/mapnik_config.xml',
-                {'layer_name': layer_name, 'query': layer.mapnik_query}
+                {'layer_name': layer_name, 'query': layer.mapnik_query()}
             )
 
             with open(layer_path, 'w') as f:
                 f.write(mapnik_config)
-        url = 'http://localhost:3001/{}/{}/{}/{}'.format(name, z, x, y)
+        url = 'http://localhost:{}/{}/{}/{}/{}'.format(settings.NODE_PORT, name, z, x, y)
 
         try:
             # Proxy request to Node.js MVT server
