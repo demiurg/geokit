@@ -1,5 +1,6 @@
 import json
 
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from wagtail.wagtailadmin import messages
@@ -7,6 +8,7 @@ from wagtail.wagtailadmin.modal_workflow import render_modal_workflow
 
 from expressions.forms import ExpressionForm
 from expressions.models import Expression
+from layers.models import Feature
 
 
 def index(request):
@@ -30,6 +32,17 @@ def add(request):
         form = ExpressionForm()
 
     return render(request, 'expressions/add.html', {'form': form})
+
+
+def evaluate_on_feature(request, expression_id, feature_id):
+    expression = get_object_or_404(Expression, id=expression_id)
+    feature = get_object_or_404(Feature, id=feature_id)
+
+    result = expression.evaluate(request, extra_substitutions=feature.properties)
+
+    if result == 'undefined':
+        return JsonResponse({'result': result})
+    return JsonResponse({'result': float(result)})
 
 
 def chooser(request):

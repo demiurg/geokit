@@ -4,7 +4,6 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
 
-from builder.models import FormVariableField
 
 
 class FormVariable(models.Model):
@@ -23,6 +22,9 @@ class FormVariable(models.Model):
 
 
 def validate_expression_text(expression_text):
+    from builder.models import FormVariableField
+
+    return
     try:
         expr = sympy.sympify(expression_text, evaluate=False)
     except sympy.SympifyError:
@@ -46,7 +48,7 @@ class Expression(models.Model):
     name = models.CharField(max_length=100)
     expression_text = models.TextField(validators=[validate_expression_text])
 
-    def evaluate(self, request):
+    def evaluate(self, request, extra_substitutions={}):
         expr = sympy.sympify(self.expression_text, evaluate=False)
         atoms = expr.atoms()
         # List of symbols that need to be resolved.
@@ -58,6 +60,11 @@ class Expression(models.Model):
             subexp = Expression.objects.filter(name=str(symbol)).first()
             if subexp:
                 val = subexp.evaluate(request)
+            elif str(symbol) in extra_substitutions.keys():
+                try:
+                    val = float(extra_substitutions[str(symbol)])
+                except (ValueError, TypeError):
+                    return 'undefined'
             else:
                 if not request.user.is_authenticated():
                     return 'undefined'

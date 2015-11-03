@@ -22,7 +22,6 @@ class Layer(models.Model):
         choices=((0, 'Good'), (1, 'Working'), (3, 'Bad')), default=1
     )
 
-    @property
     def mapnik_query(self):
         return """(
                     SELECT
@@ -45,7 +44,7 @@ class Layer(models.Model):
                 ) as extr""".format(self.name)
 
     def query_hash(self):
-        return md5.md5(self.mapnik_query).hexdigest()
+        return md5.md5(self.mapnik_query()).hexdigest()
 
     def __str__(self):
         return self.name

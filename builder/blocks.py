@@ -1,7 +1,8 @@
 import random
 
-from wagtail.wagtailcore.blocks import DateBlock, StructBlock
+from wagtail.wagtailcore.blocks import CharBlock, ChoiceBlock, DateBlock, ListBlock, StructBlock
 
+from expressions.models import Expression
 from layers.blocks import LayerChooserBlock
 
 
@@ -20,8 +21,16 @@ class GraphBlock(StructBlock):
         return super(GraphBlock, self).render(value)
 
 
+class ColorValueBlock(StructBlock):
+    min_value = CharBlock()
+    max_value = CharBlock()
+    color = CharBlock()
+
+
 class MapBlock(StructBlock):
     layer = LayerChooserBlock()
+    expression = ChoiceBlock(choices=[(e.pk, e.name) for e in Expression.objects.all()])
+    color_ramp = ListBlock(ColorValueBlock())
 
     class Meta:
         template = 'builder/blocks/map.html'
