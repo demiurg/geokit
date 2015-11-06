@@ -5,8 +5,8 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.conf import settings
-from django.contrib.gis.geos import GeometryCollection, GEOSGeometry
-from django.contrib.gis.gdal import SpatialReference
+from django.contrib.gis.geos import GeometryCollection
+from django.contrib.gis.gdal import OGRGeometry
 from django.http import HttpResponse
 from django.middleware.gzip import GZipMiddleware
 from django.template.loader import render_to_string
@@ -135,15 +135,19 @@ def add(request):
             count = 0
             try:
                 col = form.get_collection()
-                l.bounds = col.bounds
                 srs = to_string(form.layer_crs())
-                sr = SpatialReference(srs)
+                min_bounds = OGRGeometry('POINT ({} {})'.format(col.bounds[0], col.bounds[1]),
+                        srs=srs).transform(4326, clone=True)
+                max_bounds = OGRGeometry('POINT ({} {})'.format(col.bounds[2], col.bounds[3]),
+                        srs=srs).transform(4326, clone=True)
+                l.bounds = min_bounds.coords + max_bounds.coords
                 for record in col:
                     count += 1
                     geom = shape(record['geometry'])
+                    transformed_geom = OGRGeometry(geom.wkt, srs=srs).transform(3857, clone=True)
                     f = Feature(
                         layer=l,
-                        geometry=GeometryCollection(GEOSGeometry(geom.wkt), srid=sr.srid),
+                        geometry=GeometryCollection(transformed_geom.geos),
                         properties=record['properties']
                     )
                     f.save()
