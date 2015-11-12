@@ -21,15 +21,15 @@ function getColor(value) {
     {% endfor %}
 }
 
-var mvtURL = '/builder/admin/layers/{{ self.layer.name }}/{z}/{x}/{y}.pbf';
+var mvtURL = '/expressions/evaluate/{{ self.expression }}/tile/{{ self.layer.name }}/{z}/{x}/{y}/';
 var config = {
     url: mvtURL,
     getIDForLayerFeature: function(feature) { return feature.properties.id; },
     style: function(feature) {
         var style = {};
-        $.get('/expressions/evaluate/{{ self.expression }}/feature/'+feature.properties.id, function(data) {
-            style.color = getColor(data.result);
-        });
+        if ('expressionVal' in feature.properties) {
+            style.color = getColor(feature.properties.expressionVal);
+        }
 
         return style;
     }

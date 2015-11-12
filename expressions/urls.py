@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
-from expressions.views import evaluate_on_feature
+from expressions.views import evaluate_on_tile
 
 urlpatterns = [
-    url('^evaluate/(\d+)/feature/(\d+)/$', evaluate_on_feature, name='evaluate_on_feature'),
+    url('^evaluate/(\d+)/tile/(\w+)/(\d+)/(\d+)/(\d+)/$', evaluate_on_tile, name='evaluate_on_tile'),
 ]

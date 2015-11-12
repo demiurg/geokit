@@ -1,6 +1,9 @@
 import json
+import mimetypes
+import urllib2
 
-from django.http import JsonResponse
+from django.conf import settings
+from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from wagtail.wagtailadmin import messages
@@ -8,7 +11,7 @@ from wagtail.wagtailadmin.modal_workflow import render_modal_workflow
 
 from expressions.forms import ExpressionForm
 from expressions.models import Expression
-from layers.models import Feature
+from layers.models import Layer
 
 
 def index(request):
@@ -34,15 +37,32 @@ def add(request):
     return render(request, 'expressions/add.html', {'form': form})
 
 
-def evaluate_on_feature(request, expression_id, feature_id):
-    expression = get_object_or_404(Expression, id=expression_id)
-    feature = get_object_or_404(Feature, id=feature_id)
+def evaluate_on_tile(request, expression_id, layer_name, z, x, y):
+    x, y, z = int(x), int(y), int(z)
+    name = Layer.objects.get(name=layer_name).query_hash()
+    url = 'http://localhost:{}/{}/{}/{}/{}/expression/{}'.format(settings.NODE_PORT, name, z, x, y, expression_id)
+    headers = {
+        'Content-Type': request.META['CONTENT_TYPE'],
+        'Accept-Encoding': request.META['HTTP_ACCEPT_ENCODING']
+    }
+    if request.user.is_authenticated():
+        headers['X-Django-User-ID'] = request.user.id
+    else:
+        headers['X-Django-User-ID'] = -1
+    
+    try:
+        request = urllib2.Request(url, headers=headers)
+        proxied_request = urllib2.urlopen(request)
+        status_code = proxied_request.code
+        mimetype = proxied_request.headers.typeheader or mimetypes.guess_type(url)
+        content = proxied_request.read()
+    except urllib2.HTTPError as e:
+        response = HttpResponse(e.msg, status=e.code, content_type='text/plain')
+    else:
+        response = HttpResponse(content, status=status_code, content_type=mimetype)
+        response['Content-Encoding'] = 'deflate'
 
-    result = expression.evaluate(request, extra_substitutions=feature.properties)
-
-    if result == 'undefined':
-        return JsonResponse({'result': result})
-    return JsonResponse({'result': float(result)})
+    return response
 
 
 def chooser(request):

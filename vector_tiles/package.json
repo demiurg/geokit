@@ -9,6 +9,7 @@
   },
   "author": "Applied GeoSolutions",
   "dependencies": {
+    "async": "^1.5.0",
     "express": "4.13.3",
     "mapnik": "3.4.9",
     "mkdirp": "0.5.1",
