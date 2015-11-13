@@ -21,7 +21,9 @@
             <tbody>
                 {% for expression in expressions %}
                 <tr>
-                    <td class="title">{{ expression.name }}</td>
+                    <td class="title">
+                        <a href="{% url 'expressions:edit' expression.pk %}">{{ expression.name }}</a>
+                    </td>
                     <td>{{ expression.expression_text }}</td>
                 </tr>
                 {% endfor %}

@@ -1,0 +1,21 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% block titletag %}Edit Expression{% endblock %}
+
+{% block content %}
+
+{% include "wagtailadmin/shared/header.html" with title="Expressions" add_link="expressions:add" add_text="Add Expression" icon="code" %}
+
+<div class="nice-padding">
+    <form action="{% url 'expressions:edit' expression.pk %}" method="POST">
+        {% csrf_token %}
+        <ul class="fields">
+            {% for field in form %}
+                {% include "wagtailadmin/shared/field_as_li.html" with field=field %}
+            {% endfor %}
+            <li><input type="submit" value="Save" /></li>
+            <a href="{% url 'expressions:delete' expression.pk %}" class="button button-secondary no">Delete expression</a></li>
+        </ul>
+    </form>
+</div>
+{% endblock %}
