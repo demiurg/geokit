@@ -8,18 +8,16 @@ from django.conf import settings
 from django.contrib.gis.geos import GeometryCollection
 from django.contrib.gis.gdal import OGRGeometry
 from django.http import HttpResponse
-from django.middleware.gzip import GZipMiddleware
-from django.template.loader import render_to_string
 
 from wagtail.wagtailadmin import messages
 
 from models import Layer, Feature
 from forms import LayerForm, LayerEditForm
+from utils import tile_cache
 
 from fiona.crs import to_string
 from shapely.geometry import shape
 import json
-import os
 
 
 def layer_json(request, layer_name):
@@ -41,71 +39,25 @@ def layer_json(request, layer_name):
     return HttpResponse(geojson)
 
 
-#def tile_json(request, layer_name, z, x, y):
-    #x, y, z = int(x), int(y), int(z)
-    #mimetype, data = stache(request, layer_name, z, x, y, "mvt")
+@tile_cache
+def tile_mvt(request, layer_name, z, x, y):
+    url = 'http://localhost:{}/{}/{}/{}/{}'.format(settings.NODE_PORT, layer_name, z, x, y)
 
-    #mvt_features = mvt.decode(StringIO(data))
-    #features = []
-    #for wkb, props in mvt_features:
-        #geom = GEOSGeometry(buffer(wkb))
-
-        #feature  = '{ "type": "Feature", "geometry": '  + geom.json + ","
-        #feature += json.dumps(props)[1:-1]
-        #feature += '}'
-        #features.append(feature)
-
-    #features = ",".join(features)
-    #response = '{"type": "FeatureCollection", "features": [' + features + ']}'
-    #return HttpResponse(response, content_type=mimetype)
-
-
-def tile_mvt(request, layer_name, z, x, y, extension=None):
-    x, y, z = int(x), int(y), int(z)
-
-    tile_cache_path = os.path.realpath(os.path.dirname(__file__) + "/../static/tiles")
-    layer_cache_path = os.path.realpath(os.path.dirname(__file__) + "/../static/layers")
-
-    layer = Layer.objects.get(name=layer_name)
-    name = layer.query_hash()
-    tile_path = tile_cache_path + '/{}/{}/{}/{}.pbf'.format(name, z, x, y)
-    layer_path = layer_cache_path + '/%s.xml' % name
-
-    if not os.path.isfile(tile_path):
-        if not os.path.isfile(layer_path):
-            mapnik_config = render_to_string(
-                'layers/mapnik/mapnik_config.xml',
-                {'layer_name': layer_name, 'query': layer.mapnik_query()}
-            )
-
-            with open(layer_path, 'w') as f:
-                f.write(mapnik_config)
-        url = 'http://localhost:{}/{}/{}/{}/{}'.format(settings.NODE_PORT, name, z, x, y)
-
-        try:
-            # Proxy request to Node.js MVT server
-            request = urllib2.Request(url, headers={
-                'Content-Type': request.META['CONTENT_TYPE'],
-                'Accept-Encoding': request.META['HTTP_ACCEPT_ENCODING'],
-            })
-            proxied_request = urllib2.urlopen(request)
-            status_code = proxied_request.code
-            mimetype = proxied_request.headers.typeheader or mimetypes.guess_type(url)
-            content = proxied_request.read()
-        except urllib2.HTTPError as e:
-            response = HttpResponse(e.msg, status=e.code, content_type='text/plain')
-        else:
-            response = HttpResponse(content, status=status_code, content_type=mimetype)
-            response['Content-Encoding'] = 'deflate'
-
+    try:
+        # Proxy request to Node.js MVT server
+        request = urllib2.Request(url, headers={
+            'Content-Type': request.META['CONTENT_TYPE'],
+            'Accept-Encoding': request.META['HTTP_ACCEPT_ENCODING'],
+        })
+        proxied_request = urllib2.urlopen(request)
+        status_code = proxied_request.code
+        mimetype = proxied_request.headers.typeheader or mimetypes.guess_type(url)
+        content = proxied_request.read()
+    except urllib2.HTTPError as e:
+        response = HttpResponse(e.msg, status=e.code, content_type='text/plain')
     else:
-        print "Sending cached tile..."
-        response = HttpResponse(content_type='application/x-protobuf')
-        with open(tile_path, 'rb') as f:
-            response.write(f.read())
-
-        gzip_middleware = GZipMiddleware()
-        response = gzip_middleware.process_response(request, response)
+        response = HttpResponse(content, status=status_code, content_type=mimetype)
+        response['Content-Encoding'] = 'deflate'
 
     return response
 
