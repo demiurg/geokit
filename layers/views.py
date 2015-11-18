@@ -13,7 +13,7 @@ from wagtail.wagtailadmin import messages
 
 from models import Layer, Feature
 from forms import LayerForm, LayerEditForm
-from utils import tile_cache
+from utils import mapnik_xml, tile_cache
 
 from fiona.crs import to_string
 from shapely.geometry import shape
@@ -39,6 +39,7 @@ def layer_json(request, layer_name):
     return HttpResponse(geojson)
 
 
+@mapnik_xml
 @tile_cache
 def tile_mvt(request, layer_name, z, x, y):
     url = 'http://localhost:{}/{}/{}/{}/{}'.format(settings.NODE_PORT, layer_name, z, x, y)

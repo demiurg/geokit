@@ -1,4 +1,5 @@
 import json
+import md5
 import mimetypes
 import urllib2
 
@@ -12,7 +13,9 @@ from wagtail.wagtailadmin.modal_workflow import render_modal_workflow
 
 from expressions.forms import ExpressionForm
 from expressions.models import Expression
+from expressions.utils import tile_patch_expression
 from layers.models import Layer
+from layers.utils import mapnik_xml
 
 
 def index(request):
@@ -70,10 +73,13 @@ def delete(request, expression_id):
     return redirect('expressions:index')
 
 
-def evaluate_on_tile(request, expression_id, layer_name, z, x, y):
-    x, y, z = int(x), int(y), int(z)
+@mapnik_xml
+@tile_patch_expression
+def evaluate_on_tile(request, layer_name, z, x, y, expression_id):
+    print layer_name
     name = Layer.objects.get(name=layer_name).query_hash()
-    url = 'http://localhost:{}/{}/{}/{}/{}/expression/{}'.format(settings.NODE_PORT, name, z, x, y, expression_id)
+    patch_hash = md5.md5(Expression.objects.get(pk=expression_id).evaluation_query(request)).hexdigest()
+    url = 'http://localhost:{}/{}/{}/{}/{}/patch/{}'.format(settings.NODE_PORT, name, z, x, y, patch_hash)
     headers = {
         'Content-Type': request.META['CONTENT_TYPE'],
         'Accept-Encoding': request.META['HTTP_ACCEPT_ENCODING']

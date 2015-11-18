@@ -76,5 +76,8 @@ class Expression(models.Model):
 
         return sympy.simplify(expr.subs(substitutions))
 
+    def evaluation_query(self, request):
+        return "SELECT to_json(evaluate_expression({0}, {1}, $1::json))".format(self.id, request.user.id)
+
     def __str__(self):
         return self.name

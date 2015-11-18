@@ -19,14 +19,14 @@ function getColor(value) {
     {% endfor %}
 }
 
-var mvtURL = '/expressions/evaluate/{{ self.expression.id }}/tile/{{ self.layer.name }}/{z}/{x}/{y}/';
+var mvtURL = '/expressions/evaluate/tile/{{ self.layer.name }}/{z}/{x}/{y}/{{ self.expression.id }}/';
 var config = {
     url: mvtURL,
     getIDForLayerFeature: function(feature) { return feature.properties.id; },
     style: function(feature) {
         var style = {};
-        if ('expressionVal' in feature.properties) {
-            style.color = getColor(feature.properties.expressionVal);
+        if ('patchVal' in feature.properties) {
+            style.color = getColor(feature.properties.patchVal);
         }
         return style;
     }
