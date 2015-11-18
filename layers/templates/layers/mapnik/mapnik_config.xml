@@ -1,4 +1,4 @@
-<Map>
+<Map buffer-size="2">
     <Layer name="{{ layer_name }}">
         <Datasource>
             <Parameter name="type">postgis</Parameter>

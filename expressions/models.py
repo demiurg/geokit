@@ -75,3 +75,6 @@ class Expression(models.Model):
             substitutions.append((symbol, val))
 
         return sympy.simplify(expr.subs(substitutions))
+
+    def __str__(self):
+        return self.name

@@ -82,7 +82,7 @@ def evaluate_on_tile(request, expression_id, layer_name, z, x, y):
         headers['X-Django-User-ID'] = request.user.id
     else:
         headers['X-Django-User-ID'] = -1
-    
+
     try:
         request = urllib2.Request(url, headers=headers)
         proxied_request = urllib2.urlopen(request)

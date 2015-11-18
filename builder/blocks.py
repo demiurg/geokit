@@ -2,7 +2,7 @@ import random
 
 from wagtail.wagtailcore.blocks import CharBlock, ChoiceBlock, DateBlock, ListBlock, StructBlock
 
-from expressions.models import Expression
+from expressions.blocks import ExpressionChooserBlock
 from layers.blocks import LayerChooserBlock
 
 
@@ -29,7 +29,7 @@ class ColorValueBlock(StructBlock):
 
 class MapBlock(StructBlock):
     layer = LayerChooserBlock()
-    expression = ChoiceBlock(choices=[(e.pk, e.name) for e in Expression.objects.all()])
+    expression = ExpressionChooserBlock()
     color_ramp = ListBlock(ColorValueBlock())
 
     class Meta:

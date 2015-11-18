@@ -7,7 +7,8 @@ from django.template.loader import render_to_string
 
 from layers.models import Layer
 
-def tile_cache(f):
+
+def tile_cache(func):
     def wrapped_function(request, layer_name, z, x, y):
         x, y, z = int(x), int(y), int(z)
 
@@ -29,7 +30,7 @@ def tile_cache(f):
                 with open(layer_path, 'w') as f:
                     f.write(mapnik_config)
 
-            response = f(request, name, z, x, y)
+            response = func(request, name, z, x, y)
         else:
             print "Sending cached tile..."
             response = HttpResponse(content_type='application/x-protobuf')
