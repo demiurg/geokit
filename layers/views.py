@@ -77,6 +77,9 @@ def stache(request, layer_name, z, x, y, extension):
     cache_path = os.path.join(settings.STATIC_ROOT, "tiles")
 
     SELECT = """
+        WITH bbox AS (SELECT !bbox! as bb),
+            bufbox AS (SELECT st_buffer(bbox.bb, 500, 'quad_segs=1') as buf FROM bbox),
+            px_area AS (SELECT st_area(bbox.bb) / 65536.0 as a FROM bbox)
         SELECT * FROM(
             SELECT
                 ST_CollectionExtract(geometry, 1) AS __geometry__,
@@ -96,8 +99,8 @@ def stache(request, layer_name, z, x, y, extension):
                 ST_CollectionExtract(geometry, 3) AS __geometry__,
                 id AS __id__,
                 properties
-            FROM layers_feature
-            WHERE layer_id = '{0}'
+            FROM layers_feature, px_area
+            WHERE layer_id = '{0}' AND st_area(geometry) > px_area.a
         ) as extr WHERE NOT ST_isEmpty(__geometry__)
     """.format(layer_name)
 
