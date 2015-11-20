@@ -1,11 +1,15 @@
+from cStringIO import StringIO
+import json
+import md5
 import mimetypes
+import os
 import urllib2
 
 from django.shortcuts import redirect, render, get_object_or_404
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 from django.conf import settings
-from django.contrib.gis.geos import GeometryCollection
+from django.contrib.gis.geos import GeometryCollection, GEOSGeometry
 from django.contrib.gis.gdal import OGRGeometry
 from django.http import HttpResponse
 
@@ -16,8 +20,10 @@ from forms import LayerForm, LayerEditForm
 from utils import mapnik_xml, tile_cache
 
 from fiona.crs import to_string
+import ModestMaps
 from shapely.geometry import shape
-import json
+import TileStache
+from TileStache.Goodies.VecTiles import mvt
 
 
 def layer_json(request, layer_name):
@@ -39,7 +45,111 @@ def layer_json(request, layer_name):
     return HttpResponse(geojson)
 
 
-@mapnik_xml
+def tile_json(request, layer_name, z, x, y):
+    x, y, z = int(x), int(y), int(z)
+    mimetype, data = stache(request, layer_name, z, x, y, "mvt")
+
+    mvt_features = mvt.decode(StringIO(data))
+    features = []
+    for wkb, props in mvt_features:
+        geom = GEOSGeometry(buffer(wkb))
+        geom.srid = 3857
+        geom.transform(4326)
+
+        try:
+            props['id'] = props-['__id__']
+        except:
+            pass
+
+        feature = '{ "type": "Feature", "geometry": ' + geom.json + ","
+        feature += ' "properties": {}'.format(json.dumps(props))
+        feature += '}'
+        features.append(feature)
+
+    features = ",\n".join(features)
+    response = '{"type": "FeatureCollection", "features": [' + features + ']}'
+    return HttpResponse(response, content_type="application/json")
+
+
+def stache(request, layer_name, z, x, y, extension):
+    x, y, z = int(x), int(y), int(z)
+
+    cache_path = os.path.join(settings.STATIC_ROOT, "tiles")
+
+    SELECT = """
+        SELECT * FROM(
+            SELECT
+                ST_CollectionExtract(geometry, 1) AS __geometry__,
+                id AS __id__,
+                properties
+            FROM layers_feature
+            WHERE layer_id = '{0}'
+            UNION
+            SELECT
+                ST_CollectionExtract(geometry, 2) AS __geometry__,
+                id AS __id__,
+                properties
+            FROM layers_feature
+            WHERE layer_id = '{0}'
+            UNION
+            SELECT
+                ST_CollectionExtract(geometry, 3) AS __geometry__,
+                id AS __id__,
+                properties
+            FROM layers_feature
+            WHERE layer_id = '{0}'
+        ) as extr WHERE NOT ST_isEmpty(__geometry__)
+    """.format(layer_name)
+
+    name = md5.md5(SELECT).hexdigest()
+    name = layer_name + '_poly'
+
+    config = {
+        "cache": {
+            "name": "Disk",
+            "path": cache_path,
+            "umask": "0000",
+            "dirs": "portable"
+        },
+        "layers": {
+            name: {
+                "allowed origin": "*",
+                "provider": {
+                    "class": "TileStache.Goodies.VecTiles:Provider",
+                    "projection": "spherical mercator",
+                    "kwargs": {
+                        "srid": 3857,
+                        "clip": False,
+                        "simplify": 3,
+                        "dbinfo": {
+                            'host': settings.DATABASES['default']['HOST'],
+                            'user': settings.DATABASES['default']['USER'],
+                            'password': settings.DATABASES['default']['PASSWORD'],
+                            'database': settings.DATABASES['default']['NAME'],
+                        },
+                        "queries": [SELECT]
+                    },
+                },
+            },
+        },
+    }
+
+    if "cfg" in request.GET:
+        return HttpResponse(json.dumps(config, indent=4 * ' '))
+
+    # like http://tile.openstreetmap.org/1/0/0.png
+    coord = ModestMaps.Core.Coordinate(y, x, z)
+
+    config = TileStache.Config.buildConfiguration(config)
+
+    mimetype, data = TileStache.getTile(
+        config.layers[name], coord, extension
+    )
+
+    return mimetype, data
+
+
+mapnik_xml
 @tile_cache
 def tile_mvt(request, layer_name, z, x, y):
     url = 'http://localhost:{}/{}/{}/{}/{}'.format(settings.NODE_PORT, layer_name, z, x, y)

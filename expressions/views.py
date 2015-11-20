@@ -76,7 +76,6 @@ def delete(request, expression_id):
 @mapnik_xml
 @tile_patch_expression
 def evaluate_on_tile(request, layer_name, z, x, y, expression_id):
-    print layer_name
     name = Layer.objects.get(name=layer_name).query_hash()
     patch_hash = md5.md5(Expression.objects.get(pk=expression_id).evaluation_query(request)).hexdigest()
     url = 'http://localhost:{}/{}/{}/{}/{}/patch/{}'.format(settings.NODE_PORT, name, z, x, y, patch_hash)

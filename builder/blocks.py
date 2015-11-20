@@ -1,6 +1,6 @@
 import random
 
-from wagtail.wagtailcore.blocks import CharBlock, ChoiceBlock, DateBlock, ListBlock, StructBlock
+from wagtail.wagtailcore.blocks import CharBlock, DateBlock, ListBlock, StructBlock
 
 from expressions.blocks import ExpressionChooserBlock
 from layers.blocks import LayerChooserBlock

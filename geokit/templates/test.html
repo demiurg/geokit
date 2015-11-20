@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% load static from staticfiles %}
+
+{% block extra_css %}
+<style>
+#geojson-map, #mvt-map {
+    height: 300px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h2>GeoJSON</h2>
+<div id="geojson-map"></div>
+
+<h2>MVT</h2>
+<div id="mvt-map"></div>
+
+<script src="{% static 'js/TileLayer.GeoJSON.js' %}"></script>
+<script>
+// 
+// GeoJSON
+//
+var geojsonMap = L.map('geojson-map');
+geojsonMap.fitBounds([
+    [50.958, 13.539],
+    [51.198, 14.015]
+]);
+
+var geojsonURL = '/layers/dresden_buildings/{z}/{x}/{y}.json';
+var geojsonLayer = new L.TileLayer.GeoJSON(geojsonURL, {
+    clipTile: true,
+    unique: function(feature) {
+        return feature.properties.id;
+    }
+}).addTo(geojsonMap);
+
+//
+// MVT
+//
+var mvtMap = L.map('mvt-map');
+mvtMap.fitBounds([
+    [50.958, 13.539],
+    [51.198, 14.015]
+]);
+
+var mvtURL = '/layers/dresden_buildings/{z}/{x}/{y}.mvt';
+var mvtConfig = {
+    url: mvtURL,
+    getIDForLayerFeature: function(feature) { return feature.properties.id; }
+};
+
+var mvtLayer = new L.TileLayer.MVTSource(mvtConfig).addTo(mvtMap);
+</script>
+{% endblock %}
