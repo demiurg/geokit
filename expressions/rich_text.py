@@ -11,7 +11,7 @@ class ExpressionEmbedHandler(object):
         return {'id': tag['data-id']}
 
     @staticmethod
-    def expand_db_attributes(attrs, for_editor, request=None):
+    def expand_db_attributes(attrs, for_editor, user=None):
         try:
             expression = Expression.objects.get(id=attrs['id'])
 
@@ -20,7 +20,7 @@ class ExpressionEmbedHandler(object):
                 value = "<code>{0}</code>".format(expression.name)
             else:
                 tag_attrs = 'class="expression-result"'
-                value = expression.evaluate(request)
+                value = expression.evaluate(user)
             return "<span {0}>{1}</span>".format(tag_attrs, value)
         except Expression.DoesNotExist:
             return "<span>Expression does not exist</span>"
@@ -30,10 +30,10 @@ FIND_A_TAG = re.compile(r'<a(\b[^>]*)>')
 FIND_EMBED_TAG = re.compile(r'<embed(\b[^>]*)/>')
 
 
-def expand_db_html_with_request(request, html, for_editor=False):
+def expand_db_html_with_user(user, html, for_editor=False):
     """
     Clone of wagtailcore.rich_text.expand_db_html, but takes and passes
-    a request object through to tag/embed handlers. We need this for expression
+    a user object through to tag/embed handlers. We need this for expression
     evaluation, as the current user is needed.
     """
     def replace_a_tag(m):
@@ -47,9 +47,9 @@ def expand_db_html_with_request(request, html, for_editor=False):
         attrs = extract_attrs(m.group(1))
         handler = get_embed_handler(attrs['embedtype'])
         if attrs['embedtype'] == 'expression':
-            return handler.expand_db_attributes(attrs, for_editor, request=request)
+            return handler.expand_db_attributes(attrs, for_editor, user=user)
         else:
-            # Only the expression handler needs the request object
+            # Only the expression handler needs the user object
             return handler.expand_db_attributes(attrs, for_editor)
 
     html = FIND_A_TAG.sub(replace_a_tag, html)

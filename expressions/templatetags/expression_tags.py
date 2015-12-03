@@ -3,7 +3,7 @@ from django.utils.safestring import mark_safe
 
 from wagtail.wagtailcore.rich_text import RichText
 
-from expressions.rich_text import expand_db_html_with_request
+from expressions.rich_text import expand_db_html_with_user
 
 register = template.Library()
 
@@ -15,6 +15,6 @@ def richtext_with_expression(value, request):
     elif value is None:
         html = ''
     else:
-        html = expand_db_html_with_request(request, value)
+        html = expand_db_html_with_user(request.user, value)
 
     return mark_safe('<div class="rich-text">' + html + '</div>')

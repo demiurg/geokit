@@ -4,6 +4,15 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
 
+from layers.models import Feature
+
+
+EXPRESSION_TYPES = (
+    ('arith', 'arithmetic'),
+    ('filter', 'filter'),
+    ('map', 'map'),
+    ('reduce', 'reduce'),
+)
 
 
 class FormVariable(models.Model):
@@ -46,9 +55,37 @@ def validate_expression_text(expression_text):
 
 class Expression(models.Model):
     name = models.CharField(max_length=100)
+    expression_type = models.CharField(max_length=6, choices=EXPRESSION_TYPES)
     expression_text = models.TextField(validators=[validate_expression_text])
+    # The only "collections" we currently have are layers, but this will eventually become
+    # more general as other datasets are available.
+    input_collection = models.ForeignKey('layers.Layer', on_delete=models.SET_NULL, blank=True, null=True)
 
-    def evaluate(self, request, extra_substitutions={}):
+    def clean(self):
+        if not self.input_collection and self.expression_type != 'arith':
+            raise ValidationError({'input_collection': 'filter, map, and reduce expression need an input collection'})
+
+    def evaluate(self, user, extra_substitutions={}):
+        def evaluate_on_collection_item(item):
+            return self.evaluate_arithmetic(user, item.properties)
+
+        def reduce_on_collection_item(accum, item):
+            if isinstance(accum, sympy.Number):
+                return evaluate_on_collection_item(item) + accum
+            else:
+                # It is the first iteration, accum is the first object in the collection
+                return evaluate_on_collection_item(item) + evaluate_on_collection_item(accum)
+
+        if self.expression_type == 'arith':
+            return self.evaluate_arithmetic(user, extra_substitutions)
+        elif self.expression_type == 'map':
+            return map(evaluate_on_collection_item, Feature.objects.filter(layer=self.input_collection))
+        elif self.expression_type == 'filter':
+            return filter(evaluate_on_collection_item, Feature.objects.filter(layer=self.input_collection))
+        elif self.expression_type == 'reduce':
+            return reduce(reduce_on_collection_item, Feature.objects.filter(layer=self.input_collection))
+
+    def evaluate_arithmetic(self, user, extra_substitutions={}):
         expr = sympy.sympify(self.expression_text, evaluate=False)
         atoms = expr.atoms()
         # List of symbols that need to be resolved.
@@ -59,16 +96,16 @@ class Expression(models.Model):
         for symbol in symbols:
             subexp = Expression.objects.filter(name=str(symbol)).first()
             if subexp:
-                val = subexp.evaluate(request)
+                val = subexp.evaluate(user)
             elif str(symbol) in extra_substitutions.keys():
                 try:
                     val = float(extra_substitutions[str(symbol)])
                 except (ValueError, TypeError):
                     return 'undefined'
             else:
-                if not request.user.is_authenticated():
+                if not user.is_authenticated():
                     return 'undefined'
-                form_var = FormVariable.objects.filter(name=str(symbol), user=request.user).first()
+                form_var = FormVariable.objects.filter(name=str(symbol), user=user).first()
                 if not form_var:
                     return 'undefined'
                 val = form_var.value
