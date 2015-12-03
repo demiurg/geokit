@@ -14,7 +14,7 @@ from wagtail.wagtailembeds.blocks import EmbedBlock
 from wagtail.wagtailforms.models import AbstractFormField, FORM_FIELD_CHOICES
 from wagtail.wagtailimages.blocks import ImageChooserBlock
 
-from builder.blocks import GraphBlock, MapBlock
+from builder.blocks import GraphBlock, MapBlock, TableBlock
 from builder.forms import GeoKitFormBuilder
 
 
@@ -39,6 +39,7 @@ class CustomPage(Page):
         ('embed', EmbedBlock()),
         ('graph', GraphBlock()),
         ('map', MapBlock()),
+        ('table', TableBlock()),
     ])
 
     content_panels = [

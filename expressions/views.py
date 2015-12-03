@@ -5,7 +5,7 @@ import urllib2
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from wagtail.wagtailadmin import messages
@@ -71,6 +71,24 @@ def delete(request, expression_id):
 
     messages.success(request, "Expression '{0}' deleted".format(expression.name))
     return redirect('expressions:index')
+
+
+def evaluate_on_table(request, expression_id, columns):
+    '''
+    Expression must return a collection of Features.
+    '''
+    expression = get_object_or_404(Expression, pk=expression_id)
+    columns_parsed = [column.strip() for column in columns.split(',')]
+
+    features = expression.evaluate(request.user)
+    result = []
+    for feature in features:
+        row = {'pk': feature.pk}
+        for column in columns_parsed:
+            row[column] = feature.properties[column]
+        result.append(row)
+
+    return JsonResponse({'result': result})
 
 
 @mapnik_xml

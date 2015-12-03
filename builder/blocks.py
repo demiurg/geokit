@@ -40,3 +40,18 @@ class MapBlock(StructBlock):
         value["id"] = random.randint(1, 1000)
 
         return super(MapBlock, self).render(value)
+
+
+class TableBlock(StructBlock):
+    expression = ExpressionChooserBlock()
+    columns = CharBlock()
+
+    class Meta:
+        template = 'builder/blocks/table.html'
+        icon = 'placeholder'
+
+    def render(self, value):
+        print value['columns']
+        value['id'] = random.randint(1, 1000)
+        value['columns_parsed'] = value['columns'].split(',')
+        return super(TableBlock, self).render(value)

@@ -1,0 +1,36 @@
+<table id="table-{{ self.id }}">
+    <thead>
+        <tr>
+            <th>ID</th>
+            {% for column in self.columns_parsed %}
+            <th>{{ column }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<script>
+$.ajax("{% url 'evaluate_on_table' self.expression.id self.columns %}", {
+}).done(function(data) {
+    var result = data.result;
+
+    var table = document.getElementById("table-{{ self.id }}");
+    result.forEach(function(data_row, i) {
+        var row = table.insertRow(i+1);
+
+        var cellIndex = 0;
+        var pkCell = row.insertCell(cellIndex);
+        pkCell.appendChild(document.createTextNode(data_row.pk));
+
+        {% for column in self.columns_parsed %}
+        cellIndex += 1;
+        var cell = row.insertCell(cellIndex);
+        cell.appendChild(document.createTextNode(data_row.{{ column }}));
+        {% endfor %}
+    });
+}).fail(function() {
+    console.log('There was an error evaluation the expression');
+});
+</script>
