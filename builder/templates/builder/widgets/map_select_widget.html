@@ -1,6 +1,10 @@
 <div class="map-select-widget">
     <div id="map-{{ name }}"></div>
-    <input id="input-{{ name }}" name="{{ name }}" type="hidden" />
+    <select id="input-{{ name }}" name="{{ name }}" style="height: 400px" {% if select_multi %}multiple{% endif %}>
+        {% for choice in choices %}
+        <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+        {% endfor %}
+    </select>
 
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.css" />
     <style>
@@ -14,8 +18,8 @@
         var map = L.map("map-{{ name }}");
 
         map.fitBounds([
-            [{{ bounds.1 }}, {{ bounds.0 }}],
-            [{{ bounds.3 }}, {{ bounds.2 }}]
+            [{{ layer.bounds.1 }}, {{ layer.bounds.0 }}],
+            [{{ layer.bounds.3 }}, {{ layer.bounds.2 }}]
         ]);
 
         L.tileLayer('https://api.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
@@ -26,15 +30,33 @@
         }).addTo(map);
 
         var mvtLayer = new L.TileLayer.MVTSource({
-            url: '/builder/admin/layers/{{ layer_name }}/{z}/{x}/{y}.pbf',
+            url: '/builder/admin/layers/{{ layer.name }}/{z}/{x}/{y}.pbf',
             getIDForLayerFeature: function(feature) { return feature.properties.id; },
-            clickableLayers: ['{{ layer_name }}'],
+            clickableLayers: ['{{ layer.name }}'],
+            {% if not select_multi %}
             mutexToggle: true,
             onClick: function(e) {
                 if (e.feature) {
                     document.getElementById("input-{{ name }}").value = e.feature.properties.id;
                 }
             }
+            {% else %}
+            mutextToggle: false,
+            onClick: function(e) {
+                if (e.feature) {
+                    var select = document.getElementById("input-{{ name }}");
+                    for (var i = 0; i < select.length; i++) {
+                        if (select.options[i].value == e.feature.properties.id) {
+                            if (select.options[i].selected) {
+                                select.options[i].selected = false;
+                            } else {
+                                select.options[i].selected = true;
+                            }
+                        }
+                    }
+                }
+            }
+            {% endif %}
         }).addTo(map);
     </script>
 </div>

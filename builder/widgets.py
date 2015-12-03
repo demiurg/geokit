@@ -1,8 +1,8 @@
-from django.forms.widgets import NumberInput
+from django.forms.widgets import Select, SelectMultiple
 from django.template.loader import render_to_string
 
 
-class MapSelectWidget(NumberInput):
+class MapSelectWidget(Select):
     '''
     Renders Leaflet map with features from selected layer,
     returns id of selected feature.
@@ -16,7 +16,27 @@ class MapSelectWidget(NumberInput):
     def render(self, name, value, attrs=None, choices=()):
         context = {
             'name': name,
-            'layer_name': self.layer.name,
-            'bounds': self.layer.bounds
+            'choices': self.choices,
+            'layer': self.layer,
+            'select_multi': False,
         }
+
+        return render_to_string(self.template_name, context)
+
+
+class MapSelectMultipleWidget(SelectMultiple):
+    template_name = 'builder/widgets/map_select_widget.html'
+
+    def __init__(self, layer, attrs=None):
+        super(MapSelectMultipleWidget, self).__init__(attrs)
+        self.layer = layer
+
+    def render(self, name, value, attrs=None, choices=()):
+        context = {
+            'name': name,
+            'choices': self.choices,
+            'layer': self.layer,
+            'select_multi': True,
+        }
+
         return render_to_string(self.template_name, context)

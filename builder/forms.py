@@ -1,10 +1,10 @@
 from collections import OrderedDict
 
-from django.forms import ModelChoiceField
+from django.forms import ModelChoiceField, ModelMultipleChoiceField
 
 from wagtail.wagtailforms.forms import FormBuilder
 
-from builder.widgets import MapSelectWidget
+from builder.widgets import MapSelectWidget, MapSelectMultipleWidget
 from layers.models import Feature
 
 
@@ -16,7 +16,10 @@ def create_map_select(self, field, options):
 
 
 def create_map_multi_select(self, field, options):
-        return self.create_dropdown_field(field, options)
+    return ModelMultipleChoiceField(
+        queryset=Feature.objects.filter(layer=field.layer.name),
+        widget=MapSelectMultipleWidget(field.layer)
+    )
 
 
 class GeoKitFormBuilder(FormBuilder):
