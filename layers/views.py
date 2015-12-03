@@ -152,7 +152,7 @@ def stache(request, layer_name, z, x, y, extension):
     return mimetype, data
 
 
-mapnik_xml
+@mapnik_xml
 @tile_cache
 def tile_mvt(request, layer_name, z, x, y):
     url = 'http://localhost:{}/{}/{}/{}/{}'.format(settings.NODE_PORT, layer_name, z, x, y)

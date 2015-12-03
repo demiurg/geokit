@@ -11,11 +11,17 @@ from wagtail.wagtailcore.models import Page
 from wagtail.wagtailcore.fields import RichTextField, StreamField
 from wagtail.wagtailadmin.edit_handlers import FieldPanel, StreamFieldPanel, InlinePanel, PageChooserPanel
 from wagtail.wagtailembeds.blocks import EmbedBlock
-from wagtail.wagtailforms.forms import FormBuilder
-from wagtail.wagtailforms.models import AbstractFormField
+from wagtail.wagtailforms.models import AbstractFormField, FORM_FIELD_CHOICES
 from wagtail.wagtailimages.blocks import ImageChooserBlock
 
 from builder.blocks import GraphBlock, MapBlock
+from builder.forms import GeoKitFormBuilder
+
+
+GEOKIT_FORM_FIELD_CHOICES = FORM_FIELD_CHOICES + (
+    ('map_select', 'Map Select'),
+    ('map_multi_select', 'Map Multiple Select'),
+)
 
 
 class HomePage(Page):
@@ -44,15 +50,21 @@ class CustomPage(Page):
 class FormVariableField(AbstractFormField):
     page = ParentalKey('CustomFormPage', related_name='form_fields')
     variable_name = models.CharField(max_length=100)
+    geokit_field_type = models.CharField(verbose_name='Field Type', max_length=16, choices=GEOKIT_FORM_FIELD_CHOICES)
+    layer = models.ForeignKey('layers.Layer', on_delete=models.SET_NULL, blank=True, null=True)
 
     panels = [
         FieldPanel('variable_name'),
-        FieldPanel('field_type', classname="formbuilder-type"),
+        FieldPanel('geokit_field_type', classname="formbuilder-type"),
+        FieldPanel('layer'),
     ]
 
     def save(self, *args, **kwargs):
         self.label = self.variable_name
         super(FormVariableField, self).save(*args, **kwargs)
+
+    def __unicode__(self):
+        return "<FormVariableField: {}>".format(self.field_type)
 
 
 class CustomFormPage(CustomPage):
@@ -62,7 +74,7 @@ class CustomFormPage(CustomPage):
         on_delete=models.SET_NULL, related_name='+')
 
     def serve(self, request):
-        fb = FormBuilder(self.form_fields.all())
+        fb = GeoKitFormBuilder(self.form_fields.all())
         form_class = fb.get_form_class()
 
         if request.method == "POST":
@@ -71,6 +83,9 @@ class CustomFormPage(CustomPage):
             if form.is_valid():
                 # Save form variables
                 for var, value in form.cleaned_data.items():
+                    # Currently, this saves model instances (such as Features)
+                    # serialized using their unicode representations. Maybe this
+                    # should be less hacky?
                     FormVariable = apps.get_model(app_label='expressions', model_name='FormVariable')
                     var = FormVariable(name=var, value=value, user=request.user)
                     var.save()

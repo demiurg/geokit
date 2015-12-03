@@ -56,3 +56,6 @@ class Feature(models.Model):
     properties = hstore.DictionaryField(null=True)
 
     objects = hstore.HStoreGeoManager()
+
+    def __unicode__(self):
+        return "<Feature: {}>".format(self.pk)

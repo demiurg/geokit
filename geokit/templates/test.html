@@ -19,6 +19,22 @@
 
 <script src="{% static 'js/TileLayer.GeoJSON.js' %}"></script>
 <script>
+//
+// MVT
+//
+var mvtMap = L.map('mvt-map');
+mvtMap.fitBounds([
+    [50.958, 13.539],
+    [51.198, 14.015]
+]);
+
+var mvtURL = '/layers/dresden_buildings/{z}/{x}/{y}.mvt';
+var mvtConfig = {
+    url: mvtURL,
+    getIDForLayerFeature: function(feature) { return feature.properties.id; }
+};
+
+var mvtLayer = new L.TileLayer.MVTSource(mvtConfig).addTo(mvtMap);
 // 
 // GeoJSON
 //
@@ -36,23 +52,6 @@ var geojsonLayer = new L.TileLayer.GeoJSON(geojsonURL, {
     }
 }).addTo(geojsonMap);
 
-//
-// MVT
-//
-/*
-var mvtMap = L.map('mvt-map');
-mvtMap.fitBounds([
-    [50.958, 13.539],
-    [51.198, 14.015]
-]);
 
-var mvtURL = '/layers/dresden_buildings/{z}/{x}/{y}.mvt';
-var mvtConfig = {
-    url: mvtURL,
-    getIDForLayerFeature: function(feature) { return feature.properties.id; }
-};
-
-var mvtLayer = new L.TileLayer.MVTSource(mvtConfig).addTo(mvtMap);
-*/
 </script>
 {% endblock %}

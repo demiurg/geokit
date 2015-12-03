@@ -1,0 +1,40 @@
+<div class="map-select-widget">
+    <div id="map-{{ name }}"></div>
+    <input id="input-{{ name }}" name="{{ name }}" type="hidden" />
+
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.css" />
+    <style>
+        #map-{{ name }} { height: 450px; }
+    </style>
+
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+    <script src="/static/js/Leaflet.MapboxVectorTile.js"></script>
+
+    <script>
+        var map = L.map("map-{{ name }}");
+
+        map.fitBounds([
+            [{{ bounds.1 }}, {{ bounds.0 }}],
+            [{{ bounds.3 }}, {{ bounds.2 }}]
+        ]);
+
+        L.tileLayer('https://api.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+            attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a>",
+            maxZoom: 18,
+            id: 'ags.map-g13j9y5m',
+            accessToken: 'pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
+        }).addTo(map);
+
+        var mvtLayer = new L.TileLayer.MVTSource({
+            url: '/builder/admin/layers/{{ layer_name }}/{z}/{x}/{y}.pbf',
+            getIDForLayerFeature: function(feature) { return feature.properties.id; },
+            clickableLayers: ['{{ layer_name }}'],
+            mutexToggle: true,
+            onClick: function(e) {
+                if (e.feature) {
+                    document.getElementById("input-{{ name }}").value = e.feature.properties.id;
+                }
+            }
+        }).addTo(map);
+    </script>
+</div>
