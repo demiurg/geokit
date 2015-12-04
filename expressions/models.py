@@ -124,13 +124,17 @@ class Expression(models.Model):
                 # It is the first iteration, accum is the first object in the collection
                 return evaluate_on_collection_item(item) + evaluate_on_collection_item(accum)
 
+        def map_on_collection_item(item):
+            val = evaluate_on_collection_item(item)
+            item.properties[self.name + '_value'] = val
+            return item
+
         if self.expression_type == 'arith':
             return self.evaluate_arithmetic(user, extra_substitutions)
         elif self.expression_type == 'collec':
-            print self.expression_text
             return FormVariable.objects.get(name=self.expression_text, user=user).deserialize()
         elif self.expression_type == 'map':
-            return map(evaluate_on_collection_item, self.input_collection.evaluate(user))
+            return map(map_on_collection_item, self.input_collection.evaluate(user))
         elif self.expression_type == 'filter':
             return filter(evaluate_on_collection_item, self.input_collection.evaluate(user))
         elif self.expression_type == 'reduce':

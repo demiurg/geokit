@@ -3,7 +3,6 @@ import random
 from wagtail.wagtailcore.blocks import CharBlock, DateBlock, ListBlock, StructBlock
 
 from expressions.blocks import ExpressionChooserBlock
-from expressions.models import FormVariable
 from layers.blocks import LayerChooserBlock
 
 
@@ -44,7 +43,7 @@ class MapBlock(StructBlock):
 
 
 class TableBlock(StructBlock):
-    form_variable = CharBlock()
+    expression = ExpressionChooserBlock()
     columns = CharBlock()
 
     class Meta:
@@ -54,5 +53,5 @@ class TableBlock(StructBlock):
     def render(self, value, user):
         value['id'] = random.randint(1, 1000)
         value['columns_parsed'] = [column.strip() for column in value['columns'].split(',')]
-        value['variable_result'] = FormVariable.objects.get(name=value['form_variable'], user=user).deserialize()
+        value['variable_result'] = value['expression'].evaluate(user)
         return super(TableBlock, self).render(value)
