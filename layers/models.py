@@ -58,4 +58,4 @@ class Feature(models.Model):
     objects = hstore.HStoreGeoManager()
 
     def __unicode__(self):
-        return "<Feature: {}>".format(self.pk)
+        return unicode(self.pk)

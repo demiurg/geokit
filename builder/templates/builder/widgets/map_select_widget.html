@@ -1,6 +1,6 @@
 <div class="map-select-widget">
     <div id="map-{{ name }}"></div>
-    <select id="input-{{ name }}" name="{{ name }}" style="height: 400px" {% if select_multi %}multiple{% endif %}>
+    <select id="input-{{ name }}" name="{{ name }}" style="display: none" {% if select_multi %}multiple{% endif %}>
         {% for choice in choices %}
         <option value="{{ choice.0 }}">{{ choice.1 }}</option>
         {% endfor %}

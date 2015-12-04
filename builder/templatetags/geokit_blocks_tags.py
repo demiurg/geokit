@@ -16,3 +16,8 @@ def graph_data(graph_block):
         data.append([date, (random.random() * 20)])
 
     return {'data': data}
+
+
+@register.filter
+def render_with_user(block, user):
+    return block.block.render(block.value, user)

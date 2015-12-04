@@ -2,6 +2,7 @@
 
 {% load wagtailcore_tags %}
 {% load wagtailimages_tags %}
+{% load geokit_blocks_tags %}
 
 {% block bodyclass %}template-custompage{% endblock %}
 
@@ -12,8 +13,10 @@
     <section class="block-{{ block.block_type }}">
         {% if block.type == 'paragraph' %}
         {{ block|richtext }}
-        {% elif block.type == 'image' %}
+        {% elif block.block_type == 'image' %}
         {% image block.value max-500x300 %}
+        {% elif block.block_type == 'table' %}
+        {{ block|render_with_user:request.user }}
         {% else %}
         {{ block }}
         {% endif %}

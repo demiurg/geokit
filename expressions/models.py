@@ -1,5 +1,7 @@
+import re
 import sympy
 
+from django.apps import apps
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
@@ -9,6 +11,7 @@ from layers.models import Feature
 
 EXPRESSION_TYPES = (
     ('arith', 'arithmetic'),
+    ('collec', 'form variable collection'),
     ('filter', 'filter'),
     ('map', 'map'),
     ('reduce', 'reduce'),
@@ -28,6 +31,41 @@ class FormVariable(models.Model):
         FormVariable.objects.filter(name=self.name, user=self.user).delete()
 
         super(FormVariable, self).save(*args, **kwargs)
+
+    def deserialize(self):
+        """
+        Currently, variables that are objects or iterables are stored in the
+        database using their textual representation. While this is probaly
+        not a good long term solution, this method deserializes these values.
+        """
+        OBJECT_RE = re.compile(r'^<(\w+): (\d+)>$')
+        ARRAY_RE = re.compile(r'^\[(.+)\]$')
+        model_name_map = {
+            'Feature': 'layers.Feature',
+        }
+
+        object_match = re.match(OBJECT_RE, self.value)
+        array_match = re.match(ARRAY_RE, self.value)
+
+        if object_match:
+            model_class = apps.get_model(model_name_map[object_match.group(1)])
+            object_id = object_match.group(2)
+            return model_class.objects.get(pk=object_id)
+        elif array_match:
+            items = re.split(r', *', array_match.group(1))
+
+            deserialized_items = []
+            for item in items:
+                object_match = re.match(OBJECT_RE, item)
+                if object_match:
+                    model_class = apps.get_model(model_name_map[object_match.group(1)])
+                    object_id = object_match.group(2)
+                    deserialized_items.append(model_class.objects.get(pk=object_id))
+                else:
+                    deserialized_items.append(item)
+            return deserialized_items
+        else:
+            return self.value
 
 
 def validate_expression_text(expression_text):
@@ -59,11 +97,21 @@ class Expression(models.Model):
     expression_text = models.TextField(validators=[validate_expression_text])
     # The only "collections" we currently have are layers, but this will eventually become
     # more general as other datasets are available.
-    input_collection = models.ForeignKey('layers.Layer', on_delete=models.SET_NULL, blank=True, null=True)
+    input_collection = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True)
 
     def clean(self):
-        if not self.input_collection and self.expression_type != 'arith':
+        if not self.input_collection \
+           and self.expression_type != 'arith' \
+           and self.expression_type != 'collec':
             raise ValidationError({'input_collection': 'filter, map, and reduce expression need an input collection'})
+
+        if (self.expression_type == 'map' \
+            or self.expression_type == 'filter' \
+            or self.expression_type == 'reduce') \
+            and (self.input_collection.expression_type != 'collec' \
+                 and self.input_collection.expression_type != 'map' \
+                 and self.input_collection.expression_type != 'filter'):
+            raise ValidationError({'input_collection': 'This is not a valid input collection expression'})
 
     def evaluate(self, user, extra_substitutions={}):
         def evaluate_on_collection_item(item):
@@ -78,12 +126,15 @@ class Expression(models.Model):
 
         if self.expression_type == 'arith':
             return self.evaluate_arithmetic(user, extra_substitutions)
+        elif self.expression_type == 'collec':
+            print self.expression_text
+            return FormVariable.objects.get(name=self.expression_text, user=user).deserialize()
         elif self.expression_type == 'map':
-            return map(evaluate_on_collection_item, Feature.objects.filter(layer=self.input_collection))
+            return map(evaluate_on_collection_item, self.input_collection.evaluate(user))
         elif self.expression_type == 'filter':
-            return filter(evaluate_on_collection_item, Feature.objects.filter(layer=self.input_collection))
+            return filter(evaluate_on_collection_item, self.input_collection.evaluate(user))
         elif self.expression_type == 'reduce':
-            return reduce(reduce_on_collection_item, Feature.objects.filter(layer=self.input_collection))
+            return reduce(reduce_on_collection_item, self.input_collection.evaluate(user))
 
     def evaluate_arithmetic(self, user, extra_substitutions={}):
         expr = sympy.sympify(self.expression_text, evaluate=False)

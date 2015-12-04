@@ -1,3 +1,5 @@
+{% load utility_tags %}
+
 <table id="table-{{ self.id }}">
     <thead>
         <tr>
@@ -8,9 +10,18 @@
         </tr>
     </thead>
     <tbody>
+        {% for row in self.variable_result %}
+        <tr>
+            <td>{{ row.pk }}</td>
+            {% for column in self.columns_parsed %}
+            <td>{{ row.properties|keyvalue:column }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
     </tbody>
 </table>
 
+{% comment %}
 <script>
 $.ajax("{% url 'evaluate_on_table' self.expression.id self.columns %}", {
 }).done(function(data) {
@@ -34,3 +45,4 @@ $.ajax("{% url 'evaluate_on_table' self.expression.id self.columns %}", {
     console.log('There was an error evaluation the expression');
 });
 </script>
+{% endcomment %}
