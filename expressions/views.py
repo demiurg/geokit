@@ -1,11 +1,7 @@
 import json
-import md5
-import mimetypes
-import urllib2
 
-from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 
 from wagtail.wagtailadmin import messages
@@ -13,9 +9,7 @@ from wagtail.wagtailadmin.modal_workflow import render_modal_workflow
 
 from expressions.forms import ExpressionForm
 from expressions.models import Expression
-from expressions.utils import tile_patch_expression
-from layers.models import Layer
-from layers.utils import mapnik_xml
+from layers.views import tile_json
 
 
 def index(request):
@@ -91,34 +85,16 @@ def evaluate_on_table(request, expression_id, columns):
     return JsonResponse({'result': result})
 
 
-@mapnik_xml
-@tile_patch_expression
 def evaluate_on_tile(request, layer_name, z, x, y, expression_id):
-    name = Layer.objects.get(name=layer_name).query_hash()
-    patch_hash = md5.md5(Expression.objects.get(pk=expression_id).evaluation_query(request)).hexdigest()
-    url = 'http://localhost:{}/{}/{}/{}/{}/patch/{}'.format(settings.NODE_PORT, name, z, x, y, patch_hash)
-    headers = {
-        'Content-Type': request.META['CONTENT_TYPE'],
-        'Accept-Encoding': request.META['HTTP_ACCEPT_ENCODING']
-    }
-    if request.user.is_authenticated():
-        headers['X-Django-User-ID'] = request.user.id
-    else:
-        headers['X-Django-User-ID'] = -1
+    tile_response = tile_json(request, layer_name, z, x, y)
+    tile = json.loads(tile_response.content)
 
-    try:
-        request = urllib2.Request(url, headers=headers)
-        proxied_request = urllib2.urlopen(request)
-        status_code = proxied_request.code
-        mimetype = proxied_request.headers.typeheader or mimetypes.guess_type(url)
-        content = proxied_request.read()
-    except urllib2.HTTPError as e:
-        response = HttpResponse(e.msg, status=e.code, content_type='text/plain')
-    else:
-        response = HttpResponse(content, status=status_code, content_type=mimetype)
-        response['Content-Encoding'] = 'deflate'
+    expression = Expression.objects.get(pk=expression_id)
+    for feature in tile['features']:
+        patch_val = expression.evaluate(request.user, extra_substitutions=feature['properties'])
+        feature['properties']['patchVal'] = unicode(patch_val)
 
-    return response
+    return JsonResponse(tile)
 
 
 def chooser(request):

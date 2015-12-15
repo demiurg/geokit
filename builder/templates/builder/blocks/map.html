@@ -14,27 +14,40 @@ L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_t
 function getColor(value) {
     {% for color in self.color_ramp %}
     if (value >= {{ color.min_value }} && value <= {{ color.max_value }}) {
-        return 'rgb({{ color.color }})';
+        return '{{ color.color }}';
     }
     {% endfor %}
 }
 
-var mvtURL = '/expressions/evaluate/tile/{{ self.layer.name }}/{z}/{x}/{y}/{{ self.expression.id }}/';
-var config = {
-    url: mvtURL,
-    getIDForLayerFeature: function(feature) { return feature.properties.id; },
-    style: function(feature) {
-        var style = {
-            outline: {
-                color: 'rgb(0, 0, 0)',
-                size: 1
-            }
-        };
-        if ('patchVal' in feature.properties) {
-            style.color = getColor(feature.properties.patchVal);
-        }
-        return style;
+
+var geojsonURL = '/expressions/evaluate/tile/{{ self.layer.name }}/{z}/{x}/{y}/{{ self.expression.id }}/';
+var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
+    clipTiles: true,
+    unique: function(feature) {
+        return feature.id;
     }
-};
-var tiled = this.tiled = new L.TileLayer.MVTSource(config).addTo(map);
+}, {
+    style: function(feature) {
+        var featureColor = getColor(feature.properties.patchVal);
+
+        return {
+            "clickable": true,
+            "fillColor": featureColor,
+            "color": "#000",
+            "weight": 1.0,
+            "opacity": 0.3,
+            "fillOpacity": 0.2
+        };
+    },
+    onEachFeature: function(feature, layer) {
+        if (feature.properties) {
+            var popupString = '<div class="popup">' + feature.properties.patchValue + '</div>';
+            layer.bindPopup(popupString);
+        }
+        layer.on('click', function() {
+            console.log(feature);
+        });
+    }
+});
+map.addLayer(geojsonTileLayer);
 </script>

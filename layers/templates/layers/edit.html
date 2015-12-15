@@ -11,7 +11,7 @@
 
 {% block extra_js %}
     <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
-    <script src="/static/js/Leaflet.MapboxVectorTile.js"></script>
+    <script src="/static/js/TileLayer.GeoJSON.js"></script>
     <script>
 
         function info(data){
@@ -51,31 +51,37 @@
                 "Satellite": self.satellite
             };
 
-            /*self.selector = L.control.layers(
-                self.baseLayers
-            ).addTo(self.map);*/
-
-            {% comment %}
-            var geojson = {
-                type: "FeatureCollection",
-                features: [{% for f in layer.feature_set.all %}
-                {
-                    "type": "Feature",
-                    "properties": {{f.properties|safe}},
-                    "geometry": {{f.geometry.json|safe}}
-                }{% if not forloop.last %},{% endif %}
-            {% endfor %}]
+            var geojsonStyle = {
+                "clickable": true,
+                "color": "#00D",
+                "fillColor": "#00D",
+                "weight": 1.0,
+                "opacity": 0.3,
+                "fillOpacity": 0.2
+            };
+            var geojsonHoverStyle = {
+                "fillOpacity": 0.5
             };
 
-            self.featurelayer = L.geoJson(geojson).addTo(self.map);
-            {% endcomment %}
+            var geojsonURL = '/layers/{{ layer.name }}/{z}/{x}/{y}.json';
+            var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
+                clipTiles: true,
+                unique: function(feature) {
+                    return feature.id;
+                }
+            }, {
+                style: geojsonStyle
+            });
+            map.addLayer(geojsonTileLayer);
 
+            {% comment %}
             var mvtURL = '/builder/admin/layers/{{ layer.name }}/{z}/{x}/{y}.pbf';
             var config = {
                 url: mvtURL,
                 getIDForLayerFeature: function(feature) { return feature.properties.id; }
             };
             var tiled = this.tiled = new L.TileLayer.MVTSource(config).addTo(map);
+            {% endcomment %}
 
             self.featureHandler = function(feature, layer){
                 layer.on({

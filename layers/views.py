@@ -57,12 +57,12 @@ def tile_json(request, layer_name, z, x, y):
         geom.transform(4326)
 
         try:
-            props['id'] = props-['__id__']
+            props['id'] = props['__id__']
         except:
             pass
 
         feature = '{ "type": "Feature", "geometry": ' + geom.json + ","
-        feature += ' "properties": {}'.format(json.dumps(props))
+        feature += ' "properties": {}'.format(json.dumps(props['properties']))
         feature += '}'
         features.append(feature)
 
