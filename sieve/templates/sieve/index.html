@@ -1,0 +1,21 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% load staticfiles %}
+
+{% block titletag %}Sieve{% endblock %}
+{% block bodyclass %}menu-sieve{% endblock %}
+
+{% block extra_js %}
+<script src="https://fb.me/react-0.14.3.js"></script>
+<script src="https://fb.me/react-dom-0.14.3.js"></script>
+
+<script src="{% static "js/sieve.js" %}"></script>
+{% endblock %}
+
+{% block content %}
+{% include "wagtailadmin/shared/header.html" with title="Sieve" icon="placeholder" %}
+
+<div class="nice-padding">
+    <div id="sieve-container"></div>
+</div>
+{% endblock %}

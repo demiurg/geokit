@@ -60,6 +60,7 @@ INSTALLED_APPS = (
     'account',
     'expressions',
     'layers',
+    'sieve',
 )
 
 MIDDLEWARE_CLASSES = (
