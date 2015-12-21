@@ -1,16 +1,13 @@
-var Sieve = React.createClass({displayName: 'Sieve',
-    render: function() {
-        return (
-            React.createElement('div', {className: "sieve"},
-                'Hello, I am a sieve.'
-            )
-        );
-    }
+var Sieve = React.createClass({
+  displayName: 'Sieve',
+  render: function() {
+    return (
+      <div>asdf {this.props.property}</div>
+    );
+  }
 });
 
-$(document).ready(function() {
-    ReactDOM.render(
-        React.createElement(Sieve, null),
-        document.getElementById("sieve-container")
-    );
-});
+ReactDOM.render(
+  <Sieve property="property" />,
+  document.getElementById("sieve-container")
+);
