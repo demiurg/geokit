@@ -10,7 +10,13 @@
 <script src="https://fb.me/react-dom-0.14.3.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
 
-<script type="text/babel" src="{% static "js/sieve.js" %}"></script>
+<script type="text/babel" src="{% static 'js/sieve.js' %}"></script>
+<script>
+    var data = {
+        title: "This is a Sieve",
+        description: "This is the description of a Sieve"
+    }
+</script>
 {% endblock %}
 
 {% block content %}
