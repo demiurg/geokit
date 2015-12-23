@@ -1,28 +1,27 @@
-var React = require('react');
-var ReactDOM = require('react-dom');
-var Table = require('react-legit-table');
+var Table = ReactBootstrap.Table;
 
-var Sieve = React.createClass({
-  displayName: 'Sieve',
-  render: function() { 
+class Sieve extends React.Component {
+  render() {
     return (
       <div className="sieve">
         <MetaData title={this.props.title} description={this.props.description} />
         <div className="sieve-table-input">
-          <Table rows={this.props.data} />
+          a table of input data is here
+          <SieveTable cols={this.props.data.cols} rows={this.props.data.rows} />
         </div>
         <SpatialConfigurator />
         <TemporalConfigurator />
         <div className="sieve-table-output">
-          <Table rows={this.props.data} />
+          a table of output data is here
+          <SieveTable cols={this.props.data.cols} rows={this.props.data.rows} />
         </div>
       </div>
     );
   }
-});
+}
 
-var MetaData = React.createClass({
-  render: function() {
+class MetaData extends React.Component {
+  render() {
     return (
       <div className="sieve-metadata">
         <div className="sieve-metadata-title">
@@ -34,29 +33,65 @@ var MetaData = React.createClass({
       </div>
     );
   }
-});
+}
 
-var SpatialConfigurator = React.createClass({
-  render: function() {
+class SpatialConfigurator extends React.Component {
+  render() {
     return (
       <div className="sieve-spatial-configurator">
         <div id="map">This will be a map. Admins can refine the spatial domain here.</div>
       </div>
     );
   }
-});
+}
 
-var TemporalConfigurator = React.createClass({
-  render: function() {
+class TemporalConfigurator extends React.Component {
+  render() {
     return (
       <div className="sieve-temporal-configurator">
         This will be a range slider with two controls, and start/end date text inputs.
       </div>
     );
   }
-});
+}
 
-ReactDOM.render(
-  <Sieve title={data.title} description={data.description} data={data.table_data} />,
+class SieveTable extends React.Component {
+  render() {
+    return (
+      <Table striped hover responsive>
+        <TableHead cols={this.props.cols} />
+        <TableBody rows={this.props.rows} />
+      </Table>
+    );
+  }
+}
+
+class TableHead extends React.Component {
+  render() {
+    var cols = this.props.cols.map((column) => {
+      return <th>{column}</th>;
+    });
+    return (
+      <thead>
+          <tr>{cols}</tr>
+      </thead>
+    );
+  }
+}
+
+class TableBody extends React.Component {
+  render() {
+    var rows = this.props.rows.map((row) => {
+      var data = row.map((data) => {
+        return <td>{data}</td>;
+      });
+      return <tr>{data}</tr>
+    });
+    return <tbody>{rows}</tbody>;
+  }
+}
+
+React.render(
+  <Sieve title={metadata.title} description={metadata.description} data={data} />,
   document.getElementById("sieve-container")
 );

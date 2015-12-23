@@ -2,22 +2,38 @@
 
 {% load staticfiles %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
+{% endblock %}
+
 {% block titletag %}Sieve{% endblock %}
 {% block bodyclass %}menu-sieve{% endblock %}
 
 {% block extra_js %}
+<script src="https://fb.me/react-0.14.3.js"></script>
+<script src="https://fb.me/react-dom-0.14.3.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-bootstrap/0.28.1/react-bootstrap.min.js"></script>
 
+<script type="text/babel" src="{% static 'js/sieve.js' %}"></script>
 <script>
-    var data = {
+    var metadata = {
         title: "This is a Sieve title",
-        description: "This is a Sieve description",
-        table_data: [
-          {spatialIndex: 'x', temporalIndex: 'y', value: 'z'},
-          {spatialIndex: 'x', temporalIndex: 'y', value: 'z'},
-          {spatialIndex: 'x', temporalIndex: 'y', value: 'z'},
-          {spatialIndex: 'x', temporalIndex: 'y', value: 'z'},
-          {spatialIndex: 'x', temporalIndex: 'y', value: 'z'},
-        ]
+        description: "This is a Sieve description"
+    }
+    var data = {
+      cols: [
+        "Spatial Index",
+        "Temporal Index",
+        "Value"
+      ],
+      rows: [
+        ["xxx", "yyy", "zzz"],
+        ["xxx", "yyy", "zzz"],
+        ["xxx", "yyy", "zzz"],
+        ["xxx", "yyy", "zzz"],
+        ["xxx", "yyy", "zzz"],
+      ]
     }
 </script>
 {% endblock %}
@@ -28,5 +44,4 @@
 <div class="nice-padding">
     <div id="sieve-container"></div>
 </div>
-<script src="{% static 'js/bundle.js' %}"></script>
 {% endblock %}
