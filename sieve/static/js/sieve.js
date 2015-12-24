@@ -131,6 +131,9 @@ class Aggregate extends React.Component {
   }
   aggregateDimensionToggle(dimension) {
     this.setState({aggregateDimension: dimension});
+    if (dimension === null) {
+      this.setState({aggregateMethod: null});
+    }
   }
   aggregateMethodToggle(method) {
     this.setState({aggregateMethod: method});
@@ -151,7 +154,7 @@ class Aggregate extends React.Component {
           </Button>
           <Button
             onClick={this.aggregateDimensionToggle.bind(this, null)}
-            active={this.state.aggregateDimesion === null ? true : null}>
+            active={this.state.aggregateDimension === null ? true : null}>
             Do Not Aggregate
           </Button>
         </ButtonGroup>
