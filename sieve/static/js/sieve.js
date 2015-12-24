@@ -9,12 +9,16 @@ class Sieve extends React.Component {
     return (
       <div className="sieve">
         <Panel>
-          <MetaData title={this.props.title} description={this.props.description} />
+          <MetaData
+            title={this.props.title}
+            description={this.props.description} />
         </Panel>
         <Panel>
           <div className="sieve-table-input">
             a table of input data is here
-            <SieveTable cols={this.props.data.cols} rows={this.props.data.rows} />
+            <SieveTable
+              cols={this.props.data.cols}
+              rows={this.props.data.rows} />
           </div>
         </Panel>
         <Panel>
@@ -31,7 +35,9 @@ class Sieve extends React.Component {
         <Panel>
           <div className="sieve-table-output">
             a table of output data is here
-            <SieveTable cols={this.props.data.cols} rows={this.props.data.rows} />
+            <SieveTable
+              cols={this.props.data.cols}
+              rows={this.props.data.rows} />
           </div>
         </Panel>
       </div>
@@ -44,10 +50,15 @@ class MetaData extends React.Component {
     return (
       <div className="sieve-metadata">
         <div className="sieve-metadata-title">
-          <input type="text" placeholder="Title..." defaultValue={this.props.title} />
+          <input
+            type="text"
+            placeholder="Title..."
+            defaultValue={this.props.title} />
         </div>
         <div className="sieve-metadata-description">
-          <textarea placeholder="Description..." defaultValue={this.props.description} />
+          <textarea
+            placeholder="Description..."
+            defaultValue={this.props.description} />
         </div>
       </div>
     );
@@ -113,25 +124,63 @@ class TableBody extends React.Component {
 class Aggregate extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {aggregate:null};
+    this.state = {
+      aggregateDimension: null,
+      aggregateMethod: null
+    };
+  }
+  aggregateDimensionToggle(dimension) {
+    this.setState({aggregateDimension: dimension});
   }
   aggregateMethodToggle(method) {
-    this.setState({aggregate: method});
+    this.setState({aggregateMethod: method});
   }
   render() {
     return (
       <ButtonToolbar>
         <ButtonGroup>
-          <Button onClick={this.aggregateMethodToggle.bind(this, "space")} active={this.state.aggregate === "space" ? true : null}>Aggregate Across Space</Button>
-          <Button onClick={this.aggregateMethodToggle.bind(this, "time")} active={this.state.aggregate === "time" ? true : null}>Aggregate Across Time</Button>
-          <Button onClick={this.aggregateMethodToggle.bind(this, null)} active={this.state.aggregate === null ? true : null}>Do Not Aggregate</Button>
+          <Button
+            onClick={this.aggregateDimensionToggle.bind(this, "space")}
+            active={this.state.aggregateDimension === "space" ? true : null}>
+            Aggregate Across Space
+          </Button>
+          <Button
+            onClick={this.aggregateDimensionToggle.bind(this, "time")}
+            active={this.state.aggregateDimension === "time" ? true : null}>
+            Aggregate Across Time
+          </Button>
+          <Button
+            onClick={this.aggregateDimensionToggle.bind(this, null)}
+            active={this.state.aggregateDimesion === null ? true : null}>
+            Do Not Aggregate
+          </Button>
         </ButtonGroup>
         <ButtonGroup>
-          <Button>Mean</Button>
-          <Button>Median</Button>
-          <Button>Mode</Button>
-          <Button>Range</Button>
-          <Button>Standard Deviation</Button>
+          <Button
+            onClick={this.aggregateMethodToggle.bind(this, "mean")}
+            active={this.state.aggregateMethod === "mean" ? true : null}>
+            Mean
+          </Button>
+          <Button
+            onClick={this.aggregateMethodToggle.bind(this, "median")}
+            active={this.state.aggregateMethod === "median" ? true : null}>
+            Median
+          </Button>
+          <Button
+            onClick={this.aggregateMethodToggle.bind(this, "mode")}
+            active={this.state.aggregateMethod === "mode" ? true : null}>
+            Mode
+          </Button>
+          <Button
+            onClick={this.aggregateMethodToggle.bind(this, "range")}
+            active={this.state.aggregateMethod === "range" ? true : null}>
+            Range
+          </Button>
+          <Button
+            onClick={this.aggregateMethodToggle.bind(this, "std")}
+            active={this.state.aggregateMethod === "std" ? true : null}>
+            Std. Dev.
+          </Button>
         </ButtonGroup>
       </ButtonToolbar>
     );
@@ -139,6 +188,9 @@ class Aggregate extends React.Component {
 }
 
 React.render(
-  <Sieve title={metadata.title} description={metadata.description} data={data} />,
+  <Sieve
+    title={metadata.title}
+    description={metadata.description}
+    data={data} />,
   document.getElementById("sieve-container")
 );
