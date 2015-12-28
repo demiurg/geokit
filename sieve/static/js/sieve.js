@@ -122,15 +122,16 @@ class MetaData extends React.Component {
     return (
       <div className="sieve-metadata">
         <div className="sieve-metadata-title">
-          <input
+          <Input
             type="text"
             placeholder="Title..."
             defaultValue={this.props.title} />
         </div>
         <div className="sieve-metadata-description">
-          <textarea
+          <Input type="textarea"
             placeholder="Description..."
-            defaultValue={this.props.description} />
+            defaultValue={this.props.description}
+            style={{resize:"vertical"}} />
         </div>
       </div>
     );
@@ -230,7 +231,7 @@ class SieveTable extends React.Component {
   render() {
     return (
       <Table striped hover responsive>
-        <TableHead cols={this.props.cols} />
+        {this.props.cols ? <TableHead cols={this.props.cols} /> : null}
         <TableBody rows={this.props.rows} />
       </Table>
     );
@@ -268,10 +269,6 @@ class Filter extends React.Component {
       <Row>
         <Col sm={8}>
           <SieveTable
-            cols={[
-              "Filters",
-              ""
-            ]}
             rows={[
               ["Exclude rows where value is greater than 50", <Button bsSize="xsmall" className="pull-right">x</Button>],
               ["Exclude rows where value is less than or equal to 6", <Button bsSize="xsmall" className="pull-right">x</Button>],
@@ -315,7 +312,9 @@ class Aggregate extends React.Component {
     }
   }
   aggregateMethodToggle(method) {
-    this.setState({aggregateMethod: method});
+    if (this.state.aggregateDimension !== null) {
+      this.setState({aggregateMethod: method});
+    }
   }
   render() {
     return (
