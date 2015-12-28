@@ -10,6 +10,8 @@ var OverlayTrigger = ReactBootstrap.OverlayTrigger;
 var Tooltip = ReactBootstrap.Tooltip;
 var Tabs = ReactBootstrap.Tabs;
 var Tab = ReactBootstrap.Tab;
+var DropdownButton = ReactBootstrap.DropdownButton;
+var MenuItem = ReactBootstrap.MenuItem;
 
     var metadata = {
         title: "This is a Sieve title",
@@ -78,6 +80,31 @@ class Sieve extends React.Component {
               <SpatialConfigurator />
             </Col>
           </Row>
+        </Panel>
+        <Panel>
+          <ButtonToolbar>
+            <ButtonGroup>
+              <Button>x</Button>
+              <Button>/</Button>
+              <Button>+</Button>
+              <Button>-</Button>
+            </ButtonGroup>
+            <ButtonGroup className="pull-right">
+              <DropdownButton title="Data Variables" id="data-var-dropdown">
+                <MenuItem eventKey="1">Data Variable 1</MenuItem>
+                <MenuItem eventKey="2">Data Variable 2</MenuItem>
+              </DropdownButton>
+              <DropdownButton title="Form Variables" id="form-var-dropdown">
+                <MenuItem eventKey="1">Form Variable 1</MenuItem>
+                <MenuItem eventKey="2">Form Variable 2</MenuItem>
+              </DropdownButton>
+              <DropdownButton title="User Variables" id="user-var-dropdown">
+                <MenuItem eventKey="1">User Variable 1</MenuItem>
+                <MenuItem eventKey="2">User Variable 2</MenuItem>
+              </DropdownButton>
+            </ButtonGroup>
+          </ButtonToolbar>
+          <Input type="textarea" style={{resize:"vertical"}} />
         </Panel>
         <Panel>
           <Filter />
