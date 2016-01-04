@@ -1,4 +1,4 @@
-Django>=1.8,<1.9
+django==1.8
 wagtail==1.1
 sympy==0.7.6
 tilestache
