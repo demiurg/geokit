@@ -13,25 +13,56 @@ var Tab = ReactBootstrap.Tab;
 var DropdownButton = ReactBootstrap.DropdownButton;
 var MenuItem = ReactBootstrap.MenuItem;
 
-    var metadata = {
-        title: "This is a Sieve title",
-        description: "This is a Sieve description"
-    }
-    var data = {
-      cols: [
-        "Spatial Index",
-        "Temporal Index",
-        "Value"
-      ],
-      rows: [
-        ["xxx", "yyy", "zzz"],
-        ["xxx", "yyy", "zzz"],
-        ["xxx", "yyy", "zzz"],
-        ["xxx", "yyy", "zzz"],
-        ["xxx", "yyy", "zzz"],
-      ]
-    }
-
+var metadata = {
+    title: "This is a Sieve title",
+    description: "This is a Sieve description"
+}
+var spatial_domain = [
+  ["x1", "y1"],
+  ["x2", "y2"],
+  ["x3", "y3"]
+]
+var temporal_domain = [
+  new Date(1996, 0, 1),
+  new Date(1997, 0, 1),
+  new Date(1998, 0, 1),
+  new Date(1999, 0, 1),
+  new Date(2000, 0, 1)
+]
+var data = [
+  {
+    space: spatial_domain[0],
+    time: temporal_domain[0],
+    values: [
+      {
+        name: "precip",
+        value: 5,
+        measure: "inches"
+      },
+      {
+        name: "temp",
+        value: 6,
+        measure: "celsius"
+      }
+    ]
+  },
+  {
+    space: spatial_domain[1],
+    time: temporal_domain[0],
+    values: [
+      {
+        name: "precip",
+        value: 10,
+        measure: "inches"
+      },
+      {
+        name: "temp",
+        value: 8,
+        measure: "celsius"
+      }
+    ]
+  }
+]
 class Sieve extends React.Component {
   renderDays(days) {
     var buttons = [];
@@ -68,16 +99,19 @@ class Sieve extends React.Component {
       <div className="sieve">
         <Panel>
           <MetaData
-            title={this.props.title}
-            description={this.props.description} />
+            {...this.props.metadata.title}
+            {...this.props.metadata.description} />
         </Panel>
         <Panel>
           <Row>
             <Col sm={4}>
-              <TemporalConfigurator />
+              <h3>Configure Start Date</h3>
+              <TemporalConfigurator {...this.props} />
+              <h3>Configure End Date</h3>
+              <TemporalConfigurator {...this.props} />
             </Col>
             <Col sm={8}>
-              <SpatialConfigurator />
+              <SpatialConfigurator {...this.props} />
             </Col>
           </Row>
         </Panel>
@@ -142,7 +176,7 @@ class SpatialConfigurator extends React.Component {
   render() {
     return (
       <div className="sieve-spatial-configurator">
-        <h3>Configure Temporal Domain</h3>
+        <h3>Configure Spatial Domain</h3>
         <p>Similar to Map Select Widget. Allow admin to refine spatial domain for the variable</p>
       </div>
     );
@@ -161,42 +195,131 @@ class SpatialViewer extends React.Component {
 }
 
 class TemporalConfigurator extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      selectedMonth: this.props.temporalDomain[0].getMonth(),
+      selectedDay: this.props.temporalDomain[0].getDate(),
+      selectedYear: this.props.temporalDomain[0].getFullYear()
+    };
+  }
+
+  setYear(event) {
+    this.setState({selectedYear: parseInt(event.target.value)});
+  }
+
+  setMonth(event) {
+    this.setState({selectedMonth: parseInt(event.target.value)});
+  }
+
+  setDay(event) {
+    this.setState({selectedDay: parseInt(event.target.value)});
+  }
+  
+  renderYears() {
+    var optionsYears = this.props.temporalDomain.map((date) => {
+      return (
+        <option
+          value={date.getFullYear()}>
+          {date.getFullYear()}
+        </option>
+      );
+    });
+    
+    return (
+      <Input
+        type="select"
+        label="Year"
+        labelClassname="col-sm-2"
+        wrapperClassName="col-sm-10"
+        onChange={this.setYear.bind(this)}
+        defaultValue={this.props.temporalDomain[0].getFullYear()}>
+        {optionsYears}
+      </Input>
+    );
+  }
+  
+  renderMonths() {
+    var optionsMonths = [];
+    
+    for (var i = 0; i < 12; i++) {
+      optionsMonths.push(
+        <option
+          value={i}>
+          {i + 1}
+        </option>
+      );
+    }
+    
+    return (
+      <Input
+        type="select"
+        label="Month"
+        labelClassName="col-sm-2"
+        wrapperClassName="col-sm-10"
+        onChange={this.setMonth.bind(this)}
+        defaultValue={this.props.temporalDomain[0].getMonth()}
+        ref="selectedMonth">
+        {optionsMonths}
+      </Input>
+    );
+  }
+  
+  renderDays() {
+    var monthsDays = [
+      [1], // 28 day months
+      [3, 5, 8, 10], // 30 day months
+      [0, 2, 4, 6, 7, 9, 11] // 31 day months
+    ];
+    var days;
+    
+    if (monthsDays[0].indexOf(this.state.selectedMonth) !== -1) {
+      if (this.state.selectedDay > 28) {
+        this.setState({selectedDay: 28});
+      }
+      days = 28;
+    } else if (monthsDays[1].indexOf(this.state.selectedMonth) !== -1) {
+      if (this.state.selectedDay > 30) {
+        this.setState({selectedDay: 30});
+      }
+      days = 30;
+    } else if (monthsDays[2].indexOf(this.state.selectedMonth) !== -1) {
+      if (this.state.selectedday > 31) {
+        this.setState({selectedDay: 31});
+      }
+      days = 31;
+    }
+    
+    var optionsDays = [];
+    for (var i = 1; i <= days; i++) {
+      optionsDays.push(
+        <option
+          value={i}>
+          {i}
+        </option>
+      );
+    }
+    
+    return (
+      <Input
+        type="select"
+        label="Day"
+        labelClassName="col-sm-2"
+        wrapperClassName="col-sm-10"
+        onChange={this.setDay.bind(this)}
+        defaultValue={this.props.temporalDomain[0].getDate()}
+        ref="selectedDay">
+        {optionsDays}
+      </Input>
+    )
+  }
+
   render() {
     return (
       <form className="form-horizontal">
-        <h3>Configure Temporal Domain</h3>
-        <h4>Start</h4>
-        <Input type="select" label="Year" labelClassName="col-sm-2" wrapperClassName="col-sm-10" placeholder="Starting year">
-          <option value="January">1986</option>
-          <option value="January">1987</option>
-          <option value="January">1988</option>
-        </Input>
-        <Input type="select" label="Month" labelClassName="col-sm-2" wrapperClassName="col-sm-10" placeholder="Starting month">
-          <option value="January">January</option>
-          <option value="January">February</option>
-          <option value="January">March</option>
-        </Input>
-        <Input type="select" label="Day" labelClassName="col-sm-2" wrapperClassName="col-sm-10" placeholder="Starting day">
-          <option value="January">1</option>
-          <option value="January">2</option>
-          <option value="January">3</option>
-        </Input>
-        <h4>End</h4>
-        <Input type="select" label="Year" labelClassName="col-sm-2" wrapperClassName="col-sm-10" placeholder="Starting year">
-          <option value="January">1986</option>
-          <option value="January">1987</option>
-          <option value="January">1988</option>
-        </Input>
-        <Input type="select" label="Month" labelClassName="col-sm-2" wrapperClassName="col-sm-10" placeholder="Starting month">
-          <option value="January">January</option>
-          <option value="January">February</option>
-          <option value="January">March</option>
-        </Input>
-        <Input type="select" label="Day" labelClassName="col-sm-2" wrapperClassName="col-sm-10" placeholder="Starting day">
-          <option value="January">1</option>
-          <option value="January">2</option>
-          <option value="January">3</option>
-        </Input>
+        {this.renderYears()}
+        {this.renderMonths()}
+        {this.renderDays()}
       </form>
     );
   }
@@ -267,14 +390,6 @@ class Filter extends React.Component {
   render() {
     return (
       <Row>
-        <Col sm={8}>
-          <SieveTable
-            rows={[
-              ["Exclude rows where value is greater than 50", <Button bsSize="xsmall" className="pull-right">x</Button>],
-              ["Exclude rows where value is less than or equal to 6", <Button bsSize="xsmall" className="pull-right">x</Button>],
-              ["Exclude rows where value is equal to 8", <Button bsSize="xsmall" className="pull-right">x</Button>]
-            ]} />
-        </Col>
         <Col sm={4}>
           <form>
             <Input type="select">
@@ -291,6 +406,14 @@ class Filter extends React.Component {
             <Input type="text" placeholder="x" />
             <Button className="pull-right">Add Filter</Button>
           </form>
+        </Col>
+        <Col sm={8}>
+          <SieveTable
+            rows={[
+              ["Exclude rows where value is greater than 50", <Button bsSize="xsmall" className="pull-right">x</Button>],
+              ["Exclude rows where value is less than or equal to 6", <Button bsSize="xsmall" className="pull-right">x</Button>],
+              ["Exclude rows where value is equal to 8", <Button bsSize="xsmall" className="pull-right">x</Button>]
+            ]} />
         </Col>
       </Row>
     );
@@ -368,12 +491,11 @@ class Aggregate extends React.Component {
   }
 }
 
-
-
 ReactDOM.render(
   <Sieve
-    title={metadata.title}
-    description={metadata.description}
+    metadata={metadata}
+    spatialDomain={spatial_domain}
+    temporalDomain={temporal_domain}
     data={data} />,
   document.getElementById("sieve-container")
 );
