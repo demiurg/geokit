@@ -40,12 +40,12 @@ var data = [
       {
         name: "precip",
         value: 5,
-        measure: "inches"
+        unit: "inch"
       },
       {
         name: "temp",
         value: 6,
-        measure: "celsius"
+        unit: "celsius"
       }
     ]
   },
@@ -56,12 +56,12 @@ var data = [
       {
         name: "precip",
         value: 10,
-        measure: "inches"
+        unit: "inch"
       },
       {
         name: "temp",
         value: 8,
-        measure: "celsius"
+        unit: "celsius"
       }
     ]
   }
@@ -70,6 +70,24 @@ var data = [
 var filters = [
   
 ];
+
+class DataVariableMenu extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+  
+  render() {
+    var values = this.props.data[0].values.map((value) => {
+      return (<MenuItem>{value.name}</MenuItem>);
+    });
+    
+    return (
+      <DropdownButton title="Data Variables" id="data-var-dropdown">
+        {values}
+      </DropdownButton>
+    );
+  }
+}
 
 class Sieve extends React.Component {
   renderDays(days) {
@@ -89,6 +107,7 @@ class Sieve extends React.Component {
     }
     return <div>{buttons}</div>;
   }
+  
   render() {
     return (
       <div className="sieve">
@@ -101,9 +120,11 @@ class Sieve extends React.Component {
           <Row>
             <Col sm={4}>
               <h3>Configure Start Date</h3>
-              <TemporalConfigurator {...this.props} />
+              <TemporalConfigurator {...this.props}
+                ref="dateStart" />
               <h3>Configure End Date</h3>
-              <TemporalConfigurator {...this.props} />
+              <TemporalConfigurator {...this.props}
+                ref="dateEnd" />
             </Col>
             <Col sm={8}>
               <SpatialConfigurator {...this.props} />
@@ -119,10 +140,7 @@ class Sieve extends React.Component {
               <Button>-</Button>
             </ButtonGroup>
             <ButtonGroup className="pull-right">
-              <DropdownButton title="Data Variables" id="data-var-dropdown">
-                <MenuItem eventKey="1">Data Variable 1</MenuItem>
-                <MenuItem eventKey="2">Data Variable 2</MenuItem>
-              </DropdownButton>
+              <DataVariableMenu {...this.props} />
               <DropdownButton title="Form Variables" id="form-var-dropdown">
                 <MenuItem eventKey="1">Form Variable 1</MenuItem>
                 <MenuItem eventKey="2">Form Variable 2</MenuItem>
