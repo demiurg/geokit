@@ -17,11 +17,13 @@ var metadata = {
     title: "This is a Sieve title",
     description: "This is a Sieve description"
 }
+
 var spatial_domain = [
   ["x1", "y1"],
   ["x2", "y2"],
   ["x3", "y3"]
 ]
+
 var temporal_domain = [
   new Date(1996, 0, 1),
   new Date(1997, 0, 1),
@@ -29,6 +31,7 @@ var temporal_domain = [
   new Date(1999, 0, 1),
   new Date(2000, 0, 1)
 ]
+
 var data = [
   {
     space: spatial_domain[0],
@@ -63,6 +66,11 @@ var data = [
     ]
   }
 ]
+
+var filters = [
+  
+];
+
 class Sieve extends React.Component {
   renderDays(days) {
     var buttons = [];
@@ -82,19 +90,6 @@ class Sieve extends React.Component {
     return <div>{buttons}</div>;
   }
   render() {
-    var output = {
-      cols: [
-        "Year",
-        "January",
-        "February",
-        "March"
-      ],
-      rows: [
-        [1995, this.renderDays(31), this.renderDays(28), this.renderDays(31)],
-        [1996, this.renderDays(31), this.renderDays(28), this.renderDays(31)],
-        [1997, this.renderDays(31), this.renderDays(28), this.renderDays(31)],
-      ]
-    }
     return (
       <div className="sieve">
         <Panel>
@@ -139,8 +134,6 @@ class Sieve extends React.Component {
             </ButtonGroup>
           </ButtonToolbar>
           <Input type="textarea" style={{resize:"vertical"}} />
-        </Panel>
-        <Panel>
           <Filter />
         </Panel>
         <Panel>
@@ -355,7 +348,7 @@ class SieveTable extends React.Component {
     return (
       <Table striped hover responsive>
         {this.props.cols ? <TableHead cols={this.props.cols} /> : null}
-        <TableBody rows={this.props.rows} />
+        {this.props.rows.length > 0 ? <TableBody rows={this.props.rows} /> : null}
       </Table>
     );
   }
@@ -387,33 +380,67 @@ class TableBody extends React.Component {
 }
 
 class Filter extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      filters: [],
+      buttonDisabled: true
+    };
+  }
+  
+  validateFilter() {
+    if (this.refs.action.refs.input.value == "" ||
+      this.refs.comparison.refs.input.value == "" ||
+      this.refs.benchmark.refs.input.value == "") {
+      this.setState({buttonDisabled: true});
+    } else {
+      this.setState({buttonDisabled: null});
+    }
+  }
+  
+  addFilter() {
+    var filters = this.state.filters.slice();
+    filters.push([
+      this.refs.action.refs.input.value,
+      this.refs.comparison.refs.input.value,
+      this.refs.benchmark.refs.input.value
+    ]);
+    this.setState({filters: filters});
+  }
+  
   render() {
     return (
       <Row>
         <Col sm={4}>
-          <form>
-            <Input type="select">
-              <option value="January">Exclude rows where value is</option>
-              <option value="January">Include rows where value is</option>
+          <form onChange={this.validateFilter.bind(this)}>
+            <Input ref="action" type="select">
+              <option value="exclusive">Exclude rows where value is</option>
+              <option value="inclusive">Include rows where value is</option>
             </Input>
-            <Input type="select">
-              <option value="January">Less than</option>
-              <option value="January">Less than or equal to</option>
-              <option value="January">Equal to</option>
-              <option value="January">Greater than</option>
-              <option value="January">Greater than or equal to</option>
+            <Input ref="comparison" type="select">
+              <option value="lt">Less than</option>
+              <option value="ltet">Less than or equal to</option>
+              <option value="et">Equal to</option>
+              <option value="gt">Greater than</option>
+              <option value="gtet">Greater than or equal to</option>
             </Input>
-            <Input type="text" placeholder="x" />
-            <Button className="pull-right">Add Filter</Button>
+            <Input ref="benchmark" type="text" placeholder="x" />
+            <Button
+              className="pull-right"
+              disabled={this.state.buttonDisabled}
+              onClick={this.addFilter.bind(this)}>Add Filter</Button>
           </form>
         </Col>
         <Col sm={8}>
-          <SieveTable
-            rows={[
-              ["Exclude rows where value is greater than 50", <Button bsSize="xsmall" className="pull-right">x</Button>],
-              ["Exclude rows where value is less than or equal to 6", <Button bsSize="xsmall" className="pull-right">x</Button>],
-              ["Exclude rows where value is equal to 8", <Button bsSize="xsmall" className="pull-right">x</Button>]
-            ]} />
+          <Panel>
+            <SieveTable
+              cols={[
+                "Type of Filter",
+                "Method of Comparison",
+                "Value to Compare With"
+              ]}
+              rows={this.state.filters} />
+          </Panel>
         </Col>
       </Row>
     );
