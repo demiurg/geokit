@@ -416,27 +416,22 @@ class Filter extends React.Component {
   }
   
   validateFilter() {
-    console.log('1');
     if (this.refs.action.refs.input.value == "" ||
       this.refs.comparison.refs.input.value == "" ||
       this.refs.benchmark.refs.input.value == "") {
       this.setState({buttonDisabled: true});
-      console.log('2');
       return false;
     } else {
-      console.log('3');
       for (var i = 0; i < this.state.filters.length; i++) {
         if (this.state.filters[i].key == this.refs.action.refs.input.value +
           this.refs.comparison.refs.input.value +
           this.refs.benchmark.refs.input.value) {
-          console.log('filter already exists');
         
           this.setState({buttonDisabled: true});
           
           return false;
         }
       }
-      console.log('4');
       this.setState({buttonDisabled: null});
       
       return true;
@@ -462,7 +457,13 @@ class Filter extends React.Component {
   }
   
   removeFilter(filter) {
-    console.log('made it here');
+    var filters = this.state.filters;
+    for (var i = 0; i < filters.length; i++) {
+      if (this.state.filters[i].key == filter) {
+        filters.splice(i, 1);
+      }
+    }
+    this.setState({filters: filters});
   }
   
   resetForm() {
@@ -497,7 +498,7 @@ class Filter extends React.Component {
         </Col>
         <Col sm={8}>
           <Panel>
-            <FilterList filters={this.state.filters} callback={this.removeFilter} />
+            <FilterList filters={this.state.filters} removeFilter={this.removeFilter.bind(this)} />
           </Panel>
         </Col>
       </Row>
@@ -509,11 +510,7 @@ class FilterList extends React.Component {
   render() {
     var filters = this.props.filters.map((filter) => {
       return (
-        <tr>
-          <td>{filter.action}</td>
-          <td>{filter.comparison}</td>
-          <td>{filter.benchmark}</td>
-        </tr>
+        <FilterListItem filter={filter} removeFilter={this.props.removeFilter} />
       );
     });
     return (
@@ -535,17 +532,26 @@ class FilterList extends React.Component {
 
 class FilterListItem extends React.Component {
   render() {
-    <tr>
-      <td>
-        {this.props.filter.action}
-      </td>
-      <td>
-        {this.props.filter.comparison}
-      </td>
-      <td>
-        {this.props.filter.benchmark}
-      </td>
-    </tr>
+    return (
+      <tr>
+        <td>
+          {this.props.filter.action}
+        </td>
+        <td>
+          {this.props.filter.comparison}
+        </td>
+        <td>
+          {this.props.filter.benchmark}
+        </td>
+        <td>
+          <Button
+            bsSize="xsmall"
+            onClick={this.props.removeFilter.bind(null, this.props.filter.key)}>
+            x
+          </Button>
+        </td>
+      </tr>
+    );
   }
 }
 
