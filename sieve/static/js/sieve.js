@@ -67,10 +67,6 @@ var data = [
   }
 ]
 
-var filters = [
-  
-];
-
 class DataVariableMenu extends React.Component {
   constructor(props) {
     super(props);
@@ -78,7 +74,11 @@ class DataVariableMenu extends React.Component {
   
   render() {
     var values = this.props.data[0].values.map((value) => {
-      return (<MenuItem>{value.name}</MenuItem>);
+      return (
+        <MenuItem
+          onSelect={this.props.callback.bind(null, value.name)} >
+          {value.name}
+        </MenuItem>);
     });
     
     return (
@@ -106,6 +106,10 @@ class Sieve extends React.Component {
       );
     }
     return <div>{buttons}</div>;
+  }
+  
+  insertVariable(event, name) {
+    console.log(this.refs.expressionEditor.refs.input.getDOMNode().selectionStart);
   }
   
   render() {
@@ -140,7 +144,7 @@ class Sieve extends React.Component {
               <Button>-</Button>
             </ButtonGroup>
             <ButtonGroup className="pull-right">
-              <DataVariableMenu {...this.props} />
+              <DataVariableMenu {...this.props} callback={this.insertVariable.bind(this, name)} />
               <DropdownButton title="Form Variables" id="form-var-dropdown">
                 <MenuItem eventKey="1">Form Variable 1</MenuItem>
                 <MenuItem eventKey="2">Form Variable 2</MenuItem>
@@ -151,7 +155,7 @@ class Sieve extends React.Component {
               </DropdownButton>
             </ButtonGroup>
           </ButtonToolbar>
-          <Input type="textarea" style={{resize:"vertical"}} />
+          <Input type="textarea" style={{resize:"vertical"}} ref="expressionEditor" />
           <Filter />
         </Panel>
         <Panel>
@@ -402,47 +406,89 @@ class Filter extends React.Component {
     super(props);
     this.state = {
       filters: [],
-      buttonDisabled: true
+      buttonDisabled: true,
+      formDefaults: {
+        action: 'exclusive',
+        comparison: 'lt',
+        benchmark: 'x'
+      }
     };
   }
   
   validateFilter() {
+    console.log('1');
     if (this.refs.action.refs.input.value == "" ||
       this.refs.comparison.refs.input.value == "" ||
       this.refs.benchmark.refs.input.value == "") {
       this.setState({buttonDisabled: true});
+      console.log('2');
+      return false;
     } else {
+      console.log('3');
+      for (var i = 0; i < this.state.filters.length; i++) {
+        if (this.state.filters[i].key == this.refs.action.refs.input.value +
+          this.refs.comparison.refs.input.value +
+          this.refs.benchmark.refs.input.value) {
+          console.log('filter already exists');
+        
+          this.setState({buttonDisabled: true});
+          
+          return false;
+        }
+      }
+      console.log('4');
       this.setState({buttonDisabled: null});
+      
+      return true;
     }
   }
   
   addFilter() {
-    var filters = this.state.filters.slice();
-    filters.push([
-      this.refs.action.refs.input.value,
-      this.refs.comparison.refs.input.value,
-      this.refs.benchmark.refs.input.value
-    ]);
-    this.setState({filters: filters});
+    if (this.validateFilter() == true) {
+      var filters = this.state.filters.slice();
+      filters.push({
+        action: this.refs.action.refs.input.value,
+        comparison: this.refs.comparison.refs.input.value,
+        benchmark: this.refs.benchmark.refs.input.value,
+        key: this.refs.action.refs.input.value +
+          this.refs.comparison.refs.input.value +
+          this.refs.benchmark.refs.input.value
+      });
+      this.setState({filters: filters});
+      this.resetForm();
+    } else if (this.validateFilter() == false) {
+      console.log('getting here');
+    }
+  }
+  
+  removeFilter(filter) {
+    console.log('made it here');
+  }
+  
+  resetForm() {
+    this.refs.action.refs.input.value = "exclusive";
+    this.refs.comparison.refs.input.value = "lt";
+    this.refs.benchmark.refs.input.value = "";
+    this.validateFilter();
   }
   
   render() {
     return (
       <Row>
         <Col sm={4}>
-          <form onChange={this.validateFilter.bind(this)}>
-            <Input ref="action" type="select">
+          <form>
+            <Input ref="action" type="select" defaultValue="exclusive" onChange={this.validateFilter.bind(this)}>
               <option value="exclusive">Exclude rows where value is</option>
               <option value="inclusive">Include rows where value is</option>
             </Input>
-            <Input ref="comparison" type="select">
+            <Input ref="comparison" type="select" defaultValue="lt" onChange={this.validateFilter.bind(this)}>
               <option value="lt">Less than</option>
               <option value="ltet">Less than or equal to</option>
               <option value="et">Equal to</option>
               <option value="gt">Greater than</option>
               <option value="gtet">Greater than or equal to</option>
             </Input>
-            <Input ref="benchmark" type="text" placeholder="x" />
+            <Input ref="benchmark" type="text" placeholder="x" onChange={this.validateFilter.bind(this)}/>
             <Button
               className="pull-right"
               disabled={this.state.buttonDisabled}
@@ -451,17 +497,55 @@ class Filter extends React.Component {
         </Col>
         <Col sm={8}>
           <Panel>
-            <SieveTable
-              cols={[
-                "Type of Filter",
-                "Method of Comparison",
-                "Value to Compare With"
-              ]}
-              rows={this.state.filters} />
+            <FilterList filters={this.state.filters} callback={this.removeFilter} />
           </Panel>
         </Col>
       </Row>
     );
+  }
+}
+
+class FilterList extends React.Component {
+  render() {
+    var filters = this.props.filters.map((filter) => {
+      return (
+        <tr>
+          <td>{filter.action}</td>
+          <td>{filter.comparison}</td>
+          <td>{filter.benchmark}</td>
+        </tr>
+      );
+    });
+    return (
+      <Table striped hover responsive>
+        <thead>
+          <tr>
+            <th>Type of Filter</th>
+            <th>Method of Comparison</th>
+            <th>Value for Comparison</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filters}
+        </tbody>            
+      </Table>
+    );
+  }
+}
+
+class FilterListItem extends React.Component {
+  render() {
+    <tr>
+      <td>
+        {this.props.filter.action}
+      </td>
+      <td>
+        {this.props.filter.comparison}
+      </td>
+      <td>
+        {this.props.filter.benchmark}
+      </td>
+    </tr>
   }
 }
 
