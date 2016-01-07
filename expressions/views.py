@@ -7,8 +7,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from wagtail.wagtailadmin import messages
 from wagtail.wagtailadmin.modal_workflow import render_modal_workflow
 
+from rest_framework import viewsets
+
 from expressions.forms import ExpressionForm
-from expressions.models import Expression
+from expressions.models import Expression, FormVariable
+from expressions.serializers import ExpressionSerializer, FormVariableSerializer
 from layers.views import tile_json
 
 
@@ -114,3 +117,15 @@ def expression_chosen(request, expression_id):
         request, None, 'expressions/expression_chosen.js',
         {'expression_json': json.dumps({'id': expression.id, 'name': expression.name, 'expression_text': expression.expression_text})}
     )
+
+
+# rest_framework ViewSets
+
+class FormVariableViewSet(viewsets.ModelViewSet):
+    queryset = FormVariable.objects.all()
+    serializer_class = FormVariableSerializer
+
+
+class ExpressionViewSet(viewsets.ModelViewSet):
+    queryset = Expression.objects.all()
+    serializer_class = ExpressionSerializer

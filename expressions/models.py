@@ -6,8 +6,6 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
 
-from layers.models import Feature
-
 
 EXPRESSION_TYPES = (
     ('arith', 'arithmetic'),

@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     'compressor',
     'modelcluster',
     'django_hstore',
+    'rest_framework',
 
     'wagtail.wagtailcore',
     'wagtail.wagtailadmin',
