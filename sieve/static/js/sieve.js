@@ -90,6 +90,29 @@ class DataVariableMenu extends React.Component {
 }
 
 class Sieve extends React.Component {
+  constructor(props) {
+    super(props);
+
+    this._onChange = this._onChange.bind(this);
+
+    loadFormVariables();
+    this.state = {
+      formVariables: FormVariableStore.getState()
+    };
+  }
+
+  componentWillMount() {
+    FormVariableStore.addChangeListener(this._onChange);
+  }
+
+  componentWillUnmount() {
+    FormVariableStore.removeChangeListener(this._onChange);
+  }
+
+  _onChange() {
+    this.setState({formVariables: FormVariableStore.getState()});
+  }
+
   renderDays(days) {
     var buttons = [];
     const tooltip = <Tooltip>5 Moments</Tooltip>;
@@ -146,8 +169,9 @@ class Sieve extends React.Component {
             <ButtonGroup className="pull-right">
               <DataVariableMenu {...this.props} callback={this.insertVariable.bind(this, name)} />
               <DropdownButton title="Form Variables" id="form-var-dropdown">
-                <MenuItem eventKey="1">Form Variable 1</MenuItem>
-                <MenuItem eventKey="2">Form Variable 2</MenuItem>
+                {this.state.formVariables.variables.map((formVar, i) => {
+                  return <MenuItem eventKey={i}>{formVar.name}</MenuItem>;
+                })}
               </DropdownButton>
               <DropdownButton title="User Variables" id="user-var-dropdown">
                 <MenuItem eventKey="1">User Variable 1</MenuItem>
