@@ -73,9 +73,10 @@ class DataVariableMenu extends React.Component {
   }
   
   render() {
-    var values = this.props.data[0].values.map((value) => {
+    var values = this.props.data[0].values.map((value, index) => {
       return (
         <MenuItem
+          key={index}
           onSelect={this.props.callback.bind(null, value.name)} >
           {value.name}
         </MenuItem>);
@@ -118,7 +119,7 @@ class Sieve extends React.Component {
     const tooltip = <Tooltip>5 Moments</Tooltip>;
     for (var i=1; i <= days; i++) {
       buttons.push(
-        <Col xs={2} className="text-center">
+        <Col xs={2} className="text-center" key={i}>
           <OverlayTrigger
             trigger="hover"
             placement="top"
@@ -170,7 +171,7 @@ class Sieve extends React.Component {
               <DataVariableMenu {...this.props} callback={this.insertVariable.bind(this, name)} />
               <DropdownButton title="Form Variables" id="form-var-dropdown">
                 {this.state.formVariables.variables.map((formVar, i) => {
-                  return <MenuItem eventKey={i}>{formVar.name}</MenuItem>;
+                  return <MenuItem key={i} eventKey={i}>{formVar.name}</MenuItem>;
                 })}
               </DropdownButton>
               <DropdownButton title="User Variables" id="user-var-dropdown">
@@ -256,9 +257,10 @@ class TemporalConfigurator extends React.Component {
   }
   
   renderYears() {
-    var optionsYears = this.props.temporalDomain.map((date) => {
+    var optionsYears = this.props.temporalDomain.map((date, index) => {
       return (
         <option
+          key={index}
           value={date.getFullYear()}>
           {date.getFullYear()}
         </option>
@@ -284,6 +286,7 @@ class TemporalConfigurator extends React.Component {
     for (var i = 0; i < 12; i++) {
       optionsMonths.push(
         <option
+          key={i}
           value={i}>
           {i + 1}
         </option>
@@ -333,6 +336,7 @@ class TemporalConfigurator extends React.Component {
     for (var i = 1; i <= days; i++) {
       optionsDays.push(
         <option
+          key={i}
           value={i}>
           {i}
         </option>
