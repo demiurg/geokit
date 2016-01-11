@@ -62,6 +62,8 @@ INSTALLED_APPS = (
     'expressions',
     'layers',
     'sieve',
+
+    'crispy_forms',
 )
 
 MIDDLEWARE_CLASSES = (
