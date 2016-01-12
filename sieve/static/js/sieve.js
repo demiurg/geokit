@@ -97,21 +97,28 @@ class Sieve extends React.Component {
     this._onChange = this._onChange.bind(this);
 
     loadFormVariables();
+    loadUserVariables();
     this.state = {
-      formVariables: FormVariableStore.getState()
+      formVariables: FormVariableStore.getState(),
+      userVariables: UserVariableStore.getState()
     };
   }
 
   componentWillMount() {
     FormVariableStore.addChangeListener(this._onChange);
+    UserVariableStore.addChangeListener(this._onChange);
   }
 
   componentWillUnmount() {
     FormVariableStore.removeChangeListener(this._onChange);
+    UserVariableStore.removeChangeListener(this._onChange);
   }
 
   _onChange() {
-    this.setState({formVariables: FormVariableStore.getState()});
+    this.setState({
+      formVariables: FormVariableStore.getState(),
+      userVariables: UserVariableStore.getState()
+    });
   }
 
   renderDays(days) {
@@ -175,8 +182,9 @@ class Sieve extends React.Component {
                 })}
               </DropdownButton>
               <DropdownButton title="User Variables" id="user-var-dropdown">
-                <MenuItem eventKey="1">User Variable 1</MenuItem>
-                <MenuItem eventKey="2">User Variable 2</MenuItem>
+                {this.state.userVariables.variables.map((userVar, i) => {
+                  return <MenuItem key={i} eventKey={i}>{userVar.name}</MenuItem>;
+                })}
               </DropdownButton>
             </ButtonGroup>
           </ButtonToolbar>
