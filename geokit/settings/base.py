@@ -41,6 +41,8 @@ INSTALLED_APPS = (
     'modelcluster',
     'django_hstore',
     'rest_framework',
+    'overextends',
+    'dashboard',
 
     'wagtail.wagtailcore',
     'wagtail.wagtailadmin',
