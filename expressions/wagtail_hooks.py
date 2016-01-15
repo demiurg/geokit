@@ -17,9 +17,9 @@ def register_admin_urls():
     ]
 
 
-@hooks.register('register_admin_menu_item')
-def register_expressions_menu_item():
-    return MenuItem('Expressions', reverse('expressions:index'), classnames="icon icon-code")
+#@hooks.register('register_admin_menu_item')
+#def register_expressions_menu_item():
+    #return MenuItem('Expressions', reverse('expressions:index'), classnames="icon icon-code")
 
 
 @hooks.register('register_rich_text_embed_handler')

@@ -9,7 +9,6 @@ from wagtail.wagtailadmin.modal_workflow import render_modal_workflow
 
 from rest_framework import viewsets
 
-from expressions.forms import ExpressionForm
 from expressions.models import Expression, FormVariable
 from expressions.serializers import ExpressionSerializer, FormVariableSerializer
 from layers.views import tile_json
@@ -22,43 +21,43 @@ def index(request):
     })
 
 
-def add(request):
-    if request.method == 'POST':
-        form = ExpressionForm(request.POST)
+#def add(request):
+    #if request.method == 'POST':
+        #form = ExpressionForm(request.POST)
 
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Expression added.")
-            return redirect('expressions:index')
-        else:
-            messages.error(request, "The expression could not be saved due to errors.")
-    else:
-        form = ExpressionForm()
+        #if form.is_valid():
+            #form.save()
+            #messages.success(request, "Expression added.")
+            #return redirect('expressions:index')
+        #else:
+            #messages.error(request, "The expression could not be saved due to errors.")
+    #else:
+        #form = ExpressionForm()
 
-    return render(request, 'expressions/add.html', {'form': form})
+    #return render(request, 'expressions/add.html', {'form': form})
 
 
-def edit(request, expression_id):
-    expression = get_object_or_404(Expression, pk=expression_id)
+#def edit(request, expression_id):
+    #expression = get_object_or_404(Expression, pk=expression_id)
 
-    if request.POST:
-        form = ExpressionForm(request.POST, instance=expression)
-        if form.is_valid():
-            expression = form.save()
+    #if request.POST:
+        #form = ExpressionForm(request.POST, instance=expression)
+        #if form.is_valid():
+            #expression = form.save()
 
-            messages.success(request, "Expression '{0}' updated".format(expression.name), buttons=[
-                messages.button(reverse('expressions:edit', args=(expression.pk,)), 'Edit')
-            ])
-            return redirect('expressions:index')
-        else:
-            messages.error(request, "The expression could not be saved due to errors.")
-    else:
-        form = ExpressionForm(instance=expression)
+            #messages.success(request, "Expression '{0}' updated".format(expression.name), buttons=[
+                #messages.button(reverse('expressions:edit', args=(expression.pk,)), 'Edit')
+            #])
+            #return redirect('expressions:index')
+        #else:
+            #messages.error(request, "The expression could not be saved due to errors.")
+    #else:
+        #form = ExpressionForm(instance=expression)
 
-    return render(request, "expressions/edit.html", {
-        'expression': expression,
-        'form': form
-    })
+    #return render(request, "expressions/edit.html", {
+        #'expression': expression,
+        #'form': form
+    #})
 
 
 def delete(request, expression_id):
@@ -101,12 +100,10 @@ def evaluate_on_tile(request, layer_name, z, x, y, expression_id):
 
 
 def chooser(request):
-    uploadForm = ExpressionForm()
     expressions = Expression.objects.all()
 
     return render_modal_workflow(request, 'expressions/chooser.html', 'expressions/chooser.js', {
         'expressions': expressions,
-        'uploadform': uploadForm,
         'isSearching': False,
     })
 
