@@ -1,6 +1,7 @@
 from django import forms
 from crispy_forms.helper import FormHelper
 
+
 class ExampleForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(ExampleForm, self).__init__(*args, **kwargs)

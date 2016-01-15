@@ -63,16 +63,6 @@
                 "fillOpacity": 0.5
             };
 
-            var geojsonURL = '/layers/{{ layer.name }}/{z}/{x}/{y}.json';
-            var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
-                clipTiles: true,
-                unique: function(feature) {
-                    return feature.id;
-                }
-            }, {
-                style: geojsonStyle
-            });
-            map.addLayer(geojsonTileLayer);
 
             {% comment %}
             var mvtURL = '/builder/admin/layers/{{ layer.name }}/{z}/{x}/{y}.pbf';
@@ -93,7 +83,15 @@
                     },
                     click: function(e) {
                         var feature = e.target.feature;
-                        console.log(feature.properties);
+                        if (feature.properties) {
+                            var popupString = '<div class="popup">';
+                            for (var k in feature.properties) {
+                                var v = feature.properties[k];
+                                popupString += k + ': ' + v + '<br />';
+                            }
+                            popupString += '</div>';
+                            layer.bindPopup(popupString);
+                        }
                     }
                 });
             }
@@ -102,8 +100,8 @@
                 "clickable": true,
                 "color": "#46F",
                 "fillColor": "#46F",
-                "weight": 0,
-                "opacity": 0.4,
+                "weight": 1,
+                "opacity": 0.6,
                 "fillOpacity": 0.4
             };
 
@@ -111,10 +109,33 @@
                 "clickable": true,
                 "color": "#76F",
                 "fillColor": "#76F",
-                "weight": 0,
-                "opacity": 0.7,
+                "weight": 2,
+                "opacity": 0.8,
                 "fillOpacity": 0.7
             };
+
+            var geojsonURL = '/layers/{{ layer.name }}/{z}/{x}/{y}.json';
+            var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
+                clipTiles: true,
+                unique: function(feature) {
+                    return feature.properties.id;
+                }
+            }, {
+                style: defaultStyle,
+                onEachFeature: self.featureHandler,
+                pointToLayer: function (feature, latlng) {
+                    return new L.CircleMarker(latlng, {
+                        radius: 5,
+                        fillColor: "#A3C990",
+                        color: "#000",
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.4
+                    });
+                },
+            });
+            map.addLayer(geojsonTileLayer);
+
         }
 
         $(document).ready(function(){

@@ -1,5 +1,7 @@
 {% overextends "wagtailadmin/base.html" %}
 
+{% load static %}
+
 {% block branding_logo %}
-    asdfasdf
+    <img src="{% static 'dashboard/img/logo.png' %}" alt="GeoKit" width="80%" />
 {% endblock %}
