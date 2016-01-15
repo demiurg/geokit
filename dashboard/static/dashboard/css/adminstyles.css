@@ -103,16 +103,18 @@ li.sequence-member:hover {
     color: #70575b;
 }
 
-.dropdown .dropdown-toggle {
+footer .dropdown .dropdown-toggle {
     background-color: rgba(0, 0, 0, 0.20);
 }
-input[type="button"], .button, button {
-    background-color: #70575b;
+input[type="button"], .button, button, .btn, .btn-default {
+    background-color: rgba(112, 87, 91, 1.00);
     border: 0;
+    color: #EAE6E7;
 }
 
-input[type="button"]:hover, .button:hover, button:hover {
-    background-color: #5a4649;
+input[type="button"]:hover, .button:hover, button:hover, .btn:hover {
+    background-color: rgba(90, 70, 73, 1.00);
+    color: #EAE6E7;
 }
 
 .buttongroup-square input[type="button"], .buttongroup-square .button, .buttongroup-square button {
@@ -125,4 +127,3 @@ input[type="button"]:hover, .button:hover, button:hover {
     padding-left: 20px;
     width: 100%;
 }
-    
