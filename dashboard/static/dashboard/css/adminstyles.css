@@ -67,3 +67,7 @@ header, .tab-nav.merged {
 .breadcrumb li a, .breadcrumb li a:after {
     color: rgb(215,215,215);
 }
+
+.logo img {
+    width: 119px;
+}
