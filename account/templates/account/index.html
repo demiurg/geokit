@@ -1,6 +1,6 @@
 {% extends 'account/base.html' %}
 
-{% load static crispy_forms_tags %}
+{% load static %}
 
 {% block styles %}
   #signup {
@@ -300,8 +300,5 @@
           </div>
       </div>
     </div>
-  </div>
-  <div class="test">
-    {% crispy example_form %}
   </div>
 {% endblock %}

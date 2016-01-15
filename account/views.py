@@ -7,8 +7,7 @@ import random
 
 @ensure_csrf_cookie
 def index(request):
-    example_form = ExampleForm()
-    return render(request, 'account/index.html', {'example_form': example_form})
+    return render(request, 'account/index.html')
 
 
 @csrf_protect
