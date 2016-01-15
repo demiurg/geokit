@@ -12,6 +12,7 @@ from django.conf import settings
 from django.contrib.gis.geos import GeometryCollection, GEOSGeometry
 from django.contrib.gis.gdal import OGRGeometry
 from django.http import HttpResponse
+from django.db import connection
 
 from wagtail.wagtailadmin import messages
 
@@ -20,10 +21,13 @@ from forms import LayerForm, LayerEditForm
 from utils import mapnik_xml, tile_cache
 
 from fiona.crs import to_string
-import ModestMaps
 from shapely.geometry import shape
-import TileStache
-from TileStache.Goodies.VecTiles import mvt
+from . import mvt
+
+from .globalmaptiles import GlobalMercator
+import fcntl
+import errno
+import traceback
 
 
 def layer_json(request, layer_name):
@@ -47,9 +51,9 @@ def layer_json(request, layer_name):
 
 def tile_json(request, layer_name, z, x, y):
     x, y, z = int(x), int(y), int(z)
-    mimetype, data = stache(request, layer_name, z, x, y, "mvt")
-
-    mvt_features = mvt.decode(StringIO(data))
+    #mimetype, data = stache(request, layer_name, z, x, y, "mvt")
+    #mvt_features = mvt.decode(StringIO(data))
+    mvt_features = manual_mvt(layer_name, z, x, y)
     features = []
     for wkb, props in mvt_features:
         geom = GEOSGeometry(buffer(wkb))
@@ -57,9 +61,9 @@ def tile_json(request, layer_name, z, x, y):
         geom.transform(4326)
 
         try:
-            props['id'] = props['__id__']
-        except:
-            pass
+            props['properties']['id'] = props['__id__']
+        except Exception as e:
+            print(e)
 
         feature = '{ "type": "Feature", "geometry": ' + geom.json + ","
         feature += ' "properties": {}'.format(json.dumps(props['properties']))
@@ -71,85 +75,115 @@ def tile_json(request, layer_name, z, x, y):
     return HttpResponse(response, content_type="application/json")
 
 
-def stache(request, layer_name, z, x, y, extension):
+def manual_mvt(layer_name, z, x, y):
     x, y, z = int(x), int(y), int(z)
 
     cache_path = os.path.join(settings.STATIC_ROOT, "tiles")
 
-    SELECT = """
-        WITH bbox AS (SELECT !bbox! as bb),
-            bufbox AS (SELECT st_buffer(bbox.bb, 500, 'quad_segs=1') as buf FROM bbox),
-            px_area AS (SELECT st_area(bbox.bb) / 65536.0 as a FROM bbox)
-        SELECT * FROM(
+    file_path = "{}/{}/{}/{}/{}.mvt".format(cache_path, layer_name, z, x, y)
+    lock_path = "{}/{}/{}/{}/{}.mvt.lock".format(cache_path, layer_name, z, x, y)
+
+    while not os.path.exists(os.path.dirname(file_path)):
+        try:
+            os.makedirs(os.path.dirname(file_path), 0777)
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                pass
+
+    lock = Lock(lock_path)
+    lock.acquire()
+
+    try:
+        mvt_file = open(file_path, "rb")
+        mvt_data = mvt.decode(mvt_file)
+        mvt_file.close()
+        return mvt_data
+    except IOError as e:
+        if e.errno == errno.ENOENT:
+            mvt_file = open(file_path, "wb")
+
+    try:
+        gb = GlobalMercator()
+        x, y = gb.GoogleTile(x, y, z)
+        bbox_m = gb.TileBounds(x, y, z)
+        bbox = bbox2wkt(bbox_m)
+
+        SELECT = """
+            WITH box AS (SELECT ST_GeomFromText('{0}') AS b),
+                px_area AS (SELECT st_area(box.b) / 65536.0 AS a FROM box),
+                px_length AS (SELECT sqrt(px_area.a) AS l FROM px_area),
+                bufbox AS (SELECT st_buffer(box.b, px_length.l*8, 'quad_segs=1') AS buf FROM box, px_area, px_length),
+                area_threshhold AS (SELECT px_area.a * 20 AS a FROM px_area),
+                polygons AS (
+                    SELECT
+                        ST_CollectionExtract(geometry, 3) AS __geometry__,
+                        id AS __id__,
+                        properties
+                    FROM layers_feature, px_area, box, area_threshhold
+                    WHERE layer_id = '{1}' AND geometry && box.b AND
+                        st_area(geometry) > px_area.a
+                ),
+                selection AS (
+                    SELECT * FROM(
+                        SELECT
+                            ST_CollectionExtract(geometry, 1) AS __geometry__,
+                            id AS __id__,
+                            properties
+                        FROM layers_feature
+                        WHERE layer_id = '{1}'
+                        UNION
+                        SELECT
+                            ST_CollectionExtract(geometry, 2) AS __geometry__,
+                            id AS __id__,
+                            properties
+                        FROM layers_feature
+                        WHERE layer_id = '{1}'
+                        UNION
+                        SELECT * FROM polygons
+                    ) as extr WHERE NOT ST_isEmpty(__geometry__)
+                )
             SELECT
-                ST_CollectionExtract(geometry, 1) AS __geometry__,
-                id AS __id__,
-                properties
-            FROM layers_feature
-            WHERE layer_id = '{0}'
-            UNION
-            SELECT
-                ST_CollectionExtract(geometry, 2) AS __geometry__,
-                id AS __id__,
-                properties
-            FROM layers_feature
-            WHERE layer_id = '{0}'
-            UNION
-            SELECT
-                ST_CollectionExtract(geometry, 3) AS __geometry__,
-                id AS __id__,
-                properties
-            FROM layers_feature, px_area
-            WHERE layer_id = '{0}' AND st_area(geometry) > px_area.a
-        ) as extr WHERE NOT ST_isEmpty(__geometry__)
-    """.format(layer_name)
+                __geometry__, __id__, properties
+            FROM (
+                (SELECT
+                    ST_AsEWKB(st_intersection(
+                        ST_MakeValid(ST_Simplify(__geometry__, px_length.l * 2.0)),
+                        bufbox.buf
+                    )) AS __geometry__,
+                    __id__,
+                    properties
+                FROM selection, bufbox, px_length)
+            ) as Q
+            WHERE __geometry__ IS NOT NULL AND NOT ST_isEmpty(__geometry__)""".format(
+                bbox, layer_name
+            )
 
-    name = md5.md5(SELECT).hexdigest()
-    name = layer_name + '_poly'
+        cursor = connection.cursor()
+        cursor.execute(SELECT)
 
-    config = {
-        "cache": {
-            "name": "Disk",
-            "path": cache_path,
-            "umask": "0000",
-            "dirs": "portable"
-        },
-        "layers": {
-            name: {
-                "allowed origin": "*",
-                "provider": {
-                    "class": "TileStache.Goodies.VecTiles:Provider",
-                    "projection": "spherical mercator",
-                    "kwargs": {
-                        "srid": 3857,
-                        "clip": False,
-                        "simplify": 3,
-                        "dbinfo": {
-                            'host': settings.DATABASES['default']['HOST'],
-                            'user': settings.DATABASES['default']['USER'],
-                            'password': settings.DATABASES['default']['PASSWORD'],
-                            'database': settings.DATABASES['default']['NAME'],
-                        },
-                        "queries": [SELECT]
-                    },
-                },
-            },
-        },
-    }
+        columns = [col[0] for col in cursor.description]
 
-    if "cfg" in request.GET:
-        return HttpResponse(json.dumps(config, indent=4 * ' '))
+        data = [
+            (bytes(row[0]), dict(zip(columns[1:], row[1:])),)
+            for row in cursor.fetchall()
+        ]
 
-    # like http://tile.openstreetmap.org/1/0/0.png
-    coord = ModestMaps.Core.Coordinate(y, x, z)
+        try:
+            mvt.encode(mvt_file, data)
+        except Exception as e:
+            mvt_file.close()
+            os.unlink(file_path)
+        finally:
+            mvt_file.close()
+    except Exception as e:
+        lock.release()
+        os.unlink(file_path)
+        traceback.print_exc()
+        raise e
 
-    config = TileStache.Config.buildConfiguration(config)
+    lock.release()
 
-    mimetype, data = TileStache.getTile(
-        config.layers[name], coord, extension
-    )
-
-    return mimetype, data
+    return data
 
 
 @mapnik_xml
@@ -202,10 +236,16 @@ def add(request):
             try:
                 col = form.get_collection()
                 srs = to_string(form.layer_crs())
-                min_bounds = OGRGeometry('POINT ({} {})'.format(col.bounds[0], col.bounds[1]),
-                        srs=srs).transform(4326, clone=True)
-                max_bounds = OGRGeometry('POINT ({} {})'.format(col.bounds[2], col.bounds[3]),
-                        srs=srs).transform(4326, clone=True)
+
+                min_bounds = OGRGeometry(
+                    'POINT ({} {})'.format(col.bounds[0], col.bounds[1]),
+                    srs=srs
+                ).transform(4326, clone=True)
+                max_bounds = OGRGeometry(
+                    'POINT ({} {})'.format(col.bounds[2], col.bounds[3]),
+                    srs=srs
+                ).transform(4326, clone=True)
+
                 l.bounds = min_bounds.coords + max_bounds.coords
                 for record in col:
                     count += 1
@@ -288,3 +328,32 @@ def delete(request, layer_name):
 
     messages.success(request, _("Layer '{0}' deleted").format(layer_name))
     return redirect('layers:index')
+
+
+def bbox2wkt(bbox, srid=3857):
+    if srid == 3857:
+        wkt = 'SRID={0};POLYGON(({3} {4}, {1} {4}, {1} {2}, {3} {2}, {3} {4}))'.format(srid, *bbox)
+    elif srid == 4326:
+        wkt = 'SRID={0};POLYGON(({4} {3}, {4} {1}, {2} {1}, {2} {3}, {4} {3}))'.format(srid, *bbox)
+    else:
+        raise Exception("Only supports mercator and geographic")
+    return wkt
+
+
+class Lock:
+    def __init__(self, filename):
+        self.filename = filename
+        # This will create it if it does not exist already
+        self.handle = open(filename, 'w')
+
+    # Bitwise OR fcntl.LOCK_NB if you need a non-blocking lock
+    def acquire(self):
+        fcntl.flock(self.handle, fcntl.LOCK_EX)
+
+    def release(self):
+        fcntl.flock(self.handle, fcntl.LOCK_UN)
+
+    def __del__(self):
+        self.handle.close()
+        os.unlink(self.filename)
+
