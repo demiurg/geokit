@@ -99,6 +99,7 @@ class Sieve extends React.Component {
     loadFormVariables();
     loadUserVariables();
     this.state = {
+      expressionText: "",
       formVariables: FormVariableStore.getState(),
       userVariables: UserVariableStore.getState()
     };
@@ -142,8 +143,25 @@ class Sieve extends React.Component {
   insertVariable(event, name) {
     console.log(this.refs.expressionEditor.refs.input.getDOMNode().selectionStart);
   }
+
+  changeExpressionText(newValue) {
+    this.setState({expressionText: newValue});
+  }
+
+  insertToken(token)  {
+    var expressionEditor = ReactDOM.findDOMNode(this.refs.expressionEditor).getElementsByTagName("textarea")[0];
+    var caretPos = expressionEditor.selectionStart;
+    caretPos === 0 ? token = token + ' ' : token = ' ' + token + ' '; // Pad token
+    var expressionText = $(expressionEditor).val();
+    $(expressionEditor).val(expressionText.substring(0, caretPos) +  token + expressionText.substring(caretPos));
+  }
   
   render() {
+    var valueLink = {
+      value: this.state.expressionText,
+      requestChange: this.changeExpressionText.bind(this)
+    };
+
     return (
       <div className="sieve">
         <Panel>
@@ -169,26 +187,26 @@ class Sieve extends React.Component {
         <Panel>
           <ButtonToolbar>
             <ButtonGroup>
-              <Button>x</Button>
-              <Button>/</Button>
-              <Button>+</Button>
-              <Button>-</Button>
+              <Button onClick={this.insertToken.bind(this, '*')}>x</Button>
+              <Button onClick={this.insertToken.bind(this, '/')}>/</Button>
+              <Button onClick={this.insertToken.bind(this, '+')}>+</Button>
+              <Button onClick={this.insertToken.bind(this, '-')}>-</Button>
             </ButtonGroup>
             <ButtonGroup className="pull-right">
               <DataVariableMenu {...this.props} callback={this.insertVariable.bind(this, name)} />
               <DropdownButton title="Form Variables" id="form-var-dropdown">
                 {this.state.formVariables.variables.map((formVar, i) => {
-                  return <MenuItem key={i} eventKey={i}>{formVar.name}</MenuItem>;
+                  return <MenuItem key={i} eventKey={i} onClick={this.insertToken.bind(this, formVar.name)}>{formVar.name}</MenuItem>;
                 })}
               </DropdownButton>
               <DropdownButton title="User Variables" id="user-var-dropdown">
                 {this.state.userVariables.variables.map((userVar, i) => {
-                  return <MenuItem key={i} eventKey={i}>{userVar.name}</MenuItem>;
+                  return <MenuItem key={i} eventKey={i} onClick={this.insertToken.bind(this, userVar.name)}>{userVar.name}</MenuItem>;
                 })}
               </DropdownButton>
             </ButtonGroup>
           </ButtonToolbar>
-          <Input type="textarea" style={{resize:"vertical"}} ref="expressionEditor" />
+          <Input type="textarea" style={{resize:"vertical"}} ref="expressionEditor" valueLink={valueLink} />
           <Filter />
         </Panel>
         <Panel>
