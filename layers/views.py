@@ -1,6 +1,4 @@
-from cStringIO import StringIO
 import json
-import md5
 import mimetypes
 import os
 import urllib2
@@ -113,15 +111,30 @@ def manual_mvt(layer_name, z, x, y):
                 px_area AS (SELECT st_area(box.b) / 65536.0 AS a FROM box),
                 px_length AS (SELECT sqrt(px_area.a) AS l FROM px_area),
                 bufbox AS (SELECT st_buffer(box.b, px_length.l*8, 'quad_segs=1') AS buf FROM box, px_area, px_length),
-                area_threshhold AS (SELECT px_area.a * 20 AS a FROM px_area),
-                polygons AS (
+                area_threshhold AS (SELECT px_area.a * 20 AS a, px_area.a / 4 as b FROM px_area),
+                area_polygons AS (
                     SELECT
                         ST_CollectionExtract(geometry, 3) AS __geometry__,
                         id AS __id__,
-                        properties
+                        properties,
+                        st_area(geometry) as area
                     FROM layers_feature, px_area, box, area_threshhold
                     WHERE layer_id = '{1}' AND geometry && box.b AND
-                        st_area(geometry) > px_area.a
+                        st_area(geometry) > area_threshhold.b
+                ),
+                polygons AS (
+                    SELECT * FROM area_polygons ORDER BY area DESC
+                ),
+                big_poly AS (
+                    SELECT * FROM polygons, area_threshhold WHERE area > area_threshhold.a
+                ),
+                small_poly AS (
+                    SELECT
+                        st_centroid(st_envelope(__geometry__)) as __geometry__,
+                        __id__, properties, area
+                    FROM polygons, box, area_threshhold
+                    WHERE area < area_threshhold.a
+                    LIMIT 200
                 ),
                 selection AS (
                     SELECT * FROM(
@@ -139,7 +152,7 @@ def manual_mvt(layer_name, z, x, y):
                         FROM layers_feature
                         WHERE layer_id = '{1}'
                         UNION
-                        SELECT * FROM polygons
+                        SELECT __geometry__, __id__, properties FROM big_poly
                     ) as extr WHERE NOT ST_isEmpty(__geometry__)
                 )
             SELECT
@@ -154,10 +167,13 @@ def manual_mvt(layer_name, z, x, y):
                     properties
                 FROM selection, bufbox, px_length)
             ) as Q
-            WHERE __geometry__ IS NOT NULL AND NOT ST_isEmpty(__geometry__)""".format(
+            WHERE __geometry__ IS NOT NULL AND NOT ST_isEmpty(__geometry__)
+            UNION
+            SELECT __geometry__, __id__, properties FROM small_poly""".format(
                 bbox, layer_name
             )
 
+        # print SELECT
         cursor = connection.cursor()
         cursor.execute(SELECT)
 
@@ -356,4 +372,3 @@ class Lock:
     def __del__(self):
         self.handle.close()
         os.unlink(self.filename)
-
