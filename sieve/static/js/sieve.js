@@ -574,6 +574,7 @@ class FilterList extends React.Component {
             <th>Type of Filter</th>
             <th>Method of Comparison</th>
             <th>Value for Comparison</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
