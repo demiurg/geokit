@@ -1,3 +1,38 @@
+a {
+    color: #70575b;
+}
+
+a:hover, .listing .title h2 a:hover {
+    color: #b49b9f;
+}
+
+.privacy-indicator .label-private::before, .privacy-indicator .label-public::before {
+    color: #70575b;
+}
+
+.icon.teal {
+    color: #70575b;
+}
+
+.listing .children a {
+    color: #ffffff;
+}
+
+form.status-tag:hover, a.status-tag:hover, a.status-tag.primary:hover {
+    border-color: #b49b9f;
+    color: #b49b9f;
+}
+
+input.button-secondary[type="submit"], input.button-secondary[type="reset"], input.button-secondary[type="button"], .button.button-secondary, button.button-secondary {
+    border-color: #70575b;
+    color: #70575b;
+}
+
+input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"]:hover, input.button-secondary[type="button"]:hover, .button.button-secondary:hover, button.button-secondary:hover {
+    border-color: #70575b;
+    background-color: #b49b9f;
+}
+
 .nav-wrapper .inner {
     background-color: #70575b;
 }
@@ -126,4 +161,20 @@ input[type="button"]:hover, .button:hover, button:hover, .btn:hover {
     margin-bottom: 20px;
     padding-left: 20px;
     width: 100%;
+}
+
+.listing td.children:hover {
+    background-color: #b49b9f;
+}
+
+.listing td.children {
+    background-color: transparent;
+}
+
+.listing td.children a {
+    color: #70575b;
+}
+
+.listing .index .button.bicolor {
+    background-color: #70575b;
 }
