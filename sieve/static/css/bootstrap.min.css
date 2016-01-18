@@ -6790,6 +6790,10 @@ input[type="button"], .button, button, .btn, .dropdown .dropdown-toggle {
     color: #EAE6E7;
 }
 
+button, .btn-default, .btn {
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.25);
+}
+
 input[type="button"]:hover, .button:hover, button:hover, .btn:hover,.dropdown button:hover {
     background-color: rgba(90, 70, 73, 1.00);
     color: #EAE6E7;
@@ -6840,4 +6844,8 @@ input[type="button"]:hover, .button:hover, button:hover, .btn:hover,.dropdown bu
 
 .table > thead > tr > th {
     border-bottom: 2px solid rgba(0, 0, 0, 0.25);
+}
+
+td button {
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.25);
 }

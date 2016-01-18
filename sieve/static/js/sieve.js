@@ -602,7 +602,7 @@ class FilterListItem extends React.Component {
           <Button
             bsSize="xsmall"
             onClick={this.props.removeFilter.bind(null, this.props.filter.key)}>
-            x
+            &nbsp;x&nbsp;
           </Button>
         </td>
       </tr>
@@ -631,7 +631,7 @@ class Aggregate extends React.Component {
   }
   render() {
     return (
-      <ButtonToolbar>
+      <ButtonToolbar className="text-center">
         <ButtonGroup>
           <Button
             onClick={this.aggregateDimensionToggle.bind(this, "space")}
