@@ -48,6 +48,18 @@ input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"
     color: rgb(155,155,155);
 }
 
+.explorer {
+    margin-top: 185px;
+}
+
+.explorer a:hover, .explorer .children:hover {
+    background-color: rgba(90, 70, 73, 1.00);
+}
+
+.nav-main {
+    top: 185px;
+}
+
 .breadcrumb {
     background-color: #63645f;
 }
@@ -108,7 +120,6 @@ header, .tab-nav.merged {
 }
 
 .input input, .input select {
-    border: 0;
     box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.35);
 }
 
@@ -141,13 +152,13 @@ li.sequence-member:hover {
 footer .dropdown .dropdown-toggle {
     background-color: rgba(0, 0, 0, 0.20);
 }
-input[type="button"], .button, button, .btn, .btn-default {
+input[type="button"], .button, button, .btn, .btn-default, header .button {
     background-color: rgba(112, 87, 91, 1.00);
     border: 0;
     color: #EAE6E7;
 }
 
-input[type="button"]:hover, .button:hover, button:hover, .btn:hover {
+input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .button:hover {
     background-color: rgba(90, 70, 73, 1.00);
     color: #EAE6E7;
 }
@@ -163,10 +174,6 @@ input[type="button"]:hover, .button:hover, button:hover, .btn:hover {
     width: 100%;
 }
 
-.listing td.children:hover {
-    background-color: #b49b9f;
-}
-
 .listing td.children {
     background-color: transparent;
 }
@@ -177,4 +184,24 @@ input[type="button"]:hover, .button:hover, button:hover, .btn:hover {
 
 .listing .index .button.bicolor {
     background-color: #70575b;
+}
+
+.listing tr:hover td.children {
+    background-color: #70575b;
+}
+
+.listing td.children:hover {
+    background-color: #b49b9f;
+}
+
+.nav-main a:hover, .nav-main a:focus {
+    background-color: #b49b9f;
+}
+
+.nav-main .menu-active > a {
+    border-color: #b49b9f;
+}
+
+.nav-main a:hover, .nav-main a:focus {
+    text-shadow: none;
 }
