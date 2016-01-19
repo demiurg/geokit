@@ -60,6 +60,10 @@ input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"
     top: 185px;
 }
 
+.listing .no-children a:hover {
+    color: #79575b;
+}
+
 .breadcrumb {
     background-color: #63645f;
 }
