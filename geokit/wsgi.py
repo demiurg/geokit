@@ -1,13 +1,12 @@
-"""
-WSGI config for geokit project.
+import os, sys
 
-It exposes the WSGI callable as a module-level variable named ``application``.
+_cwd = os.path.realpath(os.path.dirname(os.path.abspath(__file__)))
 
-For more information on this file, see
-https://docs.djangoproject.com/en/1.8/howto/deployment/wsgi/
-"""
+sys.path.insert(0, os.path.dirname(_cwd))
+sys.path.insert(0, _cwd)
 
-import os
+activate_this = os.path.realpath(os.path.join(_cwd, './../.venv/bin/activate_this.py'))
+execfile(activate_this, dict(__file__=activate_this))
 
 from django.core.wsgi import get_wsgi_application
 

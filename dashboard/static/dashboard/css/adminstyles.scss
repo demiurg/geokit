@@ -1,0 +1,216 @@
+$color-primary: #70575b;
+$color-secondary: #b49b9f;
+$button: rgba(112, 87, 91, 1.00);
+$button-hover: rgba(90, 70, 73, 1.00);
+
+a {
+    color: $color-primary;
+}
+
+a:hover, .listing .title h2 a:hover {
+    color: $color-secondary;
+}
+
+.privacy-indicator .label-private::before, .privacy-indicator .label-public::before {
+    color: $color-primary;
+}
+
+.icon.teal {
+    color: $color-primary;
+}
+
+.listing .children a {
+    color: #ffffff;
+}
+
+form.status-tag:hover, a.status-tag:hover, a.status-tag.primary:hover {
+    border-color: $color-secondary;
+    color: $color-secondary;
+}
+
+input.button-secondary[type="submit"], input.button-secondary[type="reset"], input.button-secondary[type="button"], .button.button-secondary, button.button-secondary {
+    border-color: $color-primary;
+    color: $color-primary;
+}
+
+input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"]:hover, input.button-secondary[type="button"]:hover, .button.button-secondary:hover, button.button-secondary:hover {
+    border-color: $color-primary;
+    background-color: $color-secondary;
+}
+
+.nav-wrapper .inner {
+    background-color: $color-primary;
+}
+
+.nav-wrapper .inner a {
+    color: #eae6e7;
+}
+
+#menu-search-q {
+    background-color: #ffffff;
+    border-radius: 5px;
+    box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.50);
+    color: rgb(155,155,155);
+}
+
+.explorer {
+    margin-top: 185px;
+}
+
+.explorer a:hover, .explorer .children:hover {
+    background-color: rgba(90, 70, 73, 1.00);
+}
+
+.nav-main {
+    top: 185px;
+}
+
+.listing .no-children a:hover {
+    color: #79575b;
+}
+
+.breadcrumb {
+    background-color: #63645f;
+}
+
+.page-explorer .listing .index {
+    background-color: #7a7d7a;
+}
+
+.page-explorer .listing .index a {
+    color: rgb(235, 235, 235);
+}
+
+.content {
+    background-color: #faf6ed;
+}
+
+.tab-content {
+    padding: 20px;
+}
+
+.tab-content h2 label:before {
+    background-color: $color-primary;
+}
+
+.tab-content h2 {
+    background-color: #e8ded1;
+}
+
+header, .tab-nav.merged {
+    background-color: #7a7d7a;
+}
+
+.tab-nav.merged li a {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.tab-nav.merged li a.active {
+    background-color: #faf6ed;
+    border-top: 0.3em solid $color-primary;
+}
+
+.tab-nav.merged li a {
+    background-color: #676760;
+    border-top: 0.3em solid #676760;
+}
+
+.tab-nav.merged li a:hover {
+    border-top: 0.3em solid #454548;
+}
+
+.breadcrumb li a, .breadcrumb li a:after {
+    color: rgb(215,215,215);
+}
+
+.logo img {
+    width: 119px;
+}
+
+.input input, .input select {
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+li.sequence-member:hover {
+    background-color: #e8ded1;
+    border-color: $color-primary;
+}
+
+.stream-menu.stream-menu-closed:hover .toggle {
+    color: $color-primary;
+}
+
+.sequence-controls {
+    border: 0;
+    background-color: transparent;
+}
+
+.sequence-controls h3 {
+    background-color: #e8ded1;
+    border: 1px solid $color-primary;
+    border-bottom: 1px solid #e8ded1;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.sequence-controls h3 label {
+    color: $color-primary;
+}
+
+footer .dropdown .dropdown-toggle {
+    background-color: rgba(0, 0, 0, 0.20);
+}
+input[type="button"], .button, button, .btn, .btn-default, header .button {
+    background-color: $button;
+    border: 0;
+    color: #EAE6E7;
+}
+
+input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .button:hover {
+    background-color: $button-hover;
+    color: #EAE6E7;
+}
+
+.buttongroup-square input[type="button"], .buttongroup-square .button, .buttongroup-square button {
+    box-shadow: none;
+}
+
+.sequence-container .sequence-type-list .sequence-member {
+    background-color: rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    padding-left: 20px;
+    width: 100%;
+}
+
+.listing td.children {
+    background-color: transparent;
+}
+
+.listing td.children a {
+    color: $color-primary;
+}
+
+.listing .index .button.bicolor {
+    background-color: $color-primary;
+}
+
+.listing tr:hover td.children {
+    background-color: $color-primary;
+}
+
+.listing td.children:hover {
+    background-color: #color-secondary;
+}
+
+.nav-main a:hover, .nav-main a:focus {
+    background-color: $color-secondary;
+}
+
+.nav-main .menu-active > a {
+    border-color: $color-secondary;
+}
+
+.nav-main a:hover, .nav-main a:focus {
+    text-shadow: none;
+}
