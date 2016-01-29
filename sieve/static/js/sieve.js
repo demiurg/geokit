@@ -2,6 +2,7 @@ var Table = ReactBootstrap.Table;
 var Panel = ReactBootstrap.Panel;
 var ButtonGroup = ReactBootstrap.ButtonGroup;
 var ButtonToolbar = ReactBootstrap.ButtonToolbar;
+var ButtonInput = ReactBootstrap.ButtonInput;
 var Button = ReactBootstrap.Button;
 var Row = ReactBootstrap.Row;
 var Col = ReactBootstrap.Col;
@@ -76,8 +77,7 @@ class DataVariableMenu extends React.Component {
     var values = this.props.data[0].values.map((value, index) => {
       return (
         <MenuItem
-          key={index}
-          onSelect={this.props.callback.bind(null, value.name)} >
+          key={index} >
           {value.name}
         </MenuItem>);
     });
@@ -90,6 +90,7 @@ class DataVariableMenu extends React.Component {
   }
 }
 
+
 class Sieve extends React.Component {
   constructor(props) {
     super(props);
@@ -98,8 +99,17 @@ class Sieve extends React.Component {
 
     loadFormVariables();
     loadUserVariables();
+
     this.state = {
+      title: "",
+      description: "",
       expressionText: "",
+      filters: [],
+      spatialDomain: null,
+      temporalDomain: null,
+      aggregateDimension: null,
+      aggregateMethod: null,
+
       formVariables: FormVariableStore.getState(),
       userVariables: UserVariableStore.getState()
     };
@@ -139,13 +149,28 @@ class Sieve extends React.Component {
     }
     return <div>{buttons}</div>;
   }
-  
-  insertVariable(event, name) {
-    console.log(this.refs.expressionEditor.refs.input.getDOMNode().selectionStart);
+
+  updateMetadata(metadata) {
+    this.setState({
+      title: metadata.title,
+      description: metadata.description
+    });
   }
 
-  changeExpressionText(newValue) {
-    this.setState({expressionText: newValue});
+  _onExpressionTextChange(event) {
+    this.updateExpressionText(event.target.value);
+  }
+
+  updateExpressionText(newText) {
+    this.setState({expressionText: newText});
+  }
+
+  updateAggregateDimension(dimension) {
+    this.setState({aggregateDimension: dimension});
+  }
+
+  updateAggregateMethod(method) {
+    this.setState({aggregateMethod: method});
   }
 
   insertToken(token)  {
@@ -153,21 +178,22 @@ class Sieve extends React.Component {
     var caretPos = expressionEditor.selectionStart;
     caretPos === 0 ? token = token + ' ' : token = ' ' + token + ' '; // Pad token
     var expressionText = $(expressionEditor).val();
-    $(expressionEditor).val(expressionText.substring(0, caretPos) +  token + expressionText.substring(caretPos));
+    var newExpressionText = expressionText.substring(0, caretPos) + token + expressionText.substring(caretPos);
+    $(expressionEditor).val(newExpressionText);
+    this.updateExpressionText(newExpressionText);
+  }
+
+  saveExpression() {
+    console.log(this.state);
   }
   
   render() {
-    var valueLink = {
-      value: this.state.expressionText,
-      requestChange: this.changeExpressionText.bind(this)
-    };
-
     return (
       <div className="sieve">
         <Panel>
           <MetaData
-            {...this.props.metadata.title}
-            {...this.props.metadata.description} />
+            ref='metadata'
+            updateMetadata={this.updateMetadata.bind(this)} />
         </Panel>
         <Panel>
           <Row>
@@ -193,7 +219,7 @@ class Sieve extends React.Component {
               <Button onClick={this.insertToken.bind(this, '-')}>-</Button>
             </ButtonGroup>
             <ButtonGroup className="pull-right">
-              <DataVariableMenu {...this.props} callback={this.insertVariable.bind(this, name)} />
+              <DataVariableMenu {...this.props} />
               <DropdownButton title="Form Variables" id="form-var-dropdown">
                 {this.state.formVariables.variables.map((formVar, i) => {
                   return <MenuItem key={i} eventKey={i} onClick={this.insertToken.bind(this, formVar.name)}>{formVar.name}</MenuItem>;
@@ -206,31 +232,43 @@ class Sieve extends React.Component {
               </DropdownButton>
             </ButtonGroup>
           </ButtonToolbar>
-          <Input type="textarea" style={{resize:"vertical"}} ref="expressionEditor" valueLink={valueLink} />
+          <Input type="textarea" style={{resize:"vertical"}} ref="expressionEditor" value={this.state.expressionText} onChange={this._onExpressionTextChange.bind(this)} />
           <Filter />
         </Panel>
         <Panel>
-          <Aggregate />
+          <Aggregate
+            updateAggregateDimension={this.updateAggregateDimension.bind(this)}
+            updateAggregateMethod={this.updateAggregateMethod.bind(this)} />
         </Panel>
+        <ButtonInput bsSize="large" onClick={this.saveExpression.bind(this)}>Save</ButtonInput>
       </div>
     );
   }
 }
 
 class MetaData extends React.Component {
+  onChange() {
+    this.props.updateMetadata({
+      title: this.refs.titleInput.getValue(),
+      description: this.refs.descriptionInput.getValue()
+    });
+  }
+
   render() {
     return (
       <div className="sieve-metadata">
         <div className="sieve-metadata-title">
           <Input
+            ref='titleInput'
             type="text"
             placeholder="Title..."
-            defaultValue={this.props.title} />
+            onChange={this.onChange.bind(this)} />
         </div>
         <div className="sieve-metadata-description">
           <Input type="textarea"
+            ref="descriptionInput"
             placeholder="Description..."
-            defaultValue={this.props.description}
+            onChange={this.onChange.bind(this)}
             style={{resize:"vertical"}} />
         </div>
       </div>
@@ -623,11 +661,13 @@ class Aggregate extends React.Component {
     if (dimension === null) {
       this.setState({aggregateMethod: null});
     }
+    this.props.updateAggregateDimension(dimension);
   }
   aggregateMethodToggle(method) {
     if (this.state.aggregateDimension !== null) {
       this.setState({aggregateMethod: method});
     }
+    this.props.updateAggregateMethod(method);
   }
   render() {
     return (

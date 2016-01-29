@@ -12,4 +12,4 @@ class FormVariableSerializer(serializers.ModelSerializer):
 class ExpressionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Expression
-        fields = ('name', 'expression_type', 'expression_text', 'input_collection')
+        fields = '__all__'
