@@ -280,8 +280,7 @@ class SpatialConfigurator extends React.Component {
   render() {
     return (
       <div className="sieve-spatial-configurator">
-        <h3>Configure Spatial Domain</h3>
-        <p>Similar to Map Select Widget. Allow admin to refine spatial domain for the variable</p>
+          <Map lat="60.0" lon="10.0" zoom="10" />
       </div>
     );
   }
@@ -291,8 +290,7 @@ class SpatialViewer extends React.Component {
   render() {
     return (
       <div className="sieve-spatial-viewer">
-        <h3>Spatial Domain Viewer</h3>
-        <p>Similar to Map Viewer Widget. Allow admin to view spatial arbitrary domain.</p>
+        <Map lat="60.0" lon="10.0" zoom="10" />
       </div>
     );
   }
@@ -720,6 +718,31 @@ class Aggregate extends React.Component {
     );
   }
 }
+
+var Map = React.createClass({
+  createMap: function (element) {
+    var map = L.map(element);
+    L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
+    L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    return map;
+  },
+  setupMap: function () {
+    this.map.setView([this.props.lat, this.props.lon], this.props.zoom);
+  },
+  componentDidMount: function () {
+    if (this.props.createMap) {
+      this.map = this.props.createMap(ReactDOM.findDOMNode(this));
+    } else {
+      this.map = this.createMap(ReactDOM.findDOMNode(this));
+    }
+    this.setupMap();
+  },
+  render: function () {
+    return (<div className="map"></div>);
+  }
+});
 
 ReactDOM.render(
   <Sieve
