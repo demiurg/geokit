@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import models, migrations
-import django_hstore.fields
+import django.contrib.postgres.fields
 import django.contrib.gis.db.models.fields
 
 
@@ -17,7 +17,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('geometry', django.contrib.gis.db.models.fields.GeometryCollectionField(srid=4326)),
-                ('attributes', django_hstore.fields.DictionaryField(null=True)),
+                ('attributes', django.contrib.postgres.fields.HStoreField(null=True)),
             ],
         ),
         migrations.CreateModel(

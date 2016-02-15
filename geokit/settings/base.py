@@ -35,11 +35,11 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.gis',
+    'django.contrib.postgres',
 
     'taggit',
     'compressor',
     'modelcluster',
-    'django_hstore',
     'rest_framework',
     'overextends',
     'dashboard',

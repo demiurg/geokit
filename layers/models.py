@@ -1,8 +1,7 @@
 import md5
 
 from django.contrib.gis.db import models
-from django_hstore import hstore
-from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.fields import ArrayField, HStoreField
 
 
 class Layer(models.Model):
@@ -53,9 +52,7 @@ class Layer(models.Model):
 class Feature(models.Model):
     layer = models.ForeignKey(Layer)
     geometry = models.GeometryCollectionField(srid=3857)
-    properties = hstore.DictionaryField(null=True)
-
-    objects = hstore.HStoreGeoManager()
+    properties = HStoreField(null=True)
 
     def __unicode__(self):
         return unicode(self.pk)
