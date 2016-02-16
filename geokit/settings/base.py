@@ -140,7 +140,7 @@ DATABASE_ROUTERS = (
 ORIGINAL_BACKEND = 'django.contrib.gis.db.backends.postgis'
 POSTGIS_VERSION = (2, 1, 8)
 
-PUBLIC_SCHEMA_URLCONF = 'account.views.index'
+# PUBLIC_SCHEMA_URLCONF = 'account.views.index'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
