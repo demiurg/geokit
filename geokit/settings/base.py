@@ -128,7 +128,7 @@ DATABASES = {
         'NAME': 'geokit',
         'USER': 'geokit',
         'PASSWORD': 'geokitp4ss',
-        'HOST': '127.0.0.1',
+        'HOST': 'localhost',
         'PORT': '5432',
     }
 }
