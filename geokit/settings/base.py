@@ -31,6 +31,8 @@ SHARED_APPS = [
     'tenant_schemas',
     'account',
 
+    'wagtail.wagtailcore', # necessary for site middleware to work
+
     'django.contrib.contenttypes',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -60,12 +62,12 @@ TENANT_APPS = [
     'wagtail.wagtaildocs',
     'wagtail.wagtailsnippets',
     'wagtail.wagtailusers',
-    'wagtail.wagtailsites',
     'wagtail.wagtailembeds',
     'wagtail.wagtailredirects',
     'wagtail.wagtailforms',
     'wagtail.contrib.wagtailsearchpromotions',
     'wagtail.contrib.wagtailstyleguide',
+    # 'wagtail.wagtailsites',
 
     'search',
     'builder',
@@ -92,7 +94,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.security.SecurityMiddleware',
 
     'wagtail.wagtailcore.middleware.SiteMiddleware',
-    # 'wagtail.wagtailredirects.middleware.RedirectMiddleware',
+    'wagtail.wagtailredirects.middleware.RedirectMiddleware',
 )
 
 ROOT_URLCONF = 'geokit.urls'
