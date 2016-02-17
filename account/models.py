@@ -3,7 +3,7 @@ from tenant_schemas.models import TenantMixin
 
 
 class GeoKitSite(TenantMixin):
-    name = models.CharField(max_length=100, primary_key=True)
+    name = models.CharField(max_length=100)
     created = models.DateTimeField(auto_now_add=True, editable=False)
     modified = models.DateTimeField(auto_now=True)
 

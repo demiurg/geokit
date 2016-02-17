@@ -31,9 +31,9 @@ SHARED_APPS = [
     'tenant_schemas',
     'account',
 
+    'django.contrib.contenttypes',
     'django.contrib.admin',
     'django.contrib.auth',
-    # 'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
@@ -46,6 +46,12 @@ SHARED_APPS = [
     'rest_framework',
     'overextends',
     'dashboard',
+
+    'crispy_forms',
+]
+
+TENANT_APPS = [
+    'django.contrib.contenttypes',
 
     'wagtail.wagtailcore',
     'wagtail.wagtailadmin',
@@ -66,15 +72,9 @@ SHARED_APPS = [
     'expressions',
     'layers',
     'sieve',
-
-    'crispy_forms',
 ]
 
-TENANT_APPS = [
-    'django.contrib.contenttypes',
-]
-
-INSTALLED_APPS = SHARED_APPS + [app for app in TENANT_APPS if app not in SHARED_APPS]
+INSTALLED_APPS = list(set(TENANT_APPS + SHARED_APPS))
 
 TENANT_MODEL = "account.GeoKitSite"
 
@@ -125,7 +125,7 @@ WSGI_APPLICATION = 'geokit.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'tenant_schemas.postgresql_backend',
-        'NAME': 'geokit',
+        'NAME': 'geokits',
         'USER': 'geokit',
         'PASSWORD': 'geokitp4ss',
         'HOST': 'localhost',
