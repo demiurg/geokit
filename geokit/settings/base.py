@@ -63,7 +63,7 @@ TENANT_APPS = [
     'wagtail.wagtailsnippets',
     'wagtail.wagtailusers',
     'wagtail.wagtailembeds',
-    'wagtail.wagtailredirects',
+    # 'wagtail.wagtailredirects',
     'wagtail.wagtailforms',
     'wagtail.contrib.wagtailsearchpromotions',
     'wagtail.contrib.wagtailstyleguide',
@@ -94,7 +94,7 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.security.SecurityMiddleware',
 
     'wagtail.wagtailcore.middleware.SiteMiddleware',
-    'wagtail.wagtailredirects.middleware.RedirectMiddleware',
+    # 'wagtail.wagtailredirects.middleware.RedirectMiddleware',
 )
 
 ROOT_URLCONF = 'geokit.urls'

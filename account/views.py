@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
-from account.forms import ExampleForm
-import random
+from forms import ExampleForm
+from models import GeoKitSite
 
 
 @ensure_csrf_cookie
@@ -11,16 +11,11 @@ def index(request):
 
 
 @csrf_protect
-def availability(request):
-    available = random.choice([True, False])
+def availability(request, name):
+    name = name.lower()
+    available = not GeoKitSite.objects.filter(schema_name=name).exists()
     data = {
-        "available": False,
-        "site_name": "",
+        "available": available,
+        "site_name": name,
     }
-    if request.method == 'POST':
-        data = {
-            "available": available,
-            "site_name": request.POST.get("search-input", ""),
-        }
-
     return JsonResponse(data)

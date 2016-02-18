@@ -2,7 +2,8 @@
 
 {% load static %}
 
-{% block styles %}
+{% block extra_head %}
+<style>
   #signup {
     background-color: rgba(250, 242, 225, 1.00);
     font-size: 28px;
@@ -158,8 +159,9 @@
         width: 60vw;
       }
   }
-{% endblock %}
-{% block scripts %}
+</style>
+
+<script type="text/javascript">
       function setNavBackgroundColor() {
         if ($(document).scrollTop() > 0 && $("nav").css("background-color") === "transparent") {
           $("nav").css("background-color", "rgba(112, 87, 91, 0.85)");
@@ -170,9 +172,7 @@
       function searchSite() {
         if ($("#search-input").val() != "") {
           $.ajax({
-            url: 'accounts/availability/',
-            method: 'POST',
-            data: {'search-input': $("#search-input").val()},
+            url: '/availability/'+$("#search-input").val()+'/',
             beforeSend: function(xhr) {
               xhr.setRequestHeader("X-CSRFToken", csrftoken);
             }
@@ -212,10 +212,7 @@
       }
       function searchSiteSignup() {
         if ($("#signup-name-site").val() != "") {
-          $.ajax({
-            url: 'accounts/availability/',
-            method: 'POST',
-            data: {'search-input': $("#signup-name-site").val()},
+          $.get('/availability/'+$("#signup-name-site").val() + '/', {
             beforeSend: function(xhr) {
               xhr.setRequestHeader("X-CSRFToken", csrftoken);
             }
@@ -246,6 +243,7 @@
           }
         });
       });
+</script>
 {% endblock %}
 {% block content %}
 {% include 'account/header.html' %}

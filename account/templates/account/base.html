@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>title</title>
+    <title>GeoKit</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
     <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
@@ -25,9 +25,7 @@
           return cookieValue;
       }
       var csrftoken = getCookie('csrftoken');
-    {% block scripts %}
-    
-    {% endblock %}
+
     </script>
     <style>
       nav {
@@ -73,10 +71,9 @@
       .nav-geokit > li > .dropdown-menu a:hover {
         background-color: rgba(94,115,96, 0.55);
       }
-      {% block styles %}
-      
-      {% endblock %}
     </style>
+    {% block extra_head %}
+    {% endblock %}
   </head>
   <body>
     {% block content %}

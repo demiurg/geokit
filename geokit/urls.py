@@ -6,7 +6,7 @@ from rest_framework import routers
 router = routers.DefaultRouter()
 
 urlpatterns = [
-    url(r'^accounts/', include('account.urls')),
+    url(r'^account/', include('account.urls')),
     url(r'^builder/', include('builder.urls')),
     url(r'^expressions/', include('expressions.urls')),
     url(r'^layers/', include('layers.urls')),
