@@ -4,299 +4,170 @@
 
 {% block extra_head %}
 <style>
-  #signup {
-    background-color: rgba(250, 242, 225, 1.00);
-    font-size: 28px;
-    padding-top: 70px;
-    padding-bottom: 70px;
-  }
-  #signup h1 {
-    color: rgba(131, 107, 100, 1.00);
-  }
-  #signup p {
-    color: rgba(64, 64, 64, 0.65);
-  }
-  .signup-form {
-    border-bottom: 1px solid #a8958c;
-    border-right: 0
-    font-size: .8em;
-    padding-bottom: 25px;
-  }
-  .signup-form input {
-    border: 0;
-    border-radius: 10px;
-    box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25);
-    color: rgba(0, 0, 0, 0.65);
-    display: block;
-    height: 50px;
-    margin-bottom: 50px;
-    padding-left: 10%;
-    width: 100%;
-  }
-  .signup-form input:focus {
-    border: 1px solid rgba(131, 107, 100, 1.00);
-  }
-  .signup-form button {
-    background-color: rgba(131, 107, 100, 1.00);
-    border: 0;
-    border-radius: 10px;
-    color: rgba(255, 255, 255, 1.00);
-    box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25);
-    display: block;
-    height: 50px;
-    width: 100%;
-  }
-  .signup-form-site-notification {
-    display: none;
-  }
-  #signup .signup-form-site-notification p {
-    color: rgba(117, 127, 100, 1.00);
-    font-size: .75em;
-    margin: 0 25px 25px 25px;
-  }
-  .cover {
-    background-color: rgba(112,87,91,.76);
-    display: table;
-    height: 100vh;
-    width: 100%;
-  }
-  div.cover:before {
-    background-image: url({% static 'img/istockphoto-coal-geologist-46975590.jpg' %});
-    background-size: cover;
-    background-repeat: no-repeat;
-    content: "";
-    display: block;
-    height: 100vh;
-    position: absolute;
-    width: 100%;
-    z-index: -1;
-  }
-  .get-started {
-    display: table-cell;
-    min-width: 500px;
-    text-align: center;
-    vertical-align: middle;
-  }
-  .get-started h1 {
-    color: #fffeed;
-    font-weight: lighter;
-    margin-bottom: 60px;
-    text-shadow: 1px 1px 1px #000000;
-  }
-  .get-started .search-alert {
-    color: #fffeed;
-    font-size: 1.5em;
-    text-shadow: 1px 1px 1px #000000;
-    display: none;
-    font-weight: bold;
-  }
-  .get-started .search-form {
-    border-radius: 5px;
-    box-shadow: 1px 1px 3px 0px rgba(0,0,0,0.25);
-    display: inline-block;
-    margin-right: auto;
-    margin-left: auto;
-  }
-  .get-started input {
-    background-color: #ffffff;
-    border: 0;
-    border-top-left-radius: 5px;
-    border-bottom-left-radius: 5px;
-    color: rgba(0,0,0,.60);
-    font-size: 20px;
-    margin: 0;
-    padding: 0;
-    padding-left: 10px;
-    height: 45px;
-    width: 400px;
-  }
-  .get-started button {
-    background-color: #707277;
-    border: 0;
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
-    color: #ffffff;
-    font-size: 20px;
-    margin: 0;
-    padding: 0 15px 0 15px;
-    height: 45px;
-  }
-  @media (min-width: 768px) {
-    .signup-form {
-      border-bottom: 0;
-      border-right: 1px solid #a8958c;
-      padding-right: 15px;
-      padding-bottom: 0;
-    }
-  }
-  @media (max-width: 768px) {
-      .get-started {
-        min-width: 60vw;
-        text-align: center;
-        vertical-align: middle;
-      }
-      .get-started .search-form {
-        border-radius: 5px;
-        box-shadow: 1px 1px 3px 0px rgba(0,0,0,0.25);
-        display: inline-block;
-        margin-right: auto;
-        margin-left: auto;
-        width: 60vw;
-      }
-      #search-input {
-        border-top-left-radius: 5px;
-        border-top-right-radius: 5px;
-        border-bottom-left-radius: 0;
-        width: 60vw;
-      }
-      #search-submit {
-        border-bottom-left-radius: 5px;
-        border-bottom-right-radius: 5px;
-        border-top-right-radius: 0;
-        display: block
-        margin-top: 0;
-        overflow: hidden;
-        width: 60vw;
-      }
-  }
-</style>
+/*
+ * Base structure
+ */
 
-<script type="text/javascript">
-      function setNavBackgroundColor() {
-        if ($(document).scrollTop() > 0 && $("nav").css("background-color") === "transparent") {
-          $("nav").css("background-color", "rgba(112, 87, 91, 0.85)");
-        } else if ($(document).scrollTop() == 0 && $("#search").height() && $("nav").css("background-color") != "transparent") {
-          $("nav").css("background-color", "transparent");
-        }
-      }
-      function searchSite() {
-        if ($("#search-input").val() != "") {
-          $.ajax({
-            url: '/availability/'+$("#search-input").val()+'/',
-            beforeSend: function(xhr) {
-              xhr.setRequestHeader("X-CSRFToken", csrftoken);
-            }
-          })
-            .done(function(data) {
-              if (data.available === true) {
-                $("#signup-name-site").val(data.site_name);
-                $(".signup-form-site-notification p").css("color", "rgba(117, 127, 100, 1.00)");
-                $(".signup-form-site-notification p").html("<i class='fa fa-check-circle'></i> Your site name is available. Finish signing up to get started.");
-                $(".signup-form-site-notification").css("display", "block");
-                $('html, body').animate({
-                  scrollTop: $("#signup").offset().top
-                }, {
-                  duration: 500,
-                  complete: function() {
-                    $("#signup-email").focus();
-                  }
-                });
-              } else {
-                $(".signup-form-site-notification p").css("color", "rgba(131, 107, 100, 1.00)");
-                $(".signup-form-site-notification p").html("<i class='fa fa-times-circle'></i> That name is currently in use.");
-                $(".signup-form-site-notification").css("display", "block");
-                $('html, body').animate({
-                  scrollTop: $("#signup").offset().top
-                }, {
-                  duration: 500,
-                  complete: function() {
-                    $("#signup-email").focus();
-                  }
-                });
-              }
-            });
-        } else {
-          $(".search-alert").css("display", "block");
-          $(".search-alert p").text("Enter a site name to search.");
-        }
-      }
-      function searchSiteSignup() {
-        if ($("#signup-name-site").val() != "") {
-          $.get('/availability/'+$("#signup-name-site").val() + '/', {
-            beforeSend: function(xhr) {
-              xhr.setRequestHeader("X-CSRFToken", csrftoken);
-            }
-          })
-            .done(function(data) {
-              if (data.available === true) {
-                $(".signup-form-site-notification p").css("color", "rgba(117, 127, 100, 1.00)");
-                $(".signup-form-site-notification p").html("<i class='fa fa-check-circle'></i> Your site name is available. Finish signing up to get started.");
-                $(".signup-form-site-notification").css("display", "block");
-              } else {
-                $(".signup-form-site-notification p").css("color", "rgba(131, 107, 100, 1.00)");
-                $(".signup-form-site-notification p").html("<i class='fa fa-times-circle'></i> That name is currently in use.");
-                $(".signup-form-site-notification").css("display", "block");
-              }
-            });
-        } else {
-          $(".signup-form-site-notification p").html("<i class='fa fa-info-circle'></i> Enter a site name to begin registration.");
-          $(".signup-form-site-notification").css("display", "block");
-        }
-      }
-      $(document).ready(function() {
-        $("button").click(function(e) {
-          e.preventDefault();
-        });
-        $("#search-input").keypress(function() {
-          if ($("#search-input").val() != "") {
-            $(".search-alert").css("display", "none");
-          }
-        });
-      });
-</script>
+/* Move down content because we have a fixed navbar that is 50px tall */
+body {
+  padding-top: 50px;
+}
+
+
+/*
+ * Global add-ons
+ */
+
+.sub-header {
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+/*
+ * Top navigation
+ * Hide default border to remove 1px line.
+ */
+.navbar-fixed-top {
+  border: 0;
+}
+
+/*
+ * Sidebar
+ */
+
+/* Hide for mobile, show later */
+.sidebar {
+  display: none;
+}
+@media (min-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 51px;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+    display: block;
+    padding: 20px;
+    overflow-x: hidden;
+    overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+    background-color: #f5f5f5;
+    border-right: 1px solid #eee;
+  }
+}
+
+/* Sidebar navigation */
+.nav-sidebar {
+  margin-right: -21px; /* 20px padding + 1px border */
+  margin-bottom: 20px;
+  margin-left: -20px;
+}
+.nav-sidebar > li > a {
+  padding-right: 20px;
+  padding-left: 20px;
+}
+.nav-sidebar > .active > a,
+.nav-sidebar > .active > a:hover,
+.nav-sidebar > .active > a:focus {
+  color: #fff;
+  background-color: #428bca;
+}
+
+
+/*
+ * Main content
+ */
+
+.main {
+  padding: 20px;
+}
+@media (min-width: 768px) {
+  .main {
+    padding-right: 40px;
+    padding-left: 40px;
+  }
+}
+.main .page-header {
+  margin-top: 0;
+}
+
+
+/*
+ * Placeholder dashboard ideas
+ */
+
+.placeholders {
+  margin-bottom: 30px;
+  text-align: center;
+}
+.placeholders h4 {
+  margin-bottom: 0;
+}
+.placeholder {
+  margin-bottom: 20px;
+}
+.placeholder img {
+  display: inline-block;
+  border-radius: 50%;
+}
+</style>
 {% endblock %}
-{% block content %}
+
+
+{% block body %}
 {% include 'account/header.html' %}
-  <div id="search" class="cover">
-    <div class="get-started">
-      <h1>Get started with site creation.</h1>
-      <div class="search-alert">
-        <p></p>
-      </div>
-      <div class="search-form">
-        <form id="search-site" name="search-site" method="post" action="">
-          {% csrf_token %}
-          <input type="text" name="search-input" id="search-input" placeholder="Check availability of your site name" /><button type="submit" id="search-submit" onclick="searchSite()">Let's go</button>
-        </form>
-      </div>
-    </div>
-  </div>
-  <div id="signup" class="container-fluid">
-    <div class="row">
-      <div class="col-sm-4 col-lg-3">
-        <div class="signup-form">
-          <form id="signup-form" name="signup-form" method="post" action="">
-            <div class="signup-form-site-notification">
-              <p></p>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+          <ul class="nav nav-sidebar">
+            <li class="active"><a href="#">Overview <span class="sr-only">(current)</span></a></li>
+            <li><a href="#">Reports</a></li>
+            <li><a href="#">Analytics</a></li>
+            <li><a href="#">Export</a></li>
+          </ul>
+          <ul class="nav nav-sidebar">
+            <li><a href="">Nav item</a></li>
+            <li><a href="">Nav item again</a></li>
+            <li><a href="">One more nav</a></li>
+            <li><a href="">Another nav item</a></li>
+            <li><a href="">More navigation</a></li>
+          </ul>
+          <ul class="nav nav-sidebar">
+            <li><a href="">Nav item again</a></li>
+            <li><a href="">One more nav</a></li>
+            <li><a href="">Another nav item</a></li>
+          </ul>
+        </div>
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+          <h1 class="page-header">Dashboard</h1>
+
+          <div class="row placeholders">
+            <div class="col-xs-6 col-sm-3 placeholder">
+              <img src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" width="200" height="200" class="img-responsive" alt="Generic placeholder thumbnail">
+              <h4>Label</h4>
+              <span class="text-muted">Something else</span>
             </div>
-            <input type="text" name="email" id="signup-email" placeholder="Email address" />
-            <input type="text" name="name-first" id="signup-name-first" placeholder="First name" />
-            <input type="text" name="name-last" id="signup-name-last" placeholder="Last name" />
-            <input type="text" name="name-site" id="signup-name-site" placeholder="Site name" onkeyup="searchSiteSignup()" />
-            <button type="submit" id="signup-submit" onclick="signup()">Sign up</button>
-          </form>
+            <div class="col-xs-6 col-sm-3 placeholder">
+              <img src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" width="200" height="200" class="img-responsive" alt="Generic placeholder thumbnail">
+              <h4>Label</h4>
+              <span class="text-muted">Something else</span>
+            </div>
+            <div class="col-xs-6 col-sm-3 placeholder">
+              <img src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" width="200" height="200" class="img-responsive" alt="Generic placeholder thumbnail">
+              <h4>Label</h4>
+              <span class="text-muted">Something else</span>
+            </div>
+            <div class="col-xs-6 col-sm-3 placeholder">
+              <img src="data:image/gif;base64,R0lGODlhAQABAIAAAHd3dwAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==" width="200" height="200" class="img-responsive" alt="Generic placeholder thumbnail">
+              <h4>Label</h4>
+              <span class="text-muted">Something else</span>
+            </div>
+          </div>
+
+          <h2 class="sub-header">Section title</h2>
+          <div class="table-responsive">
+
+          </div>
         </div>
       </div>
-      <div class="col-sm-8 col-lg-9">
-        <div class="row">
-          <div class="col-md-12 col-lg-6">
-            <h1>Need custom features?</h1>
-            <p>Interdum et malesuada fames ac ante ipsum primis in faucibus. Suspendisse et felis semper, tempus enim et, aliquam dolor. Cras.</p>
-          </div>
-          <div class="col-md-12 col-lg-6">
-            <div style="background-color: #ffffff; box-shadow: 1px 1px 1px rgba(131, 107, 100, 0.25); padding: 10px;">
-              <img src="{% static 'img/graph.png' %}" style="width: 100%;" />
-            </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-12 col-lg-8 pull-right">
-            <div class="text-right">
-              <h1>Have custom products?</h1>
-              <p>Aenean sit amet luctus turpis. Nulla consequat feugiat tempus. Phasellus tempor eu sem vitae porttitor. Cras ac dui ipsum. Vivamus.</p>
-            </div>
-          </div>
-      </div>
     </div>
-  </div>
 {% endblock %}

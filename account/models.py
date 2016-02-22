@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 
 class GeoKitSite(TenantMixin):
     user = models.ForeignKey(User)
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, null=True)
     created = models.DateTimeField(auto_now_add=True, editable=False)
     modified = models.DateTimeField(auto_now=True)
 

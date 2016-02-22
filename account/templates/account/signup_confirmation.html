@@ -1,0 +1,15 @@
+{% load i18n %}{% autoescape off %}
+{% blocktrans %}You're receiving this email because you have signed up on GeoKit{% endblocktrans %}
+
+{% trans "A password was automatically generated for you:" %} {{password}}
+
+{% trans "If you would like to change it, please go to the following page and choose a new password:" %}
+{% block reset_link %}
+{{ protocol }}://{{ domain }}{% url 'password_reset_confirm' uidb64=uid token=token %}
+{% endblock %}
+
+{% trans "Thanks for using our site!" %}
+
+{% blocktrans %}The GeoKit team{% endblocktrans %}
+
+{% endautoescape %}
