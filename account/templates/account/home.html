@@ -6,10 +6,10 @@
 {% for s in sites %}
 <p>
     Name: {{s.name}},
-    Url: <a href='{{s.schema_name}}.{{request.META.HTTP_HOST}}'>
+    Url: <a href='http://{{s.schema_name}}.{{request.META.HTTP_HOST}}'>
         {{s.schema_name}}.{{request.META.HTTP_HOST}}
     </a>,
-    Admin: <a href='{{s.schema_name}}.{{request.META.HTTP_HOST}}/admin/'>
+    Admin: <a href='http://{{s.schema_name}}.{{request.META.HTTP_HOST}}/admin/'>
         {{s.schema_name}}.{{request.META.HTTP_HOST}}/admin/
     </a>
 </p>
