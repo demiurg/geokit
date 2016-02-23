@@ -49,7 +49,7 @@ def signup(request):
                 'email_template_name': 'account/signup_confirmation.html',
                 'subject_template_name': 'account/signup_confirmation_subject.txt',
                 'request': request,
-                'extra_email_context': {'password': password },
+                'extra_email_context': {'password': password},
             }
             reset_form.save(**opts)
 
@@ -72,13 +72,14 @@ def login(request):
                 if not user.check_password(form.cleaned_data['password']):
                     form.add_error('password', "Password is invalid")
                 else:
-                    result = authenticate(
-                        username=form.cleaned_data['email'],
+                    result_user = authenticate(
+                        username=user.username,
                         password=form.cleaned_data['password']
                     )
-                    if result:
-                        auth_login(request, user)
-                    print result
+                    if result_user and user.is_active:
+                        auth_login(request, result_user)
+                    else:
+                        form.add_error('password', 'Failed to authenticate.')
             except User.DoesNotExist:
                 form.add_error('email', "User does not exist")
 
