@@ -24,14 +24,18 @@ def index(request):
 
 @login_required
 def site_create(request):
-    if request.user.is_authenticated():
-        sites = GeoKitSite.objects.filter(user=request.user)
+    if request.method == 'POST':
+        form = GeoKitSiteForm(request.POST)
+        if form.is_valid():
+            site = form.save(commit=False)
+            #site.domain
+    else:
+        form = GeoKitSiteForm()
 
-        return render(request, 'account/home.html', {
-            "sites": sites
-        })
-
-    return render(request, 'account/landing.html')
+    return render(request, 'account/form.html', {
+        'title': 'Create Site',
+        'form': form
+    })
 
 
 @login_required
