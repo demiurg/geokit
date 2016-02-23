@@ -1,30 +1,56 @@
-from django.shortcuts import render, redirect
-from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User
-from django.contrib.auth.hashers import check_password
 from django.contrib.auth import login as auth_login, authenticate
+from django.contrib.auth.decorators import login_required
 
-from forms import SignupForm, LoginForm
+from forms import SignupForm, LoginForm, GeoKitSiteForm
 from models import GeoKitSite
-
-
-RESERVED_SITENAMES = [
-    'test', 'geokit', 'admin'
-]
 
 
 @ensure_csrf_cookie
 def index(request):
     if request.user.is_authenticated():
         sites = GeoKitSite.objects.filter(user=request.user)
-        print sites.count()
+
         return render(request, 'account/home.html', {
             "sites": sites
         })
 
     return render(request, 'account/landing.html')
+
+
+@login_required
+def site_create(request):
+    if request.user.is_authenticated():
+        sites = GeoKitSite.objects.filter(user=request.user)
+
+        return render(request, 'account/home.html', {
+            "sites": sites
+        })
+
+    return render(request, 'account/landing.html')
+
+
+@login_required
+def site_edit(request, schema_name):
+    site = get_object_or_404(GeoKitSite, schema_name=schema_name)
+    if site.user != request.user:
+        raise Http404
+
+    if request.method == 'POST':
+        form = GeoKitSiteForm(request.POST, instance=site)
+        if form.is_valid():
+            pass
+    else:
+        form = GeoKitSiteForm(instance=site)
+
+    return render(request, 'account/form.html', {
+        'title': 'Edit Site',
+        'form': form
+    })
 
 
 def signup(request):
@@ -100,8 +126,7 @@ def login(request):
 @csrf_protect
 def availability(request, name):
     name = name.lower()
-    available = name not in RESERVED_SITENAMES and \
-        not GeoKitSite.objects.filter(schema_name=name).exists()
+    available = GeoKitSite.is_available(name)
 
     data = {
         "available": available,

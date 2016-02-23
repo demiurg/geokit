@@ -1,13 +1,16 @@
 from django.contrib.auth.models import User
+from django.core.validators import RegexValidator
 from django.utils.translation import ugettext_lazy as _
 from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Fieldset, ButtonHolder, Submit, Div
 
+from models import GeoKitSite
 
-class BootstrapForm(forms.Form):
+
+class CrispyForm(object):
     def __init__(self, *args, **kwargs):
-        super(BootstrapForm, self).__init__(*args, **kwargs)
+        super(CrispyForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-md-4 col-sm-12 col-xs 12'
@@ -18,7 +21,7 @@ class BootstrapForm(forms.Form):
 attrs_dict = {'class': 'required', 'style': 'font-weight: bold;'}
 
 
-class LoginForm(BootstrapForm):
+class LoginForm(CrispyForm, forms.Form):
     email = forms.EmailField(
         widget=forms.TextInput(attrs=dict(attrs_dict, maxlength=75)),
         label=_("Email address")
@@ -29,7 +32,32 @@ class LoginForm(BootstrapForm):
     )
 
 
-class SignupForm(BootstrapForm):
+class GeoKitSiteForm(CrispyForm, forms.ModelForm):
+    schema_name = forms.CharField(
+        label=_("URL name"),
+        help_text=(
+            'Please only use lowercase letters and numbers: a-z, 0-9.<br>'
+            'Changing this value will invalidate previous urls!'
+        ),
+        required=True,
+        validators=[
+            RegexValidator(
+                '^[a-z0-9]+$',
+                message='Site url name must be lowecase Alphanumeric'
+            )
+        ]
+    )
+    name = forms.CharField(
+        label=_("Full name"),
+        help_text='This is a more descriptive name for your GeoKit site.'
+    )
+
+    class Meta:
+        model = GeoKitSite
+        fields = ('schema_name', 'name',)
+
+
+class SignupForm(CrispyForm, forms.Form):
     """
     Form for registering a new user account.
 
@@ -61,7 +89,7 @@ class SignupForm(BootstrapForm):
         site.
         """
         email1 = self.cleaned_data['email1']
-        if User.objects.filter(email__iexact=email).count():
+        if User.objects.filter(email__iexact=email1).count():
             raise forms.ValidationError(_(
                 u'This email address is already in use. '
                 'Please supply a different email address.'

@@ -8,6 +8,8 @@ urlpatterns = [
     url(r'^$', views.index, name='home'),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^availability/(\w+)/', views.availability, name='availability'),
+    url(r'^site/create/', views.site_create, name='site_create'),
+    url(r'^site/edit/(\w+)/', views.site_edit, name='site_edit'),
 
     url(r'^login/$', views.login, name='login'),
     url(r'^logout/$', auth_views.logout_then_login, name="logout"),
