@@ -18,7 +18,11 @@ RESERVED_SITENAMES = [
 @ensure_csrf_cookie
 def index(request):
     if request.user.is_authenticated():
-        return render(request, 'account/home.html')
+        sites = GeoKitSite.objects.filter(user=request.user)
+        print sites.count()
+        return render(request, 'account/home.html', {
+            "sites": sites
+        })
 
     return render(request, 'account/landing.html')
 
@@ -53,7 +57,7 @@ def signup(request):
             }
             reset_form.save(**opts)
 
-            return redirect('accounts:home')
+            return redirect('home')
     else:
         form = SignupForm()
 
@@ -78,6 +82,7 @@ def login(request):
                     )
                     if result_user and user.is_active:
                         auth_login(request, result_user)
+                        return redirect('home')
                     else:
                         form.add_error('password', 'Failed to authenticate.')
             except User.DoesNotExist:

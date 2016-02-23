@@ -146,6 +146,8 @@ POSTGIS_VERSION = (2, 1, 8)
 
 PUBLIC_SCHEMA_URLCONF = 'account.urls'
 
+LOGIN_URL = '/login/'
+
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
 

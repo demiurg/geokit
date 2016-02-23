@@ -5,7 +5,7 @@ from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
-    url(r'^$', views.index),
+    url(r'^$', views.index, name='home'),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^availability/(\w+)/', views.availability, name='availability'),
 
