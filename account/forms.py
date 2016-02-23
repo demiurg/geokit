@@ -12,10 +12,21 @@ class BootstrapForm(forms.Form):
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-md-4 col-sm-12 col-xs 12'
         self.helper.field_class = 'col-md-8 col-sm-12 col-xs-12'
-        self.helper.add_input(Submit('submit', 'Save', css_class='col-sm-offset-4'))
+        self.helper.add_input(Submit('submit', 'Submit', css_class='col-sm-offset-4'))
 
 
 attrs_dict = {'class': 'required', 'style': 'font-weight: bold;'}
+
+
+class LoginForm(BootstrapForm):
+    email = forms.EmailField(
+        widget=forms.TextInput(attrs=dict(attrs_dict, maxlength=75)),
+        label=_("Email address")
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs=attrs_dict, render_value=False),
+        label=_("Password")
+    )
 
 
 class SignupForm(BootstrapForm):
@@ -44,18 +55,22 @@ class SignupForm(BootstrapForm):
         label=_("Email confirmation")
     )
 
-    def clean_email(self):
+    def clean_email1(self):
         """
         Validate that the supplied email address is unique for the
         site.
         """
-
-        if User.objects.filter(email__iexact=self.cleaned_data['email']).count():
-            raise forms.ValidationError(_(u'This email address is already in use. Please supply a different email address.'))
+        email1 = self.cleaned_data['email1']
+        if User.objects.filter(email__iexact=email).count():
+            raise forms.ValidationError(_(
+                u'This email address is already in use. '
+                'Please supply a different email address.'
+            ))
         return self.cleaned_data['email']
 
-    def clean(self):
-        if 'email1' in self.cleaned_data and 'email2' in self.cleaned_data:
-            if self.cleaned_data['email1'] != self.cleaned_data['email2']:
-                raise forms.ValidationError(_("The two emails didn't match."))
+    def clean_email2(self):
+        email1 = self.cleaned_data.get('email1')
+        email2 = self.cleaned_data.get('email2')
+        if email2 and email2 and email1 == email2:
+                raise forms.ValidationError(_("The emails must match."))
         return self.cleaned_data
