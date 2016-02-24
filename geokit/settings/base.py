@@ -28,7 +28,7 @@ if 'runserver' in sys.argv:
 
 ALLOWED_HOSTS = [
     'localhost', '*.localhost',
-    '127.0.0.1', '*.127.0.0.1'
+    '127.0.0.1', '*.127.0.0.1',
     'geokit.io', '*.geokit.io',
 ]
 
