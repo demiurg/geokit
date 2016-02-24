@@ -15,10 +15,11 @@ class TenantMiddleware(object):
     """
     TENANT_NOT_FOUND_EXCEPTION = Http404
 
-    def subdomain_from_request(self, request):
-        """ Extracts hostname from request. Used for custom requests filtering.
-            By default removes the request's port and common prefixes.
-        """
+    def process_request(self, request):
+        # Connection needs first to be at the public schema, as this is where
+        # the tenant metadata is stored.
+        connection.set_schema_to_public()
+
         hostname = remove_www(request.get_host().split(':')[0])
         subdomain = None
         for allowed in settings.ALLOWED_HOSTS:
@@ -30,24 +31,17 @@ class TenantMiddleware(object):
                     subdomain = parts[0]
                     break
 
-        return subdomain
-
-    def process_request(self, request):
-        # Connection needs first to be at the public schema, as this is where
-        # the tenant metadata is stored.
-        connection.set_schema_to_public()
-        name = self.subdomain_from_request(request)
-
         TenantModel = get_tenant_model()
-        if name is None:
-            name = 'public'
+
+        if subdomain is None:
+            subdomain = 'public'
 
         try:
-            request.tenant = TenantModel.objects.get(schema_name=name)
+            request.tenant = TenantModel.objects.get(schema_name=subdomain)
             connection.set_tenant(request.tenant)
         except TenantModel.DoesNotExist:
             raise self.TENANT_NOT_FOUND_EXCEPTION(
-                'No tenant for name "%s"' % name)
+                'No tenant for name "%s"' % subdomain)
 
         # Content type can no longer be cached as public and tenant schemas
         # have different models. If someone wants to change this, the cache
