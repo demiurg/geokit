@@ -20,11 +20,17 @@ class TenantMiddleware(object):
             By default removes the request's port and common prefixes.
         """
         hostname = remove_www(request.get_host().split(':')[0])
-        parts = hostname.split('.')
-        if len(parts) == 2:
-            return parts[0]
-        else:
-            return None
+        subdomain = None
+        for allowed in settings.ALLOWED_HOSTS:
+            if hostname == allowed:
+                break
+            elif hostname.endswith(allowed):
+                parts = hostname.split('.', 1)
+                if parts[1] == allowed:
+                    subdomain = parts[0]
+                    break
+
+        return subdomain
 
     def process_request(self, request):
         # Connection needs first to be at the public schema, as this is where

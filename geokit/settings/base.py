@@ -25,6 +25,14 @@ if 'runserver' in sys.argv:
     if len(sys.argv) == 3:
         NODE_PORT = str(int(sys.argv[2].split(':')[1]) + 1)
 
+
+ALLOWED_HOSTS = [
+    'localhost', '*.localhost',
+    '127.0.0.1', '*.127.0.0.1'
+    'geokit.io', '*.geokit.io',
+]
+
+
 # Application definition
 
 SHARED_APPS = [
