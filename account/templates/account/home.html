@@ -1,0 +1,20 @@
+{% extends 'account/index.html' %}
+
+{% load static %}
+
+{% block content %}
+<p>{{sites.count}} sites</p>
+{% for s in sites %}
+<p>
+    {{s.name}},
+    url: <a href='http://{{s.schema_name}}.{{request.META.HTTP_HOST}}'>
+        {{s.schema_name}}.{{request.META.HTTP_HOST}}
+    </a>,
+    <a href='{% url "site_edit" s.schema_name %}'>Edit</a>,
+    Admin: <a href='http://{{s.schema_name}}.{{request.META.HTTP_HOST}}/admin/'>
+        {{s.schema_name}}.{{request.META.HTTP_HOST}}/admin/
+    </a>
+</p>
+{% endfor %}
+<p><a href='{% url 'site_create' %}'>Add GeoKit site</a></p>
+{% endblock %}

@@ -25,6 +25,14 @@ if 'runserver' in sys.argv:
     if len(sys.argv) == 3:
         NODE_PORT = str(int(sys.argv[2].split(':')[1]) + 1)
 
+
+ALLOWED_HOSTS = [
+    'localhost', '*.localhost',
+    '127.0.0.1', '*.127.0.0.1',
+    'geokit.io', '*.geokit.io',
+]
+
+
 # Application definition
 
 SHARED_APPS = [
@@ -82,8 +90,8 @@ TENANT_MODEL = "account.GeoKitSite"
 
 
 MIDDLEWARE_CLASSES = (
-    'tenant_schemas.middleware.TenantMiddleware',
-
+    # 'tenant_schemas.middleware.TenantMiddleware',
+    'geokit.middleware.TenantMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -118,6 +126,8 @@ TEMPLATES = [
     },
 ]
 
+CRISPY_TEMPLATE_PACK = 'bootstrap3'
+
 WSGI_APPLICATION = 'geokit.wsgi.application'
 
 
@@ -143,6 +153,8 @@ ORIGINAL_BACKEND = 'django.contrib.gis.db.backends.postgis'
 POSTGIS_VERSION = (2, 1, 8)
 
 PUBLIC_SCHEMA_URLCONF = 'account.urls'
+
+LOGIN_URL = '/login/'
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
