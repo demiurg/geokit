@@ -82,8 +82,8 @@ TENANT_MODEL = "account.GeoKitSite"
 
 
 MIDDLEWARE_CLASSES = (
-    'tenant_schemas.middleware.TenantMiddleware',
-
+    # 'tenant_schemas.middleware.TenantMiddleware',
+    'geokit.middleware.TenantMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
