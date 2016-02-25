@@ -28,7 +28,10 @@ def site_create(request):
         form = GeoKitSiteForm(request.POST)
         if form.is_valid():
             site = form.save(commit=False)
-            #site.domain
+            site.user = request.user
+            site.domain_url = form.cleaned_data['schema_name'] + '.localhost'
+            site.save()
+            return redirect('home')
     else:
         form = GeoKitSiteForm()
 
