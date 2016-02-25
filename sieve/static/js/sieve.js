@@ -6,6 +6,7 @@ var ButtonInput = ReactBootstrap.ButtonInput;
 var Button = ReactBootstrap.Button;
 var Row = ReactBootstrap.Row;
 var Col = ReactBootstrap.Col;
+var Alert = ReactBootstrap.Alert;
 var Input = ReactBootstrap.Input;
 var OverlayTrigger = ReactBootstrap.OverlayTrigger;
 var Tooltip = ReactBootstrap.Tooltip;
@@ -100,15 +101,21 @@ class Sieve extends React.Component {
     loadFormVariables();
     loadUserVariables();
 
-    this.state = {
+    this.state = this.initialState();
+  }
+
+  initialState() {
+    return {
       title: "",
       description: "",
       expressionText: "",
       filters: [],
       spatialDomain: null,
-      temporalDomain: null,
-      aggregateDimension: null,
+      temporalDomain: {start: null, end: null},
+      aggregateDimension: "NA",
       aggregateMethod: null,
+
+      errors: {},
 
       formVariables: FormVariableStore.getState(),
       userVariables: UserVariableStore.getState()
@@ -157,12 +164,26 @@ class Sieve extends React.Component {
     });
   }
 
+  updateStartDate(date) {
+    var dateJSON = date ? date.toJSON() : null;
+    this.setState({temporalDomain: {start: dateJSON, end: this.state.temporalDomain.end}});
+  }
+
+  updateEndDate(date) {
+    var dateJSON = date ? date.toJSON() : null;
+    this.setState({temporalDomain: {start: this.state.temporalDomain.start, end: dateJSON}});
+  }
+
   _onExpressionTextChange(event) {
     this.updateExpressionText(event.target.value);
   }
 
   updateExpressionText(newText) {
     this.setState({expressionText: newText});
+  }
+
+  updateFilters(filters) {
+    this.setState({filters: filters});
   }
 
   updateAggregateDimension(dimension) {
@@ -183,26 +204,78 @@ class Sieve extends React.Component {
     this.updateExpressionText(newExpressionText);
   }
 
+  validateExpression() {
+    var errors = {},
+        isValid = true,
+        data = {
+          name: this.state.title,
+          description: this.state.description,
+          expression_text: this.state.expressionText,
+          temporal_domain: this.state.temporalDomain,
+          spatial_domain_features: [],
+          filters: this.state.filters,
+          aggregate_method: this.state.aggregateMethod,
+          aggregate_dimension: this.state.aggreagateDimension
+        };
+
+    if (!data.name || data.name === '') {
+      isValid = false;
+      errors.name = "You must provide a title.";
+    }
+
+    if (!data.expression_text || data.expression_text === '') {
+      isValid = false;
+      errors.expression_text = "You must specify expression text."
+    }
+
+    return {isValid: isValid, errors: errors, data: data};
+  }
+
   saveExpression() {
-    console.log(this.state);
+    var validationResponse = this.validateExpression();
+
+    if (validationResponse.isValid) {
+      var xhr = new XMLHttpRequest();
+      xhr.open("POST", "/api/expressions/", true);
+      xhr.setRequestHeader("Content-type", "application/json");
+      xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState == 4) {
+          if (200 <= xhr.status && xhr.status < 300) {
+            this.setState(this.initialState());
+          } else {
+            this.setState({errors: {server: xhr.response}});
+          }
+        }
+      };
+
+      xhr.send(JSON.stringify(validationResponse.data));
+    } else {
+      this.setState({errors: validationResponse.errors});
+    }
   }
   
   render() {
     return (
       <div className="sieve">
+        {this.state.errors.server ? <Alert bsStyle="danger">{this.state.errors.server}</Alert> : null}
         <Panel>
           <MetaData
             ref='metadata'
-            updateMetadata={this.updateMetadata.bind(this)} />
+            updateMetadata={this.updateMetadata.bind(this)}
+            title={this.state.title} description={this.state.description} />
         </Panel>
         <Panel>
           <Row>
             <Col sm={4}>
               <h3>Configure Start Date</h3>
               <TemporalConfigurator {...this.props}
+                dateUpdated={this.updateStartDate.bind(this)}
                 ref="dateStart" />
               <h3>Configure End Date</h3>
               <TemporalConfigurator {...this.props}
+                dateUpdated={this.updateEndDate.bind(this)}
                 ref="dateEnd" />
             </Col>
             <Col sm={8}>
@@ -233,7 +306,7 @@ class Sieve extends React.Component {
             </ButtonGroup>
           </ButtonToolbar>
           <Input type="textarea" style={{resize:"vertical"}} ref="expressionEditor" value={this.state.expressionText} onChange={this._onExpressionTextChange.bind(this)} />
-          <Filter />
+          <Filter filters={this.state.filters} updateFilters={this.updateFilters.bind(this)} />
         </Panel>
         <Panel>
           <Aggregate
@@ -247,10 +320,17 @@ class Sieve extends React.Component {
 }
 
 class MetaData extends React.Component {
-  onChange() {
+  onTitleChange(e) {
     this.props.updateMetadata({
-      title: this.refs.titleInput.getValue(),
-      description: this.refs.descriptionInput.getValue()
+      title: e.target.value,
+      description: this.props.description
+    });
+  }
+
+  onDescriptionChange(e) {
+    this.props.updateMetadata({
+      title: this.props.title,
+      description: e.target.value
     });
   }
 
@@ -262,13 +342,15 @@ class MetaData extends React.Component {
             ref='titleInput'
             type="text"
             placeholder="Title..."
-            onChange={this.onChange.bind(this)} />
+            value={this.props.title}
+            onChange={this.onTitleChange.bind(this)} />
         </div>
         <div className="sieve-metadata-description">
           <Input type="textarea"
             ref="descriptionInput"
             placeholder="Description..."
-            onChange={this.onChange.bind(this)}
+            value={this.props.description}
+            onChange={this.onDescriptionChange.bind(this)}
             style={{resize:"vertical"}} />
         </div>
       </div>
@@ -280,7 +362,7 @@ class SpatialConfigurator extends React.Component {
   render() {
     return (
       <div className="sieve-spatial-configurator">
-          <Map lat="60.0" lon="10.0" zoom="10" />
+        <Map lat="60.0" lon="10.0" zoom="10" />
       </div>
     );
   }
@@ -300,22 +382,45 @@ class TemporalConfigurator extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      selectedMonth: this.props.temporalDomain[0].getMonth(),
-      selectedDay: this.props.temporalDomain[0].getDate(),
-      selectedYear: this.props.temporalDomain[0].getFullYear()
+      selectedMonth: null,
+      selectedDay: null,
+      selectedYear: null,
     };
   }
 
   setYear(event) {
-    this.setState({selectedYear: parseInt(event.target.value)});
+    var yearStr = event.target.value,
+        year = yearStr == '-1' ? null : parseInt(yearStr);
+
+    this.setState({selectedYear: year}, () => {
+      this.props.dateUpdated(this.currentDate());
+    });
   }
 
   setMonth(event) {
-    this.setState({selectedMonth: parseInt(event.target.value)});
+    var monthStr = event.target.value,
+        month = monthStr == '-1' ? null : parseInt(monthStr);
+
+    this.setState({selectedMonth: month}, () => {
+      this.props.dateUpdated(this.currentDate());
+    });
   }
 
   setDay(event) {
-    this.setState({selectedDay: parseInt(event.target.value)});
+    var dayStr = event.target.value,
+        day = dayStr == '-1' ? null : parseInt(dayStr);
+
+    this.setState({selectedDay: day}, () => {
+      this.props.dateUpdated(this.currentDate());
+    });
+  }
+
+  currentDate() {
+    if (this.state.selectedMonth == null || this.state.selectedDay == null || this.state.selectedYear == null) {
+      return null;
+    }
+
+    return new Date(+this.state.selectedYear, +this.state.selectedMonth, +this.state.selectedDay);
   }
   
   renderYears() {
@@ -336,7 +441,8 @@ class TemporalConfigurator extends React.Component {
         labelClassname="col-sm-2"
         wrapperClassName="col-sm-10"
         onChange={this.setYear.bind(this)}
-        defaultValue={this.props.temporalDomain[0].getFullYear()}>
+        defaultValue={-1}>
+        <option value={-1}>-</option>
         {optionsYears}
       </Input>
     );
@@ -362,8 +468,9 @@ class TemporalConfigurator extends React.Component {
         labelClassName="col-sm-2"
         wrapperClassName="col-sm-10"
         onChange={this.setMonth.bind(this)}
-        defaultValue={this.props.temporalDomain[0].getMonth()}
+        defaultValue={-1}
         ref="selectedMonth">
+        <option value={-1}>-</option>
         {optionsMonths}
       </Input>
     );
@@ -412,8 +519,9 @@ class TemporalConfigurator extends React.Component {
         labelClassName="col-sm-2"
         wrapperClassName="col-sm-10"
         onChange={this.setDay.bind(this)}
-        defaultValue={this.props.temporalDomain[0].getDate()}
+        defaultValue={-1}
         ref="selectedDay">
+        <option value={-1}>-</option>
         {optionsDays}
       </Input>
     )
@@ -495,7 +603,6 @@ class Filter extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      filters: [],
       buttonDisabled: true,
       formDefaults: {
         action: 'exclusive',
@@ -512,8 +619,8 @@ class Filter extends React.Component {
       this.setState({buttonDisabled: true});
       return false;
     } else {
-      for (var i = 0; i < this.state.filters.length; i++) {
-        if (this.state.filters[i].key == this.refs.action.refs.input.value +
+      for (var i = 0; i < this.props.filters.length; i++) {
+        if (this.props.filters[i].key == this.refs.action.refs.input.value +
           this.refs.comparison.refs.input.value +
           this.refs.benchmark.refs.input.value) {
         
@@ -530,7 +637,7 @@ class Filter extends React.Component {
   
   addFilter() {
     if (this.validateFilter() == true) {
-      var filters = this.state.filters.slice();
+      var filters = this.props.filters.slice();
       filters.push({
         action: this.refs.action.refs.input.value,
         comparison: this.refs.comparison.refs.input.value,
@@ -539,7 +646,7 @@ class Filter extends React.Component {
           this.refs.comparison.refs.input.value +
           this.refs.benchmark.refs.input.value
       });
-      this.setState({filters: filters});
+      this.props.updateFilters(filters);
       this.resetForm();
     } else if (this.validateFilter() == false) {
       console.log('getting here');
@@ -547,13 +654,13 @@ class Filter extends React.Component {
   }
   
   removeFilter(filter) {
-    var filters = this.state.filters;
+    var filters = this.props.filters;
     for (var i = 0; i < filters.length; i++) {
-      if (this.state.filters[i].key == filter) {
+      if (this.props.filters[i].key == filter) {
         filters.splice(i, 1);
       }
     }
-    this.setState({filters: filters});
+    this.props.updateFilters(filters);
   }
   
   resetForm() {
@@ -588,7 +695,7 @@ class Filter extends React.Component {
         </Col>
         <Col sm={8}>
           <Panel>
-            <FilterList filters={this.state.filters} removeFilter={this.removeFilter.bind(this)} />
+            <FilterList filters={this.props.filters} removeFilter={this.removeFilter.bind(this)} />
           </Panel>
         </Col>
       </Row>
@@ -650,7 +757,7 @@ class Aggregate extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      aggregateDimension: null,
+      aggregateDimension: 'NA',
       aggregateMethod: null
     };
   }
@@ -672,45 +779,45 @@ class Aggregate extends React.Component {
       <ButtonToolbar className="text-center">
         <ButtonGroup>
           <Button
-            onClick={this.aggregateDimensionToggle.bind(this, "space")}
-            active={this.state.aggregateDimension === "space" ? true : null}>
+            onClick={this.aggregateDimensionToggle.bind(this, "SP")}
+            active={this.state.aggregateDimension === "SP" ? true : null}>
             Aggregate Across Space
           </Button>
           <Button
-            onClick={this.aggregateDimensionToggle.bind(this, "time")}
-            active={this.state.aggregateDimension === "time" ? true : null}>
+            onClick={this.aggregateDimensionToggle.bind(this, "TM")}
+            active={this.state.aggregateDimension === "TM" ? true : null}>
             Aggregate Across Time
           </Button>
           <Button
-            onClick={this.aggregateDimensionToggle.bind(this, null)}
-            active={this.state.aggregateDimension === null ? true : null}>
+            onClick={this.aggregateDimensionToggle.bind(this, 'NA')}
+            active={this.state.aggregateDimension === 'NA' ? true : null}>
             Do Not Aggregate
           </Button>
         </ButtonGroup>
         <ButtonGroup>
           <Button
-            onClick={this.aggregateMethodToggle.bind(this, "mean")}
-            active={this.state.aggregateMethod === "mean" ? true : null}>
+            onClick={this.aggregateMethodToggle.bind(this, "MEA")}
+            active={this.state.aggregateMethod === "MEA" ? true : null}>
             Mean
           </Button>
           <Button
-            onClick={this.aggregateMethodToggle.bind(this, "median")}
-            active={this.state.aggregateMethod === "median" ? true : null}>
+            onClick={this.aggregateMethodToggle.bind(this, "MED")}
+            active={this.state.aggregateMethod === "MED" ? true : null}>
             Median
           </Button>
           <Button
-            onClick={this.aggregateMethodToggle.bind(this, "mode")}
-            active={this.state.aggregateMethod === "mode" ? true : null}>
+            onClick={this.aggregateMethodToggle.bind(this, "MOD")}
+            active={this.state.aggregateMethod === "MOD" ? true : null}>
             Mode
           </Button>
           <Button
-            onClick={this.aggregateMethodToggle.bind(this, "range")}
-            active={this.state.aggregateMethod === "range" ? true : null}>
+            onClick={this.aggregateMethodToggle.bind(this, "RAN")}
+            active={this.state.aggregateMethod === "RAN" ? true : null}>
             Range
           </Button>
           <Button
-            onClick={this.aggregateMethodToggle.bind(this, "std")}
-            active={this.state.aggregateMethod === "std" ? true : null}>
+            onClick={this.aggregateMethodToggle.bind(this, "STD")}
+            active={this.state.aggregateMethod === "STD" ? true : null}>
             Std. Dev.
           </Button>
         </ButtonGroup>
@@ -723,7 +830,9 @@ var Map = React.createClass({
   createMap: function (element) {
     var map = L.map(element);
     L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
-
+    L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
     return map;
   },
   setupMap: function () {
