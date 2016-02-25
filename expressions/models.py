@@ -92,68 +92,50 @@ def validate_expression_text(expression_text):
                                   'expressions may be used in expressions')
 
 
+AGG_DIM_CHOICES = (
+    ('SP', 'Across space'),
+    ('TM', 'Across time'),
+    ('NA', 'Do not aggregate'),
+)
+
+AGG_METHOD_CHOICES = (
+    ('MEA', 'Mean'),
+    ('MED', 'Median'),
+    ('MOD', 'Mode'),
+    ('RAN', 'Range'),
+    ('STD', 'Std dev'),
+)
+
+
 class Expression(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
+    description = models.TextField(null=True, blank=True)
     expression_text = models.TextField(validators=[validate_expression_text])
     spatial_domain_features = models.ManyToManyField(Feature, blank=True)
     temporal_domain = DateRangeField(null=True, blank=True)
     filters = ArrayField(HStoreField(), null=True, blank=True)
+    aggregate_method = models.CharField(max_length=3, choices=AGG_METHOD_CHOICES, null=True, blank=True)
+    aggregate_dimension = models.CharField(max_length=2, choices=AGG_DIM_CHOICES, default='NA')
 
     def evaluate(self, user, extra_substitutions={}):
-        return 'Not implemented yet'
-        #def evaluate_on_collection_item(item):
-            #return self.evaluate_arithmetic(user, item.properties)
+        expr = sympy.sympify(self.expression_text, evaluate=False)
 
-        #def reduce_on_collection_item(accum, item):
-            #if isinstance(accum, sympy.Number):
-                #return evaluate_on_collection_item(item) + accum
-            #else:
-                ## It is the first iteration, accum is the first object in the collection
-                #return evaluate_on_collection_item(item) + evaluate_on_collection_item(accum)
+        atoms = expr.atoms()
+        symbols = filter(lambda atom: type(atom) == sympy.Symbol, atoms)
+        substitutions = []
 
-        #def map_on_collection_item(item):
-            #val = evaluate_on_collection_item(item)
-            #item.properties[self.name + '_value'] = val
-            #return item
+        for symbol in symbols:
+            symbol_type, symbol_name = symbol.split(':')
 
-        #if self.expression_type == 'arith':
-            #return self.evaluate_arithmetic(user, extra_substitutions)
-        #elif self.expression_type == 'collec':
-            #return FormVariable.objects.get(name=self.expression_text, user=user).deserialize()
-        #elif self.expression_type == 'map':
-            #return map(map_on_collection_item, self.input_collection.evaluate(user))
-        #elif self.expression_type == 'filter':
-            #return filter(evaluate_on_collection_item, self.input_collection.evaluate(user))
-        #elif self.expression_type == 'reduce':
-            #return reduce(reduce_on_collection_item, self.input_collection.evaluate(user))
+            if symbol_type == 'expression':
+                val = self.resolve_sub_expression(str(symbol)).evaluate(user)
 
-    #def evaluate_arithmetic(self, user, extra_substitutions={}):
-        #expr = sympy.sympify(self.expression_text, evaluate=False)
-        #atoms = expr.atoms()
-        ## List of symbols that need to be resolved.
-        #symbols = filter(lambda atom: type(atom) == sympy.Symbol, atoms)
+            substitutions.append((symbol, val))
 
-        ## Currently symbols can only resolve to subexpressions or form variables.
-        #substitutions = []
-        #for symbol in symbols:
-            #subexp = Expression.objects.filter(name=str(symbol)).first()
-            #if subexp:
-                #val = subexp.evaluate(user)
-            #elif str(symbol) in extra_substitutions.keys():
-                #try:
-                    #val = float(extra_substitutions[str(symbol)])
-                #except (ValueError, TypeError):
-                    #return 'undefined'
-            #else:
-                #if not user.is_authenticated():
-                    #return 'undefined'
-                #form_var = FormVariable.objects.filter(name=str(symbol), user=user).first()
-                #if not form_var:
-                    #return 'undefined'
-                #val = form_var.value
-            #substitutions.append((symbol, val))
+        return sympy.simplify(expr.subs(substitutions))
 
-        #return sympy.simplify(expr.subs(substitutions))
+    def resolve_sub_expression(self, expression_name):
+        return Expression.objects.filter(name=expression_name).first()
 
     def __str__(self):
         return self.name
