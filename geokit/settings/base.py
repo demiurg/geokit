@@ -27,12 +27,12 @@ if 'runserver' in sys.argv:
 
 
 ALLOWED_HOSTS = [
-    'localhost', '*.localhost',
+    'geokit.localhost', '*.geokit.localhost',
     'geokit.io', '*.geokit.io',
 ]
 
 if RUNSERVER:
-    SESSION_COOKIE_DOMAIN = '.localhost'
+    SESSION_COOKIE_DOMAIN = '.geokit.localhost'
 else:
     SESSION_COOKIE_DOMAIN = '.geokit.io'
 
