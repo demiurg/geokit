@@ -42,7 +42,7 @@ SHARED_APPS = [
     'tenant_schemas',
     'account',
 
-    'wagtail.wagtailcore', # necessary for site middleware to work
+    'wagtail.wagtailcore', #necessary for site middleware to work
 
     'django.contrib.contenttypes',
     'django.contrib.admin',
@@ -87,7 +87,7 @@ TENANT_APPS = [
     'sieve',
 ]
 
-INSTALLED_APPS = list(set(TENANT_APPS + SHARED_APPS))
+INSTALLED_APPS = TENANT_APPS + [app for app in SHARED_APPS if app not in TENANT_APPS]
 
 TENANT_MODEL = "account.GeoKitSite"
 
