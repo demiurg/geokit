@@ -94,11 +94,11 @@ class SignupForm(CrispyForm, forms.Form):
                 u'This email address is already in use. '
                 'Please supply a different email address.'
             ))
-        return self.cleaned_data['email']
+        return self.cleaned_data['email1']
 
     def clean_email2(self):
         email1 = self.cleaned_data.get('email1')
         email2 = self.cleaned_data.get('email2')
-        if email2 and email2 and email1 == email2:
+        if email2 and email2 and email1 != email2:
                 raise forms.ValidationError(_("The emails must match."))
         return self.cleaned_data

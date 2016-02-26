@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.contrib.auth.forms import PasswordResetForm
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.auth import login as auth_login, authenticate
 from django.contrib.auth.decorators import login_required
 
@@ -30,6 +30,7 @@ def site_create(request):
             site = form.save(commit=False)
             site.user = request.user
             site.domain_url = form.cleaned_data['schema_name'] + '.localhost'
+
             site.save()
             return redirect('home')
     else:
@@ -65,7 +66,7 @@ def signup(request):
         form = SignupForm(request.POST)
         if form.is_valid():
             password = User.objects.make_random_password()
-            email = User.objects.normalize_email(form.cleaned_data['email'])
+            email = User.objects.normalize_email(form.cleaned_data['email1'])
             u = User.objects.create_user(
                 username=email,
                 email=email,
