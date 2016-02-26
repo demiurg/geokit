@@ -5,6 +5,7 @@ from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.models import User, Group
 from django.contrib.auth import login as auth_login, authenticate
 from django.contrib.auth.decorators import login_required
+from django.db import connection
 
 from forms import SignupForm, LoginForm, GeoKitSiteForm
 from models import GeoKitSite
@@ -30,8 +31,17 @@ def site_create(request):
             site = form.save(commit=False)
             site.user = request.user
             site.domain_url = form.cleaned_data['schema_name'] + '.localhost'
-
             site.save()
+
+            try:
+                CLONE = "SELECT clone_schema('test', '{}', TRUE);".format(site.schema_name)
+                cursor = connection.cursor()
+                cursor.execute(CLONE)
+
+                site.save()
+            except:
+                form.add_error("Unknown error occured creating the site.")
+
             return redirect('home')
     else:
         form = GeoKitSiteForm()

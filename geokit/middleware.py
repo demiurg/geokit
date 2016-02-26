@@ -3,6 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import DisallowedHost
 from django.db import connection
 from django.http import Http404
+from wagtail.wagtailcore.middleware import SiteMiddleware
 
 from tenant_schemas.utils import (get_tenant_model, remove_www,
                                   get_public_schema_name)
@@ -47,7 +48,11 @@ class TenantMiddleware(object):
                 'No tenant for name "%s"' % subdomain)
 
         # Fix ignore wagtail sites
-        request.site = None
+        try:
+            from wagtail.wagtailcore.models import Site
+            request.site = Site.find_for_request(request)
+        except Site.DoesNotExist:
+            request.site = None
 
         # Content type can no longer be cached as public and tenant schemas
         # have different models. If someone wants to change this, the cache
@@ -57,6 +62,9 @@ class TenantMiddleware(object):
         # the id 15. if 14 is cached instead of 15, the permissions for the
         # wrong model will be fetched.
         ContentType.objects.clear_cache()
+
+
+
 
 
 class SuspiciousTenantMiddleware(TenantMiddleware):
