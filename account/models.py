@@ -7,7 +7,7 @@ import re
 class GeoKitSite(TenantMixin):
     RESERVED = [
         'test', 'geokit', 'admin', 'public', 'topology', 'geometry', 'data',
-        'raster'
+        'raster', 'template', 'schema_template'
     ]
 
     user = models.ForeignKey(User)

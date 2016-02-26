@@ -42,7 +42,7 @@ SHARED_APPS = [
     'tenant_schemas',
     'account',
 
-    'wagtail.wagtailcore', #necessary for site middleware to work
+    # 'wagtail.wagtailcore', #necessary for site middleware to work
 
     'django.contrib.contenttypes',
     'django.contrib.admin',
@@ -92,7 +92,7 @@ INSTALLED_APPS = TENANT_APPS + [app for app in SHARED_APPS if app not in TENANT_
 TENANT_MODEL = "account.GeoKitSite"
 
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE_CLASSES = [
     # 'tenant_schemas.middleware.TenantMiddleware',
     'geokit.middleware.TenantMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -104,9 +104,9 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
 
-    'wagtail.wagtailcore.middleware.SiteMiddleware',
+    # 'wagtail.wagtailcore.middleware.SiteMiddleware',
     # 'wagtail.wagtailredirects.middleware.RedirectMiddleware',
-)
+]
 
 ROOT_URLCONF = 'geokit.urls'
 
