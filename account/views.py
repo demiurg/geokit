@@ -91,6 +91,17 @@ def signup(request):
             }
             reset_form.save(**opts)
 
+            # Do login immediate
+            result_user = authenticate(
+                username=u.username,
+                password=password
+            )
+            if result_user:
+                auth_login(request, result_user)
+                return redirect('home')
+            else:
+                form.add_error('password', 'Internal error logging in. Check email for password and try to login.')
+
             return redirect('home')
     else:
         form = SignupForm()
