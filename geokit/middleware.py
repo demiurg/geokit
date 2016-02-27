@@ -3,10 +3,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import DisallowedHost
 from django.db import connection
 from django.http import Http404
-from wagtail.wagtailcore.middleware import SiteMiddleware
 
-from tenant_schemas.utils import (get_tenant_model, remove_www,
-                                  get_public_schema_name)
+from tenant_schemas.utils import get_tenant_model, remove_www
 
 
 class TenantMiddleware(object):
@@ -62,9 +60,6 @@ class TenantMiddleware(object):
         # the id 15. if 14 is cached instead of 15, the permissions for the
         # wrong model will be fetched.
         ContentType.objects.clear_cache()
-
-
-
 
 
 class SuspiciousTenantMiddleware(TenantMiddleware):
