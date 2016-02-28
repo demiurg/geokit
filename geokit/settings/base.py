@@ -65,7 +65,6 @@ SHARED_APPS = [
 
 TENANT_APPS = [
     'django.contrib.contenttypes',
-
     'wagtail.wagtailcore',
     'wagtail.wagtailadmin',
     'wagtail.wagtailsearch',
@@ -87,7 +86,7 @@ TENANT_APPS = [
     'sieve',
 ]
 
-INSTALLED_APPS = TENANT_APPS + [app for app in SHARED_APPS if app not in TENANT_APPS]
+INSTALLED_APPS = SHARED_APPS + [app for app in TENANT_APPS if app not in SHARED_APPS]
 
 TENANT_MODEL = "account.GeoKitSite"
 
@@ -114,6 +113,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
+            os.path.join(PROJECT_DIR, 'account/templates'),
             os.path.join(PROJECT_DIR, 'templates'),
         ],
         'APP_DIRS': True,
