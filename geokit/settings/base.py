@@ -57,8 +57,6 @@ SHARED_APPS = [
     'compressor',
     'modelcluster',
     'rest_framework',
-    'overextends',
-    'dashboard',
 
     'crispy_forms',
 ]
