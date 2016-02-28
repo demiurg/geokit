@@ -5,10 +5,10 @@
     {% compress css %}
         <link rel="stylesheet" href="{% static 'wagtailadmin/css/vendor/jquery-ui/jquery-ui-1.10.3.verdant.css' %}" />
         <link rel="stylesheet" href="{% static 'wagtailadmin/css/core.css' %}" type="text/css" />
-        <link rel="stylesheet" href="{% static 'account/css/adminstyles.css' %}" type="text/css">
     {% endcompress %}
 
     {% block extra_css %}{% endblock %}
+    <link rel="stylesheet" href="{% static 'account/css/adminstyles.css' %}" type="text/css">
 {% endblock %}
 
 {% block branding_favicon %}
