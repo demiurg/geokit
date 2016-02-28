@@ -5,35 +5,35 @@
 <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
 <!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
 <!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
-    <head>
-        <meta charset="utf-8" />
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <title>{% block title %}{% if self.seo_title %}{{ self.seo_title }}{% else %}{{ self.title }}{% endif %}{% endblock %}{% block title_suffix %}{% endblock %}</title>
-        <meta name="description" content="" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>{% block title %}{% if self.seo_title %}{{ self.seo_title }}{% else %}{{ self.title }}{% endif %}{% endblock %}{% block title_suffix %}{% endblock %}</title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-        {# Global javascript #}
-        <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.js"></script>
-        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
-        <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
-        <script src="/static/js/TileLayer.GeoJSON.js"></script>
+    {# Global javascript #}
+    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+    <script src="/static/js/TileLayer.GeoJSON.js"></script>
 
-        {% block extra_js %}
-            {# Override this in templates to add extra javascript #}
-        {% endblock %}
+    {% block extra_js %}
+      {# Override this in templates to add extra javascript #}
+    {% endblock %}
 
-        {# Global stylesheets #}
-        <link rel="stylesheet" type="text/css" href="{% static 'css/geokit.css' %}">
-        <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.css" />
+    {# Global stylesheets #}
+    <link rel="stylesheet" type="text/css" href="{% static 'css/geokit.css' %}">
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.css" />
 
-        {% block extra_css %}
-            {# Override this in templates to add extra stylesheets #}
-        {% endblock %}
-    </head>
+    {% block extra_css %}
+      {# Override this in templates to add extra stylesheets #}
+    {% endblock %}
+  </head>
 
-    <body class="{% block body_class %}{% endblock %}">
-        {% wagtailuserbar %}
-
-        {% block content %}{% endblock %}
-    </body>
+  <body class="{% block body_class %}{% endblock %}">
+    {# wagtailuserbar #}
+    
+    {% block content %}{% endblock %}
+  </body>
 </html>
