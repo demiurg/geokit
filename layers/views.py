@@ -51,7 +51,13 @@ def tile_json(request, layer_name, z, x, y):
     x, y, z = int(x), int(y), int(z)
     #mimetype, data = stache(request, layer_name, z, x, y, "mvt")
     #mvt_features = mvt.decode(StringIO(data))
-    mvt_features = manual_mvt(layer_name, z, x, y)
+
+    if request.tenant is not None:
+        cache_path = os.path.join(settings.STATIC_ROOT, "tiles", str(request.tenant.pk))
+    else:
+        cache_path = os.path.join(settings.STATIC_ROOT, "tiles")
+
+    mvt_features = manual_mvt(cache_path, layer_name, z, x, y)
     features = []
     for wkb, props in mvt_features:
         geom = GEOSGeometry(buffer(wkb))
@@ -73,10 +79,8 @@ def tile_json(request, layer_name, z, x, y):
     return HttpResponse(response, content_type="application/json")
 
 
-def manual_mvt(layer_name, z, x, y):
+def manual_mvt(cache_path, layer_name, z, x, y):
     x, y, z = int(x), int(y), int(z)
-
-    cache_path = os.path.join(settings.STATIC_ROOT, "tiles")
 
     file_path = "{}/{}/{}/{}/{}.mvt".format(cache_path, layer_name, z, x, y)
     lock_path = "{}/{}/{}/{}/{}.mvt.lock".format(cache_path, layer_name, z, x, y)
@@ -200,30 +204,6 @@ def manual_mvt(layer_name, z, x, y):
     lock.release()
 
     return data
-
-
-@mapnik_xml
-@tile_cache
-def tile_mvt(request, layer_name, z, x, y):
-    url = 'http://localhost:{}/{}/{}/{}/{}'.format(settings.NODE_PORT, layer_name, z, x, y)
-
-    try:
-        # Proxy request to Node.js MVT server
-        request = urllib2.Request(url, headers={
-            'Content-Type': request.META['CONTENT_TYPE'],
-            'Accept-Encoding': request.META['HTTP_ACCEPT_ENCODING'],
-        })
-        proxied_request = urllib2.urlopen(request)
-        status_code = proxied_request.code
-        mimetype = proxied_request.headers.typeheader or mimetypes.guess_type(url)
-        content = proxied_request.read()
-    except urllib2.HTTPError as e:
-        response = HttpResponse(e.msg, status=e.code, content_type='text/plain')
-    else:
-        response = HttpResponse(content, status=status_code, content_type=mimetype)
-        response['Content-Encoding'] = 'deflate'
-
-    return response
 
 
 def index(request):

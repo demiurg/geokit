@@ -36,6 +36,7 @@ class TenantMiddleware(object):
         if subdomain is None:
             subdomain = 'public'
             request.urlconf = settings.PUBLIC_SCHEMA_URLCONF
+            request.tenant = None
             return
 
         try:
