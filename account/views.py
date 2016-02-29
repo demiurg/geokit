@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
 from django.contrib.auth.forms import PasswordResetForm
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import User
 from django.contrib.auth import login as auth_login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.db import connection

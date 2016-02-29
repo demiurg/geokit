@@ -1,7 +1,7 @@
 import md5
 
 from django.contrib.gis.db import models
-from django.contrib.postgres.fields import ArrayField, HStoreField
+from django.contrib.postgres.fields import ArrayField, HStoreField, JSONField
 
 
 class Layer(models.Model):
@@ -52,7 +52,7 @@ class Layer(models.Model):
 class Feature(models.Model):
     layer = models.ForeignKey(Layer)
     geometry = models.GeometryCollectionField(srid=3857)
-    properties = HStoreField(null=True)
+    properties = JSONField(null=True)
 
     def __unicode__(self):
         return unicode(self.pk)
