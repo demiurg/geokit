@@ -4,6 +4,18 @@ from django.contrib.auth.models import User
 import re
 
 
+ACCESS_TYPES = (
+    ('read', 'Read',),
+    ('write', 'Write'),
+    ('admin', 'Admin'),
+)
+
+
+class Membership(models.Model):
+    user = models.ForeignKey(User)
+    access = models.CharField(max_length=10, choices=ACCESS_TYPES)
+
+
 class GeoKitSite(TenantMixin):
     RESERVED = [
         'test', 'geokit', 'admin', 'public', 'topology', 'geometry', 'data',
@@ -27,5 +39,5 @@ class GeoKitSite(TenantMixin):
 
     @classmethod
     def is_available(cls, name):
-
-        return cls.is_allowed(name) and not cls.objects.filter(schema_name=name).exists()
+        return cls.is_allowed(name) and \
+            not cls.objects.filter(schema_name=name).exists()

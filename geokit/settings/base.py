@@ -42,8 +42,6 @@ SHARED_APPS = [
     'tenant_schemas',
     'account',
 
-    # 'wagtail.wagtailcore', #necessary for site middleware to work
-
     'django.contrib.contenttypes',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -59,7 +57,6 @@ SHARED_APPS = [
     'rest_framework',
     'overextends',
     'dashboard',
-
     'crispy_forms',
 ]
 
@@ -93,7 +90,7 @@ TENANT_MODEL = "account.GeoKitSite"
 
 
 MIDDLEWARE_CLASSES = [
-    # 'tenant_schemas.middleware.TenantMiddleware',
+    # implement tenant_schemas logic as well as wagtail sites middleware
     'geokit.middleware.TenantMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -103,8 +100,6 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-
-    # 'wagtail.wagtailcore.middleware.SiteMiddleware',
     # 'wagtail.wagtailredirects.middleware.RedirectMiddleware',
 ]
 
