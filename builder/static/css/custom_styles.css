@@ -1,0 +1,50 @@
+body {
+  background-color: rgb(250, 246, 237);
+}
+
+a {
+  color: rgba(0, 0, 0, 0.75);
+}
+
+a:hover, a:focus, a:active {
+  color: rgba(0, 0, 0, 0.50);
+}
+
+.navbar {
+  background-color: rgb(112, 87, 91);
+  margin-bottom: 0;
+}
+
+ul.dropdown-menu, li.open a, .navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:focus, .navbar-default .navbar-nav > .open > a:hover {
+  background-color: rgb(122, 125, 122);
+  box-shadow: none;
+  border: 0;
+}
+
+.navbar-default .navbar-nav > li > a, .navbar-default .navbar-brand, ul.dropdown-menu, li.open a, .navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:focus, .navbar-default .navbar-nav > .open > a:hover {
+  color: rgb(255, 255, 255);
+}
+
+.dropdown-menu .divider {
+  background-color: rgb(250, 246, 237);
+}
+
+.navbar-default .navbar-brand:focus, .navbar-default .navbar-brand:hover, .navbar-default .navbar-nav > li > a:focus, .navbar-default .navbar-nav > li > a:hover {
+  background-color: rgb(92, 67, 71);
+  color: rgb(255, 255, 255);
+}
+
+.dropdown-menu > li > a:hover {
+  background-color: rgb(102, 105, 102);
+  color: #ffffff;
+}
+
+.site-menu {
+  background-color: rgb(255, 255, 255);
+  border-radius: 4px;
+  padding: 15px;
+}
+
+h1 {
+  color: rgb(112, 87, 91);
+}

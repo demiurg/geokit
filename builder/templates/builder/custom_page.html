@@ -3,17 +3,47 @@
 {% load wagtailcore_tags %}
 {% load wagtailimages_tags %}
 {% load geokit_blocks_tags %}
+{% load static from staticfiles %}
+{% load menu_tags %}
 
 {% block extra_js %}
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
 {% endblock %}
 
 {% block extra_css %}
+  <style>
+    html {
+      position: relative;
+      min-height: 100%;
+    }
+    body {
+      /* Margin bottom by footer height */
+      margin-bottom: 60px;
+    }
+    .footer {
+      position: absolute;
+      bottom: 0;
+      color: rgba(255, 255, 255, 0.75);
+      width: 100%;
+      /* Set the fixed height of the footer here */
+      height: 60px;
+      background-color: rgb(112, 87, 91);
+    }
+    footer .container {
+      margin-top: 20px;
+    }
+    footer a {
+      color: rgba(255, 255, 255, 0.75);
+    }
+    footer a:hover, footer a:focus, footer a:active {
+      color: rgb(255, 255, 255);
+    }
+  </style>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+  <link rel="stylesheet" href="{% static 'css/custom_styles.css' %}">
 {% endblock %}
 
 {% block bodyclass %}template-custompage{% endblock %}
-
 {% block content %}
   <nav class="navbar navbar-default">
     <div class="container-fluid">
@@ -25,7 +55,7 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="#">Brand</a>
+        <a class="navbar-brand" href="#">Geo<strong>Kit</strong></a>
       </div>
 
       <!-- Collect the nav links, forms, and other content for toggling -->
@@ -46,21 +76,42 @@
       </div><!-- /.navbar-collapse -->
     </div><!-- /.container-fluid -->
   </nav>
-    <div class="container">
-      <h1>{{ self.title }}</h1>
-
-      {% for block in self.body %}
-      <section class="block-{{ block.block_type }}">
-        {% if block.type == 'paragraph' %}
-        {{ block|richtext }}
-        {% elif block.block_type == 'image' %}
-        {% image block.value max-500x300 %}
-        {% elif block.block_type == 'table' %}
-        {{ block|render_with_user:request.user }}
-        {% else %}
-        {{ block }}
-        {% endif %}
-      </section>
-      {% endfor %}
+    <div class="col-xs-12">
+      <p class="text-right"><small><a href="http://geokit.io/">Powered by <strong>Geo</strong>Kit</a></small></p>
     </div>
+  <div class="container">
+    <div class="row">
+      <div class="col-sm-3">
+        {% block menu %}
+          {% get_site_root as site_root %}
+          {% menu parent=site_root calling_page=self %}
+        {% endblock %}
+      </div>
+      <div class="col-sm-9">
+        <h1>{{ self.title }}</h1>
+
+        {% for block in self.body %}
+        <section class="block-{{ block.block_type }}">
+          {% if block.type == 'paragraph' %}
+            {{ block|richtext }}
+          {% elif block.block_type == 'image' %}
+          {% image block.value max-500x300 %}
+          {% elif block.block_type == 'table' %}
+            {{ block|render_with_user:request.user }}
+          {% else %}
+            {{ block }}
+          {% endif %}
+        </section>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block footer %}
+  <footer class="footer">
+    <div class="container">
+      <p>&copy; Copyright 2016 GeoKit. <a href="http://geokit.io/">Create your own <strong>Geo</strong>Kit site</a>.</p>
+    </div>
+  </footer>
 {% endblock %}
