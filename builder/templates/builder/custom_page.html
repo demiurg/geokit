@@ -61,9 +61,9 @@
       <!-- Collect the nav links, forms, and other content for toggling -->
       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
         <ul class="nav navbar-nav navbar-right">
-          <li><a href="#">Link</a></li>
+          <li><a href="http://geokit.io/">Geo<strong>Kit</strong> Home</a></li>
           <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Sign Up or Sign In <span class="caret"></span></a>
             <ul class="dropdown-menu">
               <li><a href="#">Action</a></li>
               <li><a href="#">Another action</a></li>
@@ -79,15 +79,15 @@
     <div class="powered-by">
       <p class="text-right" style="margin: 0;"><small><a href="http://geokit.io/">Powered by <strong>Geo</strong>Kit</a></small></p>
     </div>
-  <div class="container-fluid" style="margin-top: 15px;">
+  <div class="container-fluid container-geokit">
     <div class="row">
-      <div class="col-sm-3">
+      <div class="col-sm-3 hidden-xs">
         {% block menu %}
           {% get_site_root as site_root %}
           {% menu parent=site_root calling_page=self %}
         {% endblock %}
       </div>
-      <div class="col-sm-9">
+      <div class="col-sm-9 col-geokit-site-content">
         <div class="panel panel-default">
           <div class="panel-body">
         {% for block in self.body %}

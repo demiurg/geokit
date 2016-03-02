@@ -10,6 +10,21 @@ a:hover, a:focus, a:active {
   color: rgba(0, 0, 0, 0.50);
 }
 
+@media screen and (max-width: 767px) {
+  .col-geokit-site-content {
+    padding-left: 30px;
+  }
+}
+
+.col-geokit-site-content {
+  margin-top: 15px;
+}
+
+.container-geokit {
+  margin-top: 0;
+  padding-left: 0;
+}
+
 .navbar {
   background-color: rgb(112, 87, 91);
   margin-bottom: 0;
@@ -44,11 +59,22 @@ ul.dropdown-menu, li.open a, .navbar-default .navbar-nav > .open > a, .navbar-de
   border: 0;
 }
 
+.panel-geokit-site-menu {
+  border-radius: 0;
+  min-height: 100vh;
+}
+
+.panel-geokit-site-menu ul li.active {
+  font-weight: bold;
+}
+
 .powered-by {
   background-color: rgb(240, 236, 227);
-  border-bottom: 1px solid rgb(112, 87, 91);
-  box-shadow: 0px 0 5px rgba(0, 0, 0, 0.50);
+  border-bottom: 1px solid rgb(192, 167, 171);
+  box-shadow: 0 3px 3px rgba(0, 0, 0, 0.15);
   padding: 5px 10px 5px 0;
+  position: relative;
+  z-index: 50;
 }
 
 .site-menu {
