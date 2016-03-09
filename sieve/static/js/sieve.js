@@ -273,15 +273,23 @@ class Sieve extends React.Component {
               <TemporalConfigurator {...this.props}
                 dateUpdated={this.updateStartDate.bind(this)}
                 ref="dateStart" />
+            </Col>
+            <Col sm={4}>
               <h3>Configure End Date</h3>
               <TemporalConfigurator {...this.props}
                 dateUpdated={this.updateEndDate.bind(this)}
                 ref="dateEnd" />
             </Col>
-            <Col sm={8}>
-              <SpatialConfigurator {...this.props} />
+            <Col sm={4}>
+              <h3>Interval Duration</h3>
+              <IntervalConfigurator {...this.props} />
             </Col>
           </Row>
+        </Panel>
+        <Panel>
+          <Col>
+            <SpatialConfigurator {...this.props} />
+          </Col>
         </Panel>
         <Panel>
           <ButtonToolbar>
@@ -378,13 +386,85 @@ class SpatialViewer extends React.Component {
   }
 }
 
+class IntervalConfigurator extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      selectedMeasure: null,
+      selectedPeriod: null
+    }
+  }
+
+  setMeasure(event) {
+    this.setState({selectedMeasure: event.target.value});
+    console.log(event.target.value);
+  }
+
+  setPeriod(event) {
+    this.setState({selectedPeriod: event.target.value});
+    console.log(event.target.value);
+  }
+
+  render() {
+    var optionsPeriods = [];
+    var periods = ['day', 'week', 'month', 'year'];
+    
+    for (var i = 0; i < periods.length; i++) {
+      optionsPeriods.push(
+        <option
+          key={i}
+          value={periods[i]}>
+            {periods[i]}
+        </option>
+      );
+    }
+    
+    var optionsMeasures = [];
+    
+    for (var i = 0; i < 31; i++) {
+      optionsMeasures.push(
+        <option
+          key={i}
+          value={i + 1}>
+            {i + 1}
+        </option>
+      );
+    }
+    
+    return (
+      <form className="form-horizontal">
+        <Input
+          type="select"
+          label="Measure"
+          labelClassName="sr-only"
+          onChange={this.setPeriod.bind(this)}
+          wrapperClassName="col-sm-12"
+          defaultValue={-1}>
+          <option value={-1}>Measure</option>
+            {optionsMeasures}
+        </Input>
+        <Input
+          type="select"
+          label="Period"
+          labelClassName="sr-only"
+          onChange={this.setPeriod.bind(this)}
+          wrapperClassName="col-sm-12"
+          defaultValue={-1}>
+          <option value={-1}>Period</option>
+          {optionsPeriods}
+        </Input>
+      </form>
+    );
+  }
+}
+
 class TemporalConfigurator extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       selectedMonth: null,
       selectedDay: null,
-      selectedYear: null,
+      selectedYear: null
     };
   }
 
@@ -438,11 +518,11 @@ class TemporalConfigurator extends React.Component {
       <Input
         type="select"
         label="Year"
-        labelClassname="col-sm-2"
-        wrapperClassName="col-sm-10"
+        labelClassName="sr-only"
+        wrapperClassName="col-sm-12"
         onChange={this.setYear.bind(this)}
         defaultValue={-1}>
-        <option value={-1}>-</option>
+        <option value={-1}>Year</option>
         {optionsYears}
       </Input>
     );
@@ -465,12 +545,12 @@ class TemporalConfigurator extends React.Component {
       <Input
         type="select"
         label="Month"
-        labelClassName="col-sm-2"
-        wrapperClassName="col-sm-10"
+        labelClassName="sr-only"
+        wrapperClassName="col-sm-12"
         onChange={this.setMonth.bind(this)}
         defaultValue={-1}
         ref="selectedMonth">
-        <option value={-1}>-</option>
+        <option value={-1}>Month</option>
         {optionsMonths}
       </Input>
     );
@@ -516,12 +596,12 @@ class TemporalConfigurator extends React.Component {
       <Input
         type="select"
         label="Day"
-        labelClassName="col-sm-2"
-        wrapperClassName="col-sm-10"
+        labelClassName="sr-only"
+        wrapperClassName="col-sm-12"
         onChange={this.setDay.bind(this)}
         defaultValue={-1}
         ref="selectedDay">
-        <option value={-1}>-</option>
+        <option value={-1}>Day</option>
         {optionsDays}
       </Input>
     )
