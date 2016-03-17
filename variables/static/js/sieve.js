@@ -15,71 +15,17 @@ var Tab = ReactBootstrap.Tab;
 var DropdownButton = ReactBootstrap.DropdownButton;
 var MenuItem = ReactBootstrap.MenuItem;
 
-var metadata = {
-    title: "This is a Sieve title",
-    description: "This is a Sieve description"
-}
-
-var spatial_domain = [
-  ["x1", "y1"],
-  ["x2", "y2"],
-  ["x3", "y3"]
-]
-
-var temporal_domain = [
-  new Date(1996, 0, 1),
-  new Date(1997, 0, 1),
-  new Date(1998, 0, 1),
-  new Date(1999, 0, 1),
-  new Date(2000, 0, 1)
-]
-
-var data = [
-  {
-    space: spatial_domain[0],
-    time: temporal_domain[0],
-    values: [
-      {
-        name: "precip",
-        value: 5,
-        unit: "inch"
-      },
-      {
-        name: "temp",
-        value: 6,
-        unit: "celsius"
-      }
-    ]
-  },
-  {
-    space: spatial_domain[1],
-    time: temporal_domain[0],
-    values: [
-      {
-        name: "precip",
-        value: 10,
-        unit: "inch"
-      },
-      {
-        name: "temp",
-        value: 8,
-        unit: "celsius"
-      }
-    ]
-  }
-]
-
 class DataVariableMenu extends React.Component {
   constructor(props) {
     super(props);
   }
   
   render() {
-    var values = this.props.data[0].values.map((value, index) => {
+    var values = ['precip', 'temp'].map((value, index) => {
       return (
         <MenuItem
           key={index} >
-          {value.name}
+          {value}
         </MenuItem>);
     });
     
@@ -101,7 +47,11 @@ class Sieve extends React.Component {
     loadFormVariables();
     loadUserVariables();
 
-    this.state = this.initialState();
+    if (this.props.initialData) {
+      this.state = Object.assign(this.initialState(), this.props.initialData);
+    } else {
+      this.state = this.initialState();
+    }
   }
 
   initialState() {
@@ -215,7 +165,7 @@ class Sieve extends React.Component {
           spatial_domain_features: [],
           filters: this.state.filters,
           aggregate_method: this.state.aggregateMethod,
-          aggregate_dimension: this.state.aggreagateDimension
+          aggregate_dimension: this.state.aggregateDimension
         };
 
     if (!data.name || data.name === '') {
@@ -236,14 +186,20 @@ class Sieve extends React.Component {
 
     if (validationResponse.isValid) {
       var xhr = new XMLHttpRequest();
-      xhr.open("POST", "/api/expressions/", true);
+
+      if (this.props.initialData) {
+        xhr.open("PUT", "/api/expressions/"+this.props.initialData.id+"/", true);
+      } else {
+        xhr.open("POST", "/api/expressions/", true);
+      }
+
       xhr.setRequestHeader("Content-type", "application/json");
       xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
 
       xhr.onreadystatechange = () => {
         if (xhr.readyState == 4) {
           if (200 <= xhr.status && xhr.status < 300) {
-            this.setState(this.initialState());
+            window.location.href = window.redirect_after_save;
           } else {
             this.setState({errors: {server: xhr.response}});
           }
@@ -270,16 +226,18 @@ class Sieve extends React.Component {
           <Row>
             <Col sm={4}>
               <h3>Configure Start Date</h3>
-              <TemporalConfigurator {...this.props}
+              <TemporalConfigurator
+                date={this.state.temporalDomain.start}
                 dateUpdated={this.updateStartDate.bind(this)}
                 ref="dateStart" />
               <h3>Configure End Date</h3>
-              <TemporalConfigurator {...this.props}
+              <TemporalConfigurator
+                date={this.state.temporalDomain.end}
                 dateUpdated={this.updateEndDate.bind(this)}
                 ref="dateEnd" />
             </Col>
             <Col sm={8}>
-              <SpatialConfigurator {...this.props} />
+              <SpatialConfigurator />
             </Col>
           </Row>
         </Panel>
@@ -292,7 +250,7 @@ class Sieve extends React.Component {
               <Button onClick={this.insertToken.bind(this, '-')}>-</Button>
             </ButtonGroup>
             <ButtonGroup className="pull-right">
-              <DataVariableMenu {...this.props} />
+              <DataVariableMenu />
               <DropdownButton title="Form Variables" id="form-var-dropdown">
                 {this.state.formVariables.variables.map((formVar, i) => {
                   return <MenuItem key={i} eventKey={i} onClick={this.insertToken.bind(this, formVar.name)}>{formVar.name}</MenuItem>;
@@ -310,6 +268,8 @@ class Sieve extends React.Component {
         </Panel>
         <Panel>
           <Aggregate
+            dimension={this.state.aggregateDimension}
+            method={this.state.aggregateMethod}
             updateAggregateDimension={this.updateAggregateDimension.bind(this)}
             updateAggregateMethod={this.updateAggregateMethod.bind(this)} />
         </Panel>
@@ -381,11 +341,20 @@ class SpatialViewer extends React.Component {
 class TemporalConfigurator extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      selectedMonth: null,
-      selectedDay: null,
-      selectedYear: null,
-    };
+
+    if (this.props.date) {
+      this.state = {
+        selectedMonth: this.props.date.getMonth(),
+        selectedDay: this.props.date.getDate(),
+        selectedYear: this.props.date.getFullYear()
+      };
+    } else {
+      this.state = {
+        selectedMonth: null,
+        selectedDay: null,
+        selectedYear: null,
+      };
+    }
   }
 
   setYear(event) {
@@ -424,12 +393,12 @@ class TemporalConfigurator extends React.Component {
   }
   
   renderYears() {
-    var optionsYears = this.props.temporalDomain.map((date, index) => {
+    var optionsYears = [1996, 1997, 1998, 1999, 1999, 2000].map((year, index) => {
       return (
         <option
           key={index}
-          value={date.getFullYear()}>
-          {date.getFullYear()}
+          value={year}>
+          {year}
         </option>
       );
     });
@@ -441,8 +410,8 @@ class TemporalConfigurator extends React.Component {
         labelClassname="col-sm-2"
         wrapperClassName="col-sm-10"
         onChange={this.setYear.bind(this)}
-        defaultValue={-1}>
-        <option value={-1}>-</option>
+        defaultValue={this.state.selectedYear}>
+        <option value={this.state.selectedYear}>-</option>
         {optionsYears}
       </Input>
     );
@@ -468,7 +437,7 @@ class TemporalConfigurator extends React.Component {
         labelClassName="col-sm-2"
         wrapperClassName="col-sm-10"
         onChange={this.setMonth.bind(this)}
-        defaultValue={-1}
+        defaultValue={this.state.selectedMonth}
         ref="selectedMonth">
         <option value={-1}>-</option>
         {optionsMonths}
@@ -519,7 +488,7 @@ class TemporalConfigurator extends React.Component {
         labelClassName="col-sm-2"
         wrapperClassName="col-sm-10"
         onChange={this.setDay.bind(this)}
-        defaultValue={-1}
+        defaultValue={this.state.selectedDay}
         ref="selectedDay">
         <option value={-1}>-</option>
         {optionsDays}
@@ -757,8 +726,8 @@ class Aggregate extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      aggregateDimension: 'NA',
-      aggregateMethod: null
+      aggregateDimension: this.props.dimension,
+      aggregateMethod: this.props.method
     };
   }
   aggregateDimensionToggle(dimension) {
@@ -851,11 +820,8 @@ var Map = React.createClass({
   }
 });
 
-ReactDOM.render(
-  <Sieve
-    metadata={metadata}
-    spatialDomain={spatial_domain}
-    temporalDomain={temporal_domain}
-    data={data} />,
-  document.getElementById("sieve-container")
-);
+// Since this script is pulled in as 'text/babel', other scripts will go ahead and run
+// even if this one isn't finished. This provides a reliable way to know when it has
+// finished and to access its exports.
+var sieve_defined = new CustomEvent('sievedefined', {detail: {Sieve: Sieve}});
+document.dispatchEvent(sieve_defined);

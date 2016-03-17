@@ -12,10 +12,12 @@ from django.contrib.gis.gdal import OGRGeometry
 from django.http import HttpResponse
 from django.db import connection
 
+from rest_framework import viewsets
 from wagtail.wagtailadmin import messages
 
 from models import Layer, Feature
 from forms import LayerForm, LayerEditForm
+from serializers import FeatureSerializer
 from utils import mapnik_xml, tile_cache
 
 from fiona.crs import to_string
@@ -352,3 +354,8 @@ class Lock:
     def __del__(self):
         self.handle.close()
         os.unlink(self.filename)
+
+
+class FeatureViewSet(viewsets.ModelViewSet):
+    queryset = Feature.objects.all()
+    serializer_class = FeatureSerializer
