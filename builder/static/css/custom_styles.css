@@ -71,7 +71,6 @@ ul.dropdown-menu, li.open a, .navbar-default .navbar-nav > .open > a, .navbar-de
 .powered-by {
   background-color: rgb(240, 236, 227);
   border-bottom: 1px solid rgb(192, 167, 171);
-  box-shadow: 0 3px 3px rgba(0, 0, 0, 0.15);
   padding: 5px 10px 5px 0;
   position: relative;
   z-index: 50;
@@ -85,7 +84,11 @@ ul.dropdown-menu, li.open a, .navbar-default .navbar-nav > .open > a, .navbar-de
 }
 
 .site-menu a {
-  color: rfb(255, 255, 255);
+  color: rgb(255, 255, 255);
+}
+
+.tenant-navigation {
+
 }
 
 h1 {

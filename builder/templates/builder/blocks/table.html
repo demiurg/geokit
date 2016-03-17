@@ -1,25 +1,27 @@
 {% load utility_tags %}
 
-<table id="table-{{ self.id }}">
-    <thead>
-        <tr>
-            <th>ID</th>
-            {% for column in self.columns_parsed %}
-            <th>{{ column }}</th>
-            {% endfor %}
-        </tr>
-    </thead>
-    <tbody>
-        {% for row in self.variable_result %}
-        <tr>
-            <td>{{ row.pk }}</td>
-            {% for column in self.columns_parsed %}
-            <td>{{ row.properties|keyvalue:column }}</td>
-            {% endfor %}
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="panel panel-default">
+  <table id="table-{{ self.id }}" class="table">
+      <thead>
+          <tr>
+              <th>ID</th>
+              {% for column in self.columns_parsed %}
+              <th>{{ column }}</th>
+              {% endfor %}
+          </tr>
+      </thead>
+      <tbody>
+          {% for row in self.variable_result %}
+          <tr>
+              <td>{{ row.pk }}</td>
+              {% for column in self.columns_parsed %}
+              <td>{{ row.properties|keyvalue:column }}</td>
+              {% endfor %}
+          </tr>
+          {% endfor %}
+      </tbody>
+  </table>
+</div>
 
 {% comment %}
 <script>

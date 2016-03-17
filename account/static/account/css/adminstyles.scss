@@ -1,5 +1,7 @@
 $color-primary: #70575b;
 $color-secondary: #b49b9f;
+$color-red-light: rgb(240, 236, 227);
+$color-red-light-border: rgb(192, 167, 171);
 $button: rgba(112, 87, 91, 1.00);
 $button-hover: rgba(90, 70, 73, 1.00);
 
@@ -65,6 +67,11 @@ input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"
     top: 185px;
 }
 
+.listing.full-width th {
+    background-color: $color-red-light;
+    border-bottom: 1px solid $color-red-light-border;
+}
+
 .listing .no-children a:hover {
     color: #79575b;
 }
@@ -82,7 +89,7 @@ input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"
 }
 
 .content {
-    background-color: #faf6ed;
+    background-color: rgb(255, 255, 255);
 }
 
 .tab-content {
@@ -107,7 +114,7 @@ header, .tab-nav.merged {
 }
 
 .tab-nav.merged li a.active {
-    background-color: #faf6ed;
+    background-color: rgb(255, 255, 255);
     border-top: 0.3em solid $color-primary;
 }
 
@@ -213,4 +220,12 @@ input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .but
 
 .nav-main a:hover, .nav-main a:focus {
     text-shadow: none;
+}
+
+.summary {
+    background-color: $color-red-light;
+}
+
+.listing .table-headers {
+    border-bottom: 1px solid $color-red-light-border;
 }
