@@ -8,7 +8,7 @@ from geokit_tables.models import GeoKitTable
 class GeoKitTableForm(forms.ModelForm):
     csv_file = forms.FileField(required=True)
     date_column = forms.CharField(required=True, help_text=(
-        "Specify the column containing the date range for each record."
+        "Specify the column that contains the date range in ISO 8601 format (<start>/<end>)."
     ))
 
     def clean(self):
