@@ -91,10 +91,17 @@ def evaluate_on_tile(request, layer_name, z, x, y, expression_id):
     tile_response = tile_json(request, layer_name, z, x, y)
     tile = json.loads(tile_response.content)
 
-    expression = Expression.objects.get(pk=expression_id)
+    expression_result = Expression.objects.get(pk=expression_id).evaluate(request.user)
+    if expression_result.vals.shape[1] != 1:
+        raise TypeError  # No timeseries data yet
+
     for feature in tile['features']:
-        patch_val = expression.evaluate(request.user, extra_substitutions=feature['properties'])
-        feature['properties']['patchVal'] = unicode(patch_val)
+        try:
+            val_index = expression_result.spatial_key.index([int(feature['properties']['id'])])
+            patch_val = expression_result.vals[val_index]
+            feature['properties']['patchVal'] = float(patch_val)
+        except ValueError:
+            feature['properties']['patchVal'] = None
 
     return JsonResponse(tile)
 

@@ -1,4 +1,6 @@
 import re
+import numpy
+import scipy.stats
 import sympy
 
 from django.apps import apps
@@ -6,6 +8,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField, DateRangeField, HStoreField
+from django.utils.functional import cached_property
 
 from layers.models import Feature
 
@@ -17,6 +20,27 @@ EXPRESSION_TYPES = (
     ('map', 'map'),
     ('reduce', 'reduce'),
 )
+
+
+class ExpressionResult(object):
+    def __init__(self, vals=[[]], temporal_key=[], spatial_key=[]):
+        self.vals = sympy.Matrix(vals)
+        self.temporal_key = temporal_key  # datetime corresponding to each column
+        self.spatial_key = spatial_key    # Feature id corresponding to each row
+
+    @staticmethod
+    def scalar(val):
+        return ExpressionResult([[val]])
+
+    def unpack(self):
+        if self.vals.shape == (1, 1):  # Scalar
+            return self.vals[0]
+
+    def __eq__(self, other):
+        return (isinstance(other, self.__class__)) \
+            and (self.vals == other.vals) \
+            and (self.temporal_key == other.temporal_key) \
+            and (self.spatial_key == other.spatial_key)
 
 
 class FormVariable(models.Model):
@@ -69,6 +93,24 @@ class FormVariable(models.Model):
             return self.value
 
 
+class InvalidVariableTypeError(Exception):
+    def __init__(self, variable_type):
+        self.variable_type = variable_type
+        self.msg = "%s is not a valid variable type" % variable_type
+
+    def __str__(self):
+        return self.msg
+
+
+class InvalidDimensionError(Exception):
+    def __init__(self, dimension):
+        self.dimension = dimension
+        self.msg = "%s is not a valid dimension to aggregate over" % dimension
+
+    def __str__(self):
+        return self.msg
+
+
 def validate_expression_text(expression_text):
     from builder.models import FormVariableField
 
@@ -111,31 +153,103 @@ class Expression(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(null=True, blank=True)
     expression_text = models.TextField(validators=[validate_expression_text])
+    units = models.CharField(max_length=50, null=True, blank=True)
     spatial_domain_features = models.ManyToManyField(Feature, blank=True)
     temporal_domain = DateRangeField(null=True, blank=True)
     filters = ArrayField(HStoreField(), null=True, blank=True)
     aggregate_method = models.CharField(max_length=3, choices=AGG_METHOD_CHOICES, null=True, blank=True)
     aggregate_dimension = models.CharField(max_length=2, choices=AGG_DIM_CHOICES, default='NA')
 
-    def evaluate(self, user, extra_substitutions={}):
+    def evaluate(self, user):
         expr = sympy.sympify(self.expression_text, evaluate=False)
 
         atoms = expr.atoms()
         symbols = filter(lambda atom: type(atom) == sympy.Symbol, atoms)
+
+        variables = self.resolve_symbols(symbols, user)
+
+        result = evaluate_over_matrices(expr, variables)
+        temporal_key = variables[0][1].temporal_key if variables else []
+        spatial_key = variables[0][1].spatial_key if variables else []
+
+        return ExpressionResult(result, temporal_key, spatial_key)
+
+    @cached_property
+    def dimensions(self):
+        expr = sympy.sympify(self.expression_text, evaluate=False)
+
+        atoms = expr.atoms()
+        symbols = filter(lambda atom: type(atom) == sympy.Symbol, atoms)
+
+        if len(symbols) == 0:
+            # Nothing to resolve, so it's just the dimensions of the spatial/temporal domain.
+            # For now, we'll just return 1x1
+            return {'width': 1, 'height': 1}
+        else:
+            # We'll deal with this later
+            return {'width': 'unknown', 'height': 'unkown'}
+
+    def resolve_symbols(self, symbols, user, feature=None):
         substitutions = []
 
         for symbol in symbols:
-            symbol_type, symbol_name = symbol.split(':')
+            symbol_type, symbol_name = str(symbol).split('_')
 
             if symbol_type == 'expression':
-                val = self.resolve_sub_expression(str(symbol)).evaluate(user)
+                val = self.resolve_sub_expression(symbol_name).evaluate(user)
+            elif symbol_type == 'form':
+                val = ExpressionResult.scalar(self.resolve_form_variable(symbol_name, user).value)
+            elif symbol_type == 'layer':
+                val = self.resolve_layer_variable(symbol_name)
+            else:
+                raise InvalidVariableTypeError(symbol_type)
 
             substitutions.append((symbol, val))
 
-        return sympy.simplify(expr.subs(substitutions))
+        return substitutions
 
     def resolve_sub_expression(self, expression_name):
         return Expression.objects.filter(name=expression_name).first()
 
+    def resolve_form_variable(self, variable_name, user):
+        return FormVariable.objects.get(name=variable_name, user=user)
+
+    def resolve_layer_variable(self, variable_name):
+        features = Feature.objects.filter(properties__has_key=variable_name)
+        var_value = [[feature.properties[variable_name]] for feature in features]
+        spatial_key = [[feature.pk] for feature in features]
+
+        return ExpressionResult(var_value, spatial_key=spatial_key)
+
+    def aggregate_by_method(self, vals):
+        if self.aggregate_method == 'MEA':
+            return numpy.mean(vals)
+        elif self.aggregate_method == 'MED':
+            return numpy.median(vals)
+        elif self.aggregate_method == 'MOD':
+            return scipy.stats.mode(vals)[0][0]
+        elif self.aggregate_method == 'RAN':
+            return numpy.ptp(vals)
+        elif self.aggregate_method == 'STD':
+            return numpy.std(vals)
+
     def __str__(self):
         return self.name
+
+
+def evaluate_over_matrices(expr, variables):
+    if len(variables) == 0:
+        return [[sympy.simplify(expr)]]
+
+    shape = variables[0][1].vals.shape
+    for variable in variables:
+        if variable[1].vals.shape != shape:
+            raise sympy.ShapeError("All variables must have the same shape.")
+
+        result = sympy.zeros(*shape)
+
+        for i in range(shape[0] * shape[1]):
+            variables_at_index = [(var[0], var[1].vals[i]) for var in variables]
+            result[i] = sympy.simplify(expr.subs(variables_at_index))
+
+        return result

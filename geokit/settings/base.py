@@ -77,6 +77,7 @@ TENANT_APPS = [
     'search',
     'builder',
     'expressions',
+    'geokit_tables',
     'layers',
     'variables',
 ]

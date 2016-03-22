@@ -16,4 +16,4 @@ def register_admin_urls():
 
 @hooks.register('register_admin_menu_item')
 def register_tables_menu_item():
-    return MenuItem('Tables', reverse('geokit_tables:index'), classnames="icon icon-placeholder")
+    return MenuItem('Tables', reverse('geokit_tables:index'), classnames="icon icon-form")
