@@ -24,3 +24,9 @@ class GeoKitTableForm(forms.ModelForm):
     class Meta:
         model = GeoKitTable
         fields = ['name', 'description']
+
+
+class GeoKitTableEditForm(forms.ModelForm):
+    class Meta:
+        model = GeoKitTable
+        fields = ['name', 'description']

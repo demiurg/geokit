@@ -24,7 +24,9 @@
                 {% for table in tables %}
                 <tr>
                     <td class="name">
-                        {{ table.name }}
+                        <a href="{% url 'geokit_tables:edit' table.pk %}">
+                            {{ table.name }}
+                        </a>
                     </td>
                     <td class="description">
                         {{ table.description }}
