@@ -12,6 +12,8 @@ from django.utils.functional import cached_property
 
 from layers.models import Feature
 
+from expressions.functions import GEOKIT_FUNCTIONS
+
 
 EXPRESSION_TYPES = (
     ('arith', 'arithmetic'),
@@ -161,7 +163,7 @@ class Expression(models.Model):
     aggregate_dimension = models.CharField(max_length=2, choices=AGG_DIM_CHOICES, default='NA')
 
     def evaluate(self, user):
-        expr = sympy.sympify(self.expression_text, evaluate=False)
+        expr = sympy.sympify(self.expression_text, locals=GEOKIT_FUNCTIONS, evaluate=False)
 
         atoms = expr.atoms()
         symbols = filter(lambda atom: type(atom) == sympy.Symbol, atoms)

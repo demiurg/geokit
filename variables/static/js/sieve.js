@@ -250,6 +250,9 @@ class Sieve extends React.Component {
           </Col>
         </Panel>
         <Panel>
+          <h3>Table Data</h3>
+        </Panel>
+        <Panel>
           <ButtonToolbar>
             <ButtonGroup>
               <Button onClick={this.insertToken.bind(this, '*')}>x</Button>
