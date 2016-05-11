@@ -245,14 +245,16 @@ def add(request):
                 ).transform(4326, clone=True)
 
                 l.bounds = min_bounds.coords + max_bounds.coords
-                for record in col:
+                for index, record in enumerate(col):
                     count += 1
                     geom = shape(record['geometry'])
                     transformed_geom = OGRGeometry(geom.wkt, srs=srs).transform(3857, clone=True)
+                    properties = record['properties']
+                    properties['fid'] = index
                     f = Feature(
                         layer=l,
                         geometry=GeometryCollection(transformed_geom.geos),
-                        properties=record['properties']
+                        properties=properties
                     )
                     f.save()
 

@@ -10,3 +10,4 @@ arrow==0.7.0
 django-crispy-forms
 django-overextends
 django-tenant-schemas
+sortedcontainers

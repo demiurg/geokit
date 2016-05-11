@@ -12,37 +12,8 @@ from django.utils.functional import cached_property
 
 from layers.models import Feature
 
+from expressions.helpers import ExpressionResult, evaluate_over_matrices
 from expressions.functions import GEOKIT_FUNCTIONS
-
-
-EXPRESSION_TYPES = (
-    ('arith', 'arithmetic'),
-    ('collec', 'form variable collection'),
-    ('filter', 'filter'),
-    ('map', 'map'),
-    ('reduce', 'reduce'),
-)
-
-
-class ExpressionResult(object):
-    def __init__(self, vals=[[]], temporal_key=[], spatial_key=[]):
-        self.vals = sympy.Matrix(vals)
-        self.temporal_key = temporal_key  # datetime corresponding to each column
-        self.spatial_key = spatial_key    # Feature id corresponding to each row
-
-    @staticmethod
-    def scalar(val):
-        return ExpressionResult([[val]])
-
-    def unpack(self):
-        if self.vals.shape == (1, 1):  # Scalar
-            return self.vals[0]
-
-    def __eq__(self, other):
-        return (isinstance(other, self.__class__)) \
-            and (self.vals == other.vals) \
-            and (self.temporal_key == other.temporal_key) \
-            and (self.spatial_key == other.spatial_key)
 
 
 class FormVariable(models.Model):
@@ -165,6 +136,9 @@ class Expression(models.Model):
     def evaluate(self, user):
         expr = sympy.sympify(self.expression_text, locals=GEOKIT_FUNCTIONS, evaluate=False)
 
+        if type(expr) == ExpressionResult:
+            return expr
+
         atoms = expr.atoms()
         symbols = filter(lambda atom: type(atom) == sympy.Symbol, atoms)
 
@@ -237,21 +211,3 @@ class Expression(models.Model):
 
     def __str__(self):
         return self.name
-
-
-def evaluate_over_matrices(expr, variables):
-    if len(variables) == 0:
-        return [[sympy.simplify(expr)]]
-
-    shape = variables[0][1].vals.shape
-    for variable in variables:
-        if variable[1].vals.shape != shape:
-            raise sympy.ShapeError("All variables must have the same shape.")
-
-        result = sympy.zeros(*shape)
-
-        for i in range(shape[0] * shape[1]):
-            variables_at_index = [(var[0], var[1].vals[i]) for var in variables]
-            result[i] = sympy.simplify(expr.subs(variables_at_index))
-
-        return result

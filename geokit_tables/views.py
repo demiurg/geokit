@@ -38,7 +38,7 @@ def add(request):
                         )
                     elif len(date_strings) == 1:
                         date = datetime.strptime(date_strings[0], date_format).date()
-                        date_range = DateRange(lower=date, upper=date)
+                        date_range = DateRange(lower=date, upper=date, bounds='[]')
                     else:
                         raise ValueError("%s must provide a ISO 8601 date string or range seperated by a /." % date_column)
 

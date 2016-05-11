@@ -1,36 +1,48 @@
 from django.db import connection
 
-from sympy import Function
+import sympy
+from sortedcontainers import SortedDict
+
+from expressions.helpers import ExpressionResult
 
 
-def type_to_table(type_):
-    if type_ == 'table':
-        return 'geokit_tables_record', 'table_id'
-    elif type_ == 'layer':
-        return 'layers_feature', 'layer_id'
+class Join(sympy.Function):
+    '''
+    Currently, this function has the specific signature of
+    JOIN(layer__layer_name__field, table__table_name__field).
+    This may be expanded later to work with joins of other combinations
+    of data.
+    '''
 
-
-class Join(Function):
     @classmethod
-    def eval(cls, left, right):
-        left_type, left_name, left_field = str(left).split('__')
-        right_type, right_name, right_field = str(right).split('__')
-
-        left_table, left_table_relation = type_to_table(left_type)
-        right_table, right_table_relation = type_to_table(right_type)
+    def eval(cls, layer, table):
+        layer_type, layer_name, layer_field = str(layer).split('__')
+        table_type, table_name, table_field = str(table).split('__')
 
         query = """
-            SELECT t1.id, t1.properties, t2.id, t2.properties FROM site1.{0} t1
-                JOIN site1.{1} t2
-                ON t1.properties->'{2}' = t2.properties->'{3}'
-                WHERE t1.{4} = '{5}' AND t2.{6} = '{7}'
-        """.format(left_table, right_table, left_field, right_field,
-                   left_table_relation, left_name, right_table_relation, right_name)
-
+            SELECT t1.id, t1.properties, t2.id, t2.properties, t2.date FROM """ +\
+            connection.schema_name + """.layers_feature t1
+                JOIN """ + connection.schema_name + """.geokit_tables_record t2
+                ON t1.properties->>%s = t2.properties->>%s
+                WHERE t1.layer_id = %s AND t2.table_id = %s
+        """
         cursor = connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, [layer_field, table_field, layer_name, table_name])
 
-        return cursor.fetchall()
+        results = {}
+        for row in cursor.fetchall():
+            if row[0] not in results.keys():
+                results[row[0]] = SortedDict()
+            results[row[0]][row[4]] = row[3]
+
+        spatial_key = results.keys()
+        temporal_key = list(results[spatial_key[0]].keys())
+
+        result_matrix = []
+        for layer, vals in results.iteritems():
+            result_matrix.append(vals.values())
+
+        return ExpressionResult(result_matrix, temporal_key, spatial_key)
 
 
 GEOKIT_FUNCTIONS = {
