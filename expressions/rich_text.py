@@ -20,8 +20,8 @@ class ExpressionEmbedHandler(object):
                 value = "<code>{0}</code>".format(expression.name)
             else:
                 tag_attrs = 'class="expression-result"'
-                value = expression.evaluate(user)
-            return "<span {0}>{1}</span>".format(tag_attrs, value.unpack())
+                value = expression.evaluate(user).unpack()
+            return "<span {0}>{1}</span>".format(tag_attrs, value)
         except Expression.DoesNotExist:
             return "<span>Expression does not exist</span>"
 

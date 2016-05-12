@@ -1,5 +1,7 @@
+from django.apps import apps
 from django.db import connection
 
+import numpy as np
 import sympy
 from sortedcontainers import SortedDict
 
@@ -45,6 +47,22 @@ class Join(sympy.Function):
         return ExpressionResult(result_matrix, temporal_key, spatial_key)
 
 
+class Extract(sympy.Function):
+    @classmethod
+    def eval(cls, column_name, expression):
+        Expression = apps.get_model(app_label='expressions', model_name='Expression')
+        matrix = Expression.objects.get(name=str(expression)).evaluate(None)
+
+        result = np.zeros(matrix.vals.shape)
+
+        for i, col in enumerate(matrix.vals):
+            for j, row in enumerate(col):
+                result[i][j] = row[str(column_name)]
+
+        return ExpressionResult(result, matrix.temporal_key, matrix.spatial_key)
+
+
 GEOKIT_FUNCTIONS = {
     'JOIN': Join,
+    'EXTRACT': Extract,
 }
