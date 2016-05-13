@@ -1,5 +1,5 @@
 import re
-import numpy
+import numpy as np
 import scipy.stats
 import sympy
 
@@ -135,18 +135,31 @@ class Expression(models.Model):
 
     def evaluate(self, user):
         expr = sympy.sympify(self.expression_text, locals=GEOKIT_FUNCTIONS, evaluate=False)
+        print type(expr)
 
         if type(expr) == ExpressionResult:
-            return expr
+            result = expr.vals
+            temporal_key = expr.temporal_key
+            spatial_key = expr.spatial_key
+        else:
+            atoms = expr.atoms()
+            symbols = filter(lambda atom: type(atom) == sympy.Symbol, atoms)
 
-        atoms = expr.atoms()
-        symbols = filter(lambda atom: type(atom) == sympy.Symbol, atoms)
+            variables = self.resolve_symbols(symbols, user)
 
-        variables = self.resolve_symbols(symbols, user)
+            result = evaluate_over_matrices(expr, variables)
+            temporal_key = variables[0][1].temporal_key if variables else []
+            spatial_key = variables[0][1].spatial_key if variables else []
 
-        result = evaluate_over_matrices(expr, variables)
-        temporal_key = variables[0][1].temporal_key if variables else []
-        spatial_key = variables[0][1].spatial_key if variables else []
+        if self.aggregate_dimension == 'SP':
+            result = np.apply_along_axis(self.aggregate_method_func, 0, result)
+            result = result.reshape((1, len(result)))
+            spatial_key = []
+
+        if self.aggregate_dimension == 'TM':
+            result = np.apply_along_axis(self.aggregate_method_func, 1, result)
+            result = result.reshape((len(result), 1))
+            temporal_key = []
 
         return ExpressionResult(result, temporal_key, spatial_key)
 
@@ -169,7 +182,7 @@ class Expression(models.Model):
         substitutions = []
 
         for symbol in symbols:
-            symbol_type, symbol_name = str(symbol).split('_')
+            symbol_type, symbol_name = str(symbol).split('__')
 
             if symbol_type == 'expression':
                 val = self.resolve_sub_expression(symbol_name).evaluate(user)
@@ -197,17 +210,18 @@ class Expression(models.Model):
 
         return ExpressionResult(var_value, spatial_key=spatial_key)
 
-    def aggregate_by_method(self, vals):
+    @property
+    def aggregate_method_func(self):
         if self.aggregate_method == 'MEA':
-            return numpy.mean(vals)
+            return np.mean
         elif self.aggregate_method == 'MED':
-            return numpy.median(vals)
+            return np.median
         elif self.aggregate_method == 'MOD':
-            return scipy.stats.mode(vals)[0][0]
+            return scipy.stats.mode
         elif self.aggregate_method == 'RAN':
-            return numpy.ptp(vals)
+            return np.ptp
         elif self.aggregate_method == 'STD':
-            return numpy.std(vals)
+            return np.std
 
     def __str__(self):
         return self.name

@@ -19,7 +19,6 @@ class ExpressionResult(object):
         if self.vals.shape == (1, 1):  # Scalar
             return self.vals[0][0]
         else:
-            print self.vals.shape
             return self.vals
 
     def __eq__(self, other):
@@ -38,10 +37,10 @@ def evaluate_over_matrices(expr, variables):
         if variable[1].vals.shape != shape:
             raise sympy.ShapeError("All variables must have the same shape.")
 
-    result = np.zeros(*shape)
+    result = np.zeros(shape)
 
     for i in range(shape[0] * shape[1]):
-        variables_at_index = [(var[0], var[1].vals[i]) for var in variables]
-        result[i] = sympy.simplify(expr.subs(variables_at_index))
+        variables_at_index = [(var[0], var[1].vals.flat[i]) for var in variables]
+        result.flat[i] = sympy.simplify(expr.subs(variables_at_index))
 
     return result
