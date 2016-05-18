@@ -3,13 +3,20 @@ import sympy
 
 
 class ExpressionResult(object):
-    def __init__(self, vals=[[]], temporal_key=[], spatial_key=[]):
-        self.vals = np.array(vals)
-        if len(self.vals.shape) == 1:  # No consitent row length
+    def __init__(self, vals=None, temporal_key=None, spatial_key=None):
+        """Constructor for ExpressionResult class.
+
+        Uses empty arrays as defaults for vals and the keys.  Raises
+        sympy.ShapeError if vals' contents aren't all the same length.
+        """
+        self.vals = np.array([[]] if vals is None else vals)
+        if len(self.vals.shape) == 1:  # No consistent row length
             raise sympy.ShapeError("Value must not be a jagged array.")
 
-        self.temporal_key = temporal_key  # datetime corresponding to each column
-        self.spatial_key = spatial_key    # Feature id corresponding to each row
+        # datetime corresponding to each column
+        self.temporal_key = [] if temporal_key is None else temporal_key
+        # Feature id corresponding to each row
+        self.spatial_key = [] if spatial_key is None else spatial_key
 
     @staticmethod
     def scalar(val):
