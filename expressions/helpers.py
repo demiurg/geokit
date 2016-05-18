@@ -3,13 +3,20 @@ import sympy
 
 
 class ExpressionResult(object):
-    def __init__(self, vals=[[]], temporal_key=[], spatial_key=[]):
-        self.vals = np.array(vals)
-        if len(self.vals.shape) == 1:  # No consitent row length
+    def __init__(self, vals=None, temporal_key=None, spatial_key=None):
+        """Constructor for ExpressionResult class.
+
+        Uses empty arrays as defaults for vals and the keys.  Raises
+        sympy.ShapeError if vals' contents aren't all the same length.
+        """
+        self.vals = np.array([[]] if vals is None else vals)
+        if len(self.vals.shape) == 1:  # No consistent row length
             raise sympy.ShapeError("Value must not be a jagged array.")
 
-        self.temporal_key = temporal_key  # datetime corresponding to each column
-        self.spatial_key = spatial_key    # Feature id corresponding to each row
+        # datetime corresponding to each column
+        self.temporal_key = [] if temporal_key is None else temporal_key
+        # Feature id corresponding to each row
+        self.spatial_key = [] if spatial_key is None else spatial_key
 
     @staticmethod
     def scalar(val):
@@ -23,9 +30,13 @@ class ExpressionResult(object):
 
     def __eq__(self, other):
         return (isinstance(other, self.__class__)) \
-            and (self.vals == other.vals) \
+            and np.array_equal(self.vals, other.vals) \
             and (self.temporal_key == other.temporal_key) \
             and (self.spatial_key == other.spatial_key)
+
+    def __ne__(self, other):
+        """Inequality is defined to be the negation of equality."""
+        return not self.__eq__(other)
 
 
 def evaluate_over_matrices(expr, variables):
