@@ -250,9 +250,6 @@ class Sieve extends React.Component {
           </Col>
         </Panel>
         <Panel>
-          <h3>Table Data</h3>
-        </Panel>
-        <Panel>
           <ButtonToolbar>
             <ButtonGroup>
               <Button onClick={this.insertToken.bind(this, '*')}>x</Button>
@@ -656,47 +653,41 @@ class Filter extends React.Component {
     super(props);
     this.state = {
       buttonDisabled: true,
-      formDefaults: {
-        action: 'exclusive',
-        comparison: 'lt',
-        benchmark: 'x'
-      }
+      action: 'exclusive',
+      comparate: 'value',
+      comparison: 'lt',
+      benchmark: null
     };
   }
-  
+
   validateFilter() {
-    if (this.refs.action.refs.input.value == "" ||
-      this.refs.comparison.refs.input.value == "" ||
-      this.refs.benchmark.refs.input.value == "") {
-      this.setState({buttonDisabled: true});
-      return false;
-    } else {
-      for (var i = 0; i < this.props.filters.length; i++) {
-        if (this.props.filters[i].key == this.refs.action.refs.input.value +
-          this.refs.comparison.refs.input.value +
-          this.refs.benchmark.refs.input.value) {
-        
-          this.setState({buttonDisabled: true});
-          
-          return false;
-        }
+    for (var i = 0; i < this.props.filters.length; i++) {
+      if (this.props.filters[i].key == this.state.action +
+                                       this.state.comparate +
+                                       this.state.comparison +
+                                       this.renderBenchmark()) {
+        this.setState({buttonDisabled: true, benchmark: null});
+
+        return false;
       }
-      this.setState({buttonDisabled: null});
-      
-      return true;
     }
+    this.setState({buttonDisabled: null});
+    
+    return true;
   }
   
   addFilter() {
     if (this.validateFilter() == true) {
       var filters = this.props.filters.slice();
       filters.push({
-        action: this.refs.action.refs.input.value,
-        comparison: this.refs.comparison.refs.input.value,
-        benchmark: this.refs.benchmark.refs.input.value,
-        key: this.refs.action.refs.input.value +
-          this.refs.comparison.refs.input.value +
-          this.refs.benchmark.refs.input.value
+        action: this.state.action,
+        comparison: this.state.comparison,
+        comparate: this.state.comparate,
+        benchmark: this.state.benchmark,
+        key: this.state.action +
+          this.state.comparate +
+          this.state.comparison +
+          this.renderBenchmark()
       });
       this.props.updateFilters(filters);
       this.resetForm();
@@ -704,7 +695,7 @@ class Filter extends React.Component {
       console.log('getting here');
     }
   }
-  
+
   removeFilter(filter) {
     var filters = this.props.filters;
     for (var i = 0; i < filters.length; i++) {
@@ -714,12 +705,66 @@ class Filter extends React.Component {
     }
     this.props.updateFilters(filters);
   }
-  
+
   resetForm() {
-    this.refs.action.refs.input.value = "exclusive";
-    this.refs.comparison.refs.input.value = "lt";
-    this.refs.benchmark.refs.input.value = "";
-    this.validateFilter();
+    this.setState({
+      buttonDisabled: true,
+      action: 'exclusive',
+      comparate: 'value',
+      comparison: 'lt',
+      benchmark: null
+    });
+  }
+
+  updateAction(e) {
+    this.setState({action: e.target.value});
+  }
+
+  updateComparate(e) {
+    this.setState({
+      buttonDisabled: true,
+      comparate: e.target.value,
+      benchmark: null
+    });
+  }
+
+  updateComparison(e) {
+    this.setState({comparison: e.target.value});
+  }
+
+  updateBenchmark(e) {
+    var buttonDisabled = true;
+    if (e.target.value) {
+      buttonDisabled = false;
+    }
+    this.setState({
+      buttonDisabled: buttonDisabled,
+      benchmark: e.target.value
+    });
+  }
+
+  renderBenchmark() {
+    if (this.state.benchmark.hasOwnProperty('month') && this.state.benchmark.hasOwnProperty('day')) {
+      return this.state.benchmark.month + "-" + this.state.benchmark.day;
+    }
+    return this.state.benchmark;
+  }
+
+  updateDay(e) {
+    var benchmark = this.state.benchmark,
+        buttonDisabled = true;
+
+    if (!benchmark) {
+      benchmark = {month: null, day: null};
+    }
+
+    benchmark[e.target.id] = e.target.value;
+
+    if (benchmark.month && benchmark.day) {
+      buttonDisabled = false;
+    }
+
+    this.setState({buttonDisabled: buttonDisabled, benchmark: benchmark});
   }
   
   render() {
@@ -727,18 +772,27 @@ class Filter extends React.Component {
       <Row>
         <Col sm={4}>
           <form>
-            <Input ref="action" type="select" defaultValue="exclusive" onChange={this.validateFilter.bind(this)}>
-              <option value="exclusive">Exclude rows where value is</option>
-              <option value="inclusive">Include rows where value is</option>
+            <Input value={this.state.action} type="select" onChange={this.updateAction.bind(this)}>
+              <option value="exclusive">Exclude rows where</option>
+              <option value="inclusive">Include rows where</option>
             </Input>
-            <Input ref="comparison" type="select" defaultValue="lt" onChange={this.validateFilter.bind(this)}>
+            <Input value={this.state.comparate} type="select" onChange={this.updateComparate.bind(this)}>
+              <option value="value">value is</option>
+              <option value="day">day is</option>
+            </Input>
+            <Input value={this.state.comparison} type="select" onChange={this.updateComparison.bind(this)}>
               <option value="lt">Less than</option>
               <option value="ltet">Less than or equal to</option>
               <option value="et">Equal to</option>
               <option value="gt">Greater than</option>
               <option value="gtet">Greater than or equal to</option>
             </Input>
-            <Input ref="benchmark" type="text" placeholder="x" onChange={this.validateFilter.bind(this)}/>
+            {this.state.comparate == 'value' ?
+              <Input value={this.state.benchmark} type="text" placeholder="x" onChange={this.updateBenchmark.bind(this)}/> :
+              <Row onChange={this.updateDay.bind(this)}>
+                <Col xs={6}><Input id="month" type="text" placeholder="Month" /></Col>
+                <Col xs={6}><Input id="day" type="text" placeholder="Day" /></Col>
+              </Row>}
             <Button
               className="pull-right"
               disabled={this.state.buttonDisabled}
@@ -759,7 +813,7 @@ class FilterList extends React.Component {
   render() {
     var filters = this.props.filters.map((filter) => {
       return (
-        <FilterListItem filter={filter} removeFilter={this.props.removeFilter} />
+        <FilterListItem key={filter.key} filter={filter} removeFilter={this.props.removeFilter} />
       );
     });
     return (
@@ -767,6 +821,7 @@ class FilterList extends React.Component {
         <thead>
           <tr>
             <th>Type of Filter</th>
+            <th>Value Compared</th>
             <th>Method of Comparison</th>
             <th>Value for Comparison</th>
             <th></th>
@@ -788,10 +843,15 @@ class FilterListItem extends React.Component {
           {this.props.filter.action}
         </td>
         <td>
+          {this.props.filter.comparate}
+        </td>
+        <td>
           {this.props.filter.comparison}
         </td>
         <td>
-          {this.props.filter.benchmark}
+          {typeof this.props.filter.benchmark == "object" ?
+            this.props.filter.benchmark.month + "-" + this.props.filter.benchmark.day :
+            this.props.filter.benchmark}
         </td>
         <td>
           <Button

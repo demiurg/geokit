@@ -14,11 +14,9 @@ class FormVariableSerializer(serializers.ModelSerializer):
 
 class DateRangeField(serializers.Field):
     def to_representation(self, obj):
-        print obj
         return {'start': obj.lower.isoformat(), 'end': obj.upper.isoformat()}
 
     def to_internal_value(self, data):
-        print data
         if not data['start'] or not data['end']:
             return None
         else:

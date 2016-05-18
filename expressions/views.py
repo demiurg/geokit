@@ -1,6 +1,5 @@
 import json
 
-from django.core.urlresolvers import reverse
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 
@@ -19,45 +18,6 @@ def index(request):
     return render(request, 'expressions/index.html', {
         'expressions': expressions,
     })
-
-
-#def add(request):
-    #if request.method == 'POST':
-        #form = ExpressionForm(request.POST)
-
-        #if form.is_valid():
-            #form.save()
-            #messages.success(request, "Expression added.")
-            #return redirect('expressions:index')
-        #else:
-            #messages.error(request, "The expression could not be saved due to errors.")
-    #else:
-        #form = ExpressionForm()
-
-    #return render(request, 'expressions/add.html', {'form': form})
-
-
-#def edit(request, expression_id):
-    #expression = get_object_or_404(Expression, pk=expression_id)
-
-    #if request.POST:
-        #form = ExpressionForm(request.POST, instance=expression)
-        #if form.is_valid():
-            #expression = form.save()
-
-            #messages.success(request, "Expression '{0}' updated".format(expression.name), buttons=[
-                #messages.button(reverse('expressions:edit', args=(expression.pk,)), 'Edit')
-            #])
-            #return redirect('expressions:index')
-        #else:
-            #messages.error(request, "The expression could not be saved due to errors.")
-    #else:
-        #form = ExpressionForm(instance=expression)
-
-    #return render(request, "expressions/edit.html", {
-        #'expression': expression,
-        #'form': form
-    #})
 
 
 def delete(request, expression_id):

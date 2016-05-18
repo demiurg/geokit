@@ -7,7 +7,7 @@ from django.apps import apps
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
-from django.contrib.postgres.fields import ArrayField, DateRangeField, HStoreField
+from django.contrib.postgres.fields import DateRangeField, JSONField
 from django.utils.functional import cached_property
 
 from layers.models import Feature
@@ -129,7 +129,7 @@ class Expression(models.Model):
     units = models.CharField(max_length=50, null=True, blank=True)
     spatial_domain_features = models.ManyToManyField(Feature, blank=True)
     temporal_domain = DateRangeField(null=True, blank=True)
-    filters = ArrayField(HStoreField(), null=True, blank=True)
+    filters = JSONField(default=list([]))
     aggregate_method = models.CharField(max_length=3, choices=AGG_METHOD_CHOICES, null=True, blank=True)
     aggregate_dimension = models.CharField(max_length=2, choices=AGG_DIM_CHOICES, default='NA')
 
