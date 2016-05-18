@@ -64,6 +64,7 @@ document.addEventListener('sievedefined', function(e) {
         {% if expression.aggregate_method %}aggregateMethod: "{{ expression.aggregate_method }}",{% endif %}
         {% if expression.aggregate_dimension %}aggregateDimension: "{{ expression.aggregate_dimension }}",{% endif %}
         {% if expression.temporal_domain %}temporalDomain: {start: new Date("{{ expression.temporal_domain.lower }}"), end: new Date("{{ expression.temporal_domain.upper }}")},{% endif %}
+        filters: {{ filters|safe }},
         id: {{ expression.pk }},
         title: "{{ expression.name }}",
         expressionText: "{{ expression.expression_text }}"
