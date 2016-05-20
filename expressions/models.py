@@ -135,7 +135,6 @@ class Expression(models.Model):
 
     def evaluate(self, user):
         expr = sympy.sympify(self.expression_text, locals=GEOKIT_FUNCTIONS, evaluate=False)
-        print type(expr)
 
         if type(expr) == ExpressionResult:
             result = expr.vals
