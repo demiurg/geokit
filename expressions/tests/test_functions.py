@@ -7,41 +7,45 @@ from expressions.helpers import ExpressionResult
 
 
 class TestJoin(unittest.TestCase):
-    """Test functions.Join, mostly its eval class method."""
+    """Test functions.Join, mostly its eval class method.
 
-    @mock.patch('expressions.functions.connection')
-    def test_normal_case(self, db_conn_mock):
-        """Confirm ExpressionResult object is correctly generated.
+    This is a pure unit test; the DB I/O is mock.patched.
+    """
+    def setUp(self):
+        self.db_patcher = mock.patch('expressions.functions.connection')
+        self.db_mock = self.db_patcher.start()
+        self.addCleanup(self.db_patcher.stop)
 
-        This is a pure unit test; the DB I/O is mock.patched.
-        """
-        json = '{"a": 37, "b": 14, "c": [1, 2, 3]}' # fake payload
-        # spatial key                         date range
-        #    |  layer props  tables key  payload  |
-        db_conn_mock.cursor().fetchall.return_value = (
-            (1, '(ignored)', '(ignored)', json, 'dr1'),
-            (1, '(ignored)', '(ignored)', json, 'dr2'),
-            (2, '(ignored)', '(ignored)', json, 'dr1'),
-            (2, '(ignored)', '(ignored)', json, 'dr2'),
-            (3, '(ignored)', '(ignored)', json, 'dr1'),
-            (3, '(ignored)', '(ignored)', json, 'dr2'),
+        self.json = '{"a": 37, "b": 14, "c": [1, 2, 3]}' # fake payload
+
+        self.db_mock.cursor().fetchall.return_value = (
+            # spatial key
+            # / layer props  tables key    payload  date range
+            (1, '(ignored)', '(ignored)', self.json, 'dr1'),
+            (1, '(ignored)', '(ignored)', self.json, 'dr2'),
+            (2, '(ignored)', '(ignored)', self.json, 'dr1'),
+            (2, '(ignored)', '(ignored)', self.json, 'dr2'),
+            (3, '(ignored)', '(ignored)', self.json, 'dr1'),
+            (3, '(ignored)', '(ignored)', self.json, 'dr2'),
         )
 
-        em = [ [json, json], [json, json], [json, json], ]
-
+    def test_normal_case(self):
+        """Confirm ExpressionResult object is correctly generated."""
+        em = [ [self.json, self.json],
+               [self.json, self.json],
+               [self.json, self.json] ]
         expected = ExpressionResult(em, ['dr1', 'dr2'], [1, 2, 3])
         actual = functions.Join.eval('lt__ln__lf', 'tt__tn__tf')
 
         self.assertEqual(expected, actual)
 
-    @mock.patch('expressions.functions.connection')
-    def test_bad_args(self, db_conn_mock):
+    def test_bad_args(self):
+        #self.assertFalse(self.db_mock.cursor().fetchall.called)
         # bad layer & table input strings
         # TODO
         pass
 
-    @mock.patch('expressions.functions.connection')
-    def test_bad_db_output(self, db_conn_mock):
+    def test_bad_db_output(self):
         # bad output from DB?  What happens when DB is empty?
         # TODO
         pass
