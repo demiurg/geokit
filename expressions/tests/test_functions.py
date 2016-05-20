@@ -18,7 +18,8 @@ class TestJoin(unittest.TestCase):
 
         self.json = '{"a": 37, "b": 14, "c": [1, 2, 3]}' # fake payload
 
-        self.db_mock.cursor().fetchall.return_value = (
+        self.fetchall = self.db_mock.cursor().fetchall
+        self.fetchall.return_value = (
             # spatial key
             # / layer props  tables key    payload  date range
             (1, '(ignored)', '(ignored)', self.json, 'dr1'),
@@ -39,16 +40,26 @@ class TestJoin(unittest.TestCase):
 
         self.assertEqual(expected, actual)
 
-    def test_bad_args(self):
-        #self.assertFalse(self.db_mock.cursor().fetchall.called)
-        # bad layer & table input strings
-        # TODO
-        pass
+    def test_no_underscores_in_args(self):
+        """Expect an exception when arguments don't have __ separators."""
+        with self.assertRaises(ValueError):
+            actual = functions.Join.eval('HI', 'MOM')
+        self.assertFalse(self.fetchall.called)
 
-    def test_bad_db_output(self):
-        # bad output from DB?  What happens when DB is empty?
-        # TODO
-        pass
+    def test_excessive_underscores_in_args(self):
+        """Expect an exception when arguments have too many __ separators."""
+        with self.assertRaises(ValueError):
+            actual = functions.Join.eval('DINNER__SOUNDS__GREAT',
+                                         'YEAH__FRIDAY__SEE__YOU__THEN')
+        self.assertFalse(self.fetchall.called)
+
+    def test_no_db_output(self):
+        """Confirm good behavior when no data is available."""
+        self.fetchall.return_value = ()
+        expected = ExpressionResult()
+        actual = functions.Join.eval('lt__ln__lf', 'tt__tn__tf')
+        self.assertEqual(expected, actual)
+
 
 if __name__ == '__main__':
     unittest.main()
