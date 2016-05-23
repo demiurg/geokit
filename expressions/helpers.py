@@ -55,3 +55,27 @@ def evaluate_over_matrices(expr, variables):
         result.flat[i] = sympy.simplify(expr.subs(variables_at_index))
 
     return result
+
+
+def compare_to_date(date, comparison, benchmark):
+    benchmark['month'] = int(benchmark['month'])
+    benchmark['day'] = int(benchmark['day'])
+
+    if comparison == 'et' or comparison == 'ltet' or comparison == 'gtet':
+        if benchmark['month'] <= date.lower.month and date.upper.month <= benchmark['month'] and \
+           benchmark['day'] <= date.lower.day and date.upper.day <= benchmark['day']:
+            return True
+
+    if comparison == 'lt' or comparison == 'ltet':
+        if date.lower.month < benchmark['month']:
+            return True
+        elif date.lower.month == benchmark['month'] and date.lower.day < benchmark['day']:
+            return True
+
+    if comparison == 'gt' or comparison == 'gtet':
+        if date.upper.month > benchmark['month']:
+            return True
+        elif date.upper.month == benchmark['month'] and date.upper.day > benchmark['day']:
+            return True
+
+    return False

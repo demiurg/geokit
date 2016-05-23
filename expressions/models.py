@@ -2,6 +2,7 @@ import re
 import numpy as np
 import scipy.stats
 import sympy
+from collections import Counter
 
 from django.apps import apps
 from django.contrib.auth.models import User
@@ -12,7 +13,7 @@ from django.utils.functional import cached_property
 
 from layers.models import Feature
 
-from expressions.helpers import ExpressionResult, evaluate_over_matrices
+from expressions.helpers import compare_to_date, ExpressionResult, evaluate_over_matrices
 from expressions.functions import GEOKIT_FUNCTIONS
 
 
@@ -135,7 +136,6 @@ class Expression(models.Model):
 
     def evaluate(self, user):
         expr = sympy.sympify(self.expression_text, locals=GEOKIT_FUNCTIONS, evaluate=False)
-        print type(expr)
 
         if type(expr) == ExpressionResult:
             result = expr.vals
@@ -150,6 +150,19 @@ class Expression(models.Model):
             result = evaluate_over_matrices(expr, variables)
             temporal_key = variables[0][1].temporal_key if variables else []
             spatial_key = variables[0][1].spatial_key if variables else []
+
+        temporal_indices_to_delete = set()
+        for fil in self.filters:
+            if fil['comparate'] == 'day':
+                for i, date in enumerate(temporal_key):
+                    if compare_to_date(date, fil['comparison'], fil['benchmark']):
+                        if fil['action'] == 'exclusive':
+                            temporal_indices_to_delete.add(i)
+                    else:
+                        if fil['action'] == 'inclusive':
+                            temporal_indices_to_delete.add(i)
+
+        result = np.delete(result, list(temporal_indices_to_delete), 1)
 
         if self.aggregate_dimension == 'SP':
             result = np.apply_along_axis(self.aggregate_method_func, 0, result)
