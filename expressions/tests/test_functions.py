@@ -101,6 +101,30 @@ class TestExtract(unittest.TestCase):
         actual = functions.Extract.eval('a', '(ignored)')
         self.assertEqual(expected, actual)
 
+    def test_input_expression_type_logic(self):
+        """No DB access should occur when input is an ExpressionResult."""
+        p = self.payload
+        i = [ [p, p, p, p] ] # input array
+        er_input = ExpressionResult(i, self.t_key, self.s_key)
+        actual = functions.Extract.eval('a', er_input)
+        self.evaluate.assert_not_called()
+
+    def test_input_expression_result(self):
+        """ExpressionResults used as inputs should behave normally."""
+        p = self.payload
+        i = [ [p, p, p, p], # input array
+              [p, p, p, p],
+              [p, p, p, p],
+              [p, p, p, p] ]
+        er_input = ExpressionResult(i, self.t_key, self.s_key)
+        o = [ [37, 37, 37, 37], # output array
+              [37, 37, 37, 37],
+              [37, 37, 37, 37],
+              [37, 37, 37, 37] ]
+        expected = ExpressionResult(o, self.t_key, self.s_key)
+        actual = functions.Extract.eval('a', er_input)
+        self.assertEqual(expected, actual)
+
     def test_invalid_key(self):
         """On key not found, raise ValueError as per usual."""
         p = self.payload

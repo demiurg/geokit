@@ -55,8 +55,12 @@ class Join(sympy.Function):
 class Extract(sympy.Function):
     @classmethod
     def eval(cls, column_name, expression):
-        Expression = apps.get_model(app_label='expressions', model_name='Expression')
-        matrix = Expression.objects.get(name=str(expression)).evaluate(None)
+        if isinstance(expression, ExpressionResult):
+            matrix = expression
+        else:
+            Expression = apps.get_model(app_label='expressions',
+                                        model_name='Expression')
+            matrix = Expression.objects.get(name=str(expression)).evaluate(None)
 
         result = np.zeros(matrix.vals.shape)
 
