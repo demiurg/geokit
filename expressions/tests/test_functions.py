@@ -62,7 +62,7 @@ class TestJoin(unittest.TestCase):
 
 
 class TestExtract(unittest.TestCase):
-    """Test functions.Join, mostly its eval class method.
+    """Test functions.Extract, mostly its eval class method.
 
     This is a pure unit test; any DB I/O is mock.patched.
     """
@@ -70,21 +70,45 @@ class TestExtract(unittest.TestCase):
         self.apps_patcher = mock.patch('expressions.functions.apps')
         self.apps_mock = self.apps_patcher.start()
         self.addCleanup(self.apps_patcher.stop)
-
-        # make an ExpressionResult and use mocking to make Extract.eval use it
-        self.vals = [[]]
-        self.temporal_key = []
-        self.spatial_key  = []
-        self.er = ExpressionResult(self.vals,
-                                   self.temporal_key, self.spatial_key)
         self.evaluate = self.apps_mock.get_model().objects.get().evaluate
-        self.evaluate.return_value = self.er
+
+        # convenient data for making ExpressionResults
+        self.payload = {"a": 37, "b": 14, "c": [1, 2, 3]}
+        self.t_key = [1, 2, 3]
+        self.s_key  = [4, 5, 6]
 
     def test_mocking(self):
         """Meta-test to confirm convoluted mocking is functioning"""
         self.assertFalse(self.evaluate.called)
         functions.Extract.eval('what', 'ever')
         self.assertTrue(self.evaluate.called)
+
+    def test_normal_case(self):
+        """A normal call should have predictable outputs.
+
+        It should also preserve spatial & temporal keys however."""
+        p = self.payload
+        i = [ [p, p, p, p], # input array
+              [p, p, p, p],
+              [p, p, p, p],
+              [p, p, p, p] ]
+        self.evaluate.return_value = ExpressionResult(i, self.t_key, self.s_key)
+        o = [ [37, 37, 37, 37], # output array
+              [37, 37, 37, 37],
+              [37, 37, 37, 37],
+              [37, 37, 37, 37] ]
+        expected = ExpressionResult(o, self.t_key, self.s_key)
+        actual = functions.Extract.eval('a', '(ignored)')
+        self.assertEqual(expected, actual)
+
+    def test_model_exception(self):
+        """Confirm exception propagates when model raises an exception.
+
+        Something like this should occur when results are zero or >1"""
+        # make the object query mock raise an exception
+        self.apps_mock.get_model().objects.get.side_effect = Exception('derp')
+        with self.assertRaises(Exception):
+            functions.Extract.eval('should', 'break')
 
 
 if __name__ == '__main__':
