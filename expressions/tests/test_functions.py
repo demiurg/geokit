@@ -61,5 +61,31 @@ class TestJoin(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 
+class TestExtract(unittest.TestCase):
+    """Test functions.Join, mostly its eval class method.
+
+    This is a pure unit test; any DB I/O is mock.patched.
+    """
+    def setUp(self):
+        self.apps_patcher = mock.patch('expressions.functions.apps')
+        self.apps_mock = self.apps_patcher.start()
+        self.addCleanup(self.apps_patcher.stop)
+
+        # make an ExpressionResult and use mocking to make Extract.eval use it
+        self.vals = [[]]
+        self.temporal_key = []
+        self.spatial_key  = []
+        self.er = ExpressionResult(self.vals,
+                                   self.temporal_key, self.spatial_key)
+        self.evaluate = self.apps_mock.get_model().objects.get().evaluate
+        self.evaluate.return_value = self.er
+
+    def test_mocking(self):
+        """Meta-test to confirm convoluted mocking is functioning"""
+        self.assertFalse(self.evaluate.called)
+        functions.Extract.eval('what', 'ever')
+        self.assertTrue(self.evaluate.called)
+
+
 if __name__ == '__main__':
     unittest.main()
