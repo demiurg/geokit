@@ -1,22 +1,20 @@
 import re
+import numpy as np
+import scipy.stats
 import sympy
+from collections import Counter
 
 from django.apps import apps
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.contrib.gis.db import models
-from django.contrib.postgres.fields import ArrayField, DateRangeField, HStoreField
+from django.contrib.postgres.fields import DateRangeField, JSONField
+from django.utils.functional import cached_property
 
 from layers.models import Feature
 
-
-EXPRESSION_TYPES = (
-    ('arith', 'arithmetic'),
-    ('collec', 'form variable collection'),
-    ('filter', 'filter'),
-    ('map', 'map'),
-    ('reduce', 'reduce'),
-)
+from expressions.helpers import compare_to_date, ExpressionResult, evaluate_over_matrices
+from expressions.functions import GEOKIT_FUNCTIONS
 
 
 class FormVariable(models.Model):
@@ -69,6 +67,24 @@ class FormVariable(models.Model):
             return self.value
 
 
+class InvalidVariableTypeError(Exception):
+    def __init__(self, variable_type):
+        self.variable_type = variable_type
+        self.msg = "%s is not a valid variable type" % variable_type
+
+    def __str__(self):
+        return self.msg
+
+
+class InvalidDimensionError(Exception):
+    def __init__(self, dimension):
+        self.dimension = dimension
+        self.msg = "%s is not a valid dimension to aggregate over" % dimension
+
+    def __str__(self):
+        return self.msg
+
+
 def validate_expression_text(expression_text):
     from builder.models import FormVariableField
 
@@ -111,31 +127,114 @@ class Expression(models.Model):
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(null=True, blank=True)
     expression_text = models.TextField(validators=[validate_expression_text])
+    units = models.CharField(max_length=50, null=True, blank=True)
     spatial_domain_features = models.ManyToManyField(Feature, blank=True)
     temporal_domain = DateRangeField(null=True, blank=True)
-    filters = ArrayField(HStoreField(), null=True, blank=True)
+    filters = JSONField(default=list([]))
     aggregate_method = models.CharField(max_length=3, choices=AGG_METHOD_CHOICES, null=True, blank=True)
     aggregate_dimension = models.CharField(max_length=2, choices=AGG_DIM_CHOICES, default='NA')
 
-    def evaluate(self, user, extra_substitutions={}):
+    def evaluate(self, user):
+        expr = sympy.sympify(self.expression_text, locals=GEOKIT_FUNCTIONS, evaluate=False)
+
+        if type(expr) == ExpressionResult:
+            result = expr.vals
+            temporal_key = expr.temporal_key
+            spatial_key = expr.spatial_key
+        else:
+            atoms = expr.atoms()
+            symbols = filter(lambda atom: type(atom) == sympy.Symbol, atoms)
+
+            variables = self.resolve_symbols(symbols, user)
+
+            result = evaluate_over_matrices(expr, variables)
+            temporal_key = variables[0][1].temporal_key if variables else []
+            spatial_key = variables[0][1].spatial_key if variables else []
+
+        temporal_indices_to_delete = set()
+        for fil in self.filters:
+            if fil['comparate'] == 'day':
+                for i, date in enumerate(temporal_key):
+                    if compare_to_date(date, fil['comparison'], fil['benchmark']):
+                        if fil['action'] == 'exclusive':
+                            temporal_indices_to_delete.add(i)
+                    else:
+                        if fil['action'] == 'inclusive':
+                            temporal_indices_to_delete.add(i)
+
+        result = np.delete(result, list(temporal_indices_to_delete), 1)
+
+        if self.aggregate_dimension == 'SP':
+            result = np.apply_along_axis(self.aggregate_method_func, 0, result)
+            result = result.reshape((1, len(result)))
+            spatial_key = []
+
+        if self.aggregate_dimension == 'TM':
+            result = np.apply_along_axis(self.aggregate_method_func, 1, result)
+            result = result.reshape((len(result), 1))
+            temporal_key = []
+
+        return ExpressionResult(result, temporal_key, spatial_key)
+
+    @cached_property
+    def dimensions(self):
         expr = sympy.sympify(self.expression_text, evaluate=False)
 
         atoms = expr.atoms()
         symbols = filter(lambda atom: type(atom) == sympy.Symbol, atoms)
+
+        if len(symbols) == 0:
+            # Nothing to resolve, so it's just the dimensions of the spatial/temporal domain.
+            # For now, we'll just return 1x1
+            return {'width': 1, 'height': 1}
+        else:
+            # We'll deal with this later
+            return {'width': 'unknown', 'height': 'unkown'}
+
+    def resolve_symbols(self, symbols, user, feature=None):
         substitutions = []
 
         for symbol in symbols:
-            symbol_type, symbol_name = symbol.split(':')
+            symbol_type, symbol_name = str(symbol).split('__')
 
             if symbol_type == 'expression':
-                val = self.resolve_sub_expression(str(symbol)).evaluate(user)
+                val = self.resolve_sub_expression(symbol_name).evaluate(user)
+            elif symbol_type == 'form':
+                val = ExpressionResult.scalar(self.resolve_form_variable(symbol_name, user).value)
+            elif symbol_type == 'layer':
+                val = self.resolve_layer_variable(symbol_name)
+            else:
+                raise InvalidVariableTypeError(symbol_type)
 
             substitutions.append((symbol, val))
 
-        return sympy.simplify(expr.subs(substitutions))
+        return substitutions
 
     def resolve_sub_expression(self, expression_name):
         return Expression.objects.filter(name=expression_name).first()
+
+    def resolve_form_variable(self, variable_name, user):
+        return FormVariable.objects.get(name=variable_name, user=user)
+
+    def resolve_layer_variable(self, variable_name):
+        features = Feature.objects.filter(properties__has_key=variable_name)
+        var_value = [[feature.properties[variable_name]] for feature in features]
+        spatial_key = [[feature.pk] for feature in features]
+
+        return ExpressionResult(var_value, spatial_key=spatial_key)
+
+    @property
+    def aggregate_method_func(self):
+        if self.aggregate_method == 'MEA':
+            return np.mean
+        elif self.aggregate_method == 'MED':
+            return np.median
+        elif self.aggregate_method == 'MOD':
+            return scipy.stats.mode
+        elif self.aggregate_method == 'RAN':
+            return np.ptp
+        elif self.aggregate_method == 'STD':
+            return np.std
 
     def __str__(self):
         return self.name

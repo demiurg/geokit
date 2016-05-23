@@ -1,7 +1,11 @@
 {% load geokit_blocks_tags %}
 
-<h3>{{ self.start_date }} to {{ self.end_date }}</h3>
-<div id="graph-{{ self.id }}"></div>
+<div class="panel panel-default">
+  <div class="panel-body">
+    <h3>{{ self.start_date }} to {{ self.end_date }}</h3>
+    <div id="graph-{{ self.id }}"></div>
+  </div>
+</div>
 
 <script>
 var data = {% graph_data self %};

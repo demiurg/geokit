@@ -16,8 +16,8 @@
 {% block bodyclass %}menu-sieve{% endblock %}
 
 {% block extra_js %}
-<script src="https://fb.me/react-0.14.3.js"></script>
-<script src="https://fb.me/react-dom-0.14.3.js"></script>
+<script src="https://fb.me/react-0.14.7.js"></script>
+<script src="https://fb.me/react-dom-0.14.7.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-bootstrap/0.28.1/react-bootstrap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/flux/2.1.1/Flux.js"></script>
@@ -51,4 +51,29 @@ function getCookie(name) {
 <div class="nice-padding">
     <div id="sieve-container"></div>
 </div>
+
+<script>
+window.redirect_after_save = "{% url 'variables:index' %}";
+
+// Webpacking in browser is kind of a kludge...
+document.addEventListener('sievedefined', function(e) {
+  ReactDOM.render(
+      {% if expression %}
+      React.createElement(e.detail.Sieve, {initialData: {
+        {% if expression.description %}description: "{{ expression.description }}",{% endif %}
+        {% if expression.aggregate_method %}aggregateMethod: "{{ expression.aggregate_method }}",{% endif %}
+        {% if expression.aggregate_dimension %}aggregateDimension: "{{ expression.aggregate_dimension }}",{% endif %}
+        {% if expression.temporal_domain %}temporalDomain: {start: new Date("{{ expression.temporal_domain.lower }}"), end: new Date("{{ expression.temporal_domain.upper }}")},{% endif %}
+        filters: {{ filters|safe }},
+        id: {{ expression.pk }},
+        title: "{{ expression.name }}",
+        expressionText: "{{ expression.expression_text }}"
+      }}),
+      {% else %}
+      React.createElement(e.detail.Sieve, {}),
+      {% endif %}
+      document.getElementById("sieve-container")
+  );
+}, false);
+</script>
 {% endblock %}

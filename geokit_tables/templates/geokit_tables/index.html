@@ -1,0 +1,46 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% block titletag %}Tables{% endblock %}
+{% block bodyclass %}menu-tables{% endblock %}
+
+{% block content %}
+{% include "wagtailadmin/shared/header.html" with title="Tables" icon="form" add_link="geokit_tables:add" add_text="Create Table" %}
+
+<div class="nice-padding">
+    <div id="tables-results" class="geokittables">
+        {% if tables.exists %}
+        <table class="listing">
+            <col />
+            <col />
+            <col />
+            <thead>
+                <tr class="table-headers">
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Rows</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for table in tables %}
+                <tr>
+                    <td class="name">
+                        <a href="{% url 'geokit_tables:edit' table.pk %}">
+                            {{ table.name }}
+                        </a>
+                    </td>
+                    <td class="description">
+                        {{ table.description }}
+                    </td>
+                    <td>
+                        {{ table.record_set.count }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>You haven't created any tables yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

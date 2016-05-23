@@ -1,6 +1,5 @@
 import json
 
-from django.core.urlresolvers import reverse
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 
@@ -19,45 +18,6 @@ def index(request):
     return render(request, 'expressions/index.html', {
         'expressions': expressions,
     })
-
-
-#def add(request):
-    #if request.method == 'POST':
-        #form = ExpressionForm(request.POST)
-
-        #if form.is_valid():
-            #form.save()
-            #messages.success(request, "Expression added.")
-            #return redirect('expressions:index')
-        #else:
-            #messages.error(request, "The expression could not be saved due to errors.")
-    #else:
-        #form = ExpressionForm()
-
-    #return render(request, 'expressions/add.html', {'form': form})
-
-
-#def edit(request, expression_id):
-    #expression = get_object_or_404(Expression, pk=expression_id)
-
-    #if request.POST:
-        #form = ExpressionForm(request.POST, instance=expression)
-        #if form.is_valid():
-            #expression = form.save()
-
-            #messages.success(request, "Expression '{0}' updated".format(expression.name), buttons=[
-                #messages.button(reverse('expressions:edit', args=(expression.pk,)), 'Edit')
-            #])
-            #return redirect('expressions:index')
-        #else:
-            #messages.error(request, "The expression could not be saved due to errors.")
-    #else:
-        #form = ExpressionForm(instance=expression)
-
-    #return render(request, "expressions/edit.html", {
-        #'expression': expression,
-        #'form': form
-    #})
 
 
 def delete(request, expression_id):
@@ -91,10 +51,17 @@ def evaluate_on_tile(request, layer_name, z, x, y, expression_id):
     tile_response = tile_json(request, layer_name, z, x, y)
     tile = json.loads(tile_response.content)
 
-    expression = Expression.objects.get(pk=expression_id)
+    expression_result = Expression.objects.get(pk=expression_id).evaluate(request.user)
+    if expression_result.vals.shape[1] != 1:
+        raise TypeError  # No timeseries data yet
+
     for feature in tile['features']:
-        patch_val = expression.evaluate(request.user, extra_substitutions=feature['properties'])
-        feature['properties']['patchVal'] = unicode(patch_val)
+        try:
+            val_index = expression_result.spatial_key.index([int(feature['properties']['id'])])
+            patch_val = expression_result.vals[val_index]
+            feature['properties']['patchVal'] = float(patch_val)
+        except ValueError:
+            feature['properties']['patchVal'] = None
 
     return JsonResponse(tile)
 

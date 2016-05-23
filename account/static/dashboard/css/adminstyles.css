@@ -46,10 +46,6 @@ input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"
 .nav-main {
   top: 185px; }
 
-.listing.full-width th {
-  background-color: #f0ece3;
-  border-bottom: 1px solid #c0a7ab; }
-
 .listing .no-children a:hover {
   color: #79575b; }
 
@@ -63,7 +59,7 @@ input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"
   color: #ebebeb; }
 
 .content {
-  background-color: white; }
+  background-color: #faf6ed; }
 
 .tab-content {
   padding: 20px; }
@@ -82,7 +78,7 @@ header, .tab-nav.merged {
   border-top-right-radius: 5px; }
 
 .tab-nav.merged li a.active {
-  background-color: white;
+  background-color: #faf6ed;
   border-top: 0.3em solid #70575b; }
 
 .tab-nav.merged li a {
@@ -166,9 +162,3 @@ input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .but
 
 .nav-main a:hover, .nav-main a:focus {
   text-shadow: none; }
-
-.summary {
-  background-color: #f0ece3; }
-
-.listing .table-headers {
-  border-bottom: 1px solid #c0a7ab; }

@@ -1,0 +1,51 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% block titletag %}Variables{% endblock %}
+{% block bodyclass %}menu-variables{% endblock %}
+
+{% block content %}
+{% include "wagtailadmin/shared/header.html" with title="Variables" icon="placeholder" add_link="variables:add" add_text="Create Variable" %}
+
+<div class="nice-padding">
+    <div id="variables-results" class="variables">
+        {% if expressions.exists %}
+        <table class="listing">
+            <col />
+            <col />
+            <col />
+            <col />
+            <thead>
+                <tr class="table-headers">
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Dimensions</th>
+                    <th>Units</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expression in expressions %}
+                <tr>
+                    <td class="title">
+                        <a href="{% url 'variables:edit' expression.pk %}">
+                            {{ expression.name }}
+                        </a>
+                    </td>
+                    <td class="description">
+                        {{ expression.description }}
+                    </td>
+                    <td class="dimensions">
+                        {{ expression.dimensions.width }} x {{ expression.dimensions.height }}
+                    </td>
+                    <td>
+                        {{ expression.units }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>You haven't created any variables yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

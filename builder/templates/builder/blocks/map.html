@@ -1,4 +1,8 @@
-<div class="leaflet-map" id="map-{{ self.id }}"></div>
+<div class="panel panel-default">
+  <div class="panel-body">
+    <div class="leaflet-map" id="map-{{ self.id }}"></div>
+  </div>
+</div>
 
 <script>
 var map = L.map('map-{{ self.id}}');
@@ -22,7 +26,7 @@ function getColor(value) {
 
 var geojsonURL = '/expressions/evaluate/tile/{{ self.layer.name }}/{z}/{x}/{y}/{{ self.expression.id }}/';
 var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
-    clipTiles: true,
+    clipTiles: false,
     unique: function(feature) {
         return feature.id;
     }
@@ -36,12 +40,12 @@ var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
             "color": "#000",
             "weight": 1.0,
             "opacity": 0.3,
-            "fillOpacity": 0.2
+            "fillOpacity": 0.7
         };
     },
     onEachFeature: function(feature, layer) {
         if (feature.properties) {
-            var popupString = '<div class="popup">' + feature.properties.patchValue + '</div>';
+            var popupString = '<div class="popup">' + feature.properties.patchVal + '</div>';
             layer.bindPopup(popupString);
         }
         layer.on('click', function() {

@@ -15,71 +15,17 @@ var Tab = ReactBootstrap.Tab;
 var DropdownButton = ReactBootstrap.DropdownButton;
 var MenuItem = ReactBootstrap.MenuItem;
 
-var metadata = {
-    title: "This is a Sieve title",
-    description: "This is a Sieve description"
-}
-
-var spatial_domain = [
-  ["x1", "y1"],
-  ["x2", "y2"],
-  ["x3", "y3"]
-]
-
-var temporal_domain = [
-  new Date(1996, 0, 1),
-  new Date(1997, 0, 1),
-  new Date(1998, 0, 1),
-  new Date(1999, 0, 1),
-  new Date(2000, 0, 1)
-]
-
-var data = [
-  {
-    space: spatial_domain[0],
-    time: temporal_domain[0],
-    values: [
-      {
-        name: "precip",
-        value: 5,
-        unit: "inch"
-      },
-      {
-        name: "temp",
-        value: 6,
-        unit: "celsius"
-      }
-    ]
-  },
-  {
-    space: spatial_domain[1],
-    time: temporal_domain[0],
-    values: [
-      {
-        name: "precip",
-        value: 10,
-        unit: "inch"
-      },
-      {
-        name: "temp",
-        value: 8,
-        unit: "celsius"
-      }
-    ]
-  }
-]
-
 class DataVariableMenu extends React.Component {
   constructor(props) {
     super(props);
   }
   
   render() {
-    var values = this.props.data[0].values.map((value, index) => {
+    var values = ['precip', 'temp'].map((value, index) => {
       return (
         <MenuItem
           key={index} >
-          {value.name}
+          {value}
         </MenuItem>);
     });
     
@@ -101,7 +47,11 @@ class Sieve extends React.Component {
     loadFormVariables();
     loadUserVariables();
 
-    this.state = this.initialState();
+    if (this.props.initialData) {
+      this.state = Object.assign(this.initialState(), this.props.initialData);
+    } else {
+      this.state = this.initialState();
+    }
   }
 
   initialState() {
@@ -215,7 +165,7 @@ class Sieve extends React.Component {
           spatial_domain_features: [],
           filters: this.state.filters,
           aggregate_method: this.state.aggregateMethod,
-          aggregate_dimension: this.state.aggreagateDimension
+          aggregate_dimension: this.state.aggregateDimension
         };
 
     if (!data.name || data.name === '') {
@@ -236,14 +186,20 @@ class Sieve extends React.Component {
 
     if (validationResponse.isValid) {
       var xhr = new XMLHttpRequest();
-      xhr.open("POST", "/api/expressions/", true);
+
+      if (this.props.initialData) {
+        xhr.open("PUT", "/api/expressions/"+this.props.initialData.id+"/", true);
+      } else {
+        xhr.open("POST", "/api/expressions/", true);
+      }
+
       xhr.setRequestHeader("Content-type", "application/json");
       xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
 
       xhr.onreadystatechange = () => {
         if (xhr.readyState == 4) {
           if (200 <= xhr.status && xhr.status < 300) {
-            this.setState(this.initialState());
+            window.location.href = window.redirect_after_save;
           } else {
             this.setState({errors: {server: xhr.response}});
           }
@@ -270,18 +226,28 @@ class Sieve extends React.Component {
           <Row>
             <Col sm={4}>
               <h3>Configure Start Date</h3>
-              <TemporalConfigurator {...this.props}
+              <TemporalConfigurator
+                date={this.state.temporalDomain.start}
                 dateUpdated={this.updateStartDate.bind(this)}
                 ref="dateStart" />
+            </Col>
+            <Col sm={4}>
               <h3>Configure End Date</h3>
-              <TemporalConfigurator {...this.props}
+              <TemporalConfigurator
+                date={this.state.temporalDomain.end}
                 dateUpdated={this.updateEndDate.bind(this)}
                 ref="dateEnd" />
             </Col>
-            <Col sm={8}>
-              <SpatialConfigurator {...this.props} />
+            <Col sm={4}>
+              <h3>Interval Duration</h3>
+              <IntervalConfigurator {...this.props} />
             </Col>
           </Row>
+        </Panel>
+        <Panel>
+          <Col>
+            <SpatialConfigurator {...this.props} />
+          </Col>
         </Panel>
         <Panel>
           <ButtonToolbar>
@@ -292,7 +258,7 @@ class Sieve extends React.Component {
               <Button onClick={this.insertToken.bind(this, '-')}>-</Button>
             </ButtonGroup>
             <ButtonGroup className="pull-right">
-              <DataVariableMenu {...this.props} />
+              <DataVariableMenu />
               <DropdownButton title="Form Variables" id="form-var-dropdown">
                 {this.state.formVariables.variables.map((formVar, i) => {
                   return <MenuItem key={i} eventKey={i} onClick={this.insertToken.bind(this, formVar.name)}>{formVar.name}</MenuItem>;
@@ -310,6 +276,8 @@ class Sieve extends React.Component {
         </Panel>
         <Panel>
           <Aggregate
+            dimension={this.state.aggregateDimension}
+            method={this.state.aggregateMethod}
             updateAggregateDimension={this.updateAggregateDimension.bind(this)}
             updateAggregateMethod={this.updateAggregateMethod.bind(this)} />
         </Panel>
@@ -378,14 +346,95 @@ class SpatialViewer extends React.Component {
   }
 }
 
-class TemporalConfigurator extends React.Component {
+class IntervalConfigurator extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      selectedMonth: null,
-      selectedDay: null,
-      selectedYear: null,
-    };
+      selectedMeasure: null,
+      selectedPeriod: null
+    }
+  }
+
+  setMeasure(event) {
+    this.setState({selectedMeasure: event.target.value});
+    console.log(event.target.value);
+  }
+
+  setPeriod(event) {
+    this.setState({selectedPeriod: event.target.value});
+    console.log(event.target.value);
+  }
+
+  render() {
+    var optionsPeriods = [];
+    var periods = ['day', 'week', 'month', 'year'];
+    
+    for (var i = 0; i < periods.length; i++) {
+      optionsPeriods.push(
+        <option
+          key={i}
+          value={periods[i]}>
+            {periods[i]}
+        </option>
+      );
+    }
+    
+    var optionsMeasures = [];
+    
+    for (var i = 0; i < 31; i++) {
+      optionsMeasures.push(
+        <option
+          key={i}
+          value={i + 1}>
+            {i + 1}
+        </option>
+      );
+    }
+    
+    return (
+      <form className="form-horizontal">
+        <Input
+          type="select"
+          label="Measure"
+          labelClassName="sr-only"
+          onChange={this.setPeriod.bind(this)}
+          wrapperClassName="col-sm-12"
+          defaultValue={-1}>
+          <option value={-1}>Measure</option>
+            {optionsMeasures}
+        </Input>
+        <Input
+          type="select"
+          label="Period"
+          labelClassName="sr-only"
+          onChange={this.setPeriod.bind(this)}
+          wrapperClassName="col-sm-12"
+          defaultValue={-1}>
+          <option value={-1}>Period</option>
+          {optionsPeriods}
+        </Input>
+      </form>
+    );
+  }
+}
+
+class TemporalConfigurator extends React.Component {
+  constructor(props) {
+    super(props);
+
+    if (this.props.date) {
+      this.state = {
+        selectedMonth: this.props.date.getMonth(),
+        selectedDay: this.props.date.getDate(),
+        selectedYear: this.props.date.getFullYear()
+      };
+    } else {
+      this.state = {
+        selectedMonth: null,
+        selectedDay: null,
+        selectedYear: null,
+      };
+    }
   }
 
   setYear(event) {
@@ -424,12 +473,12 @@ class TemporalConfigurator extends React.Component {
   }
   
   renderYears() {
-    var optionsYears = this.props.temporalDomain.map((date, index) => {
+    var optionsYears = [1996, 1997, 1998, 1999, 1999, 2000].map((year, index) => {
       return (
         <option
           key={index}
-          value={date.getFullYear()}>
-          {date.getFullYear()}
+          value={year}>
+          {year}
         </option>
       );
     });
@@ -438,11 +487,11 @@ class TemporalConfigurator extends React.Component {
       <Input
         type="select"
         label="Year"
-        labelClassname="col-sm-2"
-        wrapperClassName="col-sm-10"
+        labelClassName="sr-only"
+        wrapperClassName="col-sm-12"
         onChange={this.setYear.bind(this)}
-        defaultValue={-1}>
-        <option value={-1}>-</option>
+        defaultValue={this.state.selectedYear}>
+        <option value={-1}>Year</option>
         {optionsYears}
       </Input>
     );
@@ -465,12 +514,12 @@ class TemporalConfigurator extends React.Component {
       <Input
         type="select"
         label="Month"
-        labelClassName="col-sm-2"
-        wrapperClassName="col-sm-10"
+        labelClassName="sr-only"
+        wrapperClassName="col-sm-12"
         onChange={this.setMonth.bind(this)}
-        defaultValue={-1}
+        defaultValue={this.state.selectedMonth}
         ref="selectedMonth">
-        <option value={-1}>-</option>
+        <option value={-1}>Month</option>
         {optionsMonths}
       </Input>
     );
@@ -516,12 +565,12 @@ class TemporalConfigurator extends React.Component {
       <Input
         type="select"
         label="Day"
-        labelClassName="col-sm-2"
-        wrapperClassName="col-sm-10"
+        labelClassName="sr-only"
+        wrapperClassName="col-sm-12"
         onChange={this.setDay.bind(this)}
-        defaultValue={-1}
+        defaultValue={this.state.selectedDay}
         ref="selectedDay">
-        <option value={-1}>-</option>
+        <option value={-1}>Day</option>
         {optionsDays}
       </Input>
     )
@@ -604,47 +653,41 @@ class Filter extends React.Component {
     super(props);
     this.state = {
       buttonDisabled: true,
-      formDefaults: {
-        action: 'exclusive',
-        comparison: 'lt',
-        benchmark: 'x'
-      }
+      action: 'exclusive',
+      comparate: 'value',
+      comparison: 'lt',
+      benchmark: null
     };
   }
-  
+
   validateFilter() {
-    if (this.refs.action.refs.input.value == "" ||
-      this.refs.comparison.refs.input.value == "" ||
-      this.refs.benchmark.refs.input.value == "") {
-      this.setState({buttonDisabled: true});
-      return false;
-    } else {
-      for (var i = 0; i < this.props.filters.length; i++) {
-        if (this.props.filters[i].key == this.refs.action.refs.input.value +
-          this.refs.comparison.refs.input.value +
-          this.refs.benchmark.refs.input.value) {
-        
-          this.setState({buttonDisabled: true});
-          
-          return false;
-        }
+    for (var i = 0; i < this.props.filters.length; i++) {
+      if (this.props.filters[i].key == this.state.action +
+                                       this.state.comparate +
+                                       this.state.comparison +
+                                       this.renderBenchmark()) {
+        this.setState({buttonDisabled: true, benchmark: null});
+
+        return false;
       }
-      this.setState({buttonDisabled: null});
-      
-      return true;
     }
+    this.setState({buttonDisabled: null});
+    
+    return true;
   }
   
   addFilter() {
     if (this.validateFilter() == true) {
       var filters = this.props.filters.slice();
       filters.push({
-        action: this.refs.action.refs.input.value,
-        comparison: this.refs.comparison.refs.input.value,
-        benchmark: this.refs.benchmark.refs.input.value,
-        key: this.refs.action.refs.input.value +
-          this.refs.comparison.refs.input.value +
-          this.refs.benchmark.refs.input.value
+        action: this.state.action,
+        comparison: this.state.comparison,
+        comparate: this.state.comparate,
+        benchmark: this.state.benchmark,
+        key: this.state.action +
+          this.state.comparate +
+          this.state.comparison +
+          this.renderBenchmark()
       });
       this.props.updateFilters(filters);
       this.resetForm();
@@ -652,7 +695,7 @@ class Filter extends React.Component {
       console.log('getting here');
     }
   }
-  
+
   removeFilter(filter) {
     var filters = this.props.filters;
     for (var i = 0; i < filters.length; i++) {
@@ -662,12 +705,66 @@ class Filter extends React.Component {
     }
     this.props.updateFilters(filters);
   }
-  
+
   resetForm() {
-    this.refs.action.refs.input.value = "exclusive";
-    this.refs.comparison.refs.input.value = "lt";
-    this.refs.benchmark.refs.input.value = "";
-    this.validateFilter();
+    this.setState({
+      buttonDisabled: true,
+      action: 'exclusive',
+      comparate: 'value',
+      comparison: 'lt',
+      benchmark: null
+    });
+  }
+
+  updateAction(e) {
+    this.setState({action: e.target.value});
+  }
+
+  updateComparate(e) {
+    this.setState({
+      buttonDisabled: true,
+      comparate: e.target.value,
+      benchmark: null
+    });
+  }
+
+  updateComparison(e) {
+    this.setState({comparison: e.target.value});
+  }
+
+  updateBenchmark(e) {
+    var buttonDisabled = true;
+    if (e.target.value) {
+      buttonDisabled = false;
+    }
+    this.setState({
+      buttonDisabled: buttonDisabled,
+      benchmark: e.target.value
+    });
+  }
+
+  renderBenchmark() {
+    if (this.state.benchmark.hasOwnProperty('month') && this.state.benchmark.hasOwnProperty('day')) {
+      return this.state.benchmark.month + "-" + this.state.benchmark.day;
+    }
+    return this.state.benchmark;
+  }
+
+  updateDay(e) {
+    var benchmark = this.state.benchmark,
+        buttonDisabled = true;
+
+    if (!benchmark) {
+      benchmark = {month: null, day: null};
+    }
+
+    benchmark[e.target.id] = e.target.value;
+
+    if (benchmark.month && benchmark.day) {
+      buttonDisabled = false;
+    }
+
+    this.setState({buttonDisabled: buttonDisabled, benchmark: benchmark});
   }
   
   render() {
@@ -675,18 +772,27 @@ class Filter extends React.Component {
       <Row>
         <Col sm={4}>
           <form>
-            <Input ref="action" type="select" defaultValue="exclusive" onChange={this.validateFilter.bind(this)}>
-              <option value="exclusive">Exclude rows where value is</option>
-              <option value="inclusive">Include rows where value is</option>
+            <Input value={this.state.action} type="select" onChange={this.updateAction.bind(this)}>
+              <option value="exclusive">Exclude rows where</option>
+              <option value="inclusive">Include rows where</option>
             </Input>
-            <Input ref="comparison" type="select" defaultValue="lt" onChange={this.validateFilter.bind(this)}>
+            <Input value={this.state.comparate} type="select" onChange={this.updateComparate.bind(this)}>
+              <option value="value">value is</option>
+              <option value="day">day is</option>
+            </Input>
+            <Input value={this.state.comparison} type="select" onChange={this.updateComparison.bind(this)}>
               <option value="lt">Less than</option>
               <option value="ltet">Less than or equal to</option>
               <option value="et">Equal to</option>
               <option value="gt">Greater than</option>
               <option value="gtet">Greater than or equal to</option>
             </Input>
-            <Input ref="benchmark" type="text" placeholder="x" onChange={this.validateFilter.bind(this)}/>
+            {this.state.comparate == 'value' ?
+              <Input value={this.state.benchmark} type="text" placeholder="x" onChange={this.updateBenchmark.bind(this)}/> :
+              <Row onChange={this.updateDay.bind(this)}>
+                <Col xs={6}><Input id="month" type="text" placeholder="Month" /></Col>
+                <Col xs={6}><Input id="day" type="text" placeholder="Day" /></Col>
+              </Row>}
             <Button
               className="pull-right"
               disabled={this.state.buttonDisabled}
@@ -707,7 +813,7 @@ class FilterList extends React.Component {
   render() {
     var filters = this.props.filters.map((filter) => {
       return (
-        <FilterListItem filter={filter} removeFilter={this.props.removeFilter} />
+        <FilterListItem key={filter.key} filter={filter} removeFilter={this.props.removeFilter} />
       );
     });
     return (
@@ -715,6 +821,7 @@ class FilterList extends React.Component {
         <thead>
           <tr>
             <th>Type of Filter</th>
+            <th>Value Compared</th>
             <th>Method of Comparison</th>
             <th>Value for Comparison</th>
             <th></th>
@@ -736,10 +843,15 @@ class FilterListItem extends React.Component {
           {this.props.filter.action}
         </td>
         <td>
+          {this.props.filter.comparate}
+        </td>
+        <td>
           {this.props.filter.comparison}
         </td>
         <td>
-          {this.props.filter.benchmark}
+          {typeof this.props.filter.benchmark == "object" ?
+            this.props.filter.benchmark.month + "-" + this.props.filter.benchmark.day :
+            this.props.filter.benchmark}
         </td>
         <td>
           <Button
@@ -757,8 +869,8 @@ class Aggregate extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      aggregateDimension: 'NA',
-      aggregateMethod: null
+      aggregateDimension: this.props.dimension,
+      aggregateMethod: this.props.method
     };
   }
   aggregateDimensionToggle(dimension) {
@@ -851,11 +963,8 @@ var Map = React.createClass({
   }
 });
 
-ReactDOM.render(
-  <Sieve
-    metadata={metadata}
-    spatialDomain={spatial_domain}
-    temporalDomain={temporal_domain}
-    data={data} />,
-  document.getElementById("sieve-container")
-);
+// Since this script is pulled in as 'text/babel', other scripts will go ahead and run
+// even if this one isn't finished. This provides a reliable way to know when it has
+// finished and to access its exports.
+var sieve_defined = new CustomEvent('sievedefined', {detail: {Sieve: Sieve}});
+document.dispatchEvent(sieve_defined);
