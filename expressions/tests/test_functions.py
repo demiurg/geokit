@@ -101,6 +101,14 @@ class TestExtract(unittest.TestCase):
         actual = functions.Extract.eval('a', '(ignored)')
         self.assertEqual(expected, actual)
 
+    def test_invalid_key(self):
+        """On key not found, raise ValueError as per usual."""
+        p = self.payload
+        i = [ [p, p, p, p] ] # input array
+        self.evaluate.return_value = ExpressionResult(i, self.t_key, self.s_key)
+        with self.assertRaises(KeyError):
+            actual = functions.Extract.eval('d', '(ignored)')
+
     def test_model_exception(self):
         """Confirm exception propagates when model raises an exception.
 
