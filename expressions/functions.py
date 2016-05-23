@@ -31,17 +31,22 @@ class Join(sympy.Function):
         cursor = connection.cursor()
         cursor.execute(query, [layer_field, table_field, layer_name, table_name])
 
+        # dict of dicts:  outer key is feature IDs, inner key is dates, inner
+        # values are geokit_tables_record.properties.
         results = {}
         for row in cursor.fetchall():
             if row[0] not in results.keys():
                 results[row[0]] = SortedDict()
             results[row[0]][row[4]] = row[3]
 
-        spatial_key = results.keys()
+        spatial_key = results.keys() # list of layers_feature.id
+        # list of geokit_tables_record.date
         temporal_key = list(results[spatial_key[0]].keys())
 
+        # result_matrix is just the natural list of lists taken from results,
+        # but with the keys removed.
         result_matrix = []
-        for layer, vals in results.iteritems():
+        for _, vals in results.iteritems():
             result_matrix.append(vals.values())
 
         return ExpressionResult(result_matrix, temporal_key, spatial_key)

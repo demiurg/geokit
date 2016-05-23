@@ -19,11 +19,11 @@ class TestExpressionResultEquality(unittest.TestCase):
         self.assertNotEqual(self.scalar_er, object())
 
     def test_scalar_identity(self):
-        """An ER object should be equal to itself."""
+        """A scalar ER object should be equal to itself."""
         self.assertEqual(self.scalar_er, self.scalar_er)
 
     def test_rect_identity(self):
-        """An ER object should be equal to itself."""
+        """An rectangular ER object should be equal to itself."""
         self.assertEqual(self.rect_er, self.rect_er)
 
     def test_unequal_dimensions(self):
