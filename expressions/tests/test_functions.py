@@ -16,7 +16,7 @@ class TestJoin(unittest.TestCase):
         self.db_mock = self.db_patcher.start()
         self.addCleanup(self.db_patcher.stop)
 
-        self.json = '{"a": 37, "b": 14, "c": [1, 2, 3]}' # fake payload
+        self.json = {"a": 37, "b": 14, "c": [1, 2, 3]} # fake payload
 
         self.fetchall = self.db_mock.cursor().fetchall
         self.fetchall.return_value = (
@@ -142,6 +142,39 @@ class TestExtract(unittest.TestCase):
         with self.assertRaises(Exception):
             functions.Extract.eval('should', 'break')
 
+
+class TestExtractJoin(unittest.TestCase):
+    """Test EXTRACT(JOIN(...)) to confirm interoperability.
+
+    This is a pure unit test; any DB I/O is mock.patched.
+    """
+    def setUp(self):
+        """Prepare mocks & test data for testing."""
+        # mocking for Join.eval
+        self.db_patcher = mock.patch('expressions.functions.connection')
+        self.db_mock = self.db_patcher.start()
+        self.addCleanup(self.db_patcher.stop)
+        self.fetchall = self.db_mock.cursor().fetchall
+
+        # test data
+        self.json = {"a": 37, "b": 14, "c": [1, 2, 3]} # fake payload
+        self.fetchall.return_value = (
+            # spatial key
+            # / layer props  tables key    payload  date range
+            (1, '(ignored)', '(ignored)', self.json, 'dr1'),
+            (1, '(ignored)', '(ignored)', self.json, 'dr2'),
+            (2, '(ignored)', '(ignored)', self.json, 'dr1'),
+            (2, '(ignored)', '(ignored)', self.json, 'dr2'),
+            (3, '(ignored)', '(ignored)', self.json, 'dr1'),
+            (3, '(ignored)', '(ignored)', self.json, 'dr2'),
+        )
+
+    def test_no_raising(self):
+        """Confirm the base case raises no exceptions."""
+        # this technically breaks the meaning of failing a test vs. errors
+        # preventing a test from completing, but it's close enough.
+        join_rv = functions.Join.eval('lt__ln__lf', 'tt__tn__tf')
+        functions.Extract.eval('a', join_rv)
 
 if __name__ == '__main__':
     unittest.main()
