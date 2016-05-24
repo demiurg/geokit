@@ -1,7 +1,5 @@
 import json
-import mimetypes
 import os
-import urllib2
 
 from django.shortcuts import redirect, render, get_object_or_404
 from django.core.urlresolvers import reverse
@@ -18,7 +16,6 @@ from wagtail.wagtailadmin import messages
 from models import Layer, Feature
 from forms import LayerForm, LayerEditForm
 from serializers import FeatureSerializer
-from utils import mapnik_xml, tile_cache
 
 from fiona.crs import to_string
 from shapely.geometry import shape
@@ -246,17 +243,20 @@ def add(request):
 
                 l.bounds = min_bounds.coords + max_bounds.coords
                 for index, record in enumerate(col):
-                    count += 1
-                    geom = shape(record['geometry'])
-                    transformed_geom = OGRGeometry(geom.wkt, srs=srs).transform(3857, clone=True)
-                    properties = record['properties']
-                    properties['fid'] = index
-                    f = Feature(
-                        layer=l,
-                        geometry=GeometryCollection(transformed_geom.geos),
-                        properties=properties
-                    )
-                    f.save()
+                    try:
+                        geom = shape(record['geometry'])
+                        transformed_geom = OGRGeometry(geom.wkt, srs=srs).transform(3857, clone=True)
+                        properties = record['properties']
+                        properties['fid'] = index
+                        f = Feature(
+                            layer=l,
+                            geometry=GeometryCollection(transformed_geom.geos),
+                            properties=properties
+                        )
+                        f.save()
+                        count += 1
+                    except Exception as e:
+                        print "Feature excepton", e
 
                 if count == 0:
                     raise Exception("Layer needs to have at least one feature")
@@ -268,6 +268,7 @@ def add(request):
                 return redirect('layers:index')
             except Exception as e:
                 print e
+                traceback.print_exc()
                 l.delete()
                 form.add_error(
                     "vector_file",
