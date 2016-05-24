@@ -39,6 +39,9 @@ class Join(sympy.Function):
                 results[row[0]] = SortedDict()
             results[row[0]][row[4]] = row[3]
 
+        if results == {}: # did you find any data?
+            return ExpressionResult()
+
         spatial_key = results.keys() # list of layers_feature.id
         # list of geokit_tables_record.date
         temporal_key = list(results[spatial_key[0]].keys())
@@ -55,8 +58,12 @@ class Join(sympy.Function):
 class Extract(sympy.Function):
     @classmethod
     def eval(cls, column_name, expression):
-        Expression = apps.get_model(app_label='expressions', model_name='Expression')
-        matrix = Expression.objects.get(name=str(expression)).evaluate(None)
+        if isinstance(expression, ExpressionResult):
+            matrix = expression
+        else:
+            Expression = apps.get_model(app_label='expressions',
+                                        model_name='Expression')
+            matrix = Expression.objects.get(name=str(expression)).evaluate(None)
 
         result = np.zeros(matrix.vals.shape)
 
