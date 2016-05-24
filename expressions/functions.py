@@ -39,6 +39,9 @@ class Join(sympy.Function):
                 results[row[0]] = SortedDict()
             results[row[0]][row[4]] = row[3]
 
+        if results == {}: # did you find any data?
+            return ExpressionResult()
+
         spatial_key = results.keys() # list of layers_feature.id
         # list of geokit_tables_record.date
         temporal_key = list(results[spatial_key[0]].keys())
