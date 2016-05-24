@@ -176,5 +176,31 @@ class TestExtractJoin(unittest.TestCase):
         join_rv = functions.Join.eval('lt__ln__lf', 'tt__tn__tf')
         functions.Extract.eval('a', join_rv)
 
+    def test_normal_case(self):
+        """Confirm expected output from calling EXTRACT(JOIN(...))."""
+        o = [ [37, 37], # output array
+              [37, 37],
+              [37, 37] ]
+        expected = ExpressionResult(o, ['dr1', 'dr2'], [1, 2, 3])
+        join_rv = functions.Join.eval('lt__ln__lf', 'tt__tn__tf')
+        actual = functions.Extract.eval('a', join_rv)
+        self.assertEqual(expected, actual)
+
+    @mock.patch('expressions.functions.apps')
+    def test_stored_expr(self, apps_mock):
+        """As normal case but feed JOIN result in through mocked DB fetch."""
+        # mock Expression.objects.get to return a particular ExpressionResult
+        self.evaluate = apps_mock.get_model().objects.get().evaluate
+        join_rv = functions.Join.eval('lt__ln__lf', 'tt__tn__tf')
+        self.evaluate.return_value = join_rv
+        # set up expected result of EXTRACT(JOIN(...))
+        o = [ [37, 37], # output array
+              [37, 37],
+              [37, 37] ]
+        expected = ExpressionResult(o, ['dr1', 'dr2'], [1, 2, 3])
+        # get actual result and compare to expectation
+        actual = functions.Extract.eval('a', 'trigger-Expression-query-pls')
+        self.assertEqual(expected, actual)
+
 if __name__ == '__main__':
     unittest.main()
