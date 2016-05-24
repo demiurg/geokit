@@ -15,11 +15,12 @@ var Tab = ReactBootstrap.Tab;
 var DropdownButton = ReactBootstrap.DropdownButton;
 var MenuItem = ReactBootstrap.MenuItem;
 
+
 class DataVariableMenu extends React.Component {
   constructor(props) {
     super(props);
   }
-  
+
   render() {
     var values = ['precip', 'temp'].map((value, index) => {
       return (
@@ -28,7 +29,7 @@ class DataVariableMenu extends React.Component {
           {value}
         </MenuItem>);
     });
-    
+
     return (
       <DropdownButton title="Data Variables" id="data-var-dropdown">
         {values}
@@ -211,7 +212,7 @@ class Sieve extends React.Component {
       this.setState({errors: validationResponse.errors});
     }
   }
-  
+
   render() {
     return (
       <div className="sieve">
@@ -368,7 +369,7 @@ class IntervalConfigurator extends React.Component {
   render() {
     var optionsPeriods = [];
     var periods = ['day', 'week', 'month', 'year'];
-    
+
     for (var i = 0; i < periods.length; i++) {
       optionsPeriods.push(
         <option
@@ -378,9 +379,9 @@ class IntervalConfigurator extends React.Component {
         </option>
       );
     }
-    
+
     var optionsMeasures = [];
-    
+
     for (var i = 0; i < 31; i++) {
       optionsMeasures.push(
         <option
@@ -390,7 +391,7 @@ class IntervalConfigurator extends React.Component {
         </option>
       );
     }
-    
+
     return (
       <form className="form-horizontal">
         <Input
@@ -471,7 +472,7 @@ class TemporalConfigurator extends React.Component {
 
     return new Date(+this.state.selectedYear, +this.state.selectedMonth, +this.state.selectedDay);
   }
-  
+
   renderYears() {
     var optionsYears = [1996, 1997, 1998, 1999, 1999, 2000].map((year, index) => {
       return (
@@ -482,7 +483,7 @@ class TemporalConfigurator extends React.Component {
         </option>
       );
     });
-    
+
     return (
       <Input
         type="select"
@@ -496,10 +497,10 @@ class TemporalConfigurator extends React.Component {
       </Input>
     );
   }
-  
+
   renderMonths() {
     var optionsMonths = [];
-    
+
     for (var i = 0; i < 12; i++) {
       optionsMonths.push(
         <option
@@ -509,7 +510,7 @@ class TemporalConfigurator extends React.Component {
         </option>
       );
     }
-    
+
     return (
       <Input
         type="select"
@@ -524,7 +525,7 @@ class TemporalConfigurator extends React.Component {
       </Input>
     );
   }
-  
+
   renderDays() {
     var monthsDays = [
       [1], // 28 day months
@@ -532,7 +533,7 @@ class TemporalConfigurator extends React.Component {
       [0, 2, 4, 6, 7, 9, 11] // 31 day months
     ];
     var days;
-    
+
     if (monthsDays[0].indexOf(this.state.selectedMonth) !== -1) {
       if (this.state.selectedDay > 28) {
         this.setState({selectedDay: 28});
@@ -549,7 +550,7 @@ class TemporalConfigurator extends React.Component {
       }
       days = 31;
     }
-    
+
     var optionsDays = [];
     for (var i = 1; i <= days; i++) {
       optionsDays.push(
@@ -560,7 +561,7 @@ class TemporalConfigurator extends React.Component {
         </option>
       );
     }
-    
+
     return (
       <Input
         type="select"
@@ -672,10 +673,10 @@ class Filter extends React.Component {
       }
     }
     this.setState({buttonDisabled: null});
-    
+
     return true;
   }
-  
+
   addFilter() {
     if (this.validateFilter() == true) {
       var filters = this.props.filters.slice();
@@ -766,7 +767,7 @@ class Filter extends React.Component {
 
     this.setState({buttonDisabled: buttonDisabled, benchmark: benchmark});
   }
-  
+
   render() {
     return (
       <Row>
@@ -829,7 +830,7 @@ class FilterList extends React.Component {
         </thead>
         <tbody>
           {filters}
-        </tbody>            
+        </tbody>
       </Table>
     );
   }
