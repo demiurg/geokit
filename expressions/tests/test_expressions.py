@@ -40,12 +40,12 @@ class OneDimensionalExpressionTests(TestCase):
 
     @mock.patch.object(Expression, 'resolve_sub_expression', patched_resolve_sub_expression)
     def test_sub_expressions(self):
-        exp = Expression(name='exp_with_subs', expression_text='expression_exp1 + 1')
+        exp = Expression(name='exp_with_subs', expression_text='expression__exp1 + 1')
         self.assertEqual(exp.evaluate(UserFactory.create()).unpack(), 4)
 
     @mock.patch.object(Expression, 'resolve_form_variable', patched_resolve_form_variable)
     def test_form_variables(self):
-        exp = Expression(name='exp_with_formvar', expression_text='form_var1 + 1')
+        exp = Expression(name='exp_with_formvar', expression_text='form__var1 + 1')
         self.assertEqual(exp.evaluate(UserFactory.create(username='tester1')).unpack(), 4)
         self.assertEqual(exp.evaluate(UserFactory.create(username='tester2')).unpack(), 5)
 

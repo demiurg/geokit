@@ -124,6 +124,12 @@ AGG_METHOD_CHOICES = (
 
 
 class Expression(models.Model):
+    """Expressions in the computational sense, but customized for geokit.
+
+    Each has a unique name, so they become composable and reusable like
+    mathematical functions.  They have optional metadata such as units, and
+    bounds in space and time.
+    """
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(null=True, blank=True)
     expression_text = models.TextField(validators=[validate_expression_text])
@@ -131,10 +137,24 @@ class Expression(models.Model):
     spatial_domain_features = models.ManyToManyField(Feature, blank=True)
     temporal_domain = DateRangeField(null=True, blank=True)
     filters = JSONField(default=list([]))
-    aggregate_method = models.CharField(max_length=3, choices=AGG_METHOD_CHOICES, null=True, blank=True)
-    aggregate_dimension = models.CharField(max_length=2, choices=AGG_DIM_CHOICES, default='NA')
+    aggregate_method = models.CharField(
+        max_length=3,
+        choices=AGG_METHOD_CHOICES,
+        null=True,
+        blank=True,
+    )
+    aggregate_dimension = models.CharField(
+        max_length=2,
+        choices=AGG_DIM_CHOICES,
+        default='NA',
+    )
 
     def evaluate(self, user):
+        """Compute the Expression, resulting in an ExpressionResult object.
+
+        Spatial and temporal bounds indices ('keys') will be tracked in the
+        result.  Needs a user since some names are not globally unique.
+        """
         expr = sympy.sympify(self.expression_text, locals=GEOKIT_FUNCTIONS, evaluate=False)
 
         if type(expr) == ExpressionResult:
@@ -200,7 +220,8 @@ class Expression(models.Model):
             if symbol_type == 'expression':
                 val = self.resolve_sub_expression(symbol_name).evaluate(user)
             elif symbol_type == 'form':
-                val = ExpressionResult.scalar(self.resolve_form_variable(symbol_name, user).value)
+                rfv = self.resolve_form_variable(symbol_name, user).value
+                val = ExpressionResult.scalar(rfv)
             elif symbol_type == 'layer':
                 val = self.resolve_layer_variable(symbol_name)
             else:
