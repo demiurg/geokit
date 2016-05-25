@@ -15,7 +15,7 @@ from wagtail.wagtailadmin import messages
 
 from models import Layer, Feature
 from forms import LayerForm, LayerEditForm
-from serializers import FeatureSerializer
+from serializers import FeatureSerializer, LayerSerializer
 
 from fiona.crs import to_string
 from shapely.geometry import shape
@@ -362,3 +362,8 @@ class Lock:
 class FeatureViewSet(viewsets.ModelViewSet):
     queryset = Feature.objects.all()
     serializer_class = FeatureSerializer
+
+
+class LayerViewSet(viewsets.ModelViewSet):
+    queryset = Layer.objects.all()
+    serializer_class = LayerSerializer

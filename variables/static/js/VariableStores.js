@@ -1,3 +1,53 @@
+var _LayerState = {
+  variables: [],
+  message: ""
+};
+
+var _LoadLayers = function() {
+  $.ajax({
+    url: '/api/layers',
+    dataType: 'json',
+    cache: 'false',
+    success: function(data) {
+      _LayerState.variables = data;
+      LayerStore.emitChange();
+    },
+    error: function(xhr, status, err) {
+      console.error(this.props.url, status, err.toString());
+      _LayerState.message = err.toString();
+      LayerStore.emitChange();
+    }
+  });
+};
+
+var loadLayers = _LoadLayers;
+
+
+var _TableState = {
+  variables: [],
+  message: ""
+};
+
+var _LoadTables = function() {
+  $.ajax({
+    url: '/api/tables',
+    dataType: 'json',
+    cache: 'false',
+    success: function(data) {
+      _TableState.variables = data;
+      TableStore.emitChange();
+    },
+    error: function(xhr, status, err) {
+      console.error(this.props.url, status, err.toString());
+      _TableState.message = err.toString();
+      TableStore.emitChange();
+    }
+  });
+};
+
+var loadLayers = _LoadLayers;
+
+
 var _formVariableState = {
   variables: [],
   message: ""

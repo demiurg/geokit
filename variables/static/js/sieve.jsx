@@ -245,11 +245,11 @@ class Sieve extends React.Component {
             </Col>
           </Row>
         </Panel>
-        <Panel>
+        {/*<Panel>
           <Col>
             <SpatialConfigurator {...this.props} />
           </Col>
-        </Panel>
+        </Panel>*/}
         <Panel>
           <ButtonToolbar>
             <ButtonGroup>
@@ -259,15 +259,37 @@ class Sieve extends React.Component {
               <Button onClick={this.insertToken.bind(this, '-')}>-</Button>
             </ButtonGroup>
             <ButtonGroup className="pull-right">
-              <DataVariableMenu />
+              <DropdownButton title="Data Variables" id="form-var-dropdown">
+                {this.state.dataVariables.variables.map((formVar, i) => {
+                  return <MenuItem
+                    key={i}
+                    eventKey={i}
+                    onClick={this.insertToken.bind(this, formVar.name)}
+                    >
+                      {formVar.name}
+                    </MenuItem>;
+                })}
+              </DropdownButton>
               <DropdownButton title="Form Variables" id="form-var-dropdown">
                 {this.state.formVariables.variables.map((formVar, i) => {
-                  return <MenuItem key={i} eventKey={i} onClick={this.insertToken.bind(this, formVar.name)}>{formVar.name}</MenuItem>;
+                  return <MenuItem
+                    key={i}
+                    eventKey={i}
+                    onClick={this.insertToken.bind(this, formVar.name)}
+                    >
+                      {formVar.name}
+                    </MenuItem>;
                 })}
               </DropdownButton>
               <DropdownButton title="User Variables" id="user-var-dropdown">
                 {this.state.userVariables.variables.map((userVar, i) => {
-                  return <MenuItem key={i} eventKey={i} onClick={this.insertToken.bind(this, userVar.name)}>{userVar.name}</MenuItem>;
+                  return <MenuItem
+                    key={i}
+                    eventKey={i}
+                    onClick={this.insertToken.bind(this, userVar.name)}
+                    >
+                      {userVar.name}
+                    </MenuItem>;
                 })}
               </DropdownButton>
             </ButtonGroup>
