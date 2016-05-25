@@ -94,3 +94,8 @@ ul.dropdown-menu, li.open a, .navbar-default .navbar-nav > .open > a, .navbar-de
 h1 {
   color: rgb(112, 87, 91);
 }
+
+path {
+  fill: none;
+  stroke: #000;
+}

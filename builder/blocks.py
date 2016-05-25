@@ -8,8 +8,7 @@ from layers.blocks import LayerChooserBlock
 
 # Inherits from StructBlock to reuse form rendering logic.
 class GraphBlock(StructBlock):
-    start_date = DateBlock()
-    end_date = DateBlock()
+    variable = ExpressionChooserBlock()
 
     class Meta:
         template = 'builder/blocks/graph.html'
@@ -17,6 +16,7 @@ class GraphBlock(StructBlock):
 
     def render(self, value):
         value["id"] = random.randint(1, 1000)  # Used to give each div a unique id, should be done a better way
+        value["data"] = value["variable"].evaluate(None)
 
         return super(GraphBlock, self).render(value)
 
