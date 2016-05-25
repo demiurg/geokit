@@ -14,7 +14,7 @@ from .models import GeoKitTable, Record
 from .serializers import GeoKitTableSerializer
 
 
-class FeatureViewSet(viewsets.ModelViewSet):
+class GeoKitTableViewSet(viewsets.ModelViewSet):
     queryset = GeoKitTable.objects.all()
     serializer_class = GeoKitTableSerializer
 
