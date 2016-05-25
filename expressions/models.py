@@ -134,8 +134,6 @@ class Expression(models.Model):
     description = models.TextField(null=True, blank=True)
     expression_text = models.TextField(validators=[validate_expression_text])
     units = models.CharField(max_length=50, null=True, blank=True)
-    spatial_domain_features = models.ManyToManyField(Feature, blank=True)
-    temporal_domain = DateRangeField(null=True, blank=True)
     filters = JSONField(default=list([]))
     aggregate_method = models.CharField(
         max_length=3,
@@ -155,7 +153,8 @@ class Expression(models.Model):
         Spatial and temporal bounds indices ('keys') will be tracked in the
         result.  Needs a user since some names are not globally unique.
         """
-        expr = sympy.sympify(self.expression_text, locals=GEOKIT_FUNCTIONS, evaluate=False)
+        expr = sympy.sympify(self.expression_text,
+                locals=GEOKIT_FUNCTIONS, evaluate=False)
 
         if type(expr) == ExpressionResult:
             result = expr.vals
@@ -204,14 +203,14 @@ class Expression(models.Model):
         symbols = filter(lambda atom: type(atom) == sympy.Symbol, atoms)
 
         if len(symbols) == 0:
-            # Nothing to resolve, so it's just the dimensions of the spatial/temporal domain.
-            # For now, we'll just return 1x1
+            # Nothing to resolve, so it's just the dimensions of the
+            # spatial/temporal domain.  For now, we'll just return 1x1
             return {'width': 1, 'height': 1}
         else:
             # We'll deal with this later
             return {'width': 'unknown', 'height': 'unkown'}
 
-    def resolve_symbols(self, symbols, user, feature=None):
+    def resolve_symbols(self, symbols, user):
         substitutions = []
 
         for symbol in symbols:
