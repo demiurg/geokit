@@ -238,9 +238,11 @@ class Expression(models.Model):
 
     def resolve_layer_variable(self, variable_name):
         features = Feature.objects.filter(properties__has_key=variable_name)
+        if features == []: # no features = empty expression result
+            return ExpressionResult()
+
         var_value = [[feature.properties[variable_name]] for feature in features]
         spatial_key = [[feature.pk] for feature in features]
-
         return ExpressionResult(var_value, spatial_key=spatial_key)
 
     @property

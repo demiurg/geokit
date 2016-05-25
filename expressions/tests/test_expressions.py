@@ -110,3 +110,13 @@ class TwoDimensionalExpressionTest(TestCase):
         expected = ExpressionResult([[2], [4], [10]])
         actual = exp.evaluate(UserFactory.create())
         self.assertEqual(expected, actual)
+
+
+class TestEmptyLayer(TestCase):
+    @mock.patch('expressions.models.Feature.objects.filter')
+    def test_whatever(self, emfof_mock):
+        emfof_mock.return_value = []
+        exp = Expression(name='empty_expr', expression_text='layer__OHAI')
+        expected = ExpressionResult()
+        actual = exp.evaluate(UserFactory.create())
+        self.assertEqual(expected, actual)
