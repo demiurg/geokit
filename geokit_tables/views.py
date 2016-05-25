@@ -4,12 +4,19 @@ from datetime import datetime
 from django.db import transaction
 from django.shortcuts import get_object_or_404, render, redirect
 
+from rest_framework import viewsets
 from wagtail.wagtailadmin import messages
 
 from psycopg2.extras import DateRange
 
-from geokit_tables.forms import GeoKitTableForm, GeoKitTableEditForm
-from geokit_tables.models import GeoKitTable, Record
+from .forms import GeoKitTableForm, GeoKitTableEditForm
+from .models import GeoKitTable, Record
+from .serializers import GeoKitTableSerializer
+
+
+class FeatureViewSet(viewsets.ModelViewSet):
+    queryset = GeoKitTable.objects.all()
+    serializer_class = GeoKitTableSerializer
 
 
 def index(request):
