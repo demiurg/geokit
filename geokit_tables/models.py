@@ -5,6 +5,9 @@ from django.contrib.postgres.fields import DateRangeField, JSONField
 
 
 class GeoKitTable(models.Model):
+    """Metadata for a particular table of time-series data.
+
+    Actual data is kept in Record objects."""
     name = models.SlugField(primary_key=True, max_length=250)
     description = models.TextField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True, editable=False)
@@ -15,6 +18,13 @@ class GeoKitTable(models.Model):
 
 
 class Record(models.Model):
+    """A particular span of time and associated data.
+
+    The data may contain feature IDs to associate that data with particular
+    geospatial data, eg a particular NH county.  The data can be arbitrarily
+    complex.  For instance, weather observations for a given week, which could
+    include mean high temperature, mean cloud cover, and total precipitation.
+    """
     table = models.ForeignKey(GeoKitTable)
     date = DateRangeField()
     properties = JSONField(null=True)
