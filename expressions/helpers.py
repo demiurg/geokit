@@ -2,7 +2,8 @@ import numpy as np
 import sympy
 
 
-class ExpressionResult(object):
+class ExpressionResult(sympy.Atom):
+
     def __init__(self, vals=None, temporal_key=None, spatial_key=None):
         """Constructor for ExpressionResult class.
 
@@ -33,10 +34,6 @@ class ExpressionResult(object):
             and np.array_equal(self.vals, other.vals) \
             and (self.temporal_key == other.temporal_key) \
             and (self.spatial_key == other.spatial_key)
-
-    def __ne__(self, other):
-        """Inequality is defined to be the negation of equality."""
-        return not self.__eq__(other)
 
 
 def evaluate_over_matrices(expr, variables):

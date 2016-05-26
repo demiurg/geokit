@@ -243,7 +243,7 @@ class Expression(models.Model):
 
         var_value = [[feature.properties[variable_name]] for feature in features]
         spatial_key = [[feature.pk] for feature in features]
-        return ExpressionResult(var_value, spatial_key=spatial_key)
+        return ExpressionResult(var_value, None, spatial_key)
 
     @property
     def aggregate_method_func(self):

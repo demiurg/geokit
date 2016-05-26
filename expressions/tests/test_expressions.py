@@ -5,12 +5,14 @@ from django.test import TestCase
 
 import numpy as np
 import sympy
+from sympy.core.cache import clear_cache
 import factory
 import mock
 from psycopg2.extras import DateRange
 
 from expressions.models import Expression, FormVariable
 from expressions.helpers import ExpressionResult
+from expressions import functions
 from layers.models import Layer, Feature
 
 
@@ -35,6 +37,9 @@ def patched_resolve_form_variable(self, variable_name, user):
 
 
 class OneDimensionalExpressionTests(TestCase):
+    def setUp(self):
+        clear_cache()
+
     def test_no_substitutions(self):
         exp = Expression(name='exp', expression_text='1+2')
         self.assertEqual(exp.evaluate(UserFactory.create()).unpack(), 3)
@@ -64,6 +69,9 @@ def return_two_dim_spatial_dom_features(*args, **kwargs):
 
 
 class TwoDimensionalExpressionTest(TestCase):
+    def setUp(self):
+        clear_cache()
+
     @mock.patch('expressions.models.sympy.sympify')
     def test_mean_across_nothing(self, sympify_mock):
         """Confirm that the mean of an empty dataset is NaN."""
@@ -113,10 +121,58 @@ class TwoDimensionalExpressionTest(TestCase):
 
 
 class TestEmptyLayer(TestCase):
+    def setUp(self):
+        clear_cache()
+
     @mock.patch('expressions.models.Feature.objects.filter')
-    def test_whatever(self, emfof_mock):
+    def test_empty_layer(self, emfof_mock):
         emfof_mock.return_value = []
         exp = Expression(name='empty_expr', expression_text='layer__OHAI')
         expected = ExpressionResult()
         actual = exp.evaluate(UserFactory.create())
         self.assertEqual(expected, actual)
+
+
+class TestLocalFunctions(TestCase):
+    """Test local functions inside an expression.
+
+    Currently just EXTRACT & JOIN.  I/O is mocked so this is a unit test.
+    """
+    def setUp(self):
+        clear_cache() # so sympy doesn't carry state between tests
+
+        # mock Join.eval
+        eval_patcher = mock.patch('expressions.functions.Join.eval')
+        self.eval_mock = eval_patcher.start()
+        self.addCleanup(eval_patcher.stop)
+        self.eval_mock.return_value = ExpressionResult()
+
+    def test_join(self):
+        """Ask Expression to handle a JOIN."""
+        self.eval_mock.return_value = ExpressionResult()
+        exp = Expression(name='expr',
+                         expression_text='JOIN(lt__ln__lf, tt__tn__tf)')
+        actual = exp.evaluate(UserFactory.create())
+        # not assertIs because Expression always returns a new ExpressionResult
+        self.assertEqual(self.eval_mock.return_value, actual)
+        self.assertTrue(self.eval_mock.called)
+
+    @mock.patch('expressions.functions.Extract.eval')
+    def test_extract(self, eval_mock):
+        """Ask Expression to handle an EXTRACT."""
+        eval_mock.return_value = ExpressionResult()
+        exp = Expression(name='expr',
+                         expression_text='EXTRACT(test_col_name, test_expr)')
+        actual = exp.evaluate(UserFactory.create())
+        # not assertIs because Expression always returns a new ExpressionResult
+        self.assertEqual(eval_mock.return_value, actual)
+        self.assertTrue(eval_mock.called)
+
+    def test_nested_functions(self):
+        """Have EXTRACT use a value from a JOIN expression."""
+        self.eval_mock.return_value = ExpressionResult()
+        text = 'EXTRACT(test_col_name, JOIN(lt__ln__lf, tt__tn__tf))'
+        exp = Expression(name='expr', expression_text=text)
+        actual = exp.evaluate(UserFactory.create())
+        self.assertEqual(self.eval_mock.return_value, actual)
+        self.assertTrue(self.eval_mock.called)
