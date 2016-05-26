@@ -2,7 +2,6 @@ import re
 import numpy as np
 import scipy.stats
 import sympy
-from collections import Counter
 
 from django.apps import apps
 from django.contrib.auth.models import User

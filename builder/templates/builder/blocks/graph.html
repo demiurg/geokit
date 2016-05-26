@@ -14,98 +14,113 @@ var margin = {top: 20, right: 40, bottom: 30, left: 40},
     height = 300 - margin.top - margin.bottom;
 
 if (data.type == 'scatter') {
-  var x_scale = d3.scale.ordinal()
-                      .domain(data.values.map(function(d) { return d.location_id; }))
-                      .rangePoints([0, width]);
+  (function(data) {
+    var x_scale = d3.scale.ordinal()
+                        .domain(data.values.map(function(d) { return d.location_id; }))
+                        .rangePoints([0, width]);
 
-  var y_scale = d3.scale.linear()
-                        .domain([0, d3.max(data.values, function(d) {
-                            return d.value;
-                        })])
-                        .range([height, 0]);
+    var y_scale = d3.scale.linear()
+                          .domain([0, d3.max(data.values, function(d) {
+                              return d.value;
+                          })])
+                          .range([height, 0]);
 
-  var graph = d3.select("#graph-{{ self.id }}")
-              .append("svg")
-                  .attr("width", width + margin.left + margin.right)
-                  .attr("height", height + margin.top + margin.bottom)
-              .append("g")
-                  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    var graph = d3.select("#graph-{{ self.id }}")
+                .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-  graph.selectAll("circle")
-      .data(data.values)
-      .enter()
-          .append("circle")
-          .attr("cx", function(d) {
-              return x_scale(d.location_id);
-          })
-          .attr("cy", function(d) {
-              return y_scale(d.value);
-          })
-          .attr("r", 3);
+    var tooltip = graph.append("g")
+          .attr("display", "none");
+    tooltip.append("text");
 
-  var x_axis = d3.svg.axis()
-                  .scale(x_scale)
-                  .orient("bottom");
+    graph.selectAll("circle")
+        .data(data.values)
+        .enter()
+            .append("circle")
+            .attr("cx", function(d) {
+                return x_scale(d.location_id);
+            })
+            .attr("cy", function(d) {
+                return y_scale(d.value);
+            })
+            .attr("r", 3)
+            .on("mouseover", function(d) {
+                tooltip.select("text").text(JSON.stringify(d.metadata));
+                tooltip.attr("transform", "translate(" + x_scale(d.location_id) + "," + y_scale(d.value) + ")")
+                        .attr("display", null);
+            })
+            .on("mouseout", function(d) {
+                tooltip.attr("display", "none");
+            });
 
-  var y_axis = d3.svg.axis()
-                  .scale(y_scale)
-                  .orient("left");
+    var x_axis = d3.svg.axis()
+                    .scale(x_scale)
+                    .tickValues(x_scale.domain().filter(function() { return false; }))
+                    .orient("bottom");
 
-  graph.append("g")
-      .attr("class", "axis")
-      .attr("transform", "translate(0, " + height + ")")
-      .call(x_axis);
+    var y_axis = d3.svg.axis()
+                    .scale(y_scale)
+                    .orient("left");
 
-  graph.append("g")
-      .attr("class", "axis")
-      .call(y_axis);
+    graph.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(0, " + height + ")")
+        .call(x_axis);
+
+    graph.append("g")
+        .attr("class", "axis")
+        .call(y_axis);
+  })(data);
 } else if (data.type == 'timeseries') {
-  var parse_date = d3.time.format("%Y-%m-%d").parse;
-  var x_scale = d3.time.scale()
-                       .domain([
-                           d3.min(data.values, function(d) { return parse_date(d.date); }),
-                           d3.max(data.values, function(d) { return parse_date(d.date); })
-                       ])
-                       .range([0, width]);
+  (function(data) {
+    var parse_date = d3.time.format("%Y-%m-%d").parse;
+    var x_scale = d3.time.scale()
+                        .domain([
+                            d3.min(data.values, function(d) { return parse_date(d.date); }),
+                            d3.max(data.values, function(d) { return parse_date(d.date); })
+                        ])
+                        .range([0, width]);
 
-  var y_scale = d3.scale.linear()
-                        .domain([0, d3.max(data.values, function(d) {
-                          return d.value;
-                        })])
-                        .range([height, 0]);
+    var y_scale = d3.scale.linear()
+                          .domain([0, d3.max(data.values, function(d) {
+                            return d.value;
+                          })])
+                          .range([height, 0]);
 
-  var graph = d3.select("#graph-{{ self.id }}")
-              .append("svg")
-                  .attr("width", width + margin.left + margin.right)
-                  .attr("height", height + margin.top + margin.bottom)
-              .append("g")
-                  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    var graph = d3.select("#graph-{{ self.id }}")
+                .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-  var line = d3.svg.line()
-      .x(function(d) { return x_scale(parse_date(d.date)); })
-      .y(function(d) { return y_scale(d.value); });
+    var line = d3.svg.line()
+        .x(function(d) { return x_scale(parse_date(d.date)); })
+        .y(function(d) { return y_scale(d.value); });
 
-  graph.append("path")
-        .datum(data.values)
-        .attr("d", line);
+    graph.append("path")
+          .datum(data.values)
+          .attr("d", line);
 
-  var x_axis = d3.svg.axis()
-                  .scale(x_scale)
-                  .orient("bottom");
+    var x_axis = d3.svg.axis()
+                    .scale(x_scale)
+                    .orient("bottom");
 
-  var y_axis = d3.svg.axis()
-                  .scale(y_scale)
-                  .orient("left");
+    var y_axis = d3.svg.axis()
+                    .scale(y_scale)
+                    .orient("left");
 
-  graph.append("g")
-      .attr("class", "axis")
-      .attr("transform", "translate(0, " + height + ")")
-      .call(x_axis);
+    graph.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(0, " + height + ")")
+        .call(x_axis);
 
-  graph.append("g")
-      .attr("class", "axis")
-      .call(y_axis);
+    graph.append("g")
+        .attr("class", "axis")
+        .call(y_axis);
+  })(data);
 }
-
-
 </script>

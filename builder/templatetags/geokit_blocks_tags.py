@@ -2,6 +2,8 @@ import json
 
 from django import template
 
+from layers.models import Feature
+
 register = template.Library()
 
 
@@ -23,10 +25,15 @@ def graph_data(graph_block):
             })
     elif cols == 1:
         # Build scatterplot by location
+        features = list(Feature.objects.filter(pk__in=expression_result.spatial_key).values())
+
         data['type'] = 'scatter'
         for i, value in enumerate(expression_result.vals):
+            metadata = [feature for feature in features if feature['id'] == expression_result.spatial_key[i]][0]
+            del metadata['geometry']
             data['values'].append({
                 'location_id': expression_result.spatial_key[i],
+                'metadata': metadata,
                 'value': value[0]
             })
     else:
