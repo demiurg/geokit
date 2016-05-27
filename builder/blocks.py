@@ -1,6 +1,6 @@
 import random
 
-from wagtail.wagtailcore.blocks import CharBlock, DateBlock, ListBlock, StructBlock
+from wagtail.wagtailcore.blocks import CharBlock, ListBlock, StructBlock
 
 from expressions.blocks import ExpressionChooserBlock
 from layers.blocks import LayerChooserBlock
@@ -44,7 +44,6 @@ class MapBlock(StructBlock):
 
 class TableBlock(StructBlock):
     expression = ExpressionChooserBlock()
-    columns = CharBlock()
 
     class Meta:
         template = 'builder/blocks/table.html'
@@ -52,6 +51,6 @@ class TableBlock(StructBlock):
 
     def render(self, value, user):
         value['id'] = random.randint(1, 1000)
-        value['columns_parsed'] = [column.strip() for column in value['columns'].split(',')]
-        value['variable_result'] = value['expression'].evaluate(user)
+        value['variable_result'] = value['expression'].evaluate(None)
+        value['keys'] = value['variable_result'].vals[0][0].keys()
         return super(TableBlock, self).render(value)
