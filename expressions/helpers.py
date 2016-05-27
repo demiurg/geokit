@@ -2,7 +2,11 @@ import numpy as np
 import sympy
 
 
-class ExpressionResult(object):
+class ExpressionResult(sympy.Atom):
+    """Used for storing a numpy array of values.
+
+    Each row & column can be optionally associated with features and
+    datetimes to associate the values with the real world."""
     def __init__(self, vals=None, temporal_key=None, spatial_key=None):
         """Constructor for ExpressionResult class.
 
@@ -20,23 +24,26 @@ class ExpressionResult(object):
 
     @staticmethod
     def scalar(val):
+        """Enclose a single object in an ExpresssionResult."""
         return ExpressionResult([[val]])
 
     def unpack(self):
+        """If only a single value is present, return it.
+
+        Otherwise return all the data."""
         if self.vals.shape == (1, 1):  # Scalar
             return self.vals[0][0]
         else:
             return self.vals
 
     def __eq__(self, other):
+        """ExpressionResults are equal if their data and metadata are equal.
+
+        Note that the parent class provides __ne__."""
         return (isinstance(other, self.__class__)) \
             and np.array_equal(self.vals, other.vals) \
             and (self.temporal_key == other.temporal_key) \
             and (self.spatial_key == other.spatial_key)
-
-    def __ne__(self, other):
-        """Inequality is defined to be the negation of equality."""
-        return not self.__eq__(other)
 
 
 def evaluate_over_matrices(expr, variables):

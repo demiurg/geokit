@@ -32,12 +32,12 @@ class Join(sympy.Function):
         cursor.execute(query, [layer_field, table_field, layer_name, table_name])
 
         # dict of dicts:  outer key is feature IDs, inner key is dates, inner
-        # values are geokit_tables_record.properties.
+        # values are geokit_tables.Record.properties.
         results = {}
-        for row in cursor.fetchall():
-            if row[0] not in results.keys():
-                results[row[0]] = SortedDict()
-            results[row[0]][row[4]] = row[3]
+        for (f_id, _, _, t_props, t_date) in cursor.fetchall():
+            if f_id not in results:
+                results[f_id] = SortedDict()
+            results[f_id][t_date] = t_props
 
         if results == {}: # did you find any data?
             return ExpressionResult()
