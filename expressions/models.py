@@ -2,7 +2,6 @@ import re
 import numpy as np
 import scipy.stats
 import sympy
-from collections import Counter
 
 from django.apps import apps
 from django.contrib.auth.models import User
@@ -124,18 +123,37 @@ AGG_METHOD_CHOICES = (
 
 
 class Expression(models.Model):
+    """Expressions in the computational sense, but customized for geokit.
+
+    Each has a unique name, so they become composable and reusable like
+    mathematical functions.  They have optional metadata such as units, and
+    bounds in space and time.
+    """
     name = models.CharField(max_length=100, unique=True)
     description = models.TextField(null=True, blank=True)
     expression_text = models.TextField(validators=[validate_expression_text])
     units = models.CharField(max_length=50, null=True, blank=True)
-    spatial_domain_features = models.ManyToManyField(Feature, blank=True)
-    temporal_domain = DateRangeField(null=True, blank=True)
     filters = JSONField(default=list([]))
-    aggregate_method = models.CharField(max_length=3, choices=AGG_METHOD_CHOICES, null=True, blank=True)
-    aggregate_dimension = models.CharField(max_length=2, choices=AGG_DIM_CHOICES, default='NA')
+    aggregate_method = models.CharField(
+        max_length=3,
+        choices=AGG_METHOD_CHOICES,
+        null=True,
+        blank=True,
+    )
+    aggregate_dimension = models.CharField(
+        max_length=2,
+        choices=AGG_DIM_CHOICES,
+        default='NA',
+    )
 
     def evaluate(self, user):
-        expr = sympy.sympify(self.expression_text, locals=GEOKIT_FUNCTIONS, evaluate=False)
+        """Compute the Expression, resulting in an ExpressionResult object.
+
+        Spatial and temporal bounds indices ('keys') will be tracked in the
+        result.  Needs a user since some names are not globally unique.
+        """
+        expr = sympy.sympify(self.expression_text,
+                locals=GEOKIT_FUNCTIONS, evaluate=False)
 
         if type(expr) == ExpressionResult:
             result = expr.vals
@@ -184,14 +202,14 @@ class Expression(models.Model):
         symbols = filter(lambda atom: type(atom) == sympy.Symbol, atoms)
 
         if len(symbols) == 0:
-            # Nothing to resolve, so it's just the dimensions of the spatial/temporal domain.
-            # For now, we'll just return 1x1
+            # Nothing to resolve, so it's just the dimensions of the
+            # spatial/temporal domain.  For now, we'll just return 1x1
             return {'width': 1, 'height': 1}
         else:
             # We'll deal with this later
             return {'width': 'unknown', 'height': 'unkown'}
 
-    def resolve_symbols(self, symbols, user, feature=None):
+    def resolve_symbols(self, symbols, user):
         substitutions = []
 
         for symbol in symbols:
@@ -200,7 +218,8 @@ class Expression(models.Model):
             if symbol_type == 'expression':
                 val = self.resolve_sub_expression(symbol_name).evaluate(user)
             elif symbol_type == 'form':
-                val = ExpressionResult.scalar(self.resolve_form_variable(symbol_name, user).value)
+                rfv = self.resolve_form_variable(symbol_name, user).value
+                val = ExpressionResult.scalar(rfv)
             elif symbol_type == 'layer':
                 val = self.resolve_layer_variable(symbol_name)
             else:
@@ -218,10 +237,12 @@ class Expression(models.Model):
 
     def resolve_layer_variable(self, variable_name):
         features = Feature.objects.filter(properties__has_key=variable_name)
+        if features == []: # no features = empty expression result
+            return ExpressionResult()
+
         var_value = [[feature.properties[variable_name]] for feature in features]
         spatial_key = [[feature.pk] for feature in features]
-
-        return ExpressionResult(var_value, spatial_key=spatial_key)
+        return ExpressionResult(var_value, None, spatial_key)
 
     @property
     def aggregate_method_func(self):
