@@ -20,7 +20,9 @@
 <script src="https://fb.me/react-dom-15.1.0.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-bootstrap/0.29.4/react-bootstrap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/flux/2.1.1/Flux.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/redux/3.5.2/redux.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-redux/4.4.5/react-redux.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/redux-thunk/2.1.0/redux-thunk.js"></script>
 <script src="https://rawgit.com/Olical/EventEmitter/master/EventEmitter.js"></script>
 <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
 <script>
@@ -40,8 +42,6 @@ function getCookie(name) {
     return cookieValue;
 }
 </script>
-<script type='text/javascript' src="{% static 'js/Actions.js' %}"></script>
-<script type='text/javascript' src="{% static 'js/VariableStores.js' %}"></script>
 <script type="text/babel" src="{% static 'js/sieve.jsx' %}"></script>
 {% endblock %}
 
@@ -53,27 +53,46 @@ function getCookie(name) {
 </div>
 
 <script>
+
 window.redirect_after_save = "{% url 'variables:index' %}";
+
+var sieve_props = {};
+
+{% if expression %}
+sieve_props = {initialData: {
+  {% if expression.description %}description: "{{ expression.description }}",{% endif %}
+  {% if expression.aggregate_method %}aggregateMethod: "{{ expression.aggregate_method }}",{% endif %}
+  {% if expression.aggregate_dimension %}aggregateDimension: "{{ expression.aggregate_dimension }}",{% endif %}
+  {% if expression.temporal_domain %}temporalDomain: {start: new Date("{{ expression.temporal_domain.lower }}"), end: new Date("{{ expression.temporal_domain.upper }}")},{% endif %}
+  filters: {{ filters|safe }},
+  id: {{ expression.pk }},
+  title: "{{ expression.name }}",
+  expressionText: "{{ expression.expression_text }}"
+}};
+{% endif %}
 
 // Webpacking in browser is kind of a kludge...
 document.addEventListener('sievedefined', function(e) {
-  ReactDOM.render(
-      {% if expression %}
-      React.createElement(e.detail.Sieve, {initialData: {
-        {% if expression.description %}description: "{{ expression.description }}",{% endif %}
-        {% if expression.aggregate_method %}aggregateMethod: "{{ expression.aggregate_method }}",{% endif %}
-        {% if expression.aggregate_dimension %}aggregateDimension: "{{ expression.aggregate_dimension }}",{% endif %}
-        {% if expression.temporal_domain %}temporalDomain: {start: new Date("{{ expression.temporal_domain.lower }}"), end: new Date("{{ expression.temporal_domain.upper }}")},{% endif %}
-        filters: {{ filters|safe }},
-        id: {{ expression.pk }},
-        title: "{{ expression.name }}",
-        expressionText: "{{ expression.expression_text }}"
-      }}),
-      {% else %}
-      React.createElement(e.detail.Sieve, {}),
-      {% endif %}
-      document.getElementById("sieve-container")
+  var store = Redux.createStore(
+    e.detail.sieveApp,
+    Redux.applyMiddleware(ReduxThunk.default)
   );
+
+  store.dispatch(e.detail.fetchLayers()).then(function(){
+    console.log(store.getState());
+  });
+
+  ReactDOM.render(
+    React.createElement(
+      ReactRedux.Provider,
+      {
+        children: React.createElement(e.detail.Sieve, sieve_props),
+        store: store
+      }
+    ),
+    document.getElementById("sieve-container")
+  );
+
 }, false);
 </script>
 {% endblock %}

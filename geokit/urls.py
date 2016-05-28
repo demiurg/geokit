@@ -1,9 +1,12 @@
 from django.conf.urls import url, include
 from django.conf import settings
-
 from rest_framework import routers
-
 router = routers.DefaultRouter()
+
+from geokit_tables import views as tables_views
+
+router.register(r'tables', tables_views.GeoKitTableViewSet)
+
 
 urlpatterns = [
     url(r'^account/', include('account.urls')),

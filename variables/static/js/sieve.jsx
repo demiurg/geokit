@@ -15,38 +15,158 @@ var Tab = ReactBootstrap.Tab;
 var DropdownButton = ReactBootstrap.DropdownButton;
 var MenuItem = ReactBootstrap.MenuItem;
 
+/* trying to be cute but not parsing:\
+const {
+  Table, Panel, ButtonGroup, ButtonToolbar, ButtonInput, Button, Row, Col, Alert
+  Input, OverlayTrigger, Tooltip, Tabs, Tab, DropdownButton, MenuItem
+} = ReactBootstrap;
+*/
 
-class DataVariableMenu extends React.Component {
-  constructor(props) {
-    super(props);
-  }
+/* Actions */
 
-  render() {
-    var values = ['precip', 'temp'].map((value, index) => {
-      return (
-        <MenuItem
-          key={index} >
-          {value}
-        </MenuItem>);
-    });
-
-    return (
-      <DropdownButton title="Data Variables" id="data-var-dropdown">
-        {values}
-      </DropdownButton>
-    );
+var REQUEST_LAYERS = 'REQUEST_LAYERS';
+function requestLayers() {
+  return {
+    type: REQUEST_LAYERS
   }
 }
+
+var RECEIVE_LAYERS = 'RECEIVE_LAYERS';
+function receiveLayers(json){
+  return {
+    type: RECEIVE_LAYERS,
+    layers: json,
+    receivedAt: Date.now()
+  }
+}
+
+function fetchLayers(){
+  return function(dispatch){
+    dispatch(requestLayers());
+
+    return $.ajax({
+      url: '/api/layers',
+      dataType: 'json',
+      cache: 'false',
+      success: function(data) {
+        dispatch(receiveLayers(data));
+      },
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }
+    });
+  };
+}
+
+function layers(state={
+  isFetching: false,
+  didInvalidate: false,
+  items: []
+}, action){
+  switch (action.type) {
+    case REQUEST_LAYERS:
+      return Object.assign({}, state, {
+        isFetching: true,
+        didInvalidate: false
+      });
+    case RECEIVE_LAYERS:
+      return Object.assign({}, state, {
+        isFetching: false,
+        didInvalidate: false,
+        items: action.layers,
+        lastUpdate: action.receivedAt
+      });
+    default:
+      return state;
+  }
+}
+
+const initialState = {
+    layers: {
+      isFetching: false,
+      didInvalidate: false,
+      items: []
+    },
+    tables: {
+      isFetching: false,
+      didInvalidate: false,
+      items: []
+    },
+    expressions: {
+      isFetching: false,
+      didInvalidate: false,
+      items: []
+    }
+}
+
+
+/* app */
+
+function sieveApp(state=initialState, action){
+  switch (action.type){
+    case REQUEST_LAYERS:
+      return Object.assign({}, state, {
+        [action.layers]: layers(state[action.layers], action)
+      });
+    default:
+      return state;
+  }
+}
+
+// Not actually necessary with one...
+var rootReducer = Redux.combineReducers({
+  layers
+});
+
+var mapStateToProps = (state) => {
+  return {
+    layers: state.layers
+  };
+};
+
+var mapDispatchToProps = (dispatch) => {
+  return {
+    onClick: (name) => {
+      console.log('dispatch(toggleLayer(name))');
+    }
+  };
+};
+
+/* components */
+
+var DropdownLayers = ({layers, onClick}) => (
+  // TODO something different when layers.isFetching
+
+  <DropdownButton title="Data Variables" id="form-var-dropdown">
+    {layers.items.map((layer, i) => {
+      return <MenuItem
+        key={i}
+        eventKey={i}
+        onClick={() => onClick(layer.name)}
+        >
+          {layer.name}
+        </MenuItem>;
+    })}
+  </DropdownButton>
+)
+
+
+DropdownLayers.propTypes = {
+  onclick: React.PropTypes.func.isRequired,
+  layers: React.PropTypes.arrayOf(React.PropTypes.shape({
+    name: React.PropTypes.number.isRequired
+  }).isRequired).isRequired,
+}
+
+DropdownLayers = ReactRedux.connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(DropdownLayers);
 
 
 class Sieve extends React.Component {
   constructor(props) {
     super(props);
-
-    this._onChange = this._onChange.bind(this);
-
-    loadFormVariables();
-    loadUserVariables();
 
     if (this.props.initialData) {
       this.state = Object.assign(this.initialState(), this.props.initialData);
@@ -68,26 +188,9 @@ class Sieve extends React.Component {
 
       errors: {},
 
-      formVariables: FormVariableStore.getState(),
-      userVariables: UserVariableStore.getState()
+      formVariables: [],
+      userVariables: []
     };
-  }
-
-  componentWillMount() {
-    FormVariableStore.addChangeListener(this._onChange);
-    UserVariableStore.addChangeListener(this._onChange);
-  }
-
-  componentWillUnmount() {
-    FormVariableStore.removeChangeListener(this._onChange);
-    UserVariableStore.removeChangeListener(this._onChange);
-  }
-
-  _onChange() {
-    this.setState({
-      formVariables: FormVariableStore.getState(),
-      userVariables: UserVariableStore.getState()
-    });
   }
 
   renderDays(days) {
@@ -259,19 +362,9 @@ class Sieve extends React.Component {
               <Button onClick={this.insertToken.bind(this, '-')}>-</Button>
             </ButtonGroup>
             <ButtonGroup className="pull-right">
-              <DropdownButton title="Data Variables" id="form-var-dropdown">
-                {this.state.dataVariables.variables.map((formVar, i) => {
-                  return <MenuItem
-                    key={i}
-                    eventKey={i}
-                    onClick={this.insertToken.bind(this, formVar.name)}
-                    >
-                      {formVar.name}
-                    </MenuItem>;
-                })}
-              </DropdownButton>
+              <DropdownLayers/>
               <DropdownButton title="Form Variables" id="form-var-dropdown">
-                {this.state.formVariables.variables.map((formVar, i) => {
+                {this.state.formVariables.map((formVar, i) => {
                   return <MenuItem
                     key={i}
                     eventKey={i}
@@ -282,7 +375,7 @@ class Sieve extends React.Component {
                 })}
               </DropdownButton>
               <DropdownButton title="User Variables" id="user-var-dropdown">
-                {this.state.userVariables.variables.map((userVar, i) => {
+                {this.state.userVariables.map((userVar, i) => {
                   return <MenuItem
                     key={i}
                     eventKey={i}
@@ -989,5 +1082,10 @@ var Map = React.createClass({
 // Since this script is pulled in as 'text/babel', other scripts will go ahead and run
 // even if this one isn't finished. This provides a reliable way to know when it has
 // finished and to access its exports.
-var sieve_defined = new CustomEvent('sievedefined', {detail: {Sieve: Sieve}});
+var sieve_defined = new CustomEvent(
+  'sievedefined',
+  {
+    detail: { Sieve, sieveApp, fetchLayers }
+  }
+);
 document.dispatchEvent(sieve_defined);
