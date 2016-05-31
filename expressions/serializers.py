@@ -24,8 +24,6 @@ class DateRangeField(serializers.Field):
 
 
 class ExpressionSerializer(serializers.HyperlinkedModelSerializer):
-    temporal_domain = DateRangeField()
-
     class Meta:
         model = Expression
         fields = '__all__'
