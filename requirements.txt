@@ -11,3 +11,6 @@ django-crispy-forms
 django-overextends
 django-tenant-schemas
 sortedcontainers
+numpy
+scipy
+mock
