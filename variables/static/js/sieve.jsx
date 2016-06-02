@@ -105,18 +105,14 @@ const initialState = {
 function sieveApp(state=initialState, action){
   switch (action.type){
     case REQUEST_LAYERS:
+    case RECEIVE_LAYERS:
       return Object.assign({}, state, {
-        [action.layers]: layers(state[action.layers], action)
+        layers: layers(state[action.layers], action)
       });
     default:
       return state;
   }
 }
-
-// Not actually necessary with one...
-var rootReducer = Redux.combineReducers({
-  layers
-});
 
 var mapStateToProps = (state) => {
   return {

@@ -10,3 +10,4 @@ static/CACHE/*
 public/*
 !*.gitkeep
 media/*
+media
