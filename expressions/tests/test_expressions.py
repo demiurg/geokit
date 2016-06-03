@@ -7,7 +7,6 @@ from django.test import TestCase
 import numpy as np
 import sympy
 from sympy.core.cache import clear_cache
-import factory
 import mock
 from psycopg2.extras import DateRange
 

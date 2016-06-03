@@ -3,7 +3,7 @@ import io
 
 import mock
 from django.test import RequestFactory
-from account.tests.util import TenantTestCase
+from geokit.tests.util import TenantTestCase
 
 from geokit_tables.forms import GeoKitTableForm
 
