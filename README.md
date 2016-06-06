@@ -44,7 +44,7 @@ or
 ./run.sh 8000
 ```
 
-Run the test suite with:
+Run the `py.test`-based test suite:
 
 ```
 #!bash
@@ -52,19 +52,22 @@ Run the test suite with:
 # first make sure this is running in its own terminal or in the background:
 ssh -o "ExitOnForwardFailure yes" -nNT -L 5432:localhost:5432 oka.ags.io
 
-# to run all tests:
-./manage.py test --keepdb # <-- Test DB creation requires circa 30 sec,
-                          #     so save your DB between runs with --keepdb
+# to run all tests (after activating your virtualenv):
+py.test # see pytest.ini for config
+
 # specific subsets of tests:
-./manage.py test --keepdb expressions
-./manage.py test --keepdb expressions.tests.test_functions
+py.test geokit_tables                       # everything under that dir
+py.test geokit_tables/tests/test_forms.py   # only the tests in this file
+# just run this one named test:
+py.test geokit_tables/tests/test_forms.py::test_the_thing
 ```
 
+Before geokit is started or tested, one needs to create a virtualenvironment
+and run `pip install -r dev_requirements.txt` inside of it; `requirements.txt`
+is for production while `dev_requirements.txt` also installs testing apparatus.
 
-Before geokit is started, one needs to create a virtualenvironment and run `pip
-install -r requirements.txt` inside of it. In addition, the node dependencies
-must be installed by changing to the `vector_tiles` directory and running `npm
-install`.
+In addition, the node dependencies must be installed by changing to the
+`vector_tiles` directory and running `npm install`.
 
 The `run.sh` script also creates an SSH tunnel to oka's Postgres port, so
 geokit can be run on any system that can ssh to oka.ags.io
