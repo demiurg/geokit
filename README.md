@@ -2,7 +2,7 @@
 
 ## Configuration
 
-Put this in `local.py`:
+Put this in `local.py` for local dev & testing purposes:
 
 ```
 from .base import DATABASES
@@ -10,6 +10,22 @@ from .base import DATABASES
 your_db_name = # set your db name here
 
 DATABASES['default']['TEST'] = {'NAME': your_db_name }
+
+DEBUG = True
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': { 'class': 'logging.StreamHandler', },
+    },
+    'loggers': {
+        'tests': {
+            'level': 'INFO',
+            'handlers': ['console'],
+        },
+    },
+}
 ```
 
 ## Installation and running

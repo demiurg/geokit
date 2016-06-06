@@ -1,8 +1,13 @@
+import logging
+
 from django.db import connection
 from django.contrib.auth.models import User
 
 from tenant_schemas.utils import get_tenant_model
 from tenant_schemas.test.cases import TenantTestCase as BaseTenantTestCase
+
+
+logger = logging.getLogger('tests.util')
 
 
 class TenantTestCase(BaseTenantTestCase):
@@ -24,21 +29,20 @@ class TenantTestCase(BaseTenantTestCase):
         cls.sync_shared()
         cls.user, created = User.objects.get_or_create(username=user)
         if created:
-            print "Created user '{}'.".format(user)
+            logger.info("Created user '{}'.".format(user))
         else:
-            print "User '{}' exists, not creating it.".format(user)
+            logger.info("User '{}' exists, not creating it.".format(user))
         Tenant = get_tenant_model()
-        d = {'domain_url': tenant, 'schema_name': schema,
-             'user': cls.user}
+        d = {'domain_url': tenant, 'schema_name': schema, 'user': cls.user}
         cls.tenant, created = Tenant.objects.get_or_create(schema_name='test',
                                                            defaults=d)
         if created:
             msg = 'No schema named "{}" detected; creating one'
-            print msg.format(schema)
+            logger.info(msg.format(schema))
             cls.tenant.create_schema(check_if_exists=True)
             connection.set_tenant(cls.tenant)
         else:
-            print 'Tenant with schema name "{}" found'.format(schema)
+            logger.info('Tenant with schema name "{}" found'.format(schema))
         connection.set_tenant(cls.tenant)
         cls.teardown = teardown
 
@@ -52,6 +56,6 @@ class TenantTestCase(BaseTenantTestCase):
         """If the user requested teardown, destroy the tenant and user."""
         if cls.teardown:
             sn = cls.tenant.schema_name
-            print "Tearing down tenant '{}' per request.".format(sn)
+            logger.info("Tearing down tenant '{}' per request.".format(sn))
             cls.user.delete()
             super(TenantTestCase, cls).tearDownClass()
