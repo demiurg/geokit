@@ -11,3 +11,4 @@ public/*
 !*.gitkeep
 media/*
 media
+geokit/settings/local.py
