@@ -44,6 +44,23 @@ or
 ./run.sh 8000
 ```
 
+Run the test suite with:
+
+```
+#!bash
+
+# first make sure this is running in its own terminal or in the background:
+ssh -o "ExitOnForwardFailure yes" -nNT -L 5432:localhost:5432 oka.ags.io
+
+# to run all tests:
+./manage.py test --keepdb # <-- Test DB creation requires circa 30 sec,
+                          #     so save your DB between runs with --keepdb
+# specific subsets of tests:
+./manage.py test --keepdb expressions
+./manage.py test --keepdb expressions.tests.test_functions
+```
+
+
 Before geokit is started, one needs to create a virtualenvironment and run `pip
 install -r requirements.txt` inside of it. In addition, the node dependencies
 must be installed by changing to the `vector_tiles` directory and running `npm
