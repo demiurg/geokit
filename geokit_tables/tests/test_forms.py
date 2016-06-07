@@ -1,9 +1,8 @@
 import unittest
 import io
 
-import mock
+import mock, pytest
 from django.test import RequestFactory
-from geokit.tests.util import TenantTestCase
 
 from geokit_tables.forms import GeoKitTableForm
 
@@ -194,17 +193,12 @@ test_data = u"""fid,date,srad,prcp,tmin,tmax
 0,2010-183,27.474,0.0,13.0,27.0
 """
 
-
-class TestGeoKitTableForm(TenantTestCase):
-    """Confirm function of GeoKitTableForm, mostly its clean() method."""
-    def setUp(self):
-        self.factory = RequestFactory()
-
-    def test_normal_case(self):
-        """Check validation success with normal inputs."""
-        with io.StringIO(test_data) as fake_csv:
-            post_vars = {'date_column': 'date',
-                         'name': 'testtable', 'csv_file': fake_csv}
-            req = self.factory.post('/shouldnt/matter', post_vars)
-            gktf = GeoKitTableForm(req.POST, req.FILES)
-            self.assertTrue(gktf.is_valid())
+@pytest.mark.django_db
+def test_gktf_normal_case():
+    """Check validation success with normal inputs."""
+    with io.StringIO(test_data) as fake_csv:
+        post_vars = {'date_column': 'date',
+                     'name': 'testtable', 'csv_file': fake_csv}
+        req = RequestFactory().post('/shouldnt/matter', post_vars)
+        gktf = GeoKitTableForm(req.POST, req.FILES)
+        assert gktf.is_valid()

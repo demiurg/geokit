@@ -4,58 +4,56 @@ from django.db import connection
 from django.contrib.auth.models import User
 
 from tenant_schemas.utils import get_tenant_model
-from tenant_schemas.test.cases import TenantTestCase as BaseTenantTestCase
+from tenant_schemas.test.cases import TenantTestCase
+
+import pytest
 
 
 logger = logging.getLogger('tests.util')
 
+def make_tenant(schema='test', domain='tenant.test.com', username='tester'):
+    """Returns a tuple:  (a tenant schema, an administrative user for it).
 
-class TenantTestCase(BaseTenantTestCase):
-    """Non-erroneous tenant model instantiation for geokit testing.
+    `schema`:   Schema name
+    `domain`:   Domain for the tenant site
+    `username`: Username to be admin of the site
 
-    The parent class assumes all fields can be null; this obviously fails.
+    Both user and tenant are created if they don't already exist, and the db
+    connection is set to that tenant.  Logs to tests.util, level INFO.
+    Tenant creation is conditional because it requires significant time.
     """
-    @classmethod
-    def tenant_setup(cls, schema='test', tenant='tenant.test.com',
-                     user='tester', teardown=False):
-        """As the superclass's setUpClass but with conditionality built in.
+    TenantTestCase.sync_shared()
+    # create or get the user
+    user, created = User.objects.get_or_create(username=username)
+    if created:
+        logger.info("Created user '{}'.".format(user))
+    else:
+        logger.info("User '{}' exists, not creating it.".format(user))
+    # create or get the tenant
+    goc = get_tenant_model().objects.get_or_create
+    d = {'domain_url': domain, 'schema_name': schema, 'user': user}
+    tenant, created = goc(schema_name=schema, defaults=d)
+    if created:
+        msg = "No schema named '{}' detected; creating one"
+        logger.info(msg.format(schema))
+        tenant.create_schema(check_if_exists=True)
+    else:
+        logger.info("Tenant with schema name '{}' found".format(schema))
+    connection.set_tenant(tenant)
 
-        Tenant creation requires significant time due to (stupidly) repetitive
-        application of (very slow) migrations.  Expedite this process by
-        creating the tenant only if it's not already present.  If teardown is
-        specified, the tenant & user will be destroyed in tearDownClass, and
-        otherwise will persist for the next test class' use.
-        """
-        cls.sync_shared()
-        cls.user, created = User.objects.get_or_create(username=user)
-        if created:
-            logger.info("Created user '{}'.".format(user))
-        else:
-            logger.info("User '{}' exists, not creating it.".format(user))
-        Tenant = get_tenant_model()
-        d = {'domain_url': tenant, 'schema_name': schema, 'user': cls.user}
-        cls.tenant, created = Tenant.objects.get_or_create(schema_name='test',
-                                                           defaults=d)
-        if created:
-            msg = 'No schema named "{}" detected; creating one'
-            logger.info(msg.format(schema))
-            cls.tenant.create_schema(check_if_exists=True)
-            connection.set_tenant(cls.tenant)
-        else:
-            logger.info('Tenant with schema name "{}" found'.format(schema))
-        connection.set_tenant(cls.tenant)
-        cls.teardown = teardown
+    return (user, tenant)
 
-    @classmethod
-    def setUpClass(cls):
-        """Set up for testing by calling tenant_setup."""
-        cls.tenant_setup()
+@pytest.fixture
+def testing_tenant(db, request):
+    """Bundle make_tenant into a pytest fixture."""
+    return make_tenant()
 
-    @classmethod
-    def tearDownClass(cls):
-        """If the user requested teardown, destroy the tenant and user."""
-        if cls.teardown:
-            sn = cls.tenant.schema_name
-            logger.info("Tearing down tenant '{}' per request.".format(sn))
-            cls.user.delete()
-            super(TenantTestCase, cls).tearDownClass()
+@pytest.fixture
+def temp_testing_tenant(db, request):
+    """Create a tenant, but clean it up aftewards via pytest magic."""
+    (user, tenant) = make_tenant()
+    yield (user, tenant)
+    sn = tenant.schema_name
+    logger.info("Tearing down tenant '{}' and its admin user.".format(sn))
+    user.delete()
+    TenantTestCase.tearDownClass()
