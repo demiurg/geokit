@@ -48,19 +48,3 @@ def make_tenant(schema='test', domain='tenant.test.com', username='tester'):
 def set_tenant(request):
     tenant = get_tenant_model().objects.get(schema_name='test')
     connection.set_tenant(tenant)
-
-
-@pytest.fixture
-def testing_tenant(db, request):
-    """Bundle make_tenant into a pytest fixture."""
-    return make_tenant()
-
-@pytest.fixture
-def temp_testing_tenant(db, request):
-    """Create a tenant, but clean it up aftewards via pytest magic."""
-    (user, tenant) = make_tenant()
-    yield (user, tenant)
-    sn = tenant.schema_name
-    logger.info("Tearing down tenant '{}' and its admin user.".format(sn))
-    user.delete()
-    TenantTestCase.tearDownClass()
