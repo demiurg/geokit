@@ -4,6 +4,7 @@ import io
 import mock, pytest
 from django.test import RequestFactory
 from django.db import connection
+from django import forms
 
 from geokit_tables.forms import GeoKitTableForm
 from geokit.tests.util import set_tenant
@@ -204,3 +205,14 @@ def test_gktf_normal_case(set_tenant):
         req = RequestFactory().post('/shouldnt/matter', post_vars)
         gktf = GeoKitTableForm(req.POST, req.FILES)
         assert gktf.is_valid()
+
+@pytest.mark.django_db
+def test_gktf_date_field_mismatch(set_tenant):
+    """Confirm ValidationError emitted when date field names don't match."""
+    with io.StringIO(test_data) as fake_csv:
+        post_vars = {'date_column': 'I-M-RONG-FLD-NAME-LOL',
+                     'name': 'testtable', 'csv_file': fake_csv}
+        req = RequestFactory().post('/shouldnt/matter', post_vars)
+        gktf = GeoKitTableForm(req.POST, req.FILES)
+        assert not gktf.is_valid()
+
