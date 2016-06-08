@@ -59,6 +59,7 @@ function fetchLayers(){
 }
 
 function layers(state={
+  name: 'Layers',
   isFetching: false,
   didInvalidate: false,
   items: []
@@ -81,18 +82,139 @@ function layers(state={
   }
 }
 
+
+var REQUEST_TABLES = 'REQUEST_TABLES';
+function requestTables() {
+  return {
+    type: REQUEST_TABLES
+  }
+}
+
+var RECEIVE_TABLES = 'RECEIVE_TABLES';
+function receiveTables(json){
+  return {
+    type: RECEIVE_TABLES,
+    tables: json,
+    receivedAt: Date.now()
+  }
+}
+
+function fetchTables(){
+  return function(dispatch){
+    dispatch(requestTables());
+
+    return $.ajax({
+      url: '/api/tables',
+      dataType: 'json',
+      cache: 'false',
+      success: function(data) {
+        dispatch(receiveTables(data));
+      },
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }
+    });
+  };
+}
+
+function tables(state={
+  name: 'Tables',
+  isFetching: false,
+  didInvalidate: false,
+  items: []
+}, action){
+  switch (action.type) {
+    case REQUEST_TABLES:
+      return Object.assign({}, state, {
+        isFetching: true,
+        didInvalidate: false
+      });
+    case RECEIVE_TABLES:
+      return Object.assign({}, state, {
+        isFetching: false,
+        didInvalidate: false,
+        items: action.tables,
+        lastUpdate: action.receivedAt
+      });
+    default:
+      return state;
+  }
+}
+
+
+var REQUEST_EXPRESSIONS = 'REQUEST_EXPRESSIONS';
+function requestExpressions() {
+  return {
+    type: REQUEST_EXPRESSIONS
+  }
+}
+
+var RECEIVE_EXPRESSIONS = 'RECEIVE_EXPRESSIONS';
+function receiveExpressions(json){
+  return {
+    type: RECEIVE_EXPRESSIONS,
+    expressions: json,
+    receivedAt: Date.now()
+  }
+}
+
+function fetchExpressions(){
+  return function(dispatch){
+    dispatch(requestExpressions());
+
+    return $.ajax({
+      url: '/api/expressions',
+      dataType: 'json',
+      cache: 'false',
+      success: function(data) {
+        dispatch(receiveExpressions(data));
+      },
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }
+    });
+  };
+}
+
+function expressions(state={
+  name: 'Expressions',
+  isFetching: false,
+  didInvalidate: false,
+  items: []
+}, action){
+  switch (action.type) {
+    case REQUEST_EXPRESSIONS:
+      return Object.assign({}, state, {
+        isFetching: true,
+        didInvalidate: false
+      });
+    case RECEIVE_EXPRESSIONS:
+      return Object.assign({}, state, {
+        isFetching: false,
+        didInvalidate: false,
+        items: action.expressions,
+        lastUpdate: action.receivedAt
+      });
+    default:
+      return state;
+  }
+}
+
 const initialState = {
     layers: {
+      name: 'Layers',
       isFetching: false,
       didInvalidate: false,
       items: []
     },
     tables: {
+      name: 'Tables',
       isFetching: false,
       didInvalidate: false,
       items: []
     },
     expressions: {
+      name: 'Expressions',
       isFetching: false,
       didInvalidate: false,
       items: []
@@ -109,55 +231,89 @@ function sieveApp(state=initialState, action){
       return Object.assign({}, state, {
         layers: layers(state[action.layers], action)
       });
+    case REQUEST_TABLES:
+    case RECEIVE_TABLES:
+      return Object.assign({}, state, {
+        tables: tables(state[action.tables], action)
+      });
+    case REQUEST_EXPRESSIONS:
+    case RECEIVE_EXPRESSIONS:
+      return Object.assign({}, state, {
+        expressions: expressions(state[action.expressions], action)
+      });
     default:
       return state;
   }
 }
 
-var mapStateToProps = (state) => {
+var mapVariableStateToProps = (state) => {
   return {
-    layers: state.layers
+    variables: [state.layers, state.expressions, state.tables]
   };
 };
 
-var mapDispatchToProps = (dispatch) => {
+var mapVariableDispatchToProps = (dispatch) => {
   return {
-    onClick: (name) => {
-      console.log('dispatch(toggleLayer(name))');
+    onclick: (name) => {
+      console.log('dispatch(toggleLayer(name))', name);
     }
   };
 };
 
 /* components */
 
-var DropdownLayers = ({layers, onClick}) => (
+var DropdownComponent = ({things, onclick}) => (
   // TODO something different when layers.isFetching
 
-  <DropdownButton title="Data Variables" id="form-var-dropdown">
-    {layers.items.map((layer, i) => {
-      return <MenuItem
+  <DropdownButton title={things.name} id="form-var-dropdown">
+    {things.items.map((item, i) =>
+      <MenuItem
         key={i}
         eventKey={i}
-        onClick={() => onClick(layer.name)}
+        onClick={() => onclick(item.name)}
         >
-          {layer.name}
-        </MenuItem>;
-    })}
+          {item.name}
+      </MenuItem>
+    )}
   </DropdownButton>
 )
 
 
-DropdownLayers.propTypes = {
+DropdownComponent.propTypes = {
   onclick: React.PropTypes.func.isRequired,
-  layers: React.PropTypes.arrayOf(React.PropTypes.shape({
-    name: React.PropTypes.number.isRequired
-  }).isRequired).isRequired,
+  things: React.PropTypes.shape({
+    name: React.PropTypes.string.isRequired,
+    items: React.PropTypes.array.isRequired
+  }).isRequired
 }
 
-DropdownLayers = ReactRedux.connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(DropdownLayers);
+class VariableButtonGroupComponent extends React.Component {
+  /*static propTypes = {
+    onclick: React.PropTypes.func.isRequired;
+    variables: React.PropTypes.arrayOf(React.PropTypes.shape({
+    name: React.PropTypes.number.isRequired,
+    items: React.PropTypes.array.isRequired
+  }).isRequired).isRequired*/
+
+  render(){
+    return <div className='pull-right'><ButtonGroup>
+    {
+      this.props.variables.map((things, i) =>
+        <DropdownComponent
+          things={things}
+          onclick={this.props.onclick}
+          key={i}
+        />
+      )
+    }
+    </ButtonGroup></div>;
+  }
+}
+
+var VariableButtonGroup = ReactRedux.connect(
+  mapVariableStateToProps,
+  mapVariableDispatchToProps
+)(VariableButtonGroupComponent);
 
 
 class Sieve extends React.Component {
@@ -357,31 +513,7 @@ class Sieve extends React.Component {
               <Button onClick={this.insertToken.bind(this, '+')}>+</Button>
               <Button onClick={this.insertToken.bind(this, '-')}>-</Button>
             </ButtonGroup>
-            <ButtonGroup className="pull-right">
-              <DropdownLayers/>
-              <DropdownButton title="Form Variables" id="form-var-dropdown">
-                {this.state.formVariables.map((formVar, i) => {
-                  return <MenuItem
-                    key={i}
-                    eventKey={i}
-                    onClick={this.insertToken.bind(this, formVar.name)}
-                    >
-                      {formVar.name}
-                    </MenuItem>;
-                })}
-              </DropdownButton>
-              <DropdownButton title="User Variables" id="user-var-dropdown">
-                {this.state.userVariables.map((userVar, i) => {
-                  return <MenuItem
-                    key={i}
-                    eventKey={i}
-                    onClick={this.insertToken.bind(this, userVar.name)}
-                    >
-                      {userVar.name}
-                    </MenuItem>;
-                })}
-              </DropdownButton>
-            </ButtonGroup>
+            <VariableButtonGroup />
           </ButtonToolbar>
           <Input type="textarea" style={{resize:"vertical"}} ref="expressionEditor" value={this.state.expressionText} onChange={this._onExpressionTextChange.bind(this)} />
           <Filter filters={this.state.filters} updateFilters={this.updateFilters.bind(this)} />
@@ -585,7 +717,7 @@ class TemporalConfigurator extends React.Component {
   }
 
   renderYears() {
-    var optionsYears = [1996, 1997, 1998, 1999, 1999, 2000].map((year, index) => {
+    var optionsYears = [1996, 1997, 1998, 1999, 2000].map((year, index) => {
       return (
         <option
           key={index}
@@ -1064,16 +1196,38 @@ var Map = React.createClass({
   },
   componentDidMount: function () {
     if (this.props.createMap) {
-      this.map = this.props.createMap(ReactDOM.findDOMNode(this));
+      this.map = this.props.createMap(this.refs_map);
     } else {
-      this.map = this.createMap(ReactDOM.findDOMNode(this));
+      this.map = this.createMap(this.refs_map);
     }
     this.setupMap();
   },
   render: function () {
-    return (<div className="map"></div>);
+    return (<div ref={(ref) => this.refs_map = ref} className="map"></div>);
   }
 });
+
+function sieve(el){
+    var store = Redux.createStore(
+    sieveApp,
+    Redux.applyMiddleware(ReduxThunk.default)
+  );
+
+  store.dispatch(fetchLayers());
+  store.dispatch(fetchTables());
+  store.dispatch(fetchExpressions());
+
+  ReactDOM.render(
+    React.createElement(
+      ReactRedux.Provider,
+      {
+        children: React.createElement(Sieve, sieve_props),
+        store: store
+      }
+    ),
+    el
+  );
+}
 
 // Since this script is pulled in as 'text/babel', other scripts will go ahead and run
 // even if this one isn't finished. This provides a reliable way to know when it has
@@ -1081,7 +1235,7 @@ var Map = React.createClass({
 var sieve_defined = new CustomEvent(
   'sievedefined',
   {
-    detail: { Sieve, sieveApp, fetchLayers }
+    detail: { sieve }
   }
 );
 document.dispatchEvent(sieve_defined);

@@ -73,23 +73,7 @@ sieve_props = {initialData: {
 
 // Webpacking in browser is kind of a kludge...
 document.addEventListener('sievedefined', function(e) {
-  var store = Redux.createStore(
-    e.detail.sieveApp,
-    Redux.applyMiddleware(ReduxThunk.default)
-  );
-
-  store.dispatch(e.detail.fetchLayers()).then(function(){
-    console.log(store.getState());
-  });
-
-  ReactDOM.render(
-    React.createElement(
-      ReactRedux.Provider,
-      {
-        children: React.createElement(e.detail.Sieve, sieve_props),
-        store: store
-      }
-    ),
+  e.detail.sieve(
     document.getElementById("sieve-container")
   );
 
