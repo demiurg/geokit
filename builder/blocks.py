@@ -38,6 +38,7 @@ class MapBlock(StructBlock):
 
     def render(self, value):
         value["id"] = random.randint(1, 1000)
+        value["data"] = value["expression"].evaluate(None)
 
         return super(MapBlock, self).render(value)
 

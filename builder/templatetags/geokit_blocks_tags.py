@@ -1,6 +1,7 @@
 import json
 
 from django import template
+from django.core.serializers import serialize
 
 from layers.models import Feature
 
@@ -39,6 +40,26 @@ def graph_data(graph_block):
     else:
         pass
     return {'data': json.dumps(data)}
+
+
+@register.simple_tag
+def map_data(map_block):
+    expression_result = map_block['data']
+    data = []
+
+    rows, cols = expression_result.vals.shape
+    if cols == 1:
+        features = Feature.objects.filter(pk__in=expression_result.spatial_key)
+
+        for i, value in enumerate(expression_result.vals):
+            geometries = [feature for feature in features if feature.pk == expression_result.spatial_key[i]]
+            geojson = json.loads(serialize('geojson', geometries, fields=('geometry')))
+            geojson['features'][0]['properties'][map_block['expression'].name] = value[0]
+
+            data.append(geojson['features'][0])
+
+
+    return json.dumps(data)
 
 
 @register.filter
