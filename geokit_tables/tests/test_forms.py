@@ -3,8 +3,10 @@ import io
 
 import mock, pytest
 from django.test import RequestFactory
+from django.db import connection
 
 from geokit_tables.forms import GeoKitTableForm
+from geokit.tests.util import set_tenant
 
 
 test_data = u"""fid,date,srad,prcp,tmin,tmax
@@ -194,7 +196,7 @@ test_data = u"""fid,date,srad,prcp,tmin,tmax
 """
 
 @pytest.mark.django_db
-def test_gktf_normal_case():
+def test_gktf_normal_case(set_tenant):
     """Check validation success with normal inputs."""
     with io.StringIO(test_data) as fake_csv:
         post_vars = {'date_column': 'date',

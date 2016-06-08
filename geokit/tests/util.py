@@ -11,6 +11,7 @@ import pytest
 
 logger = logging.getLogger('tests.util')
 
+
 def make_tenant(schema='test', domain='tenant.test.com', username='tester'):
     """Returns a tuple:  (a tenant schema, an administrative user for it).
 
@@ -42,6 +43,12 @@ def make_tenant(schema='test', domain='tenant.test.com', username='tester'):
     connection.set_tenant(tenant)
 
     return (user, tenant)
+
+@pytest.fixture
+def set_tenant(request):
+    tenant = get_tenant_model().objects.get(schema_name='test')
+    connection.set_tenant(tenant)
+
 
 @pytest.fixture
 def testing_tenant(db, request):
