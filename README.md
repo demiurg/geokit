@@ -65,7 +65,8 @@ Run the `py.test`-based test suite:
 ssh -o "ExitOnForwardFailure yes" -nNT -L 5432:localhost:5432 oka.ags.io
 
 # to run all tests (after activating your virtualenv):
-py.test
+py.test --setup-db # only needed for the first run
+py.test            # save a second off the runtime by leaving it off
 
 # specific subsets of tests:
 py.test geokit_tables                       # everything under that dir
