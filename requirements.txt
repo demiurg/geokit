@@ -14,4 +14,3 @@ django-compressor
 sortedcontainers
 numpy
 scipy
-mock
