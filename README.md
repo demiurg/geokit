@@ -28,7 +28,16 @@ LOGGING = {
 }
 ```
 
-## Installation and running
+## Installation
+
+Before geokit is started or tested, one needs to create a virtualenvironment
+and run `pip install -r dev_requirements.txt` inside of it; `requirements.txt`
+is for production while `dev_requirements.txt` also installs testing apparatus.
+
+In addition, the node dependencies must be installed by changing to the
+`vector_tiles` directory and running `npm install`.
+
+# Running
 
 The `run.sh` script takes either the `hostname:port` or just `port` as an argument:
 
@@ -43,6 +52,9 @@ or
 
 ./run.sh 8000
 ```
+
+The `run.sh` script also creates an SSH tunnel to oka's Postgres port, so
+geokit can be run on any system that can ssh to oka.ags.io
 
 Run the `py.test`-based test suite:
 
@@ -61,13 +73,3 @@ py.test geokit_tables/tests/test_forms.py   # only the tests in this file
 # just run this one named test:
 py.test geokit_tables/tests/test_forms.py::test_the_thing
 ```
-
-Before geokit is started or tested, one needs to create a virtualenvironment
-and run `pip install -r dev_requirements.txt` inside of it; `requirements.txt`
-is for production while `dev_requirements.txt` also installs testing apparatus.
-
-In addition, the node dependencies must be installed by changing to the
-`vector_tiles` directory and running `npm install`.
-
-The `run.sh` script also creates an SSH tunnel to oka's Postgres port, so
-geokit can be run on any system that can ssh to oka.ags.io
