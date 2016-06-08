@@ -4,10 +4,11 @@
 *.sqlite
 *~
 ._*
-.venv/*
-venv/*
-static/CACHE/*
-public/*
-!*.gitkeep
-media/*
+.venv/
+venv/
+static/
+media/
 media
+public/
+!*.gitkeep
+geokit/settings/local.py

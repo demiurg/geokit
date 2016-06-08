@@ -47,7 +47,9 @@ def add(request):
                         date = datetime.strptime(date_strings[0], date_format).date()
                         date_range = DateRange(lower=date, upper=date, bounds='[]')
                     else:
-                        raise ValueError("%s must provide a ISO 8601 date string or range seperated by a /." % date_column)
+                        ve_str = ("{} must provide a ISO 8601 date string or "
+                                  "range seperated by a /.")
+                        raise ValueError(ve_str.format(date_column))
 
                     r = Record(table=t, properties=row, date=date_range)
                     r.save()
