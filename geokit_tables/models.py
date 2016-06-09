@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from django.db import models
-from django.contrib.postgres.fields import DateRangeField, JSONField
+from django.contrib.postgres.fields import DateRangeField, JSONField, ArrayField
 
 
 class GeoKitTable(models.Model):
@@ -12,6 +12,7 @@ class GeoKitTable(models.Model):
     description = models.TextField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True, editable=False)
     modified = models.DateTimeField(auto_now=True)
+    field_names = ArrayField(models.TextField(), null=True)
 
     def __unicode__(self):
         return self.name
@@ -26,7 +27,7 @@ class Record(models.Model):
     include mean high temperature, mean cloud cover, and total precipitation.
     """
     table = models.ForeignKey(GeoKitTable)
-    date = DateRangeField()
+    date = DateRangeField(null=True)
     properties = JSONField(null=True)
 
     def __unicode__(self):
