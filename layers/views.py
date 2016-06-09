@@ -48,8 +48,8 @@ def layer_json(request, layer_name):
 
 def tile_json(request, layer_name, z, x, y):
     x, y, z = int(x), int(y), int(z)
-    #mimetype, data = stache(request, layer_name, z, x, y, "mvt")
-    #mvt_features = mvt.decode(StringIO(data))
+    # mimetype, data = stache(request, layer_name, z, x, y, "mvt")
+    # mvt_features = mvt.decode(StringIO(data))
 
     if request.tenant is not None:
         cache_path = os.path.join(settings.STATIC_ROOT, "tiles", str(request.tenant.pk))
@@ -242,18 +242,19 @@ def add(request):
                 ).transform(4326, clone=True)
 
                 l.bounds = min_bounds.coords + max_bounds.coords
+
+                features = []
                 for index, record in enumerate(col):
                     try:
                         geom = shape(record['geometry'])
                         transformed_geom = OGRGeometry(geom.wkt, srs=srs).transform(3857, clone=True)
                         properties = record['properties']
                         properties['fid'] = index
-                        f = Feature(
+                        features.append(Feature(
                             layer=l,
                             geometry=GeometryCollection(transformed_geom.geos),
                             properties=properties
-                        )
-                        f.save()
+                        ))
                         count += 1
                     except Exception as e:
                         print "Feature excepton", e
@@ -261,6 +262,9 @@ def add(request):
                 if count == 0:
                     raise Exception("Layer needs to have at least one feature")
 
+                Feature.objects.bulk_create(features)
+
+                l.field_names = col.schema['properties'].keys()
                 l.status = 0
                 l.save()
 
