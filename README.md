@@ -5,13 +5,11 @@
 Put this in `local.py` for local dev & testing purposes:
 
 ```
-from .base import DATABASES
+from .base import DATABASES, GEOKIT_HOSTS
 
-your_db_name = # set your db name here
+GEOKIT_HOSTS.append('testserver') # django's hostname in testing mode
 
 DATABASES['default']['TEST'] = {'NAME': your_db_name }
-
-DEBUG = True
 
 LOGGING = {
     'version': 1,
@@ -26,6 +24,8 @@ LOGGING = {
         },
     },
 }
+
+DEBUG = True
 ```
 
 ## Installation
@@ -67,6 +67,7 @@ ssh -o "ExitOnForwardFailure yes" -nNT -L 5432:localhost:5432 oka.ags.io
 # to run all tests (after activating your virtualenv):
 py.test --setup-db # only needed for the first run
 py.test            # save a second off the runtime by leaving it off
+py.test -s         # echo stdout & stderr to console instead of capturing them
 
 # specific subsets of tests:
 py.test geokit_tables                       # everything under that dir
