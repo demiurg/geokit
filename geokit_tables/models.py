@@ -31,4 +31,5 @@ class Record(models.Model):
     properties = JSONField(null=True)
 
     def __unicode__(self):
-        return self.pk
+        """Explicitly convert primary key to unicode & return it."""
+        return unicode(self.pk)
