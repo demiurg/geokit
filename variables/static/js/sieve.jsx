@@ -60,6 +60,7 @@ function fetchLayers(){
 
 function layers(state={
   name: 'Layers',
+  tovar: (name, field) => `layers__${name}__${field}`,
   isFetching: false,
   didInvalidate: false,
   items: []
@@ -119,6 +120,7 @@ function fetchTables(){
 
 function tables(state={
   name: 'Tables',
+  tovar: (name, field) => `tables__${name}__${field}`,
   isFetching: false,
   didInvalidate: false,
   items: []
@@ -178,6 +180,7 @@ function fetchExpressions(){
 
 function expressions(state={
   name: 'Expressions',
+  tovar: (name, field) => `expressions__${name}__${field}`,
   isFetching: false,
   didInvalidate: false,
   items: []
@@ -200,31 +203,9 @@ function expressions(state={
   }
 }
 
-const initialState = {
-    layers: {
-      name: 'Layers',
-      isFetching: false,
-      didInvalidate: false,
-      items: []
-    },
-    tables: {
-      name: 'Tables',
-      isFetching: false,
-      didInvalidate: false,
-      items: []
-    },
-    expressions: {
-      name: 'Expressions',
-      isFetching: false,
-      didInvalidate: false,
-      items: []
-    }
-}
-
-
 /* app */
 
-function sieveApp(state=initialState, action){
+function sieveApp(state={}, action){
   switch (action.type){
     case REQUEST_LAYERS:
     case RECEIVE_LAYERS:
@@ -248,14 +229,17 @@ function sieveApp(state=initialState, action){
 
 var mapVariableStateToProps = (state) => {
   return {
-    variables: [state.layers, state.expressions, state.tables]
+    variables: [state.layers, state.expressions, state.tables],
+    layers: state.layers,
+    tables: state.tables
   };
 };
 
 var mapVariableDispatchToProps = (dispatch) => {
   return {
-    onclick: (name) => {
-      console.log('dispatch(toggleLayer(name))', name);
+    onclick: (token) => {
+      console.log(token);
+      return token;
     }
   };
 };
@@ -266,14 +250,16 @@ var DropdownComponent = ({things, onclick}) => (
   // TODO something different when layers.isFetching
 
   <DropdownButton title={things.name} id="form-var-dropdown">
-    {things.items.map((item, i) =>
-      <MenuItem
-        key={i}
-        eventKey={i}
-        onClick={() => onclick(item.name)}
-        >
-          {item.name}
-      </MenuItem>
+    {things.items.map((item, i) => item.field_names ?
+      item.field_names.map((field, j) =>
+        <MenuItem
+          key={`${j}${i}`}
+          eventKey={`${j}${i}`}
+          onClick={() => onclick(things.tovar(item.name, field))}
+          >
+            {`${field}/${item.name}`}
+        </MenuItem>
+      ) : null
     )}
   </DropdownButton>
 )
@@ -296,17 +282,23 @@ class VariableButtonGroupComponent extends React.Component {
   }).isRequired).isRequired*/
 
   render(){
-    return <div className='pull-right'><ButtonGroup>
-    {
-      this.props.variables.map((things, i) =>
-        <DropdownComponent
-          things={things}
-          onclick={this.props.onclick}
-          key={i}
-        />
-      )
+    var join = null;
+    if (this.props.tables.items.length && this.props.layers.items.length){
+      join = <Button id="form-var-dropdown">Join</Button>;
     }
-    </ButtonGroup></div>;
+    return <div className='pull-right'>
+      <ButtonGroup>
+      {
+        this.props.variables.map((things, i) =>
+          <DropdownComponent
+            things={things}
+            onclick={(token) => this.props.onClick(this.props.onclick(token))}
+            key={i}
+          />
+        )
+      }
+      </ButtonGroup>
+    </div>;
   }
 }
 
@@ -338,10 +330,7 @@ class Sieve extends React.Component {
       aggregateDimension: "NA",
       aggregateMethod: null,
 
-      errors: {},
-
-      formVariables: [],
-      userVariables: []
+      errors: {}
     };
   }
 
@@ -513,7 +502,7 @@ class Sieve extends React.Component {
               <Button onClick={this.insertToken.bind(this, '+')}>+</Button>
               <Button onClick={this.insertToken.bind(this, '-')}>-</Button>
             </ButtonGroup>
-            <VariableButtonGroup />
+            <VariableButtonGroup onClick={this.insertToken.bind(this)} />
           </ButtonToolbar>
           <Input type="textarea" style={{resize:"vertical"}} ref="expressionEditor" value={this.state.expressionText} onChange={this._onExpressionTextChange.bind(this)} />
           <Filter filters={this.state.filters} updateFilters={this.updateFilters.bind(this)} />
