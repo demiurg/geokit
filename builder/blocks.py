@@ -1,4 +1,4 @@
-import random
+import uuid
 
 from wagtail.wagtailcore.blocks import CharBlock, ListBlock, StructBlock
 
@@ -15,7 +15,7 @@ class GraphBlock(StructBlock):
         icon = 'placeholder'
 
     def render(self, value):
-        value["id"] = random.randint(1, 1000)  # Used to give each div a unique id, should be done a better way
+        value["id"] = uuid.uuid4()
         value["data"] = value["variable"].evaluate(None)
 
         return super(GraphBlock, self).render(value)
@@ -37,20 +37,20 @@ class MapBlock(StructBlock):
         icon = 'placeholder'
 
     def render(self, value):
-        value["id"] = random.randint(1, 1000)
+        value["id"] = uuid.uuid4()
+        value["data"] = value["expression"].evaluate(None)
 
         return super(MapBlock, self).render(value)
 
 
 class TableBlock(StructBlock):
-    expression = ExpressionChooserBlock()
+    variables = ListBlock(ExpressionChooserBlock())
 
     class Meta:
         template = 'builder/blocks/table.html'
         icon = 'placeholder'
 
     def render(self, value, user):
-        value['id'] = random.randint(1, 1000)
-        value['variable_result'] = value['expression'].evaluate(None)
-        value['keys'] = value['variable_result'].vals[0][0].keys()
+        value['id'] = uuid.uuid4()
+
         return super(TableBlock, self).render(value)

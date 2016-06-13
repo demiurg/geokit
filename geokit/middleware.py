@@ -8,7 +8,8 @@ from tenant_schemas.utils import get_tenant_model, remove_www
 
 
 class TenantMiddleware(object):
-    """
+    """This class is a modified cutpaste of a class from django-tenant-schemas.
+
     This middleware should be placed at the very top of the middleware stack.
     Selects the proper database schema using the request host. Can fail in
     various ways which is better than corrupting or revealing data.
@@ -22,7 +23,7 @@ class TenantMiddleware(object):
 
         hostname = remove_www(request.get_host().split(':')[0])
         subdomain = None
-        for allowed in settings.ALLOWED_HOSTS:
+        for allowed in settings.GEOKIT_HOSTS:
             if hostname == allowed:
                 break
             elif hostname.endswith(allowed):

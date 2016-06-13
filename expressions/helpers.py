@@ -39,14 +39,17 @@ class ExpressionResult(sympy.Atom):
         else:
             return self.vals
 
+    def dimensions_equal_to(self, other):
+        return self.temporal_key == other.temporal_key \
+            and self.spatial_key == other.spatial_key
+
     def __eq__(self, other):
         """ExpressionResults are equal if their data and metadata are equal.
 
         Note that the parent class provides __ne__."""
         return (isinstance(other, self.__class__)) \
             and np.array_equal(self.vals, other.vals) \
-            and (self.temporal_key == other.temporal_key) \
-            and (self.spatial_key == other.spatial_key)
+            and self.dimensions_equal_to(other)
 
 
 def evaluate_over_matrices(expr, variables):

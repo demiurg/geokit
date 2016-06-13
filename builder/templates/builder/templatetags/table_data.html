@@ -1,0 +1,23 @@
+{% if error %}
+{{ error }}
+{% else %}
+<table class="table">
+    <thead>
+        <tr>
+            <th></th>
+            {% for header in headers %}
+            <th>{{ header }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        <tr>
+            {% for cell in row %}
+            <td>{{ cell }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

@@ -103,6 +103,7 @@ if (data.type == 'scatter') {
 
     graph.append("path")
           .datum(data.values)
+          .attr("class", "graph-line")
           .attr("d", line);
 
     var x_axis = d3.svg.axis()

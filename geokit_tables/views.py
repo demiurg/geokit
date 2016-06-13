@@ -30,11 +30,15 @@ def add(request):
 
         if form.is_valid():
             with transaction.atomic():  # Don't want to save an incomplete table
-                t = form.save()
+                t = form.save(commit=False)
 
                 reader = csv.DictReader(form.cleaned_data['csv_file'])
                 date_column = form.cleaned_data['date_column']
 
+                t.field_names = reader.fieldnames
+                t.save()
+
+                records = []
                 for row in reader:
                     date_strings = row[date_column].split('/')
                     date_format = "%Y-%j"
@@ -47,10 +51,13 @@ def add(request):
                         date = datetime.strptime(date_strings[0], date_format).date()
                         date_range = DateRange(lower=date, upper=date, bounds='[]')
                     else:
-                        raise ValueError("%s must provide a ISO 8601 date string or range seperated by a /." % date_column)
+                        ve_str = ("{} must provide a ISO 8601 date string or "
+                                  "range seperated by a /.")
+                        raise ValueError(ve_str.format(date_column))
 
-                    r = Record(table=t, properties=row, date=date_range)
-                    r.save()
+                    records.append(Record(table=t, properties=row, date=date_range))
+
+                Record.objects.bulk_create(records)
 
             messages.success(request, "Table '{0}' added.".format(t.name))
             return redirect('geokit_tables:index')

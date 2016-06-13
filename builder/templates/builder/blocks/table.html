@@ -1,22 +1,6 @@
+{% load geokit_blocks_tags %}
 {% load utility_tags %}
 
 <div class="panel panel-default">
-  <table id="table-{{ self.id }}" class="table">
-      <thead>
-          <tr>
-              {% for column in self.keys %}
-              <th>{{ column }}</th>
-              {% endfor %}
-          </tr>
-      </thead>
-      <tbody>
-          {% for row in self.variable_result.vals.0 %}
-          <tr>
-              {% for column in self.keys %}
-              <td>{{ row|keyvalue:column }}</td>
-              {% endfor %}
-          </tr>
-          {% endfor %}
-      </tbody>
-  </table>
+  {% table_data self %}
 </div>

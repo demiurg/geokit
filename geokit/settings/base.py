@@ -25,11 +25,12 @@ if 'runserver' in sys.argv:
     if len(sys.argv) == 3:
         NODE_PORT = str(int(sys.argv[2].split(':')[1]) + 1)
 
-
-ALLOWED_HOSTS = [
-    'geokit.localhost', '*.geokit.localhost',
-    'geokit.io', '*.geokit.io',
+# used to distinguish tenant portion of domain from the rest of it
+GEOKIT_HOSTS = [
+    'geokit.localhost', 'geokit.io',
 ]
+
+ALLOWED_HOSTS = list(GEOKIT_HOSTS)
 
 if RUNSERVER:
     SESSION_COOKIE_DOMAIN = '.geokit.localhost'
