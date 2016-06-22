@@ -14,6 +14,7 @@ var Tabs = ReactBootstrap.Tabs;
 var Tab = ReactBootstrap.Tab;
 var DropdownButton = ReactBootstrap.DropdownButton;
 var MenuItem = ReactBootstrap.MenuItem;
+var Modal = ReactBootstrap.Modal;
 
 /* trying to be cute but not parsing:\
 const {
@@ -203,9 +204,58 @@ function expressions(state={
   }
 }
 
+
+var UPDATE_EXPRESSION_TEXT = 'UPDATE_EXPRESSION_TEXT';
+function updateExpressionText(text) {
+  return {
+    type: UPDATE_EXPRESSION_TEXT,
+    text
+  };
+}
+
+var INSERT_TOKEN = 'INSERT_TOKEN';
+function insertToken(token, position){
+  return {
+    type: INSERT_TOKEN,
+    token,
+    position
+  };
+}
+
+
+function insertTokenInExpression(text, action){
+  var pos = action.position;
+  var token = action.token;
+
+  if(pos === 0){
+    token = token + ' '
+  }else{
+    token = ' ' + token + ' '; // Pad token
+  }
+
+  var newtext = text.substring(0, pos) + token + text.substring(pos);
+
+  return newtext;
+}
+
 /* app */
 
-function sieveApp(state={}, action){
+var initialState = Object.assign({
+  title: "",
+  description: "",
+  expressionText: "",
+  filters: [],
+  spatialDomain: null,
+  temporalDomain: {start: null, end: null},
+  aggregateDimension: "NA",
+  aggregateMethod: null,
+
+  errors: {},
+  position: 0
+}, sieve_props.initialData);
+
+
+function sieveApp(state=initialState, action){
   switch (action.type){
     case REQUEST_LAYERS:
     case RECEIVE_LAYERS:
@@ -222,24 +272,35 @@ function sieveApp(state={}, action){
       return Object.assign({}, state, {
         expressions: expressions(state[action.expressions], action)
       });
+    case UPDATE_EXPRESSION_TEXT:
+      return Object.assign({}, state, {
+        expressionText: action.text
+      });
+    case INSERT_TOKEN:
+      return Object.assign({}, state, {
+        expressionText: insertTokenInExpression(state.expressionText, action),
+        position: action.position
+      });
     default:
       return state;
   }
 }
 
-var mapVariableStateToProps = (state) => {
-  return {
+var mapStateToProps = (state) => {
+  return Object.assign({}, state, {
     variables: [state.layers, state.expressions, state.tables],
     layers: state.layers,
     tables: state.tables
-  };
+  });
 };
 
-var mapVariableDispatchToProps = (dispatch) => {
+var mapDispatchToProps = (dispatch) => {
   return {
-    onclick: (token) => {
-      console.log(token);
-      return token;
+    onExpressionTextChange: (text) => {
+      dispatch(updateExpressionText(text));
+    },
+    onInsertToken: (token, position) => {
+      dispatch(insertToken(token, position));
     }
   };
 };
@@ -273,7 +334,7 @@ DropdownComponent.propTypes = {
   }).isRequired
 }
 
-class VariableButtonGroupComponent extends React.Component {
+class VariableButtonGroup extends React.Component {
   /*static propTypes = {
     onclick: React.PropTypes.func.isRequired;
     variables: React.PropTypes.arrayOf(React.PropTypes.shape({
@@ -284,15 +345,16 @@ class VariableButtonGroupComponent extends React.Component {
   render(){
     var join = null;
     if (this.props.tables.items.length && this.props.layers.items.length){
-      join = <Button id="form-var-dropdown">Join</Button>;
+      join = <JoinZard {...this.props} >Join</JoinZard>;
     }
     return <div className='pull-right'>
+      {join}
       <ButtonGroup>
       {
         this.props.variables.map((things, i) =>
           <DropdownComponent
             things={things}
-            onclick={(token) => this.props.onClick(this.props.onclick(token))}
+            onclick={(token) => {this.props.dispatch(insertToken(token))}}
             key={i}
           />
         )
@@ -302,35 +364,76 @@ class VariableButtonGroupComponent extends React.Component {
   }
 }
 
-var VariableButtonGroup = ReactRedux.connect(
-  mapVariableStateToProps,
-  mapVariableDispatchToProps
-)(VariableButtonGroupComponent);
 
+class JoinForm extends React.Component {
+  render() {
+    var {
+      fields: {left, right, column},
+      resetForm, handleSubmit, submitting
+    } = this.props;
+    return (
+      <form onSubmit={handleSubmit}>
+        <div>
+          <input type="text" placeholder="Left variable" {...left} />
+        </div>
+      </form>
+    );
+  }
+}
 
-class Sieve extends React.Component {
-  constructor(props) {
+class JoinZard extends React.Component {
+  constructor(props){
     super(props);
-
-    if (this.props.initialData) {
-      this.state = Object.assign(this.initialState(), this.props.initialData);
-    } else {
-      this.state = this.initialState();
-    }
+    this.state = { showModal: false};
   }
 
-  initialState() {
-    return {
-      title: "",
-      description: "",
-      expressionText: "",
-      filters: [],
-      spatialDomain: null,
-      temporalDomain: {start: null, end: null},
-      aggregateDimension: "NA",
-      aggregateMethod: null,
+  close() {
+    this.setState({ showModal: false });
+  }
 
-      errors: {}
+  open() {
+    this.setState({ showModal: true });
+  }
+
+  use() {
+    this.setState({ showModal: false });
+  }
+
+  render(){
+    return (
+      <div className='pull-right'>
+        <Button
+          bsStyle="primary"
+          onClick={this.open.bind(this)}
+        >
+          Join
+        </Button>
+
+        <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Modal heading</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <h4>Text in a modal</h4>
+          </Modal.Body>
+          <Modal.Footer>
+           <Button onClick={this.use.bind(this)}>Use Variable</Button>
+           <Button onClick={this.close.bind(this)}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+      </div>
+    );
+  }
+}
+
+
+class SieveComponent extends React.Component {
+  constructor(props){
+    super(props);
+
+    // Keeping this synched separately
+    this.state = {
+      expressionText: this.props.expressionText
     };
   }
 
@@ -369,10 +472,6 @@ class Sieve extends React.Component {
     this.setState({temporalDomain: {start: this.state.temporalDomain.start, end: dateJSON}});
   }
 
-  _onExpressionTextChange(event) {
-    this.updateExpressionText(event.target.value);
-  }
-
   updateExpressionText(newText) {
     this.setState({expressionText: newText});
   }
@@ -389,14 +488,18 @@ class Sieve extends React.Component {
     this.setState({aggregateMethod: method});
   }
 
-  insertToken(token)  {
-    var expressionEditor = ReactDOM.findDOMNode(this.refs.expressionEditor).getElementsByTagName("textarea")[0];
-    var caretPos = expressionEditor.selectionStart;
-    caretPos === 0 ? token = token + ' ' : token = ' ' + token + ' '; // Pad token
-    var expressionText = $(expressionEditor).val();
-    var newExpressionText = expressionText.substring(0, caretPos) + token + expressionText.substring(caretPos);
-    $(expressionEditor).val(newExpressionText);
-    this.updateExpressionText(newExpressionText);
+  getPosition(){
+    var el = ReactDOM.findDOMNode(this.refs.expressionEditor).getElementsByTagName("textarea")[0];
+    var caretPos = el.selectionStart;
+    return caretPos;
+  }
+
+  componentDidUpdate(props, state){
+    if(props.position != this.props.position && this.props.position != 0){
+      var el = ReactDOM.findDOMNode(this.refs.expressionEditor).getElementsByTagName("textarea")[0];
+      el.setSelectionRange(this.props.position, this.props.position+1);
+      console.log(this.props.position);
+    }
   }
 
   validateExpression() {
@@ -458,28 +561,35 @@ class Sieve extends React.Component {
   }
 
   render() {
+    var self = this;
+    var positionedInsert = (token) => {
+      var pos = this.getPosition();
+      console.log(pos);
+      this.props.onInsertToken(token, pos);
+    };
+
     return (
       <div className="sieve">
-        {this.state.errors.server ? <Alert bsStyle="danger">{this.state.errors.server}</Alert> : null}
+        {this.props.errors.server ? <Alert bsStyle="danger">{this.props.errors.server}</Alert> : null}
         <Panel>
           <MetaData
             ref='metadata'
             updateMetadata={this.updateMetadata.bind(this)}
-            title={this.state.title} description={this.state.description} />
+            title={this.props.title} description={this.props.description} />
         </Panel>
         <Panel>
           <Row>
             <Col sm={4}>
               <h3>Configure Start Date</h3>
               <TemporalConfigurator
-                date={this.state.temporalDomain.start}
+                date={this.props.temporalDomain.start}
                 dateUpdated={this.updateStartDate.bind(this)}
                 ref="dateStart" />
             </Col>
             <Col sm={4}>
               <h3>Configure End Date</h3>
               <TemporalConfigurator
-                date={this.state.temporalDomain.end}
+                date={this.props.temporalDomain.end}
                 dateUpdated={this.updateEndDate.bind(this)}
                 ref="dateEnd" />
             </Col>
@@ -497,20 +607,25 @@ class Sieve extends React.Component {
         <Panel>
           <ButtonToolbar>
             <ButtonGroup>
-              <Button onClick={this.insertToken.bind(this, '*')}>x</Button>
-              <Button onClick={this.insertToken.bind(this, '/')}>/</Button>
-              <Button onClick={this.insertToken.bind(this, '+')}>+</Button>
-              <Button onClick={this.insertToken.bind(this, '-')}>-</Button>
+              <Button onClick={() => {positionedInsert('*')}}>x</Button>
+              <Button onClick={() => {positionedInsert('/')}}>/</Button>
+              <Button onClick={() => {positionedInsert('+')}}>+</Button>
+              <Button onClick={() => {positionedInsert('-')}}>-</Button>
             </ButtonGroup>
-            <VariableButtonGroup onClick={this.insertToken.bind(this)} />
+            <VariableButtonGroup {...this.props} />
           </ButtonToolbar>
-          <Input type="textarea" style={{resize:"vertical"}} ref="expressionEditor" value={this.state.expressionText} onChange={this._onExpressionTextChange.bind(this)} />
-          <Filter filters={this.state.filters} updateFilters={this.updateFilters.bind(this)} />
+          <Input type="textarea"
+            style={{resize: "vertical"}}
+            ref="expressionEditor"
+            value={this.props.expressionText}
+            onChange={(e)=> this.props.onExpressionTextChange(e.target.value) }
+          />
+          <Filter filters={this.props.filters} updateFilters={this.updateFilters.bind(this)} />
         </Panel>
         <Panel>
           <Aggregate
-            dimension={this.state.aggregateDimension}
-            method={this.state.aggregateMethod}
+            dimension={this.props.aggregateDimension}
+            method={this.props.aggregateMethod}
             updateAggregateDimension={this.updateAggregateDimension.bind(this)}
             updateAggregateMethod={this.updateAggregateMethod.bind(this)} />
         </Panel>
@@ -519,6 +634,12 @@ class Sieve extends React.Component {
     );
   }
 }
+
+var Sieve = ReactRedux.connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(SieveComponent);
+
 
 class MetaData extends React.Component {
   onTitleChange(e) {

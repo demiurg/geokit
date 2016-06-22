@@ -19,7 +19,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 try:
     from .local import *
 except ImportError as ie:
-    if ie.message == 'cannot import name local':
+    if ie.message in ('cannot import name local', 'No module named local',):
         print('No local settings file found.', file=sys.stderr)
     else:
         raise
