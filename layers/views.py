@@ -264,7 +264,9 @@ def add(request):
 
                 Feature.objects.bulk_create(features)
 
-                l.field_names = col.schema['properties'].keys() + "fid"
+                field_names = col.schema['properties'].keys()
+                field_names.append("fid")
+                l.field_names = field_names
                 l.status = 0
                 l.save()
 
