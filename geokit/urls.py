@@ -4,8 +4,10 @@ from rest_framework import routers
 router = routers.DefaultRouter()
 
 from geokit_tables import views as tables_views
+from variables import views as variable_views
 
 router.register(r'tables', tables_views.GeoKitTableViewSet)
+router.register(r'variables', variable_views.VariableViewSet)
 
 
 urlpatterns = [

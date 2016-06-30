@@ -12,7 +12,7 @@ class TestJoin(unittest.TestCase):
     This is a pure unit test; the DB I/O is mock.patched.
     """
     def setUp(self):
-        self.db_patcher = mock.patch('expressions.functions.connection')
+        self.db_patcher = mock.patch('expressions.helpers.connection')
         self.db_mock = self.db_patcher.start()
         self.addCleanup(self.db_patcher.stop)
 
@@ -151,7 +151,7 @@ class TestExtractJoin(unittest.TestCase):
     def setUp(self):
         """Prepare mocks & test data for testing."""
         # mocking for Join.eval
-        self.db_patcher = mock.patch('expressions.functions.connection')
+        self.db_patcher = mock.patch('expressions.helpers.connection')
         self.db_mock = self.db_patcher.start()
         self.addCleanup(self.db_patcher.stop)
         self.fetchall = self.db_mock.cursor().fetchall

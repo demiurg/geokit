@@ -2,13 +2,13 @@ import uuid
 
 from wagtail.wagtailcore.blocks import CharBlock, ListBlock, StructBlock
 
-from expressions.blocks import ExpressionChooserBlock
 from layers.blocks import LayerChooserBlock
+from variables.blocks import VariableChooserBlock
 
 
 # Inherits from StructBlock to reuse form rendering logic.
 class GraphBlock(StructBlock):
-    variable = ExpressionChooserBlock()
+    variable = VariableChooserBlock()
 
     class Meta:
         template = 'builder/blocks/graph.html'
@@ -16,7 +16,6 @@ class GraphBlock(StructBlock):
 
     def render(self, value):
         value["id"] = uuid.uuid4()
-        value["data"] = value["variable"].evaluate(None)
 
         return super(GraphBlock, self).render(value)
 
@@ -29,7 +28,7 @@ class ColorValueBlock(StructBlock):
 
 class MapBlock(StructBlock):
     layer = LayerChooserBlock()
-    expression = ExpressionChooserBlock()
+    variable = VariableChooserBlock()
     color_ramp = ListBlock(ColorValueBlock())
 
     class Meta:
@@ -38,13 +37,12 @@ class MapBlock(StructBlock):
 
     def render(self, value):
         value["id"] = uuid.uuid4()
-        value["data"] = value["expression"].evaluate(None)
 
         return super(MapBlock, self).render(value)
 
 
 class TableBlock(StructBlock):
-    variables = ListBlock(ExpressionChooserBlock())
+    variables = ListBlock(VariableChooserBlock())
 
     class Meta:
         template = 'builder/blocks/table.html'
