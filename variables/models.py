@@ -4,6 +4,7 @@ import numpy as np
 
 from django.db import models
 from django.contrib.postgres.fields import ArrayField, DateRangeField
+from django.dispatch import receiver
 
 from geokit_tables.models import GeoKitTable
 from layers.models import Layer
@@ -20,19 +21,6 @@ DATASOURCE_TYPES = (
 
 
 class DataSource(models.Model):
-    source_type = models.CharField(max_length=20, choices=DATASOURCE_TYPES)
-
-    #def value(self):
-        #'''
-        #Attempt at multiple dispatch. It is important to note that for this to
-        #work DATASOURCE_TYPES keys must be the name of the DataSource property
-        #that points to it's subclass.
-
-        #e.g. If the DataSource is a VariableDataSource, self.source_type must
-        #be 'variabledatasource' so we can call `self.variabledatasource.value()`.
-        #'''
-        #return getattr(self, self.source_type).value()
-
     def _populate_value_matrix(self, source_values, source_spatial_key, source_temporal_key):
         output = np.empty((len(self.variable.spatial_domain), len(self.variable.temporal_domain)))
 
@@ -101,3 +89,6 @@ class Variable(models.Model):
 
     def data(self):
         return self.data_source.value()
+
+    def __unicode__(self):
+        return self.name

@@ -205,6 +205,14 @@ function expressions(state={
 }
 
 
+var UPDATE_METADATA = 'UPDATE_METADATA';
+function updateMetadata(metadata) {
+  return {
+    type: UPDATE_METADATA,
+    metadata
+  };
+}
+
 var UPDATE_EXPRESSION_TEXT = 'UPDATE_EXPRESSION_TEXT';
 function updateExpressionText(text) {
   return {
@@ -272,6 +280,11 @@ function sieveApp(state=initialState, action){
       return Object.assign({}, state, {
         expressions: expressions(state[action.expressions], action)
       });
+    case UPDATE_METADATA:
+      return Object.assign({}, state, {
+        title: action.metadata.title,
+        description: action.metadata.description
+      });
     case UPDATE_EXPRESSION_TEXT:
       return Object.assign({}, state, {
         expressionText: action.text
@@ -288,6 +301,8 @@ function sieveApp(state=initialState, action){
 
 var mapStateToProps = (state) => {
   return Object.assign({}, state, {
+    metadata: {title: state.title, description: state.description},
+    expressionText: state.expressionText,
     variables: [state.layers, state.expressions, state.tables],
     layers: state.layers,
     tables: state.tables
@@ -301,6 +316,9 @@ var mapDispatchToProps = (dispatch) => {
     },
     onInsertToken: (token, position) => {
       dispatch(insertToken(token, position));
+    },
+    onMetadataChange: (metadata) => {
+      dispatch(updateMetadata(metadata));
     }
   };
 };
@@ -506,9 +524,9 @@ class SieveComponent extends React.Component {
     var errors = {},
         isValid = true,
         data = {
-          name: this.state.title,
-          description: this.state.description,
-          expression_text: this.state.expressionText,
+          name: this.props.metadata.title,
+          description: this.props.metadata.description,
+          expression_text: this.props.expressionText,
           temporal_domain: this.state.temporalDomain,
           spatial_domain_features: [],
           filters: this.state.filters,
@@ -529,7 +547,8 @@ class SieveComponent extends React.Component {
     return {isValid: isValid, errors: errors, data: data};
   }
 
-  saveExpression() {
+  saveExpression(e) {
+    e.stopPropagation();
     var validationResponse = this.validateExpression();
 
     if (validationResponse.isValid) {
@@ -538,7 +557,7 @@ class SieveComponent extends React.Component {
       if (this.props.initialData) {
         xhr.open("PUT", "/api/expressions/"+this.props.initialData.id+"/", true);
       } else {
-        xhr.open("POST", "/api/expressions/", true);
+        xhr.open("POST", "/api/variables/", true);
       }
 
       xhr.setRequestHeader("Content-type", "application/json");
@@ -556,6 +575,7 @@ class SieveComponent extends React.Component {
 
       xhr.send(JSON.stringify(validationResponse.data));
     } else {
+      console.log(validationResponse.errors);
       this.setState({errors: validationResponse.errors});
     }
   }
@@ -574,8 +594,8 @@ class SieveComponent extends React.Component {
         <Panel>
           <MetaData
             ref='metadata'
-            updateMetadata={this.updateMetadata.bind(this)}
-            title={this.props.title} description={this.props.description} />
+            updateMetadata={this.props.onMetadataChange.bind(this)}
+            title={this.props.metadata.title} description={this.props.metadata.description} />
         </Panel>
         <Panel>
           <Row>
