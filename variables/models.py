@@ -3,8 +3,7 @@ from __future__ import unicode_literals
 import numpy as np
 
 from django.db import models
-from django.contrib.postgres.fields import ArrayField, DateRangeField
-from django.dispatch import receiver
+from django.contrib.postgres.fields import ArrayField, DateRangeField, JSONField
 
 from geokit_tables.models import GeoKitTable
 from layers.models import Layer
@@ -84,7 +83,7 @@ class Variable(models.Model):
     name = models.CharField(primary_key=True, max_length=75)
     temporal_domain = ArrayField(DateRangeField())
     spatial_domain = ArrayField(models.IntegerField())
-    data_source = models.OneToOneField(DataSource)
+    tree = JSONField()
     units = models.CharField(max_length=100)
 
     def data(self):
