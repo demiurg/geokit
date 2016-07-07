@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from expressions.models import Expression
 from expressions.serializers import ExpressionSerializer
-from variables.models import Variable, ExpressionDataSource
+from variables.models import Variable
 from variables.serializers import VariableSerializer
 
 
@@ -33,23 +33,23 @@ class VariableViewSet(viewsets.ModelViewSet):
     queryset = Variable.objects.all()
     serializer_class = VariableSerializer
 
-    def create(self, request):
-        expression_serializer = ExpressionSerializer(data=request.data)
-        expression_serializer.is_valid(raise_exception=True)
-        expression = expression_serializer.save()
+    #def create(self, request):
+        #expression_serializer = ExpressionSerializer(data=request.data)
+        #expression_serializer.is_valid(raise_exception=True)
+        #expression = expression_serializer.save()
 
-        ds = ExpressionDataSource(expression=expression)
-        ds.save()
+        #ds = ExpressionDataSource(expression=expression)
+        #ds.save()
 
-        d = request.data
-        variable = Variable(
-            name=d['name'],
-            temporal_domain=d['temporal_domain'],
-            spatial_domain=[],   # temporarily unimplemented
-            units='',            # temporarily unimplemented
-            data_source=ds
-        )
-        variable.save()
-        serializer = VariableSerializer(variable, context={'request': request})
+        #d = request.data
+        #variable = Variable(
+            #name=d['name'],
+            #temporal_domain=d['temporal_domain'],
+            #spatial_domain=[],   # temporarily unimplemented
+            #units='',            # temporarily unimplemented
+            #data_source=ds
+        #)
+        #variable.save()
+        #serializer = VariableSerializer(variable, context={'request': request})
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=self.get_success_headers(serializer.data))
+        #return Response(serializer.data, status=status.HTTP_201_CREATED, headers=self.get_success_headers(serializer.data))
