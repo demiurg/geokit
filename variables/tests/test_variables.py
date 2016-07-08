@@ -1,24 +1,10 @@
+import pytest
 import numpy as np
-
-from dateutil.rrule import rrule, DAILY
-from datetime import date
 
 from variables.models import Variable
 
 
-def mock_value():
-    return np.array([
-        [1, 2, 3, 4, 5, 6],
-        [7, 8, 9, 10, 11, 12],
-        [13, 14, 15, 16, 17, 18]
-    ])
-
-mock_temporal_domain = list(rrule(freq=DAILY, count=6, dtstart=date(2010, 1, 1)))
-
-mock_spatial_domain = [1, 2, 3]
-
-
-def test_arithmetic_operators():
+def test_arithmetic_operators_scalar():
     v = Variable(tree=['+', [1, 2]])
     assert v.data() == 3
 
@@ -36,3 +22,21 @@ def test_arithmetic_operators():
 
     v = Variable(tree=['/', [3, 1]])
     assert v.data() == 3
+
+
+def test_arithmetic_operators_matrices():
+    v = Variable(tree=['+',
+        [np.array([[1, 2], [3, 4]]), np.array([[2, 3], [4, 5]])]
+    ])
+    np.testing.assert_array_equal(v.data(), np.array([[3, 5], [7, 9]]))
+
+    v = Variable(tree=['+',
+        [np.array([[1, 2], [3, 4]]), 2]
+    ])
+    np.testing.assert_array_equal(v.data(), np.array([[3, 4], [5, 6]]))
+
+    v = Variable(tree=['+',
+        [np.array([[1, 2], [3, 4]]), np.array([[1, 2, 3], [4, 5, 6]])]
+    ])
+    with pytest.raises(ValueError):
+        v.data()

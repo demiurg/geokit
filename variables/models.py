@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import numpy as np
+
 from django.db import models
 from django.contrib.postgres.fields import ArrayField, DateRangeField, JSONField
 
@@ -18,31 +20,22 @@ def resolve_arguments(left, right):
     return left_val, right_val
 
 
-def AddOperator(left, right):
-    left_val, right_val = resolve_arguments(left, right)
-    return left_val + right_val
+def UnaryOperator(func):
+    def f(left, right):
+        left_val, right_val = resolve_arguments(left, right)
 
+        if type(left) == np.ndarray and type(right) == np.ndarray and left.shape != right.shape:
+            raise ValueError("Arguments must be of equal dimensions")
 
-def SubtractionOperator(left, right):
-    left_val, right_val = resolve_arguments(left, right)
-    return left_val - right_val
-
-
-def MultiplicationOperator(left, right):
-    left_val, right_val = resolve_arguments(left, right)
-    return left_val * right_val
-
-
-def DivisionOperator(left, right):
-    left_val, right_val = resolve_arguments(left, right)
-    return left_val / right_val
+        return func(left_val, right_val)
+    return f
 
 
 operator_table = {
-    '+': AddOperator,
-    '-': SubtractionOperator,
-    '*': MultiplicationOperator,
-    '/': DivisionOperator,
+    '+': UnaryOperator(np.add),
+    '-': UnaryOperator(np.subtract),
+    '*': UnaryOperator(np.multiply),
+    '/': UnaryOperator(np.divide),
 }
 
 
