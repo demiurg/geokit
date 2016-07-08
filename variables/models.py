@@ -20,7 +20,7 @@ def resolve_arguments(left, right):
     return left_val, right_val
 
 
-def UnaryOperator(func):
+def IterativeOperator(func):
     def f(left, right):
         left_val, right_val = resolve_arguments(left, right)
 
@@ -32,10 +32,10 @@ def UnaryOperator(func):
 
 
 operator_table = {
-    '+': UnaryOperator(np.add),
-    '-': UnaryOperator(np.subtract),
-    '*': UnaryOperator(np.multiply),
-    '/': UnaryOperator(np.divide),
+    '+': IterativeOperator(np.add),
+    '-': IterativeOperator(np.subtract),
+    '*': IterativeOperator(np.multiply),
+    '/': IterativeOperator(np.divide),
 }
 
 
