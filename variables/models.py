@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField, DateRangeField, JSONField
 
 
-def AddOperator(left, right):
+def resolve_arguments(left, right):
     if type(left) == list:
         left_val = operator_table[left[0]](*left[1])
     else:
@@ -15,11 +15,34 @@ def AddOperator(left, right):
     else:
         right_val = right
 
+    return left_val, right_val
+
+
+def AddOperator(left, right):
+    left_val, right_val = resolve_arguments(left, right)
     return left_val + right_val
+
+
+def SubtractionOperator(left, right):
+    left_val, right_val = resolve_arguments(left, right)
+    return left_val - right_val
+
+
+def MultiplicationOperator(left, right):
+    left_val, right_val = resolve_arguments(left, right)
+    return left_val * right_val
+
+
+def DivisionOperator(left, right):
+    left_val, right_val = resolve_arguments(left, right)
+    return left_val / right_val
 
 
 operator_table = {
     '+': AddOperator,
+    '-': SubtractionOperator,
+    '*': MultiplicationOperator,
+    '/': DivisionOperator,
 }
 
 

@@ -25,4 +25,14 @@ def test_arithmetic_operators():
     v = Variable(tree=['+', [['+', [1, 2]], 3]])
     assert v.data() == 6
 
-    v = Variable(tree=['+', [3, ['+', [1, 3]]]])
+    v = Variable(tree=['+', [3, ['+', [1, 2]]]])
+    assert v.data() == 6
+
+    v = Variable(tree=['-', [['-', [6, 2]], 1]])
+    assert v.data() == 3
+
+    v = Variable(tree=['*', [3, ['*', [1, 3]]]])
+    assert v.data() == 9
+
+    v = Variable(tree=['/', [3, 1]])
+    assert v.data() == 3
