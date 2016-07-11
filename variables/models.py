@@ -6,18 +6,15 @@ from django.db import models
 from django.contrib.postgres.fields import ArrayField, DateRangeField, JSONField
 
 
-def resolve_arguments(left, right):
-    if type(left) == list:
-        left_val = operator_table[left[0]](*left[1])
-    else:
-        left_val = left
+def resolve_arguments(*args):
+    resolved_args = []
+    for arg in args:
+        if type(arg) == list:
+            resolved_args.append(operator_table[arg[0]](*arg[1]))
+        else:
+            resolved_args.append(arg)
 
-    if type(right) == list:
-        right_val = operator_table[right[0]](*right[1])
-    else:
-        right_val = right
-
-    return left_val, right_val
+    return tuple(resolved_args)
 
 
 def IterativeOperator(func):
@@ -31,11 +28,28 @@ def IterativeOperator(func):
     return f
 
 
+def SpatialMeanOperator(val):
+    (val,) = resolve_arguments(val)
+
+    mean_vals = np.mean(val, axis=0)
+    return mean_vals.reshape(1, len(mean_vals))
+
+
+def TemporalMeanOperator(val):
+    (val,) = resolve_arguments(val)
+
+    mean_vals = np.mean(val, axis=1)
+    return mean_vals.reshape(len(mean_vals), 1)
+
+
 operator_table = {
     '+': IterativeOperator(np.add),
     '-': IterativeOperator(np.subtract),
     '*': IterativeOperator(np.multiply),
     '/': IterativeOperator(np.divide),
+
+    'smean': SpatialMeanOperator,
+    'tmean': TemporalMeanOperator,
 }
 
 

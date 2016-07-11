@@ -40,3 +40,19 @@ def test_arithmetic_operators_matrices():
     ])
     with pytest.raises(ValueError):
         v.data()
+
+
+def test_spatial_mean_operator():
+    v = Variable(tree=['smean',
+        [np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])]
+    ])
+
+    np.testing.assert_array_equal(v.data(), np.array([[4, 5, 6]]))
+
+
+def test_temporal_mean_operator():
+    v = Variable(tree=['tmean',
+        [np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])]
+    ])
+
+    np.testing.assert_array_equal(v.data(), np.array([[2], [5], [8]]))
