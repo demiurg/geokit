@@ -5,6 +5,11 @@ from django.db import connection
 
 from geokit.tests.util import make_tenant
 
+try:
+    import geokit.settings.local
+except Exception as e:
+    raise type(e)("error importing required local settings file:", *e.args)
+
 logger = logging.getLogger('tests.util')
 
 def pytest_addoption(parser):
