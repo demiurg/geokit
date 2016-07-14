@@ -5,6 +5,11 @@ import numpy as np
 from django.db import models
 from django.contrib.postgres.fields import ArrayField, DateRangeField, JSONField
 
+from geokit_tables.models import GeoKitTable
+from layers.models import Layer
+
+from expressions.helpers import join_layer_and_table
+
 
 def resolve_arguments(*args):
     resolved_args = []
@@ -42,6 +47,34 @@ def TemporalMeanOperator(val):
     return mean_vals.reshape(len(mean_vals), 1)
 
 
+def JoinOperator(left, right, field):
+    '''
+    Serialization format:
+    `{
+        'model': 'GeoKitTable',
+        'id': 1,
+        'field': 'fid'
+    }`
+    '''
+    if left['model'] == 'Layer':
+        if right['model'] != 'GeoKitTable':
+            raise ValueError("Arguments must be a Layer and GeoKitTable")
+        layer = Layer.objects.get(pk=left['id'])
+        layer_field = left['field']
+        table = GeoKitTable.objects.get(pk=right['id'])
+        table_field = right['field']
+
+    if left['model'] == 'GeoKitTable':
+        if right['model'] != 'Layer':
+            raise ValueError("Arguments must be a Layer and GeoKitTable")
+        layer = Layer.objects.get(pk=right['id'])
+        layer_field = right['field']
+        table = GeoKitTable.objects.get(pk=left['id'])
+        table_field = left['field']
+
+    return np.array(join_layer_and_table(layer.name, layer_field, table.name, table_field, field)[0]).astype('float64')
+
+
 operator_table = {
     '+': IterativeOperator(np.add),
     '-': IterativeOperator(np.subtract),
@@ -50,6 +83,8 @@ operator_table = {
 
     'smean': SpatialMeanOperator,
     'tmean': TemporalMeanOperator,
+
+    'join': JoinOperator,
 }
 
 

@@ -56,3 +56,32 @@ def test_temporal_mean_operator():
     ])
 
     np.testing.assert_array_equal(v.data(), np.array([[2], [5], [8]]))
+
+
+@pytest.mark.django_db
+def test_join_operator(set_schema):
+    v = Variable(tree=['join', [
+        {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
+        {'model': 'GeoKitTable', 'id': 'cnty24k97_data', 'field': 'fid'},
+        'tmin'
+    ]])
+    np.testing.assert_array_equal(v.data(), np.array([
+        [-4.0, -3.5, -2.5, -1.5, 1],
+        [8.0, 7.0, 3.5, 5.0, 3.5]
+    ]))
+
+    v = Variable(tree=['join', [
+        {'model': 'GeoKitTable', 'id': 1, 'field': 'fid'},
+        {'model': 'GeoKitTable', 'id': 2, 'field': 'fid'},
+        'test'
+    ]])
+    with pytest.raises(ValueError):
+        v.data()
+
+    v = Variable(tree=['join', [
+        {'model': 'Layer', 'id': 1, 'field': 'fid'},
+        {'model': 'Layer', 'id': 2, 'field': 'fid'},
+        'test'
+    ]])
+    with pytest.raises(ValueError):
+        v.data()
