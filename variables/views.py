@@ -5,15 +5,13 @@ from django.shortcuts import get_object_or_404, render
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 
-from expressions.models import Expression
-from expressions.serializers import ExpressionSerializer
 from variables.models import Variable
 from variables.serializers import VariableSerializer
 
 
 def index(request):
-    expressions = Expression.objects.all()
-    return render(request, 'variables/index.html', {"expressions": expressions})
+    variables = Variable.objects.all()
+    return render(request, 'variables/index.html', {"variables": variables})
 
 
 def add(request):
@@ -21,10 +19,10 @@ def add(request):
 
 
 def edit(request, expression_id):
-    expression = get_object_or_404(Expression, pk=expression_id)
-    filters = json.dumps(expression.filters)
+    variable = get_object_or_404(Variable, pk=variable_id)
+    filters = json.dumps(variable.filters)
     return render(request, 'variables/sieve.html', {
-        'expression': expression,
+        'variable': variable,
         'filters': filters,
     })
 

@@ -10,12 +10,15 @@
     "babel-preset-es2015-loose": "^7.0.0"
   },
   "devDependencies": {
+    "babel-preset-react": "^6.11.1",
+    "babel-preset-stage-0": "^6.5.0",
     "chai": "^3.5.0",
     "mocha": "^2.5.3"
   },
   "scripts": {
     "test": "mocha --compilers js:babel-core/register --recursive",
-    "test:watch": "npm run test -- --watch"
+    "test:watch": "npm run test -- --watch",
+    "build": "babel variables/static/js/sieve.jsx --out-file variables/static/js/sieve.js"
   },
   "repository": {
     "type": "git",
@@ -26,6 +29,11 @@
   "license": "ISC",
   "homepage": "https://bitbucket.org/appliedgeosolutions/geokit#readme",
   "babel": {
-    "presets": ["es2015"]
+    "presets": [
+      "react",
+      "es2015",
+      "es2015-loose",
+      "stage-0"
+    ]
   }
 }

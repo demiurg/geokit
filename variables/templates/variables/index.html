@@ -8,7 +8,7 @@
 
 <div class="nice-padding">
     <div id="variables-results" class="variables">
-        {% if expressions.exists %}
+        {% if variables.exists %}
         <table class="listing">
             <col />
             <col />
@@ -23,21 +23,21 @@
                 </tr>
             </thead>
             <tbody>
-                {% for expression in expressions %}
+                {% for variable in variables %}
                 <tr>
                     <td class="title">
-                        <a href="{% url 'variables:edit' expression.pk %}">
-                            {{ expression.name }}
+                        <a href="{% url 'variables:edit' variable.pk %}">
+                            {{ variable.name }}
                         </a>
                     </td>
                     <td class="description">
-                        {{ expression.description }}
+                        {{ variable.description }}
                     </td>
-                    <td class="dimensions">
-                        {{ expression.dimensions.width }} x {{ expression.dimensions.height }}
+                    <td class="spatial_domain">
+                        {{ variable.spatial_domain.width }} x {{ variable.spatial_domain.height }}
                     </td>
                     <td>
-                        {{ expression.units }}
+                        {{ variable.units }}
                     </td>
                 </tr>
                 {% endfor %}

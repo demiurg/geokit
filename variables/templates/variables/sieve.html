@@ -21,7 +21,6 @@
 {% block extra_js %}
 <script src="https://fb.me/react-15.1.0.js"></script>
 <script src="https://fb.me/react-dom-15.1.0.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-bootstrap/0.29.4/react-bootstrap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/3.5.2/redux.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-redux/4.4.5/react-redux.js"></script>
@@ -46,7 +45,6 @@ function getCookie(name) {
     return cookieValue;
 }
 </script>
-<script type="text/babel" src="{% static 'js/sieve.jsx' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -62,16 +60,14 @@ window.redirect_after_save = "{% url 'variables:index' %}";
 
 var sieve_props = {};
 
-{% if expression %}
+{% if variable %}
 sieve_props = {initialData: {
-  {% if expression.description %}description: "{{ expression.description }}",{% endif %}
-  {% if expression.aggregate_method %}aggregateMethod: "{{ expression.aggregate_method }}",{% endif %}
-  {% if expression.aggregate_dimension %}aggregateDimension: "{{ expression.aggregate_dimension }}",{% endif %}
-  {% if expression.temporal_domain %}temporalDomain: {start: new Date("{{ expression.temporal_domain.lower }}"), end: new Date("{{ expression.temporal_domain.upper }}")},{% endif %}
+  {% if variable.description %}description: "{{ variable.description }}",{% endif %}
+  {% if variable.temporal_domain %}temporal_domain: {start: new Date("{{ variable.temporal_domain.lower }}"), end: new Date("{{ variable.temporal_domain.upper }}")},{% endif %}
   filters: {{ filters|safe }},
-  id: {{ expression.pk }},
-  title: "{{ expression.name }}",
-  expressionText: "{{ expression.expression_text }}"
+  id: {{ variable.pk }},
+  title: "{{ variable.name }}",
+  variable_tree: "{{ variable.variable_tree }}"
 }};
 {% endif %}
 
@@ -83,4 +79,8 @@ document.addEventListener('sievedefined', function(e) {
 
 }, false);
 </script>
+
+<script type="text/javascript" src="{% static 'js/Actions.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/sieve.js' %}"></script>
+
 {% endblock %}

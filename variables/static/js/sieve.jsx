@@ -23,235 +23,12 @@ const {
 } = ReactBootstrap;
 */
 
-/* Actions */
-
-var REQUEST_LAYERS = 'REQUEST_LAYERS';
-function requestLayers() {
-  return {
-    type: REQUEST_LAYERS
-  }
-}
-
-var RECEIVE_LAYERS = 'RECEIVE_LAYERS';
-function receiveLayers(json){
-  return {
-    type: RECEIVE_LAYERS,
-    layers: json,
-    receivedAt: Date.now()
-  }
-}
-
-function fetchLayers(){
-  return function(dispatch){
-    dispatch(requestLayers());
-
-    return $.ajax({
-      url: '/api/layers',
-      dataType: 'json',
-      cache: 'false',
-      success: function(data) {
-        dispatch(receiveLayers(data));
-      },
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }
-    });
-  };
-}
-
-function layers(state={
-  name: 'Layers',
-  tovar: (name, field) => `layers__${name}__${field}`,
-  isFetching: false,
-  didInvalidate: false,
-  items: []
-}, action){
-  switch (action.type) {
-    case REQUEST_LAYERS:
-      return Object.assign({}, state, {
-        isFetching: true,
-        didInvalidate: false
-      });
-    case RECEIVE_LAYERS:
-      return Object.assign({}, state, {
-        isFetching: false,
-        didInvalidate: false,
-        items: action.layers,
-        lastUpdate: action.receivedAt
-      });
-    default:
-      return state;
-  }
-}
-
-
-var REQUEST_TABLES = 'REQUEST_TABLES';
-function requestTables() {
-  return {
-    type: REQUEST_TABLES
-  }
-}
-
-var RECEIVE_TABLES = 'RECEIVE_TABLES';
-function receiveTables(json){
-  return {
-    type: RECEIVE_TABLES,
-    tables: json,
-    receivedAt: Date.now()
-  }
-}
-
-function fetchTables(){
-  return function(dispatch){
-    dispatch(requestTables());
-
-    return $.ajax({
-      url: '/api/tables',
-      dataType: 'json',
-      cache: 'false',
-      success: function(data) {
-        dispatch(receiveTables(data));
-      },
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }
-    });
-  };
-}
-
-function tables(state={
-  name: 'Tables',
-  tovar: (name, field) => `tables__${name}__${field}`,
-  isFetching: false,
-  didInvalidate: false,
-  items: []
-}, action){
-  switch (action.type) {
-    case REQUEST_TABLES:
-      return Object.assign({}, state, {
-        isFetching: true,
-        didInvalidate: false
-      });
-    case RECEIVE_TABLES:
-      return Object.assign({}, state, {
-        isFetching: false,
-        didInvalidate: false,
-        items: action.tables,
-        lastUpdate: action.receivedAt
-      });
-    default:
-      return state;
-  }
-}
-
-
-var REQUEST_EXPRESSIONS = 'REQUEST_EXPRESSIONS';
-function requestExpressions() {
-  return {
-    type: REQUEST_EXPRESSIONS
-  }
-}
-
-var RECEIVE_EXPRESSIONS = 'RECEIVE_EXPRESSIONS';
-function receiveExpressions(json){
-  return {
-    type: RECEIVE_EXPRESSIONS,
-    expressions: json,
-    receivedAt: Date.now()
-  }
-}
-
-function fetchExpressions(){
-  return function(dispatch){
-    dispatch(requestExpressions());
-
-    return $.ajax({
-      url: '/api/expressions',
-      dataType: 'json',
-      cache: 'false',
-      success: function(data) {
-        dispatch(receiveExpressions(data));
-      },
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }
-    });
-  };
-}
-
-function expressions(state={
-  name: 'Expressions',
-  tovar: (name, field) => `expressions__${name}__${field}`,
-  isFetching: false,
-  didInvalidate: false,
-  items: []
-}, action){
-  switch (action.type) {
-    case REQUEST_EXPRESSIONS:
-      return Object.assign({}, state, {
-        isFetching: true,
-        didInvalidate: false
-      });
-    case RECEIVE_EXPRESSIONS:
-      return Object.assign({}, state, {
-        isFetching: false,
-        didInvalidate: false,
-        items: action.expressions,
-        lastUpdate: action.receivedAt
-      });
-    default:
-      return state;
-  }
-}
-
-
-var UPDATE_METADATA = 'UPDATE_METADATA';
-function updateMetadata(metadata) {
-  return {
-    type: UPDATE_METADATA,
-    metadata
-  };
-}
-
-var UPDATE_EXPRESSION_TEXT = 'UPDATE_EXPRESSION_TEXT';
-function updateExpressionText(text) {
-  return {
-    type: UPDATE_EXPRESSION_TEXT,
-    text
-  };
-}
-
-var INSERT_TOKEN = 'INSERT_TOKEN';
-function insertToken(token, position){
-  return {
-    type: INSERT_TOKEN,
-    token,
-    position
-  };
-}
-
-
-function insertTokenInExpression(text, action){
-  var pos = action.position;
-  var token = action.token;
-
-  if(pos === 0){
-    token = token + ' '
-  }else{
-    token = ' ' + token + ' '; // Pad token
-  }
-
-  var newtext = text.substring(0, pos) + token + text.substring(pos);
-
-  return newtext;
-}
-
 /* app */
 
 var initialState = Object.assign({
   title: "",
   description: "",
-  expressionText: "",
+  variableText: "",
   filters: [],
   spatialDomain: null,
   temporalDomain: {start: null, end: null},
@@ -275,23 +52,23 @@ function sieveApp(state=initialState, action){
       return Object.assign({}, state, {
         tables: tables(state[action.tables], action)
       });
-    case REQUEST_EXPRESSIONS:
-    case RECEIVE_EXPRESSIONS:
+    case REQUEST_VARIABLES:
+    case RECEIVE_VARIABLES:
       return Object.assign({}, state, {
-        expressions: expressions(state[action.expressions], action)
+        variables: variables(state[action.variables], action)
       });
     case UPDATE_METADATA:
       return Object.assign({}, state, {
         title: action.metadata.title,
         description: action.metadata.description
       });
-    case UPDATE_EXPRESSION_TEXT:
+    case UPDATE_VARIABLE_TEXT:
       return Object.assign({}, state, {
-        expressionText: action.text
+        variableText: action.text
       });
     case INSERT_TOKEN:
       return Object.assign({}, state, {
-        expressionText: insertTokenInExpression(state.expressionText, action),
+        variableText: insertTokenInVariable(state.variableText, action),
         position: action.position
       });
     default:
@@ -302,8 +79,8 @@ function sieveApp(state=initialState, action){
 var mapStateToProps = (state) => {
   return Object.assign({}, state, {
     metadata: {title: state.title, description: state.description},
-    expressionText: state.expressionText,
-    variables: [state.layers, state.expressions, state.tables],
+    variableText: state.variableText,
+    variables: [state.layers, state.variables, state.tables],
     layers: state.layers,
     tables: state.tables
   });
@@ -311,8 +88,8 @@ var mapStateToProps = (state) => {
 
 var mapDispatchToProps = (dispatch) => {
   return {
-    onExpressionTextChange: (text) => {
-      dispatch(updateExpressionText(text));
+    onVariableTextChange: (text) => {
+      dispatch(updateVariableText(text));
     },
     onInsertToken: (token, position) => {
       dispatch(insertToken(token, position));
@@ -324,7 +101,6 @@ var mapDispatchToProps = (dispatch) => {
 };
 
 /* components */
-
 var DropdownComponent = ({things, onclick}) => (
   // TODO something different when layers.isFetching
 
@@ -451,7 +227,7 @@ class SieveComponent extends React.Component {
 
     // Keeping this synched separately
     this.state = {
-      expressionText: this.props.expressionText
+      variableText: this.props.variableText
     };
   }
 
@@ -490,8 +266,8 @@ class SieveComponent extends React.Component {
     this.setState({temporalDomain: {start: this.state.temporalDomain.start, end: dateJSON}});
   }
 
-  updateExpressionText(newText) {
-    this.setState({expressionText: newText});
+  updateVariableText(newText) {
+    this.setState({variableText: newText});
   }
 
   updateFilters(filters) {
@@ -507,26 +283,26 @@ class SieveComponent extends React.Component {
   }
 
   getPosition(){
-    var el = ReactDOM.findDOMNode(this.refs.expressionEditor).getElementsByTagName("textarea")[0];
+    var el = ReactDOM.findDOMNode(this.refs.variableEditor).getElementsByTagName("textarea")[0];
     var caretPos = el.selectionStart;
     return caretPos;
   }
 
   componentDidUpdate(props, state){
     if(props.position != this.props.position && this.props.position != 0){
-      var el = ReactDOM.findDOMNode(this.refs.expressionEditor).getElementsByTagName("textarea")[0];
+      var el = ReactDOM.findDOMNode(this.refs.variableEditor).getElementsByTagName("textarea")[0];
       el.setSelectionRange(this.props.position, this.props.position+1);
       console.log(this.props.position);
     }
   }
 
-  validateExpression() {
+  validateVariable() {
     var errors = {},
         isValid = true,
         data = {
           name: this.props.metadata.title,
           description: this.props.metadata.description,
-          expression_text: this.props.expressionText,
+          variable_text: this.props.variableText,
           temporal_domain: this.state.temporalDomain,
           spatial_domain_features: [],
           filters: this.state.filters,
@@ -539,23 +315,23 @@ class SieveComponent extends React.Component {
       errors.name = "You must provide a title.";
     }
 
-    if (!data.expression_text || data.expression_text === '') {
+    if (!data.variable_text || data.variable_text === '') {
       isValid = false;
-      errors.expression_text = "You must specify expression text."
+      errors.variable_text = "You must specify variable text."
     }
 
     return {isValid: isValid, errors: errors, data: data};
   }
 
-  saveExpression(e) {
+  saveVariable(e) {
     e.stopPropagation();
-    var validationResponse = this.validateExpression();
+    var validationResponse = this.validateVariable();
 
     if (validationResponse.isValid) {
       var xhr = new XMLHttpRequest();
 
       if (this.props.initialData) {
-        xhr.open("PUT", "/api/expressions/"+this.props.initialData.id+"/", true);
+        xhr.open("PUT", "/api/variables/"+this.props.initialData.id+"/", true);
       } else {
         xhr.open("POST", "/api/variables/", true);
       }
@@ -636,9 +412,9 @@ class SieveComponent extends React.Component {
           </ButtonToolbar>
           <Input type="textarea"
             style={{resize: "vertical"}}
-            ref="expressionEditor"
-            value={this.props.expressionText}
-            onChange={(e)=> this.props.onExpressionTextChange(e.target.value) }
+            ref="variableEditor"
+            value={this.props.variableText}
+            onChange={(e)=> this.props.onVariableTextChange(e.target.value) }
           />
           <Filter filters={this.props.filters} updateFilters={this.updateFilters.bind(this)} />
         </Panel>
@@ -649,7 +425,7 @@ class SieveComponent extends React.Component {
             updateAggregateDimension={this.updateAggregateDimension.bind(this)}
             updateAggregateMethod={this.updateAggregateMethod.bind(this)} />
         </Panel>
-        <ButtonInput bsSize="large" onClick={this.saveExpression.bind(this)}>Save</ButtonInput>
+        <ButtonInput bsSize="large" onClick={this.saveVariable.bind(this)}>Save</ButtonInput>
       </div>
     );
   }
@@ -1156,10 +932,10 @@ class Filter extends React.Component {
             </Input>
             <Input value={this.state.comparison} type="select" onChange={this.updateComparison.bind(this)}>
               <option value="lt">Less than</option>
-              <option value="ltet">Less than or equal to</option>
+              <option value="lte">Less than or equal to</option>
               <option value="et">Equal to</option>
               <option value="gt">Greater than</option>
-              <option value="gtet">Greater than or equal to</option>
+              <option value="gte">Greater than or equal to</option>
             </Input>
             {this.state.comparate == 'value' ?
               <Input value={this.state.benchmark} type="text" placeholder="x" onChange={this.updateBenchmark.bind(this)}/> :
@@ -1345,7 +1121,7 @@ function sieve(el){
 
   store.dispatch(fetchLayers());
   store.dispatch(fetchTables());
-  store.dispatch(fetchExpressions());
+  store.dispatch(fetchVariables());
 
   ReactDOM.render(
     React.createElement(

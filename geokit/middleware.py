@@ -45,7 +45,8 @@ class TenantMiddleware(object):
             connection.set_tenant(request.tenant)
         except TenantModel.DoesNotExist:
             raise self.TENANT_NOT_FOUND_EXCEPTION(
-                'No tenant for name "%s"' % subdomain)
+                'No tenant for name "%s"' % subdomain
+            )
 
         # Fix ignore wagtail sites
         try:
