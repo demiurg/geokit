@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import numpy.ma as ma
 
 from variables.models import Variable
 
@@ -71,6 +72,16 @@ def test_join_operator(set_schema):
     ]))
 
     v = Variable(tree=['join', [
+        {'model': 'GeoKitTable', 'id': 'cnty24k97_data', 'field': 'fid'},
+        {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
+        'tmin'
+    ]])
+    np.testing.assert_array_equal(v.data(), np.array([
+        [-4.0, -3.5, -2.5, -1.5, 1],
+        [8.0, 7.0, 3.5, 5.0, 3.5]
+    ]))
+
+    v = Variable(tree=['join', [
         {'model': 'GeoKitTable', 'id': 1, 'field': 'fid'},
         {'model': 'GeoKitTable', 'id': 2, 'field': 'fid'},
         'test'
@@ -85,3 +96,52 @@ def test_join_operator(set_schema):
     ]])
     with pytest.raises(ValueError):
         v.data()
+
+
+def test_value_filter_operator():
+    test_matrix = np.array([[1, 2], [3, 4]])
+
+    v = Variable(tree=['filter', [
+        test_matrix, {'comparison': '>', 'comparator': 3}
+    ]])
+
+    assert not ma.is_masked(v.data()[0][0])
+    assert not ma.is_masked(v.data()[0][1])
+    assert not ma.is_masked(v.data()[1][0])
+    assert ma.is_masked(v.data()[1][1])
+
+    v = Variable(tree=['filter', [
+        test_matrix, {'comparison': '>=', 'comparator': 3}
+    ]])
+
+    assert not ma.is_masked(v.data()[0][0])
+    assert not ma.is_masked(v.data()[0][1])
+    assert ma.is_masked(v.data()[1][0])
+    assert ma.is_masked(v.data()[1][1])
+
+    v = Variable(tree=['filter', [
+        test_matrix, {'comparison': '<', 'comparator': 3}
+    ]])
+
+    assert ma.is_masked(v.data()[0][0])
+    assert ma.is_masked(v.data()[0][1])
+    assert not ma.is_masked(v.data()[1][0])
+    assert not ma.is_masked(v.data()[1][1])
+
+    v = Variable(tree=['filter', [
+        test_matrix, {'comparison': '<=', 'comparator': 3}
+    ]])
+
+    assert ma.is_masked(v.data()[0][0])
+    assert ma.is_masked(v.data()[0][1])
+    assert ma.is_masked(v.data()[1][0])
+    assert not ma.is_masked(v.data()[1][1])
+
+    v = Variable(tree=['filter', [
+        test_matrix, {'comparison': '==', 'comparator': 3}
+    ]])
+
+    assert not ma.is_masked(v.data()[0][0])
+    assert not ma.is_masked(v.data()[0][1])
+    assert ma.is_masked(v.data()[1][0])
+    assert not ma.is_masked(v.data()[1][1])

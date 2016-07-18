@@ -1,5 +1,6 @@
 .idea/*
 .cache
+.coverage
 *.pyc
 *.swp
 *.sqlite

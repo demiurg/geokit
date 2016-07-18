@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import numpy as np
+import numpy.ma as ma
 
 from django.db import models
 from django.contrib.postgres.fields import ArrayField, DateRangeField, JSONField
@@ -47,6 +48,37 @@ def TemporalMeanOperator(val):
     return mean_vals.reshape(len(mean_vals), 1)
 
 
+def SpatialFilterOperator():
+    pass
+
+
+def TemporalFilterOperator():
+    pass
+
+
+def ValueFilterOperator(val, filter_):
+    '''
+    Filter format:
+    `{
+        'comparison': '<',
+        'comparator': 5
+    }`
+    '''
+    (val,) = resolve_arguments(val)
+    if filter_['comparison'] == '<':
+        masked_val = ma.masked_where(val < filter_['comparator'], val)
+    elif filter_['comparison'] == '<=':
+        masked_val = ma.masked_where(val <= filter_['comparator'], val)
+    elif filter_['comparison'] == '==':
+        masked_val = ma.masked_where(val == filter_['comparator'], val)
+    elif filter_['comparison'] == '>=':
+        masked_val = ma.masked_where(val >= filter_['comparator'], val)
+    elif filter_['comparison'] == '>':
+        masked_val = ma.masked_where(val > filter_['comparator'], val)
+
+    return masked_val
+
+
 def JoinOperator(left, right, field):
     '''
     Serialization format:
@@ -83,6 +115,10 @@ operator_table = {
 
     'smean': SpatialMeanOperator,
     'tmean': TemporalMeanOperator,
+
+    'filter': ValueFilterOperator,
+    'sfilter': SpatialFilterOperator,
+    'tfilter': TemporalFilterOperator,
 
     'join': JoinOperator,
 }
