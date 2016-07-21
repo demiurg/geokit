@@ -18,7 +18,7 @@
   "scripts": {
     "test": "mocha --compilers js:babel-core/register --recursive",
     "test:watch": "npm run test -- --watch",
-    "build": "babel variables/static/js/sieve.jsx --out-file variables/static/js/sieve.js"
+    "build": "babel variables/static/js/*.jsx --out-file variables/static/js/sieve.js"
   },
   "repository": {
     "type": "git",

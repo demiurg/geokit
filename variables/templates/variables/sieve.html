@@ -66,8 +66,8 @@ sieve_props = {initialData: {
   {% if variable.temporal_domain %}temporal_domain: {start: new Date("{{ variable.temporal_domain.lower }}"), end: new Date("{{ variable.temporal_domain.upper }}")},{% endif %}
   filters: {{ filters|safe }},
   id: {{ variable.pk }},
-  title: "{{ variable.name }}",
-  variable_tree: "{{ variable.variable_tree }}"
+  name: "{{ variable.name }}",
+  tree: "{{ variable.tree }}"
 }};
 {% endif %}
 
@@ -80,6 +80,7 @@ document.addEventListener('sievedefined', function(e) {
 }, false);
 </script>
 
+<script type="text/javascript" src="{% static 'js/Components.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/Actions.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/sieve.js' %}"></script>
 

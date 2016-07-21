@@ -1,13 +1,25 @@
 'use strict';
 
 var REQUEST_LAYERS = 'REQUEST_LAYERS';
+var RECEIVE_LAYERS = 'RECEIVE_LAYERS';
+
+var REQUEST_TABLES = 'REQUEST_TABLES';
+var RECEIVE_TABLES = 'RECEIVE_TABLES';
+
+var RECEIVE_VARIABLES = 'RECEIVE_VARIABLES';
+var REQUEST_VARIABLES = 'REQUEST_VARIABLES';
+
+var UPDATE_METADATA = 'UPDATE_METADATA';
+var UPDATE_TREE = 'UPDATE_TREE';
+
+
 function requestLayers() {
   return {
     type: REQUEST_LAYERS
   }
 }
 
-var RECEIVE_LAYERS = 'RECEIVE_LAYERS';
+
 function receiveLayers(json){
   return {
     type: RECEIVE_LAYERS,
@@ -36,7 +48,6 @@ function fetchLayers(){
 
 function layers(state={
   name: 'Layers',
-  tovar: (name, field) => `layers__${name}__${field}`,
   isFetching: false,
   didInvalidate: false,
   items: []
@@ -59,15 +70,12 @@ function layers(state={
   }
 }
 
-
-var REQUEST_TABLES = 'REQUEST_TABLES';
 function requestTables() {
   return {
     type: REQUEST_TABLES
   }
 }
 
-var RECEIVE_TABLES = 'RECEIVE_TABLES';
 function receiveTables(json){
   return {
     type: RECEIVE_TABLES,
@@ -96,7 +104,6 @@ function fetchTables(){
 
 function tables(state={
   name: 'Tables',
-  tovar: (name, field) => `tables__${name}__${field}`,
   isFetching: false,
   didInvalidate: false,
   items: []
@@ -119,15 +126,12 @@ function tables(state={
   }
 }
 
-
-var REQUEST_VARIABLES = 'REQUEST_VARIABLES';
 function requestVariables() {
   return {
     type: REQUEST_VARIABLES
   }
 }
 
-var RECEIVE_VARIABLES = 'RECEIVE_VARIABLES';
 function receiveVariables(json){
   return {
     type: RECEIVE_VARIABLES,
@@ -154,9 +158,9 @@ function fetchVariables(){
   };
 }
 
+
 function variables(state={
   name: 'Variables',
-  tovar: (name, field) => `variables__${name}__${field}`,
   isFetching: false,
   didInvalidate: false,
   items: []
@@ -180,27 +184,3 @@ function variables(state={
 }
 
 
-var UPDATE_METADATA = 'UPDATE_METADATA';
-function updateMetadata(metadata) {
-  return {
-    type: UPDATE_METADATA,
-    metadata
-  };
-}
-
-var UPDATE_VARIABLE_TEXT = 'UPDATE_VARIABLE_TEXT';
-function updateVariableText(text) {
-  return {
-    type: UPDATE_VARIABLE_TEXT,
-    text
-  };
-}
-
-var INSERT_TOKEN = 'INSERT_TOKEN';
-function insertToken(token, position){
-  return {
-    type: INSERT_TOKEN,
-    token,
-    position
-  };
-}
