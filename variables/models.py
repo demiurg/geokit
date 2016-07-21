@@ -81,7 +81,31 @@ class Variable(models.Model):
         pass
 
     def TemporalFilterOperator(self, val, filter_):
-        pass
+        '''
+        Filter format:
+        `{
+            'date_ranges': [{'start': datetime.date(2000,1,1), 'end': datetime.date(2005,5,1)}, {...}],
+            'filter_type': 'inclusive'
+        }`
+        '''
+        (val,) = self.resolve_arguments(val)
+        mask = np.full(val.shape, False, dtype=bool)
+
+        for i, date in enumerate(self.temporal_domain):
+            for date_range in filter_['date_ranges']:
+                in_range = date_range['start'] <= date <= date_range['end']
+
+                if filter_['filter_type'] == 'inclusive' and not in_range:
+                    mask[:,i] = True
+                elif filter_['filter_type'] == 'exclusive' and in_range:
+                    mask[:,i] = True
+
+        if hasattr(val, 'mask'):
+            val.mask = np.bitwise_or(val.mask, mask)
+            return val
+        else:
+            return ma.masked_array(val, mask=mask)
+
 
     def ValueFilterOperator(self, val, filter_):
         '''
@@ -92,18 +116,27 @@ class Variable(models.Model):
         }`
         '''
         (val,) = self.resolve_arguments(val)
-        if filter_['comparison'] == '<':
-            masked_val = ma.masked_where(val < filter_['comparator'], val)
-        elif filter_['comparison'] == '<=':
-            masked_val = ma.masked_where(val <= filter_['comparator'], val)
-        elif filter_['comparison'] == '==':
-            masked_val = ma.masked_where(val == filter_['comparator'], val)
-        elif filter_['comparison'] == '>=':
-            masked_val = ma.masked_where(val >= filter_['comparator'], val)
-        elif filter_['comparison'] == '>':
-            masked_val = ma.masked_where(val > filter_['comparator'], val)
+        if hasattr(val, 'mask'):
+            data = val.data
+        else:
+            data = val
 
-        return masked_val
+        if filter_['comparison'] == '<':
+            mask = data < filter_['comparator']
+        elif filter_['comparison'] == '<=':
+            mask = data <= filter_['comparator']
+        elif filter_['comparison'] == '==':
+            mask = data == filter_['comparator']
+        elif filter_['comparison'] == '>=':
+            mask = data >= filter_['comparator']
+        elif filter_['comparison'] == '>':
+            mask = data > filter_['comparator']
+
+        if hasattr(val, 'mask'):
+            val.mask = np.bitwise_or(val.mask, mask)
+            return val
+        else:
+            return ma.masked_array(val, mask=mask)
 
     def JoinOperator(self, left, right, field):
         '''

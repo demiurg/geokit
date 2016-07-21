@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 import numpy as np
 import numpy.ma as ma
@@ -105,43 +107,39 @@ def test_value_filter_operator():
         test_matrix, {'comparison': '>', 'comparator': 3}
     ]])
 
-    assert not ma.is_masked(v.data()[0][0])
-    assert not ma.is_masked(v.data()[0][1])
-    assert not ma.is_masked(v.data()[1][0])
-    assert ma.is_masked(v.data()[1][1])
+    np.testing.assert_array_equal(v.data().mask, [[False, False], [False, True]])
 
     v = Variable(tree=['filter', [
         test_matrix, {'comparison': '>=', 'comparator': 3}
     ]])
 
-    assert not ma.is_masked(v.data()[0][0])
-    assert not ma.is_masked(v.data()[0][1])
-    assert ma.is_masked(v.data()[1][0])
-    assert ma.is_masked(v.data()[1][1])
+    np.testing.assert_array_equal(v.data().mask, [[False, False], [True, True]])
 
     v = Variable(tree=['filter', [
         test_matrix, {'comparison': '<', 'comparator': 3}
     ]])
 
-    assert ma.is_masked(v.data()[0][0])
-    assert ma.is_masked(v.data()[0][1])
-    assert not ma.is_masked(v.data()[1][0])
-    assert not ma.is_masked(v.data()[1][1])
+    np.testing.assert_array_equal(v.data().mask, [[True, True], [False, False]])
 
     v = Variable(tree=['filter', [
         test_matrix, {'comparison': '<=', 'comparator': 3}
     ]])
 
-    assert ma.is_masked(v.data()[0][0])
-    assert ma.is_masked(v.data()[0][1])
-    assert ma.is_masked(v.data()[1][0])
-    assert not ma.is_masked(v.data()[1][1])
+    np.testing.assert_array_equal(v.data().mask, [[True, True], [True, False]])
 
     v = Variable(tree=['filter', [
         test_matrix, {'comparison': '==', 'comparator': 3}
     ]])
 
-    assert not ma.is_masked(v.data()[0][0])
-    assert not ma.is_masked(v.data()[0][1])
-    assert ma.is_masked(v.data()[1][0])
-    assert not ma.is_masked(v.data()[1][1])
+    np.testing.assert_array_equal(v.data().mask, [[False, False], [True, False]])
+
+
+def test_temporal_filter_operator():
+    v = Variable(tree=['tfilter', [
+        np.array([[1, 2, 3, 4], [5, 6, 7, 8]]),
+        {'filter_type': 'inclusive', 'date_ranges': [
+            {'start': date(2010, 2, 1), 'end': date(2010, 4, 1)}
+        ]}
+    ]], temporal_domain=[date(2010, 1, 1), date(2010, 2, 1), date(2010, 3, 1), date(2010, 4, 1)])
+
+    np.testing.assert_array_equal(v.data().mask, [[True, False, False, False], [True, False, False, False]])
