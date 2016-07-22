@@ -4,6 +4,9 @@ import pytest
 import numpy as np
 import numpy.ma as ma
 
+from django.contrib.gis.geos import GEOSGeometry
+
+from layers.models import Feature
 from variables.models import Variable
 
 
@@ -132,6 +135,21 @@ def test_value_filter_operator():
     ]])
 
     np.testing.assert_array_equal(v.data().mask, [[False, False], [True, False]])
+
+
+def test_spatial_filter():
+    f1 = Feature()
+    f2 = Feature()
+    f1.geometry = GEOSGeometry('GEOMETRYCOLLECTION(POLYGON(( 12 12, 12 18, 18 18, 18 17, 12 12)))')
+    f2.geometry = GEOSGeometry('GEOMETRYCOLLECTION(POLYGON(( 1 1, 1 2, 2 2, 2 1, 1 1)))')
+    v = Variable(tree=['sfilter', [
+        np.array([[1, 2, 3, 4], [5, 6, 7, 8]]),
+        {'filter_type': 'inclusive', 'containing_geometries': [
+            GEOSGeometry('GEOMETRYCOLLECTION(POLYGON(( 10 10, 10 20, 20 20, 20 15, 10 10 )))')
+        ]}
+    ]], spatial_domain=[f1, f2])
+
+    np.testing.assert_array_equal(v.data().mask, [[False, False, False, False], [True, True, True, True]])
 
 
 def test_temporal_filter_operator():

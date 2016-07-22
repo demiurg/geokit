@@ -77,8 +77,31 @@ class Variable(models.Model):
         mean_vals = np.mean(val, axis=1)
         return mean_vals.reshape(len(mean_vals), 1)
 
-    def SpatialFilterOperator(self):
-        pass
+    def SpatialFilterOperator(self, val, filter_):
+        '''
+        Filter format:
+        `{
+            'containing_geometries': [],
+            'filter_type': 'inclusive'
+        }`
+        '''
+        (val,) = self.resolve_arguments(val)
+        mask = np.full(val.shape, False, dtype=bool)
+
+        for i, feature in enumerate(self.spatial_domain):
+            for geometry in filter_['containing_geometries']:
+                contains = geometry.contains(feature.geometry)
+
+                if filter_['filter_type'] == 'inclusive' and not contains:
+                    mask[i] = True
+                elif filter_['filter_type'] == 'exlcusive' and contains:
+                    mask[i] = True
+
+        if hasattr(val, 'mask'):
+            val.mask = np.bitwise_or(val.mask, mask)
+            return val
+        else:
+            return ma.masked_array(val, mask=mask)
 
     def TemporalFilterOperator(self, val, filter_):
         '''
