@@ -1,3 +1,193 @@
+'use strict';
+
+var REQUEST_LAYERS = 'REQUEST_LAYERS';
+var RECEIVE_LAYERS = 'RECEIVE_LAYERS';
+
+var REQUEST_TABLES = 'REQUEST_TABLES';
+var RECEIVE_TABLES = 'RECEIVE_TABLES';
+
+var RECEIVE_VARIABLES = 'RECEIVE_VARIABLES';
+var REQUEST_VARIABLES = 'REQUEST_VARIABLES';
+
+var UPDATE_METADATA = 'UPDATE_METADATA';
+var UPDATE_TREE = 'UPDATE_TREE';
+
+function requestLayers() {
+  return {
+    type: REQUEST_LAYERS
+  };
+}
+
+function receiveLayers(json) {
+  return {
+    type: RECEIVE_LAYERS,
+    layers: json,
+    receivedAt: Date.now()
+  };
+}
+
+function fetchLayers() {
+  return function (dispatch) {
+    dispatch(requestLayers());
+
+    return $.ajax({
+      url: '/api/layers',
+      dataType: 'json',
+      cache: 'false',
+      success: function success(data) {
+        dispatch(receiveLayers(data));
+      },
+      error: function error(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }
+    });
+  };
+}
+
+function layers() {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+    name: 'Layers',
+    isFetching: false,
+    didInvalidate: false,
+    items: []
+  } : arguments[0];
+  var action = arguments[1];
+
+  switch (action.type) {
+    case REQUEST_LAYERS:
+      return Object.assign({}, state, {
+        isFetching: true,
+        didInvalidate: false
+      });
+    case RECEIVE_LAYERS:
+      return Object.assign({}, state, {
+        isFetching: false,
+        didInvalidate: false,
+        items: action.layers,
+        lastUpdate: action.receivedAt
+      });
+    default:
+      return state;
+  }
+}
+
+function requestTables() {
+  return {
+    type: REQUEST_TABLES
+  };
+}
+
+function receiveTables(json) {
+  return {
+    type: RECEIVE_TABLES,
+    tables: json,
+    receivedAt: Date.now()
+  };
+}
+
+function fetchTables() {
+  return function (dispatch) {
+    dispatch(requestTables());
+
+    return $.ajax({
+      url: '/api/tables',
+      dataType: 'json',
+      cache: 'false',
+      success: function success(data) {
+        dispatch(receiveTables(data));
+      },
+      error: function error(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }
+    });
+  };
+}
+
+function tables() {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+    name: 'Tables',
+    isFetching: false,
+    didInvalidate: false,
+    items: []
+  } : arguments[0];
+  var action = arguments[1];
+
+  switch (action.type) {
+    case REQUEST_TABLES:
+      return Object.assign({}, state, {
+        isFetching: true,
+        didInvalidate: false
+      });
+    case RECEIVE_TABLES:
+      return Object.assign({}, state, {
+        isFetching: false,
+        didInvalidate: false,
+        items: action.tables,
+        lastUpdate: action.receivedAt
+      });
+    default:
+      return state;
+  }
+}
+
+function requestVariables() {
+  return {
+    type: REQUEST_VARIABLES
+  };
+}
+
+function receiveVariables(json) {
+  return {
+    type: RECEIVE_VARIABLES,
+    variables: json,
+    receivedAt: Date.now()
+  };
+}
+
+function fetchVariables() {
+  return function (dispatch) {
+    dispatch(requestVariables());
+
+    return $.ajax({
+      url: '/api/variables',
+      dataType: 'json',
+      cache: 'false',
+      success: function success(data) {
+        dispatch(receiveVariables(data));
+      },
+      error: function error(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }
+    });
+  };
+}
+
+function variables() {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+    name: 'Variables',
+    isFetching: false,
+    didInvalidate: false,
+    items: []
+  } : arguments[0];
+  var action = arguments[1];
+
+  switch (action.type) {
+    case REQUEST_VARIABLES:
+      return Object.assign({}, state, {
+        isFetching: true,
+        didInvalidate: false
+      });
+    case RECEIVE_VARIABLES:
+      return Object.assign({}, state, {
+        isFetching: false,
+        didInvalidate: false,
+        items: action.variables,
+        lastUpdate: action.receivedAt
+      });
+    default:
+      return state;
+  }
+}
 "use strict";
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
@@ -928,53 +1118,43 @@ var Aggregate = function (_React$Component13) {
 }(React.Component);
 "use strict";
 
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var Table = ReactBootstrap.Table;
-var Panel = ReactBootstrap.Panel;
-var ButtonGroup = ReactBootstrap.ButtonGroup;
-var ButtonToolbar = ReactBootstrap.ButtonToolbar;
-var ButtonInput = ReactBootstrap.ButtonInput;
-var Button = ReactBootstrap.Button;
-var Row = ReactBootstrap.Row;
-var Col = ReactBootstrap.Col;
-var Alert = ReactBootstrap.Alert;
-var Input = ReactBootstrap.Input;
-var OverlayTrigger = ReactBootstrap.OverlayTrigger;
-var Tooltip = ReactBootstrap.Tooltip;
-var Tabs = ReactBootstrap.Tabs;
-var Tab = ReactBootstrap.Tab;
-var DropdownButton = ReactBootstrap.DropdownButton;
-var MenuItem = ReactBootstrap.MenuItem;
-var Modal = ReactBootstrap.Modal;
-
-/* trying to be cute but not parsing:\
-const {
-  Table, Panel, ButtonGroup, ButtonToolbar, ButtonInput, Button, Row, Col, Alert
-  Input, OverlayTrigger, Tooltip, Tabs, Tab, DropdownButton, MenuItem
-} = ReactBootstrap;
-*/
+var _ReactBootstrap = ReactBootstrap;
+var Table = _ReactBootstrap.Table;
+var Panel = _ReactBootstrap.Panel;
+var ButtonGroup = _ReactBootstrap.ButtonGroup;
+var ButtonToolbar = _ReactBootstrap.ButtonToolbar;
+var ButtonInput = _ReactBootstrap.ButtonInput;
+var Button = _ReactBootstrap.Button;
+var Row = _ReactBootstrap.Row;
+var Col = _ReactBootstrap.Col;
+var Alert = _ReactBootstrap.Alert;
+var Input = _ReactBootstrap.Input;
+var OverlayTrigger = _ReactBootstrap.OverlayTrigger;
+var Tooltip = _ReactBootstrap.Tooltip;
+var Tabs = _ReactBootstrap.Tabs;
+var Tab = _ReactBootstrap.Tab;
+var DropdownButton = _ReactBootstrap.DropdownButton;
+var MenuItem = _ReactBootstrap.MenuItem;
+var Modal = _ReactBootstrap.Modal;
+var FieldGroup = _ReactBootstrap.FieldGroup;
+var FormControl = _ReactBootstrap.FormControl;
+var ControlLabel = _ReactBootstrap.ControlLabel;
+var FormGroup = _ReactBootstrap.FormGroup;
 
 /* app */
 
 var initialState = Object.assign({
   title: "",
   description: "",
-  variableText: "",
-  filters: [],
   spatialDomain: null,
   temporalDomain: { start: null, end: null },
-  aggregateDimension: "NA",
-  aggregateMethod: null,
-
-  errors: {},
-  position: 0
+  errors: {}
 }, sieve_props.initialData);
 
 function sieveApp() {
@@ -1015,8 +1195,8 @@ var mapStateToProps = function mapStateToProps(state) {
   return Object.assign({}, state, {
     metadata: { title: state.title, description: state.description },
     tree: state.variableText,
-    variables: [state.layers, state.variables, state.tables],
     input_variables: [],
+    variables: state.variables,
     layers: state.layers,
     tables: state.tables
   });
@@ -1087,94 +1267,61 @@ var VariableButtonGroup = function (_React$Component) {
     var _this2 = this;
 
     var join = null;
-    if (this.props.tables.items.length && this.props.layers.items.length) {
-      join = React.createElement(
-        JoinZard,
-        this.props,
-        "Join"
-      );
-    }
     return React.createElement(
-      "div",
-      { className: "pull-right" },
-      join,
-      React.createElement(
-        ButtonGroup,
-        null,
-        this.props.variables.map(function (things, i) {
-          return React.createElement(DropdownComponent, {
-            things: things,
-            onclick: function onclick(token) {
-              _this2.props.dispatch(insertToken(token));
-            },
-            key: i
-          });
-        })
-      )
+      ButtonGroup,
+      null,
+      this.props.variables.map(function (things, i) {
+        return React.createElement(DropdownComponent, {
+          things: things,
+          onclick: function onclick(token) {
+            _this2.props.dispatch(insertToken(token));
+          },
+          key: i
+        });
+      })
     );
   };
 
   return VariableButtonGroup;
 }(React.Component);
 
-var JoinForm = function (_React$Component2) {
-  _inherits(JoinForm, _React$Component2);
+var AddInputModal = function (_React$Component2) {
+  _inherits(AddInputModal, _React$Component2);
 
-  function JoinForm() {
-    _classCallCheck(this, JoinForm);
+  function AddInputModal(props) {
+    _classCallCheck(this, AddInputModal);
 
-    return _possibleConstructorReturn(this, _React$Component2.apply(this, arguments));
+    var _this3 = _possibleConstructorReturn(this, _React$Component2.call(this, props));
+
+    _this3.state = { showModal: false };
+    return _this3;
   }
 
-  JoinForm.prototype.render = function render() {
-    var _props = this.props;
-    var _props$fields = _props.fields;
-    var left = _props$fields.left;
-    var right = _props$fields.right;
-    var column = _props$fields.column;
-    var resetForm = _props.resetForm;
-    var handleSubmit = _props.handleSubmit;
-    var submitting = _props.submitting;
-
-    return React.createElement(
-      "form",
-      { onSubmit: handleSubmit },
-      React.createElement(
-        "div",
-        null,
-        React.createElement("input", _extends({ type: "text", placeholder: "Left variable" }, left))
-      )
-    );
-  };
-
-  return JoinForm;
-}(React.Component);
-
-var JoinZard = function (_React$Component3) {
-  _inherits(JoinZard, _React$Component3);
-
-  function JoinZard(props) {
-    _classCallCheck(this, JoinZard);
-
-    var _this4 = _possibleConstructorReturn(this, _React$Component3.call(this, props));
-
-    _this4.state = { showModal: false };
-    return _this4;
-  }
-
-  JoinZard.prototype.close = function close() {
+  AddInputModal.prototype.close = function close() {
     this.setState({ showModal: false });
   };
 
-  JoinZard.prototype.open = function open() {
+  AddInputModal.prototype.open = function open() {
     this.setState({ showModal: true });
   };
 
-  JoinZard.prototype.use = function use() {
+  AddInputModal.prototype.use = function use() {
     this.setState({ showModal: false });
   };
 
-  JoinZard.prototype.render = function render() {
+  AddInputModal.prototype.render = function render() {
+    var i2o = function i2o(item, i) {
+      if (item.field_names) {
+        return item.field_names.map(function (field, j) {
+          return React.createElement(
+            "option",
+            { value: "" + j + i },
+            field + "/" + item.name
+          );
+        });
+      }
+    };
+
     return React.createElement(
       "div",
       { className: "pull-right" },
@@ -1184,7 +1331,7 @@ var JoinZard = function (_React$Component3) {
           bsStyle: "primary",
           onClick: this.open.bind(this)
         },
-        "Join"
+        this.props.children ? this.props.children : "Add Input"
       ),
       React.createElement(
         Modal,
@@ -1195,16 +1342,43 @@ var JoinZard = function (_React$Component3) {
           React.createElement(
             Modal.Title,
             null,
-            "Modal heading"
+            "Adding Input Variable"
           )
         ),
         React.createElement(
           Modal.Body,
           null,
           React.createElement(
-            "h4",
+            "form",
             null,
-            "Text in a modal"
+            React.createElement(
+              FormGroup,
+              { controlId: "leftSelect" },
+              React.createElement(
+                ControlLabel,
+                null,
+                "Left"
+              ),
+              React.createElement(
+                FormControl,
+                { componentClass: "select", placeholder: "select" },
+                this.props.layers.items.map(i2o).concat(this.props.tables.items.map(i2o))
+              )
+            ),
+            React.createElement(
+              FormGroup,
+              { controlId: "rightSelect" },
+              React.createElement(
+                ControlLabel,
+                null,
+                "Right"
+              ),
+              React.createElement(
+                FormControl,
+                { componentClass: "select", placeholder: "select" },
+                this.props.layers.items.map(i2o).concat(this.props.tables.items.map(i2o))
+              )
+            )
           )
         ),
         React.createElement(
@@ -1225,16 +1399,16 @@ var JoinZard = function (_React$Component3) {
     );
   };
 
-  return JoinZard;
+  return AddInputModal;
 }(React.Component);
 
-var SieveComponent = function (_React$Component4) {
-  _inherits(SieveComponent, _React$Component4);
+var SieveComponent = function (_React$Component3) {
+  _inherits(SieveComponent, _React$Component3);
 
   function SieveComponent(props) {
     _classCallCheck(this, SieveComponent);
 
-    return _possibleConstructorReturn(this, _React$Component4.call(this, props));
+    return _possibleConstructorReturn(this, _React$Component3.call(this, props));
   }
 
   SieveComponent.prototype.validateVariable = function validateVariable() {
@@ -1260,7 +1434,7 @@ var SieveComponent = function (_React$Component4) {
   };
 
   SieveComponent.prototype.saveVariable = function saveVariable(e) {
-    var _this6 = this;
+    var _this5 = this;
 
     e.stopPropagation();
     var validationResponse = this.validateVariable();
@@ -1282,7 +1456,7 @@ var SieveComponent = function (_React$Component4) {
           if (200 <= xhr.status && xhr.status < 300) {
             window.location.href = window.redirect_after_save;
           } else {
-            _this6.setState({ errors: { server: xhr.response } });
+            _this5.setState({ errors: { server: xhr.response } });
           }
         }
       };
@@ -1295,8 +1469,6 @@ var SieveComponent = function (_React$Component4) {
   };
 
   SieveComponent.prototype.render = function render() {
-    var _this7 = this;
-
     var self = this;
 
     return React.createElement(
@@ -1317,106 +1489,66 @@ var SieveComponent = function (_React$Component4) {
       ),
       React.createElement(
         Panel,
-        null,
+        { header: React.createElement(
+            "h3",
+            null,
+            "Input Variables"
+          ) },
+        this.props.input_variables.length ? JSON.stringify(this.props.input_variables.length) : "Add some!",
         React.createElement(
-          Row,
-          null,
-          React.createElement(
-            Col,
-            { sm: 4 },
-            React.createElement(
-              "h3",
-              null,
-              "Configure Start Date"
-            ),
-            React.createElement(TemporalConfigurator, {
-              date: this.props.temporalDomain.start,
-              dateUpdated: this.updateStartDate.bind(this),
-              ref: "dateStart" })
-          ),
-          React.createElement(
-            Col,
-            { sm: 4 },
-            React.createElement(
-              "h3",
-              null,
-              "Configure End Date"
-            ),
-            React.createElement(TemporalConfigurator, {
-              date: this.props.temporalDomain.end,
-              dateUpdated: this.updateEndDate.bind(this),
-              ref: "dateEnd" })
-          ),
-          React.createElement(
-            Col,
-            { sm: 4 },
-            React.createElement(
-              "h3",
-              null,
-              "Interval Duration"
-            ),
-            React.createElement(IntervalConfigurator, this.props)
-          )
+          AddInputModal,
+          this.props,
+          "Add Input"
         )
       ),
       React.createElement(
         Panel,
         null,
         React.createElement(
-          ButtonToolbar,
-          null,
+          "div",
+          { className: "pull-right" },
           React.createElement(
-            ButtonGroup,
+            ButtonToolbar,
             null,
             React.createElement(
-              Button,
-              { onClick: function onClick() {
-                  positionedInsert('*');
-                } },
-              "x"
-            ),
-            React.createElement(
-              Button,
-              { onClick: function onClick() {
-                  positionedInsert('/');
-                } },
-              "/"
-            ),
-            React.createElement(
-              Button,
-              { onClick: function onClick() {
-                  positionedInsert('+');
-                } },
-              "+"
-            ),
-            React.createElement(
-              Button,
-              { onClick: function onClick() {
-                  positionedInsert('-');
-                } },
-              "-"
+              ButtonGroup,
+              null,
+              React.createElement(
+                Button,
+                { onClick: function onClick() {
+                    addOperator('*');
+                  } },
+                "x"
+              ),
+              React.createElement(
+                Button,
+                { onClick: function onClick() {
+                    addOperator('/');
+                  } },
+                "/"
+              ),
+              React.createElement(
+                Button,
+                { onClick: function onClick() {
+                    addOperator('+');
+                  } },
+                "+"
+              ),
+              React.createElement(
+                Button,
+                { onClick: function onClick() {
+                    addOperator('-');
+                  } },
+                "-"
+              )
             )
-          ),
-          React.createElement(VariableButtonGroup, this.props)
+          )
         ),
-        React.createElement(Input, { type: "textarea",
-          style: { resize: "vertical" },
-          ref: "variableEditor",
-          value: this.props.variableText,
-          onChange: function onChange(e) {
-            return _this7.props.onVariableTextChange(e.target.value);
-          }
-        }),
-        React.createElement(Filter, { filters: this.props.filters, updateFilters: this.updateFilters.bind(this) })
-      ),
-      React.createElement(
-        Panel,
-        null,
-        React.createElement(Aggregate, {
-          dimension: this.props.aggregateDimension,
-          method: this.props.aggregateMethod,
-          updateAggregateDimension: this.updateAggregateDimension.bind(this),
-          updateAggregateMethod: this.updateAggregateMethod.bind(this) })
+        React.createElement(
+          "p",
+          null,
+          JSON.stringify(this.props.tree)
+        )
       ),
       React.createElement(
         ButtonInput,

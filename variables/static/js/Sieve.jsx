@@ -1,42 +1,17 @@
-var Table = ReactBootstrap.Table;
-var Panel = ReactBootstrap.Panel;
-var ButtonGroup = ReactBootstrap.ButtonGroup;
-var ButtonToolbar = ReactBootstrap.ButtonToolbar;
-var ButtonInput = ReactBootstrap.ButtonInput;
-var Button = ReactBootstrap.Button;
-var Row = ReactBootstrap.Row;
-var Col = ReactBootstrap.Col;
-var Alert = ReactBootstrap.Alert;
-var Input = ReactBootstrap.Input;
-var OverlayTrigger = ReactBootstrap.OverlayTrigger;
-var Tooltip = ReactBootstrap.Tooltip;
-var Tabs = ReactBootstrap.Tabs;
-var Tab = ReactBootstrap.Tab;
-var DropdownButton = ReactBootstrap.DropdownButton;
-var MenuItem = ReactBootstrap.MenuItem;
-var Modal = ReactBootstrap.Modal;
-
-/* trying to be cute but not parsing:\
 const {
-  Table, Panel, ButtonGroup, ButtonToolbar, ButtonInput, Button, Row, Col, Alert
-  Input, OverlayTrigger, Tooltip, Tabs, Tab, DropdownButton, MenuItem
+  Table, Panel, ButtonGroup, ButtonToolbar, ButtonInput, Button, Row, Col,
+  Alert, Input, OverlayTrigger, Tooltip, Tabs, Tab, DropdownButton, MenuItem,
+  Modal, FieldGroup, FormControl, ControlLabel, FormGroup
 } = ReactBootstrap;
-*/
 
 /* app */
 
 var initialState = Object.assign({
   title: "",
   description: "",
-  variableText: "",
-  filters: [],
   spatialDomain: null,
   temporalDomain: {start: null, end: null},
-  aggregateDimension: "NA",
-  aggregateMethod: null,
-
-  errors: {},
-  position: 0
+  errors: {}
 }, sieve_props.initialData);
 
 
@@ -75,12 +50,8 @@ var mapStateToProps = (state) => {
   return Object.assign({}, state, {
     metadata: {title: state.title, description: state.description},
     tree: state.variableText,
-    variables: [
-      state.layers,
-      state.variables,
-      state.tables
-    ],
     input_variables: [],
+    variables: state.variables,
     layers: state.layers,
     tables: state.tables
   });
@@ -132,11 +103,7 @@ class VariableButtonGroup extends React.Component {
 
   render(){
     var join = null;
-    if (this.props.tables.items.length && this.props.layers.items.length){
-      join = <JoinZard {...this.props} >Join</JoinZard>;
-    }
-    return <div className='pull-right'>
-      {join}
+    return (
       <ButtonGroup>
       {
         this.props.variables.map((things, i) =>
@@ -148,28 +115,13 @@ class VariableButtonGroup extends React.Component {
         )
       }
       </ButtonGroup>
-    </div>;
-  }
-}
-
-
-class JoinForm extends React.Component {
-  render() {
-    var {
-      fields: {left, right, column},
-      resetForm, handleSubmit, submitting
-    } = this.props;
-    return (
-      <form onSubmit={handleSubmit}>
-        <div>
-          <input type="text" placeholder="Left variable" {...left} />
-        </div>
-      </form>
     );
   }
 }
 
-class JoinZard extends React.Component {
+
+
+class AddInputModal extends React.Component {
   constructor(props){
     super(props);
     this.state = { showModal: false};
@@ -188,21 +140,48 @@ class JoinZard extends React.Component {
   }
 
   render(){
+    var i2o = (item, i) => {
+      if (item.field_names){
+        return item.field_names.map((field, j) => (
+          <option value={`${j}${i}`}>
+            {`${field}/${item.name}`}
+          </option>
+        ))
+      }
+    };
+
     return (
       <div className='pull-right'>
         <Button
           bsStyle="primary"
           onClick={this.open.bind(this)}
         >
-          Join
+          {this.props.children ? this.props.children : "Add Input"}
         </Button>
 
         <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
           <Modal.Header closeButton>
-            <Modal.Title>Modal heading</Modal.Title>
+            <Modal.Title>Adding Input Variable</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <h4>Text in a modal</h4>
+            <form>
+              <FormGroup controlId="leftSelect">
+                <ControlLabel>Left</ControlLabel>
+                <FormControl componentClass="select" placeholder="select">
+                  {
+                    this.props.layers.items.map(i2o).concat(this.props.tables.items.map(i2o))
+                  }
+                </FormControl>
+              </FormGroup>
+              <FormGroup controlId="rightSelect">
+                <ControlLabel>Right</ControlLabel>
+                <FormControl componentClass="select" placeholder="select">
+                  {
+                    this.props.layers.items.map(i2o).concat(this.props.tables.items.map(i2o))
+                  }
+                </FormControl>
+              </FormGroup>
+            </form>
           </Modal.Body>
           <Modal.Footer>
            <Button onClick={this.use.bind(this)}>Use Variable</Button>
@@ -287,58 +266,29 @@ class SieveComponent extends React.Component {
             updateMetadata={this.props.onMetadataChange.bind(this)}
             title={this.props.metadata.title} description={this.props.metadata.description} />
         </Panel>
-        <Panel>
-          <Row>
-            <Col sm={4}>
-              <h3>Configure Start Date</h3>
-              <TemporalConfigurator
-                date={this.props.temporalDomain.start}
-                dateUpdated={this.updateStartDate.bind(this)}
-                ref="dateStart" />
-            </Col>
-            <Col sm={4}>
-              <h3>Configure End Date</h3>
-              <TemporalConfigurator
-                date={this.props.temporalDomain.end}
-                dateUpdated={this.updateEndDate.bind(this)}
-                ref="dateEnd" />
-            </Col>
-            <Col sm={4}>
-              <h3>Interval Duration</h3>
-              <IntervalConfigurator {...this.props} />
-            </Col>
-          </Row>
+
+        <Panel header={<h3>Input Variables</h3>}>
+          {this.props.input_variables.length ? JSON.stringify(this.props.input_variables.length) : "Add some!"}
+          <AddInputModal {...this.props} >Add Input</AddInputModal>
         </Panel>
-        {/*<Panel>
-          <Col>
-            <SpatialConfigurator {...this.props} />
-          </Col>
-        </Panel>*/}
+
         <Panel>
-          <ButtonToolbar>
-            <ButtonGroup>
-              <Button onClick={() => {positionedInsert('*')}}>x</Button>
-              <Button onClick={() => {positionedInsert('/')}}>/</Button>
-              <Button onClick={() => {positionedInsert('+')}}>+</Button>
-              <Button onClick={() => {positionedInsert('-')}}>-</Button>
-            </ButtonGroup>
-            <VariableButtonGroup {...this.props} />
-          </ButtonToolbar>
-          <Input type="textarea"
-            style={{resize: "vertical"}}
-            ref="variableEditor"
-            value={this.props.variableText}
-            onChange={(e)=> this.props.onVariableTextChange(e.target.value) }
-          />
-          <Filter filters={this.props.filters} updateFilters={this.updateFilters.bind(this)} />
+          <div className='pull-right'>
+            <ButtonToolbar>
+              <ButtonGroup>
+                <Button onClick={() => {addOperator('*')}}>x</Button>
+                <Button onClick={() => {addOperator('/')}}>/</Button>
+                <Button onClick={() => {addOperator('+')}}>+</Button>
+                <Button onClick={() => {addOperator('-')}}>-</Button>
+              </ButtonGroup>
+            </ButtonToolbar>
+          </div>
+          <p>
+            {JSON.stringify(this.props.tree)}
+          </p>
+
         </Panel>
-        <Panel>
-          <Aggregate
-            dimension={this.props.aggregateDimension}
-            method={this.props.aggregateMethod}
-            updateAggregateDimension={this.updateAggregateDimension.bind(this)}
-            updateAggregateMethod={this.updateAggregateMethod.bind(this)} />
-        </Panel>
+
         <ButtonInput bsSize="large" onClick={this.saveVariable.bind(this)}>Save</ButtonInput>
       </div>
     );
