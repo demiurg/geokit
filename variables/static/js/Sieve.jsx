@@ -11,7 +11,9 @@ var initialState = Object.assign({
   description: "",
   spatialDomain: null,
   temporalDomain: {start: null, end: null},
-  errors: {}
+  errors: {},
+  tree: {},
+  input_variables: []
 }, sieve_props.initialData);
 
 
@@ -48,12 +50,7 @@ function sieveApp(state=initialState, action){
 
 var mapStateToProps = (state) => {
   return Object.assign({}, state, {
-    metadata: {title: state.title, description: state.description},
-    tree: state.variableText,
-    input_variables: [],
-    variables: state.variables,
-    layers: state.layers,
-    tables: state.tables
+    metadata: {title: state.title, description: state.description}
   });
 };
 
@@ -132,6 +129,7 @@ class AddInputModal extends React.Component {
   }
 
   open() {
+    console.log($(this.form).serialize());
     this.setState({ showModal: true });
   }
 
@@ -164,12 +162,16 @@ class AddInputModal extends React.Component {
             <Modal.Title>Adding Input Variable</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <form>
+            <form ref={(ref)=>{this.form=ref}}>
               <FormGroup controlId="leftSelect">
                 <ControlLabel>Left</ControlLabel>
                 <FormControl componentClass="select" placeholder="select">
                   {
-                    this.props.layers.items.map(i2o).concat(this.props.tables.items.map(i2o))
+                    this.props.layers.items.map(
+                      i2o
+                    ).concat(
+                      this.props.tables.items.map(i2o)
+                    )
                   }
                 </FormControl>
               </FormGroup>
@@ -177,7 +179,11 @@ class AddInputModal extends React.Component {
                 <ControlLabel>Right</ControlLabel>
                 <FormControl componentClass="select" placeholder="select">
                   {
-                    this.props.layers.items.map(i2o).concat(this.props.tables.items.map(i2o))
+                    this.props.layers.items.map(
+                      i2o
+                    ).concat(
+                      this.props.tables.items.map(i2o)
+                    )
                   }
                 </FormControl>
               </FormGroup>

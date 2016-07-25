@@ -64,7 +64,6 @@ var sieve_props = {};
 sieve_props = {initialData: {
   {% if variable.description %}description: "{{ variable.description }}",{% endif %}
   {% if variable.temporal_domain %}temporal_domain: {start: new Date("{{ variable.temporal_domain.lower }}"), end: new Date("{{ variable.temporal_domain.upper }}")},{% endif %}
-  filters: {{ filters|safe }},
   id: {{ variable.pk }},
   name: "{{ variable.name }}",
   tree: "{{ variable.tree }}"
