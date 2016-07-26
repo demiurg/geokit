@@ -1662,11 +1662,15 @@ var AddBinOpModal = function (_React$Component4) {
                 this.props.input_variables.map(function (v, i) {
                   return React.createElement(
                     "option",
-                    { value: i },
+                    { key: i, value: JSON.stringify(v) },
                     var2description(v)
                   );
                 }),
-                "                "
+                React.createElement(
+                  "option",
+                  { key: this.props.input_variables.length, value: JSON.stringify(this.props.tree) },
+                  "tree"
+                )
               )
             )
           )

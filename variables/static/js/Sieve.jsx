@@ -317,14 +317,17 @@ class AddBinOpModal extends React.Component {
                   { this.props.input_variables.map((v, i) => (
                     <option value={i}>{var2description(v)}</option>
                   )) }
+                  <option key={this.props.input_variables.length} value={JSON.stringify(this.props.tree)}>tree</option>
                 </FormControl>
               </FormGroup>
               <FormGroup controlId="rightSelect">
                 <ControlLabel>Right operand</ControlLabel>
                 <FormControl componentClass="select" placeholder="select" name="right">
                   { this.props.input_variables.map((v, i) => (
-                    <option value={i}>{var2description(v)}</option>
-                  )) }                </FormControl>
+                    <option key={i} value={JSON.stringify(v)}>{var2description(v)}</option>
+                  )) }
+                  <option key={this.props.input_variables.length} value={JSON.stringify(this.props.tree)}>tree</option>
+                </FormControl>
               </FormGroup>
             </form>
           </Modal.Body>
