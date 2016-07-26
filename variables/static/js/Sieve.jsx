@@ -125,8 +125,154 @@ class VariableButtonGroup extends React.Component {
 }
 
 
+class AddDataInputModal extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = { showModal: false};
+  }
 
-class AddInputModal extends React.Component {
+  close() {
+    this.setState({ showModal: false });
+  }
+
+  open() {
+    this.setState({ showModal: true });
+  }
+
+  use() {
+    var form = $(this.form).serializeArray();
+    var variable = [
+      'join',
+      [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]
+    ];
+    this.props.onAddInputVariable(variable);
+    this.setState({ showModal: false });
+  }
+
+  render(){
+    var i2o = (type, item, i) => { return (item, i) => {
+      if (item.field_names){
+        return item.field_names.map((field, j) => (
+          <option value={
+            `{"type": "${type}", "id": "${item.name}", "field": "${field}"}`
+          }>
+            {`${field}/${item.name}`}
+          </option>
+        ))
+      }
+    }};
+
+    return (
+      <div className='pull-right'>
+        <Button
+          bsStyle="primary"
+          onClick={this.open.bind(this)}
+        >
+          {this.props.children ? this.props.children : "Add Input"}
+        </Button>
+
+        <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Adding Input Variable</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <form ref={(ref)=>{this.form=ref}}>
+              <FormGroup controlId="leftSelect">
+                <ControlLabel>Left</ControlLabel>
+                <FormControl componentClass="select" placeholder="select" name="left">
+                  {
+                    this.props.layers.items.map(
+                      i2o('Layer')
+                    ).concat(
+                      this.props.tables.items.map(i2o('Table'))
+                    )
+                  }
+                </FormControl>
+              </FormGroup>
+              <FormGroup controlId="rightSelect">
+                <ControlLabel>Right</ControlLabel>
+                <FormControl componentClass="select" placeholder="select" name="right">
+                  {
+                    this.props.layers.items.map(
+                      i2o('Layer')
+                    ).concat(
+                      this.props.tables.items.map(i2o('Table'))
+                    )
+                  }
+                </FormControl>
+              </FormGroup>
+            </form>
+          </Modal.Body>
+          <Modal.Footer>
+           <Button onClick={this.use.bind(this)}>Use Variable</Button>
+           <Button onClick={this.close.bind(this)}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+      </div>
+    );
+  }
+}
+
+
+class AddNumberInputModal extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = { showModal: false};
+  }
+
+  close() {
+    this.setState({ showModal: false });
+  }
+
+  open() {
+    this.setState({ showModal: true });
+  }
+
+  use() {
+    var form = $(this.form).serializeArray();
+    var variable = [
+      'expression',
+      [JSON.parse(form[0]['value'])]
+    ];
+    this.props.onAddInputVariable(variable);
+    this.setState({ showModal: false });
+  }
+
+  render(){
+    return (
+      <div className='pull-right'>
+        <Button
+          bsStyle="primary"
+          onClick={this.open.bind(this)}
+        >
+          {this.props.children ? this.props.children : "Add Input"}
+        </Button>
+
+        <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Adding Input Variable</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <form ref={(ref)=>{this.form=ref}}>
+              <FormGroup controlId="numericText">
+                <ControlLabel>Expression</ControlLabel>
+                <FormControl componentClass="textarea" placeholder="type number, like '1'" name="numericText">
+                </FormControl>
+              </FormGroup>
+            </form>
+          </Modal.Body>
+          <Modal.Footer>
+           <Button onClick={this.use.bind(this)}>Use Variable</Button>
+           <Button onClick={this.close.bind(this)}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+      </div>
+    );
+  }
+}
+
+
+class AddBinOpModal extends React.Component {
   constructor(props){
     super(props);
     this.state = { showModal: false};
@@ -300,8 +446,8 @@ class SieveComponent extends React.Component {
               return [
                 <dt>{variable[0]}</dt>,
                 <dd>{
-                  variable[1][0].type + ' ' + variable[1][0].id + ' and ' +
-                  variable[1][1].type + ' ' + variable[1][1].id + ' on ' +
+                  variable[1][0].type + ' <i>' + variable[1][0].id + '</i> and ' +
+                  variable[1][1].type + ' <i>' + variable[1][1].id + '</i> on ' +
                   variable[1][0].field +   ' = ' + variable[1][1].field
                 }</dd>
               ];
@@ -309,7 +455,8 @@ class SieveComponent extends React.Component {
             }</dl>
             : "Add some!"
           }
-          <AddInputModal {...this.props} >Add Input</AddInputModal>
+          <AddDataInputModal {...this.props} >Add Data Input</AddDataInputModal>
+          <AddNumberInputModal {...this.props} >Add Numeric Input</AddNumberInputModal>
         </Panel>
 
         <Panel>

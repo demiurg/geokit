@@ -1327,11 +1327,11 @@ var VariableButtonGroup = function (_React$Component) {
   return VariableButtonGroup;
 }(React.Component);
 
-var AddInputModal = function (_React$Component2) {
-  _inherits(AddInputModal, _React$Component2);
+var AddDataInputModal = function (_React$Component2) {
+  _inherits(AddDataInputModal, _React$Component2);
 
-  function AddInputModal(props) {
-    _classCallCheck(this, AddInputModal);
+  function AddDataInputModal(props) {
+    _classCallCheck(this, AddDataInputModal);
 
     var _this3 = _possibleConstructorReturn(this, _React$Component2.call(this, props));
 
@@ -1339,22 +1339,22 @@ var AddInputModal = function (_React$Component2) {
     return _this3;
   }
 
-  AddInputModal.prototype.close = function close() {
+  AddDataInputModal.prototype.close = function close() {
     this.setState({ showModal: false });
   };
 
-  AddInputModal.prototype.open = function open() {
+  AddDataInputModal.prototype.open = function open() {
     this.setState({ showModal: true });
   };
 
-  AddInputModal.prototype.use = function use() {
+  AddDataInputModal.prototype.use = function use() {
     var form = $(this.form).serializeArray();
     var variable = ['join', [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]];
     this.props.onAddInputVariable(variable);
     this.setState({ showModal: false });
   };
 
-  AddInputModal.prototype.render = function render() {
+  AddDataInputModal.prototype.render = function render() {
     var _this4 = this;
 
     var i2o = function i2o(type, item, i) {
@@ -1450,16 +1450,236 @@ var AddInputModal = function (_React$Component2) {
     );
   };
 
-  return AddInputModal;
+  return AddDataInputModal;
 }(React.Component);
 
-var SieveComponent = function (_React$Component3) {
-  _inherits(SieveComponent, _React$Component3);
+var AddNumberInputModal = function (_React$Component3) {
+  _inherits(AddNumberInputModal, _React$Component3);
+
+  function AddNumberInputModal(props) {
+    _classCallCheck(this, AddNumberInputModal);
+
+    var _this5 = _possibleConstructorReturn(this, _React$Component3.call(this, props));
+
+    _this5.state = { showModal: false };
+    return _this5;
+  }
+
+  AddNumberInputModal.prototype.close = function close() {
+    this.setState({ showModal: false });
+  };
+
+  AddNumberInputModal.prototype.open = function open() {
+    this.setState({ showModal: true });
+  };
+
+  AddNumberInputModal.prototype.use = function use() {
+    var form = $(this.form).serializeArray();
+    var variable = ['expression', [JSON.parse(form[0]['value'])]];
+    this.props.onAddInputVariable(variable);
+    this.setState({ showModal: false });
+  };
+
+  AddNumberInputModal.prototype.render = function render() {
+    var _this6 = this;
+
+    return React.createElement(
+      "div",
+      { className: "pull-right" },
+      React.createElement(
+        Button,
+        {
+          bsStyle: "primary",
+          onClick: this.open.bind(this)
+        },
+        this.props.children ? this.props.children : "Add Input"
+      ),
+      React.createElement(
+        Modal,
+        { show: this.state.showModal, onHide: this.close.bind(this) },
+        React.createElement(
+          Modal.Header,
+          { closeButton: true },
+          React.createElement(
+            Modal.Title,
+            null,
+            "Adding Input Variable"
+          )
+        ),
+        React.createElement(
+          Modal.Body,
+          null,
+          React.createElement(
+            "form",
+            { ref: function ref(_ref3) {
+                _this6.form = _ref3;
+              } },
+            React.createElement(
+              FormGroup,
+              { controlId: "numericText" },
+              React.createElement(
+                ControlLabel,
+                null,
+                "Expression"
+              ),
+              React.createElement(FormControl, { componentClass: "textarea", placeholder: "type number, like '1'", name: "numericText" })
+            )
+          )
+        ),
+        React.createElement(
+          Modal.Footer,
+          null,
+          React.createElement(
+            Button,
+            { onClick: this.use.bind(this) },
+            "Use Variable"
+          ),
+          React.createElement(
+            Button,
+            { onClick: this.close.bind(this) },
+            "Close"
+          )
+        )
+      )
+    );
+  };
+
+  return AddNumberInputModal;
+}(React.Component);
+
+var AddBinOpModal = function (_React$Component4) {
+  _inherits(AddBinOpModal, _React$Component4);
+
+  function AddBinOpModal(props) {
+    _classCallCheck(this, AddBinOpModal);
+
+    var _this7 = _possibleConstructorReturn(this, _React$Component4.call(this, props));
+
+    _this7.state = { showModal: false };
+    return _this7;
+  }
+
+  AddBinOpModal.prototype.close = function close() {
+    this.setState({ showModal: false });
+  };
+
+  AddBinOpModal.prototype.open = function open() {
+    this.setState({ showModal: true });
+  };
+
+  AddBinOpModal.prototype.use = function use() {
+    var form = $(this.form).serializeArray();
+    var variable = ['join', [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]];
+    this.props.onAddInputVariable(variable);
+    this.setState({ showModal: false });
+  };
+
+  AddBinOpModal.prototype.render = function render() {
+    var _this8 = this;
+
+    var i2o = function i2o(type, item, i) {
+      return function (item, i) {
+        if (item.field_names) {
+          return item.field_names.map(function (field, j) {
+            return React.createElement(
+              "option",
+              { value: "{\"type\": \"" + type + "\", \"id\": \"" + item.name + "\", \"field\": \"" + field + "\"}" },
+              field + "/" + item.name
+            );
+          });
+        }
+      };
+    };
+
+    return React.createElement(
+      "div",
+      { className: "pull-right" },
+      React.createElement(
+        Button,
+        {
+          bsStyle: "primary",
+          onClick: this.open.bind(this)
+        },
+        this.props.children ? this.props.children : "Add Input"
+      ),
+      React.createElement(
+        Modal,
+        { show: this.state.showModal, onHide: this.close.bind(this) },
+        React.createElement(
+          Modal.Header,
+          { closeButton: true },
+          React.createElement(
+            Modal.Title,
+            null,
+            "Adding Input Variable"
+          )
+        ),
+        React.createElement(
+          Modal.Body,
+          null,
+          React.createElement(
+            "form",
+            { ref: function ref(_ref4) {
+                _this8.form = _ref4;
+              } },
+            React.createElement(
+              FormGroup,
+              { controlId: "leftSelect" },
+              React.createElement(
+                ControlLabel,
+                null,
+                "Left"
+              ),
+              React.createElement(
+                FormControl,
+                { componentClass: "select", placeholder: "select", name: "left" },
+                this.props.layers.items.map(i2o('Layer')).concat(this.props.tables.items.map(i2o('Table')))
+              )
+            ),
+            React.createElement(
+              FormGroup,
+              { controlId: "rightSelect" },
+              React.createElement(
+                ControlLabel,
+                null,
+                "Right"
+              ),
+              React.createElement(
+                FormControl,
+                { componentClass: "select", placeholder: "select", name: "right" },
+                this.props.layers.items.map(i2o('Layer')).concat(this.props.tables.items.map(i2o('Table')))
+              )
+            )
+          )
+        ),
+        React.createElement(
+          Modal.Footer,
+          null,
+          React.createElement(
+            Button,
+            { onClick: this.use.bind(this) },
+            "Use Variable"
+          ),
+          React.createElement(
+            Button,
+            { onClick: this.close.bind(this) },
+            "Close"
+          )
+        )
+      )
+    );
+  };
+
+  return AddBinOpModal;
+}(React.Component);
+
+var SieveComponent = function (_React$Component5) {
+  _inherits(SieveComponent, _React$Component5);
 
   function SieveComponent(props) {
     _classCallCheck(this, SieveComponent);
 
-    return _possibleConstructorReturn(this, _React$Component3.call(this, props));
+    return _possibleConstructorReturn(this, _React$Component5.call(this, props));
   }
 
   SieveComponent.prototype.validateVariable = function validateVariable() {
@@ -1485,7 +1705,7 @@ var SieveComponent = function (_React$Component3) {
   };
 
   SieveComponent.prototype.saveVariable = function saveVariable(e) {
-    var _this6 = this;
+    var _this10 = this;
 
     e.stopPropagation();
     var validationResponse = this.validateVariable();
@@ -1507,7 +1727,7 @@ var SieveComponent = function (_React$Component3) {
           if (200 <= xhr.status && xhr.status < 300) {
             window.location.href = window.redirect_after_save;
           } else {
-            _this6.setState({ errors: { server: xhr.response } });
+            _this10.setState({ errors: { server: xhr.response } });
           }
         }
       };
@@ -1560,14 +1780,19 @@ var SieveComponent = function (_React$Component3) {
             ), React.createElement(
               "dd",
               null,
-              variable[1][0].type + ' ' + variable[1][0].id + ' and ' + variable[1][1].type + ' ' + variable[1][1].id + ' on ' + variable[1][0].field + ' = ' + variable[1][1].field
+              variable[1][0].type + ' <i>' + variable[1][0].id + '</i> and ' + variable[1][1].type + ' <i>' + variable[1][1].id + '</i> on ' + variable[1][0].field + ' = ' + variable[1][1].field
             )];
           })
         ) : "Add some!",
         React.createElement(
-          AddInputModal,
+          AddDataInputModal,
           this.props,
-          "Add Input"
+          "Add Data Input"
+        ),
+        React.createElement(
+          AddNumberInputModal,
+          this.props,
+          "Add Numeric Input"
         )
       ),
       React.createElement(
