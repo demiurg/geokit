@@ -163,14 +163,11 @@ class AddDataInputModal extends React.Component {
     }};
 
     return (
-      <div className='pull-right'>
-        <Button
-          bsStyle="primary"
-          onClick={this.open.bind(this)}
-        >
-          {this.props.children ? this.props.children : "Add Input"}
-        </Button>
-
+      <Button
+        bsStyle="primary"
+        onClick={this.open.bind(this)}
+      >
+        {this.props.children ? this.props.children : "Add Input"}
         <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
           <Modal.Header closeButton>
             <Modal.Title>Adding Input Variable</Modal.Title>
@@ -208,7 +205,7 @@ class AddDataInputModal extends React.Component {
            <Button onClick={this.close.bind(this)}>Close</Button>
           </Modal.Footer>
         </Modal>
-      </div>
+      </Button>
     );
   }
 }
@@ -240,13 +237,11 @@ class AddNumberInputModal extends React.Component {
 
   render(){
     return (
-      <div className='pull-right'>
-        <Button
-          bsStyle="primary"
-          onClick={this.open.bind(this)}
-        >
-          {this.props.children ? this.props.children : "Add Input"}
-        </Button>
+      <Button
+        bsStyle="primary"
+        onClick={this.open.bind(this)}
+      >
+        {this.props.children ? this.props.children : "Add Input"}
 
         <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
           <Modal.Header closeButton>
@@ -266,7 +261,7 @@ class AddNumberInputModal extends React.Component {
            <Button onClick={this.close.bind(this)}>Close</Button>
           </Modal.Footer>
         </Modal>
-      </div>
+      </Button>
     );
   }
 }
@@ -310,14 +305,11 @@ class AddBinOpModal extends React.Component {
     }};
 
     return (
-      <div className='pull-right'>
-        <Button
-          bsStyle="primary"
-          onClick={this.open.bind(this)}
-        >
-          {this.props.children ? this.props.children : "Add Input"}
-        </Button>
-
+      <Button
+        bsStyle="primary"
+        onClick={this.open.bind(this)}
+      >
+        {this.props.children ? this.props.children : "Add Input"}
         <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
           <Modal.Header closeButton>
             <Modal.Title>Adding Input Variable</Modal.Title>
@@ -355,7 +347,7 @@ class AddBinOpModal extends React.Component {
            <Button onClick={this.close.bind(this)}>Close</Button>
           </Modal.Footer>
         </Modal>
-      </div>
+      </Button>
     );
   }
 }
@@ -424,9 +416,19 @@ class SieveComponent extends React.Component {
   render() {
     var self = this;
 
-
-    function var2desc(v){
-      return v.variable
+    function v2dd(variable){
+      switch(variable[0]){
+        case 'join':
+          return (
+            variable[1][0].type + ' ' + variable[1][0].id + ' and ' +
+            variable[1][1].type + ' ' + variable[1][1].id + ' on ' +
+            variable[1][0].field + ' = ' + variable[1][1].field
+          );
+        case 'expression':
+          return variable[1][0];
+        default:
+          return JSON.stringify(v);
+      }
     }
 
     return (
@@ -445,18 +447,20 @@ class SieveComponent extends React.Component {
             this.props.input_variables.map((variable)=>{
               return [
                 <dt>{variable[0]}</dt>,
-                <dd>{
-                  variable[1][0].type + ' <i>' + variable[1][0].id + '</i> and ' +
-                  variable[1][1].type + ' <i>' + variable[1][1].id + '</i> on ' +
-                  variable[1][0].field +   ' = ' + variable[1][1].field
-                }</dd>
+                <dd>{v2dd(variable)}</dd>
               ];
             })
             }</dl>
             : "Add some!"
           }
-          <AddDataInputModal {...this.props} >Add Data Input</AddDataInputModal>
-          <AddNumberInputModal {...this.props} >Add Numeric Input</AddNumberInputModal>
+          <div className='pull-right'>
+            <ButtonToolbar>
+              <ButtonGroup>
+                <AddDataInputModal {...this.props} >Add Data Input</AddDataInputModal>
+                <AddNumberInputModal {...this.props} >Add Numeric Input</AddNumberInputModal>
+              </ButtonGroup>
+            </ButtonToolbar>
+          </div>
         </Panel>
 
         <Panel>

@@ -1372,16 +1372,12 @@ var AddDataInputModal = function (_React$Component2) {
     };
 
     return React.createElement(
-      "div",
-      { className: "pull-right" },
-      React.createElement(
-        Button,
-        {
-          bsStyle: "primary",
-          onClick: this.open.bind(this)
-        },
-        this.props.children ? this.props.children : "Add Input"
-      ),
+      Button,
+      {
+        bsStyle: "primary",
+        onClick: this.open.bind(this)
+      },
+      this.props.children ? this.props.children : "Add Input",
       React.createElement(
         Modal,
         { show: this.state.showModal, onHide: this.close.bind(this) },
@@ -1484,16 +1480,12 @@ var AddNumberInputModal = function (_React$Component3) {
     var _this6 = this;
 
     return React.createElement(
-      "div",
-      { className: "pull-right" },
-      React.createElement(
-        Button,
-        {
-          bsStyle: "primary",
-          onClick: this.open.bind(this)
-        },
-        this.props.children ? this.props.children : "Add Input"
-      ),
+      Button,
+      {
+        bsStyle: "primary",
+        onClick: this.open.bind(this)
+      },
+      this.props.children ? this.props.children : "Add Input",
       React.createElement(
         Modal,
         { show: this.state.showModal, onHide: this.close.bind(this) },
@@ -1592,16 +1584,12 @@ var AddBinOpModal = function (_React$Component4) {
     };
 
     return React.createElement(
-      "div",
-      { className: "pull-right" },
-      React.createElement(
-        Button,
-        {
-          bsStyle: "primary",
-          onClick: this.open.bind(this)
-        },
-        this.props.children ? this.props.children : "Add Input"
-      ),
+      Button,
+      {
+        bsStyle: "primary",
+        onClick: this.open.bind(this)
+      },
+      this.props.children ? this.props.children : "Add Input",
       React.createElement(
         Modal,
         { show: this.state.showModal, onHide: this.close.bind(this) },
@@ -1742,8 +1730,15 @@ var SieveComponent = function (_React$Component5) {
   SieveComponent.prototype.render = function render() {
     var self = this;
 
-    function var2desc(v) {
-      return v.variable;
+    function v2dd(variable) {
+      switch (variable[0]) {
+        case 'join':
+          return variable[1][0].type + ' ' + variable[1][0].id + ' and ' + variable[1][1].type + ' ' + variable[1][1].id + ' on ' + variable[1][0].field + ' = ' + variable[1][1].field;
+        case 'expression':
+          return variable[1][0];
+        default:
+          return JSON.stringify(v);
+      }
     }
 
     return React.createElement(
@@ -1780,19 +1775,31 @@ var SieveComponent = function (_React$Component5) {
             ), React.createElement(
               "dd",
               null,
-              variable[1][0].type + ' <i>' + variable[1][0].id + '</i> and ' + variable[1][1].type + ' <i>' + variable[1][1].id + '</i> on ' + variable[1][0].field + ' = ' + variable[1][1].field
+              v2dd(variable)
             )];
           })
         ) : "Add some!",
         React.createElement(
-          AddDataInputModal,
-          this.props,
-          "Add Data Input"
-        ),
-        React.createElement(
-          AddNumberInputModal,
-          this.props,
-          "Add Numeric Input"
+          "div",
+          { className: "pull-right" },
+          React.createElement(
+            ButtonToolbar,
+            null,
+            React.createElement(
+              ButtonGroup,
+              null,
+              React.createElement(
+                AddDataInputModal,
+                this.props,
+                "Add Data Input"
+              ),
+              React.createElement(
+                AddNumberInputModal,
+                this.props,
+                "Add Numeric Input"
+              )
+            )
+          )
         )
       ),
       React.createElement(
