@@ -1,9 +1,16 @@
 import logging
+import pytest
 
 from django.test import utils
 from django.db import connection
+from django.core.management import call_command
 
 from geokit.tests.util import make_tenant
+
+try:
+    import geokit.settings.local
+except Exception as e:
+    raise type(e)("error importing required local settings file:", *e.args)
 
 logger = logging.getLogger('tests.util')
 
@@ -19,3 +26,10 @@ def pytest_configure(config):
         utils.setup_test_environment()
         connection.creation.create_test_db(keepdb=True)
         make_tenant()
+        call_command("loaddata", "geokit_tables_fixtures.json")
+        call_command("loaddata", "layers_fixtures.json")
+
+
+@pytest.fixture
+def set_schema():
+    connection.set_schema('test')

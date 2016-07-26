@@ -94,7 +94,7 @@ def compare_to_date(date, comparison, benchmark):
     return False
 
 
-def join_layer_and_table(layer_name, layer_field, table_name, table_field):
+def join_layer_and_table(layer_name, layer_field, table_name, table_field, variable):
     query = """
         SELECT t1.id, t1.properties, t2.id, t2.properties, t2.date FROM """ +\
         connection.schema_name + """.layers_feature t1
@@ -111,7 +111,7 @@ def join_layer_and_table(layer_name, layer_field, table_name, table_field):
     for (f_id, _, _, t_props, t_date) in cursor.fetchall():
         if f_id not in results:
             results[f_id] = SortedDict()
-        results[f_id][t_date] = t_props
+        results[f_id][t_date] = t_props[variable]
 
     if results == {}:  # did you find any data?
         return [[]], None, None
