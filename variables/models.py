@@ -19,6 +19,14 @@ class Variable(models.Model):
     tree = JSONField()
     units = models.CharField(max_length=100)
 
+    def __init__(self, *args, **kwargs):
+        super(Variable, self).__init__(*args, **kwargs)
+
+        self.current_dimensions = {
+            'spatial_domain': self.spatial_domain,
+            'temporal_domain': self.temporal_domain
+        }
+
     def data(self):
         operator = self.resolve_operator(self.tree[0])
         return operator(*self.tree[1])
@@ -33,6 +41,7 @@ class Variable(models.Model):
             '*': self.IterativeOperator(np.multiply),
             '/': self.IterativeOperator(np.divide),
 
+            'mean': self.MeanOperator,
             'smean': self.SpatialMeanOperator,
             'tmean': self.TemporalMeanOperator,
 
@@ -65,16 +74,28 @@ class Variable(models.Model):
             return func(left_val, right_val)
         return f
 
+    def MeanOperator(self, left, right):
+        left_val, right_val = self.resolve_arguments(left, right)
+
+        if left_val.shape != right_val.shape:
+            raise ValueError("Arguments must be of equal dimensions")
+
+        return np.mean([left_val, right_val], axis=0)
+
     def SpatialMeanOperator(self, val):
         (val,) = self.resolve_arguments(val)
 
         mean_vals = np.mean(val, axis=0)
+
+        self.current_dimensions['spatial_domain'] = []
         return mean_vals.reshape(1, len(mean_vals))
 
     def TemporalMeanOperator(self, val):
         (val,) = self.resolve_arguments(val)
 
         mean_vals = np.mean(val, axis=1)
+
+        self.current_dimensions['temporal_domain'] = []
         return mean_vals.reshape(len(mean_vals), 1)
 
     def SpatialFilterOperator(self, val, filter_):
@@ -86,22 +107,20 @@ class Variable(models.Model):
         }`
         '''
         (val,) = self.resolve_arguments(val)
-        mask = np.full(val.shape, False, dtype=bool)
 
-        for i, feature in enumerate(self.spatial_domain):
+        indices_to_delete = set()
+        for i, feature in enumerate(self.current_dimensions['spatial_domain']):
             for geometry in filter_['containing_geometries']:
                 contains = geometry.contains(feature.geometry)
 
                 if filter_['filter_type'] == 'inclusive' and not contains:
-                    mask[i] = True
+                    indices_to_delete.add(i)
                 elif filter_['filter_type'] == 'exlcusive' and contains:
-                    mask[i] = True
+                    indices_to_delete.add(i)
 
-        if hasattr(val, 'mask'):
-            val.mask = np.bitwise_or(val.mask, mask)
-            return val
-        else:
-            return ma.masked_array(val, mask=mask)
+        val = np.delete(val, list(indices_to_delete), 0)
+        self.current_dimensions['spatial_domain'] = list(np.delete(self.current_dimensions['spatial_domain'], list(indices_to_delete)))
+        return val
 
     def TemporalFilterOperator(self, val, filter_):
         '''
@@ -112,23 +131,20 @@ class Variable(models.Model):
         }`
         '''
         (val,) = self.resolve_arguments(val)
-        mask = np.full(val.shape, False, dtype=bool)
 
-        for i, date in enumerate(self.temporal_domain):
+        indices_to_delete = set()
+        for i, date in enumerate(self.current_dimensions['temporal_domain']):
             for date_range in filter_['date_ranges']:
                 in_range = date_range['start'] <= date <= date_range['end']
 
                 if filter_['filter_type'] == 'inclusive' and not in_range:
-                    mask[:,i] = True
+                    indices_to_delete.add(i)
                 elif filter_['filter_type'] == 'exclusive' and in_range:
-                    mask[:,i] = True
+                    indices_to_delete.add(i)
 
-        if hasattr(val, 'mask'):
-            val.mask = np.bitwise_or(val.mask, mask)
-            return val
-        else:
-            return ma.masked_array(val, mask=mask)
-
+        val = np.delete(val, list(indices_to_delete), 1)
+        self.current_dimensions['temporal_domain'] = list(np.delete(self.current_dimensions['temporal_domain'], list(indices_to_delete)))
+        return val
 
     def ValueFilterOperator(self, val, filter_):
         '''

@@ -48,6 +48,15 @@ def test_arithmetic_operators_matrices():
         v.data()
 
 
+def test_mean_operator():
+    v = Variable(tree=['mean', [
+        np.array([[1, 2], [3, 4]]), np.array([[5, 6], [7, 8]])
+    ]])
+
+    np.testing.assert_array_equal(v.data(), np.array([[3, 4], [5, 6]]))
+
+
+
 def test_spatial_mean_operator():
     v = Variable(tree=['smean',
         [np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])]
@@ -149,7 +158,7 @@ def test_spatial_filter():
         ]}
     ]], spatial_domain=[f1, f2])
 
-    np.testing.assert_array_equal(v.data().mask, [[False, False, False, False], [True, True, True, True]])
+    np.testing.assert_array_equal(v.data(), [[1, 2, 3, 4]])
 
 
 def test_temporal_filter_operator():
@@ -160,4 +169,4 @@ def test_temporal_filter_operator():
         ]}
     ]], temporal_domain=[date(2010, 1, 1), date(2010, 2, 1), date(2010, 3, 1), date(2010, 4, 1)])
 
-    np.testing.assert_array_equal(v.data().mask, [[True, False, False, False], [True, False, False, False]])
+    np.testing.assert_array_equal(v.data(), [[2, 3, 4], [6, 7, 8]])
