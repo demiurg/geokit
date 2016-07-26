@@ -12,6 +12,9 @@ var REQUEST_VARIABLES = 'REQUEST_VARIABLES';
 var UPDATE_METADATA = 'UPDATE_METADATA';
 var UPDATE_TREE = 'UPDATE_TREE';
 
+var REMOVE_VARIABLE = 'REMOVE_VARIABLE';
+var ADD_VARIABLE = 'ADD_VARIABLE';
+
 function requestLayers() {
   return {
     type: REQUEST_LAYERS
@@ -42,33 +45,6 @@ function fetchLayers() {
       }
     });
   };
-}
-
-function layers() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {
-    name: 'Layers',
-    isFetching: false,
-    didInvalidate: false,
-    items: []
-  } : arguments[0];
-  var action = arguments[1];
-
-  switch (action.type) {
-    case REQUEST_LAYERS:
-      return Object.assign({}, state, {
-        isFetching: true,
-        didInvalidate: false
-      });
-    case RECEIVE_LAYERS:
-      return Object.assign({}, state, {
-        isFetching: false,
-        didInvalidate: false,
-        items: action.layers,
-        lastUpdate: action.receivedAt
-      });
-    default:
-      return state;
-  }
 }
 
 function requestTables() {
@@ -103,33 +79,6 @@ function fetchTables() {
   };
 }
 
-function tables() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {
-    name: 'Tables',
-    isFetching: false,
-    didInvalidate: false,
-    items: []
-  } : arguments[0];
-  var action = arguments[1];
-
-  switch (action.type) {
-    case REQUEST_TABLES:
-      return Object.assign({}, state, {
-        isFetching: true,
-        didInvalidate: false
-      });
-    case RECEIVE_TABLES:
-      return Object.assign({}, state, {
-        isFetching: false,
-        didInvalidate: false,
-        items: action.tables,
-        lastUpdate: action.receivedAt
-      });
-    default:
-      return state;
-  }
-}
-
 function requestVariables() {
   return {
     type: REQUEST_VARIABLES
@@ -162,31 +111,14 @@ function fetchVariables() {
   };
 }
 
-function variables() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {
-    name: 'Variables',
-    isFetching: false,
-    didInvalidate: false,
-    items: []
-  } : arguments[0];
-  var action = arguments[1];
+var nextVariableId = 0;
 
-  switch (action.type) {
-    case REQUEST_VARIABLES:
-      return Object.assign({}, state, {
-        isFetching: true,
-        didInvalidate: false
-      });
-    case RECEIVE_VARIABLES:
-      return Object.assign({}, state, {
-        isFetching: false,
-        didInvalidate: false,
-        items: action.variables,
-        lastUpdate: action.receivedAt
-      });
-    default:
-      return state;
-  }
+function addInputVariable(variabe) {
+  return {
+    type: ADD_VARIABLE,
+    id: nextVariableId++,
+    variable: variable
+  };
 }
 "use strict";
 
@@ -1116,6 +1048,110 @@ var Aggregate = function (_React$Component13) {
 
   return Aggregate;
 }(React.Component);
+'use strict';
+
+function layers() {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+    name: 'Layers',
+    isFetching: false,
+    didInvalidate: false,
+    items: []
+  } : arguments[0];
+  var action = arguments[1];
+
+  switch (action.type) {
+    case REQUEST_LAYERS:
+      return Object.assign({}, state, {
+        isFetching: true,
+        didInvalidate: false
+      });
+    case RECEIVE_LAYERS:
+      return Object.assign({}, state, {
+        isFetching: false,
+        didInvalidate: false,
+        items: action.layers,
+        lastUpdate: action.receivedAt
+      });
+    default:
+      return state;
+  }
+}
+
+function tables() {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+    name: 'Tables',
+    isFetching: false,
+    didInvalidate: false,
+    items: []
+  } : arguments[0];
+  var action = arguments[1];
+
+  switch (action.type) {
+    case REQUEST_TABLES:
+      return Object.assign({}, state, {
+        isFetching: true,
+        didInvalidate: false
+      });
+    case RECEIVE_TABLES:
+      return Object.assign({}, state, {
+        isFetching: false,
+        didInvalidate: false,
+        items: action.tables,
+        lastUpdate: action.receivedAt
+      });
+    default:
+      return state;
+  }
+}
+
+function variables() {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+    name: 'Variables',
+    isFetching: false,
+    didInvalidate: false,
+    items: []
+  } : arguments[0];
+  var action = arguments[1];
+
+  switch (action.type) {
+    case REQUEST_VARIABLES:
+      return Object.assign({}, state, {
+        isFetching: true,
+        didInvalidate: false
+      });
+    case RECEIVE_VARIABLES:
+      return Object.assign({}, state, {
+        isFetching: false,
+        didInvalidate: false,
+        items: action.variables,
+        lastUpdate: action.receivedAt
+      });
+    default:
+      return state;
+  }
+}
+
+function input_variable(state, action) {
+  switch (action.type) {
+    case 'ADD_VARIABLE':
+      return {
+        id: action.id,
+        variable: action.variable
+      };
+    default:
+      return state;
+  }
+}
+
+function input_variables() {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
+  var action = arguments[1];
+
+  switch (action.type) {
+    case ADD_VARIABLE:
+      return [].concat(state, [input_variable(undefined, action)]);
+  }
+}
 "use strict";
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1154,7 +1190,9 @@ var initialState = Object.assign({
   description: "",
   spatialDomain: null,
   temporalDomain: { start: null, end: null },
-  errors: {}
+  errors: {},
+  tree: {},
+  input_variables: []
 }, sieve_props.initialData);
 
 function sieveApp() {
@@ -1184,7 +1222,11 @@ function sieveApp() {
       });
     case UPDATE_TREE:
       return Object.assign({}, state, {
-        variableText: action.text
+        tree: action.tree
+      });
+    case ADD_VARIABLE:
+      return Object.assign({}, state, {
+        input_variables: input_variables(state.input_variables, action)
       });
     default:
       return state;
@@ -1193,12 +1235,7 @@ function sieveApp() {
 
 var mapStateToProps = function mapStateToProps(state) {
   return Object.assign({}, state, {
-    metadata: { title: state.title, description: state.description },
-    tree: state.variableText,
-    input_variables: [],
-    variables: state.variables,
-    layers: state.layers,
-    tables: state.tables
+    metadata: { title: state.title, description: state.description }
   });
 };
 
@@ -1206,6 +1243,9 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
   return {
     onMetadataChange: function onMetadataChange(metadata) {
       dispatch(updateMetadata(metadata));
+    },
+    onAddInputVariable: function onAddInputVariable(variable) {
+      dispatch(addInputVariable(variable));
     }
   };
 };
@@ -1306,20 +1346,27 @@ var AddInputModal = function (_React$Component2) {
   };
 
   AddInputModal.prototype.use = function use() {
+    var form = $(this.form).serializeArray();
+    var variable = ['join', [form[0]['value'], form[1]['value']]];
+    this.prop;
     this.setState({ showModal: false });
   };
 
   AddInputModal.prototype.render = function render() {
-    var i2o = function i2o(item, i) {
-      if (item.field_names) {
-        return item.field_names.map(function (field, j) {
-          return React.createElement(
-            "option",
-            { value: "" + j + i },
-            field + "/" + item.name
-          );
-        });
-      }
+    var _this4 = this;
+
+    var i2o = function i2o(type, item, i) {
+      return function (item, i) {
+        if (item.field_names) {
+          return item.field_names.map(function (field, j) {
+            return React.createElement(
+              "option",
+              { value: "{type: \"" + type + "\", field: \"" + field + "\", name: \"" + item.name + "\"}" },
+              field + "/" + item.name
+            );
+          });
+        }
+      };
     };
 
     return React.createElement(
@@ -1350,7 +1397,9 @@ var AddInputModal = function (_React$Component2) {
           null,
           React.createElement(
             "form",
-            null,
+            { ref: function ref(_ref2) {
+                _this4.form = _ref2;
+              } },
             React.createElement(
               FormGroup,
               { controlId: "leftSelect" },
@@ -1361,8 +1410,8 @@ var AddInputModal = function (_React$Component2) {
               ),
               React.createElement(
                 FormControl,
-                { componentClass: "select", placeholder: "select" },
-                this.props.layers.items.map(i2o).concat(this.props.tables.items.map(i2o))
+                { componentClass: "select", placeholder: "select", name: "left" },
+                this.props.layers.items.map(i2o('layer')).concat(this.props.tables.items.map(i2o('table')))
               )
             ),
             React.createElement(
@@ -1375,8 +1424,8 @@ var AddInputModal = function (_React$Component2) {
               ),
               React.createElement(
                 FormControl,
-                { componentClass: "select", placeholder: "select" },
-                this.props.layers.items.map(i2o).concat(this.props.tables.items.map(i2o))
+                { componentClass: "select", placeholder: "select", name: "right" },
+                this.props.layers.items.map(i2o('layer')).concat(this.props.tables.items.map(i2o('table')))
               )
             )
           )
@@ -1434,7 +1483,7 @@ var SieveComponent = function (_React$Component3) {
   };
 
   SieveComponent.prototype.saveVariable = function saveVariable(e) {
-    var _this5 = this;
+    var _this6 = this;
 
     e.stopPropagation();
     var validationResponse = this.validateVariable();
@@ -1456,7 +1505,7 @@ var SieveComponent = function (_React$Component3) {
           if (200 <= xhr.status && xhr.status < 300) {
             window.location.href = window.redirect_after_save;
           } else {
-            _this5.setState({ errors: { server: xhr.response } });
+            _this6.setState({ errors: { server: xhr.response } });
           }
         }
       };

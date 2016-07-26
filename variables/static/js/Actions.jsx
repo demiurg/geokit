@@ -1,16 +1,19 @@
 'use strict';
 
-var REQUEST_LAYERS = 'REQUEST_LAYERS';
-var RECEIVE_LAYERS = 'RECEIVE_LAYERS';
+const REQUEST_LAYERS = 'REQUEST_LAYERS';
+const RECEIVE_LAYERS = 'RECEIVE_LAYERS';
 
-var REQUEST_TABLES = 'REQUEST_TABLES';
-var RECEIVE_TABLES = 'RECEIVE_TABLES';
+const REQUEST_TABLES = 'REQUEST_TABLES';
+const RECEIVE_TABLES = 'RECEIVE_TABLES';
 
-var RECEIVE_VARIABLES = 'RECEIVE_VARIABLES';
-var REQUEST_VARIABLES = 'REQUEST_VARIABLES';
+const RECEIVE_VARIABLES = 'RECEIVE_VARIABLES';
+const REQUEST_VARIABLES = 'REQUEST_VARIABLES';
 
-var UPDATE_METADATA = 'UPDATE_METADATA';
-var UPDATE_TREE = 'UPDATE_TREE';
+const UPDATE_METADATA = 'UPDATE_METADATA';
+const UPDATE_TREE = 'UPDATE_TREE';
+
+const REMOVE_VARIABLE = 'REMOVE_VARIABLE';
+const ADD_VARIABLE = 'ADD_VARIABLE';
 
 
 function requestLayers() {
@@ -46,30 +49,6 @@ function fetchLayers(){
   };
 }
 
-function layers(state={
-  name: 'Layers',
-  isFetching: false,
-  didInvalidate: false,
-  items: []
-}, action){
-  switch (action.type) {
-    case REQUEST_LAYERS:
-      return Object.assign({}, state, {
-        isFetching: true,
-        didInvalidate: false
-      });
-    case RECEIVE_LAYERS:
-      return Object.assign({}, state, {
-        isFetching: false,
-        didInvalidate: false,
-        items: action.layers,
-        lastUpdate: action.receivedAt
-      });
-    default:
-      return state;
-  }
-}
-
 function requestTables() {
   return {
     type: REQUEST_TABLES
@@ -100,30 +79,6 @@ function fetchTables(){
       }
     });
   };
-}
-
-function tables(state={
-  name: 'Tables',
-  isFetching: false,
-  didInvalidate: false,
-  items: []
-}, action){
-  switch (action.type) {
-    case REQUEST_TABLES:
-      return Object.assign({}, state, {
-        isFetching: true,
-        didInvalidate: false
-      });
-    case RECEIVE_TABLES:
-      return Object.assign({}, state, {
-        isFetching: false,
-        didInvalidate: false,
-        items: action.tables,
-        lastUpdate: action.receivedAt
-      });
-    default:
-      return state;
-  }
 }
 
 function requestVariables() {
@@ -158,29 +113,12 @@ function fetchVariables(){
   };
 }
 
+let nextVariableId = 0;
 
-function variables(state={
-  name: 'Variables',
-  isFetching: false,
-  didInvalidate: false,
-  items: []
-}, action){
-  switch (action.type) {
-    case REQUEST_VARIABLES:
-      return Object.assign({}, state, {
-        isFetching: true,
-        didInvalidate: false
-      });
-    case RECEIVE_VARIABLES:
-      return Object.assign({}, state, {
-        isFetching: false,
-        didInvalidate: false,
-        items: action.variables,
-        lastUpdate: action.receivedAt
-      });
-    default:
-      return state;
+function addInputVariable(variabe){
+  return {
+    type: ADD_VARIABLE,
+    id: nextVariableId++,
+    variable
   }
 }
-
-

@@ -41,12 +41,17 @@ function sieveApp(state=initialState, action){
       });
     case UPDATE_TREE:
       return Object.assign({}, state, {
-        variableText: action.text
+        tree: action.tree
+      });
+    case ADD_VARIABLE:
+      return Object.assign({}, state, {
+        input_variables: input_variables(state.input_variables, action)
       });
     default:
       return state;
   }
 }
+
 
 var mapStateToProps = (state) => {
   return Object.assign({}, state, {
@@ -58,6 +63,9 @@ var mapDispatchToProps = (dispatch) => {
   return {
     onMetadataChange: (metadata) => {
       dispatch(updateMetadata(metadata));
+    },
+    onAddInputVariable: (variable) => {
+      dispatch(addInputVariable(variable));
     }
   };
 };
@@ -88,7 +96,7 @@ DropdownComponent.propTypes = {
     name: React.PropTypes.string.isRequired,
     items: React.PropTypes.array.isRequired
   }).isRequired
-}
+};
 
 class VariableButtonGroup extends React.Component {
   /*static propTypes = {
@@ -129,24 +137,31 @@ class AddInputModal extends React.Component {
   }
 
   open() {
-    console.log($(this.form).serialize());
     this.setState({ showModal: true });
   }
 
   use() {
+    var form = $(this.form).serializeArray();
+    var variable = [
+      'join',
+      [form[0]['value'], form[1]['value']]
+    ];
+    this.prop
     this.setState({ showModal: false });
   }
 
   render(){
-    var i2o = (item, i) => {
+    var i2o = (type, item, i) => { return (item, i) => {
       if (item.field_names){
         return item.field_names.map((field, j) => (
-          <option value={`${j}${i}`}>
+          <option value={
+            `{type: "${type}", field: "${field}", name: "${item.name}"}`
+          }>
             {`${field}/${item.name}`}
           </option>
         ))
       }
-    };
+    }};
 
     return (
       <div className='pull-right'>
@@ -165,24 +180,24 @@ class AddInputModal extends React.Component {
             <form ref={(ref)=>{this.form=ref}}>
               <FormGroup controlId="leftSelect">
                 <ControlLabel>Left</ControlLabel>
-                <FormControl componentClass="select" placeholder="select">
+                <FormControl componentClass="select" placeholder="select" name="left">
                   {
                     this.props.layers.items.map(
-                      i2o
+                      i2o('layer')
                     ).concat(
-                      this.props.tables.items.map(i2o)
+                      this.props.tables.items.map(i2o('table'))
                     )
                   }
                 </FormControl>
               </FormGroup>
               <FormGroup controlId="rightSelect">
                 <ControlLabel>Right</ControlLabel>
-                <FormControl componentClass="select" placeholder="select">
+                <FormControl componentClass="select" placeholder="select" name="right">
                   {
                     this.props.layers.items.map(
-                      i2o
+                      i2o('layer')
                     ).concat(
-                      this.props.tables.items.map(i2o)
+                      this.props.tables.items.map(i2o('table'))
                     )
                   }
                 </FormControl>
@@ -308,7 +323,7 @@ var Sieve = ReactRedux.connect(
 
 
 function sieve(el){
-    var store = Redux.createStore(
+  var store = Redux.createStore(
     sieveApp,
     Redux.applyMiddleware(ReduxThunk.default)
   );
