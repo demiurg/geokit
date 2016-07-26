@@ -43,6 +43,10 @@ function sieveApp(state=initialState, action){
       return Object.assign({}, state, {
         tree: action.tree
       });
+    case ADD_TREE_NODE:
+      return Object.assign({}, state, {
+        tree: tree(state.tree, action)
+      });
     case ADD_VARIABLE:
       return Object.assign({}, state, {
         input_variables: input_variables(state.input_variables, action)
@@ -66,6 +70,9 @@ var mapDispatchToProps = (dispatch) => {
     },
     onAddInputVariable: (variable) => {
       dispatch(addInputVariable(variable));
+    },
+    onAddTreeOp: (op) => {
+      dispatch(addTreeNode(op));
     }
   };
 };
@@ -284,66 +291,45 @@ class AddBinOpModal extends React.Component {
   use() {
     var form = $(this.form).serializeArray();
     var variable = [
-      'join',
+      this.props.op,
       [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]
     ];
-    this.props.onAddInputVariable(variable);
+    this.props.onAddTreeOp(variable);
     this.setState({ showModal: false });
   }
 
   render(){
-    var i2o = (type, item, i) => { return (item, i) => {
-      if (item.field_names){
-        return item.field_names.map((field, j) => (
-          <option value={
-            `{"type": "${type}", "id": "${item.name}", "field": "${field}"}`
-          }>
-            {`${field}/${item.name}`}
-          </option>
-        ))
-      }
-    }};
-
     return (
       <Button
         bsStyle="primary"
         onClick={this.open.bind(this)}
       >
-        {this.props.children ? this.props.children : "Add Input"}
+        {this.props.children ? this.props.children : this.props.op}
         <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
           <Modal.Header closeButton>
-            <Modal.Title>Adding Input Variable</Modal.Title>
+            <Modal.Title>Adding Binary Operation</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <form ref={(ref)=>{this.form=ref}}>
               <FormGroup controlId="leftSelect">
-                <ControlLabel>Left</ControlLabel>
+                <ControlLabel>Left operand</ControlLabel>
                 <FormControl componentClass="select" placeholder="select" name="left">
-                  {
-                    this.props.layers.items.map(
-                      i2o('Layer')
-                    ).concat(
-                      this.props.tables.items.map(i2o('Table'))
-                    )
-                  }
+                  { this.props.input_variables.map((v, i) => (
+                    <option value={i}>{var2description(v)}</option>
+                  )) }
                 </FormControl>
               </FormGroup>
               <FormGroup controlId="rightSelect">
-                <ControlLabel>Right</ControlLabel>
+                <ControlLabel>Right operand</ControlLabel>
                 <FormControl componentClass="select" placeholder="select" name="right">
-                  {
-                    this.props.layers.items.map(
-                      i2o('Layer')
-                    ).concat(
-                      this.props.tables.items.map(i2o('Table'))
-                    )
-                  }
-                </FormControl>
+                  { this.props.input_variables.map((v, i) => (
+                    <option value={i}>{var2description(v)}</option>
+                  )) }                </FormControl>
               </FormGroup>
             </form>
           </Modal.Body>
           <Modal.Footer>
-           <Button onClick={this.use.bind(this)}>Use Variable</Button>
+           <Button onClick={this.use.bind(this)}>Use Operation</Button>
            <Button onClick={this.close.bind(this)}>Close</Button>
           </Modal.Footer>
         </Modal>
@@ -352,6 +338,20 @@ class AddBinOpModal extends React.Component {
   }
 }
 
+function var2description(variable){
+  switch(variable[0]){
+    case 'join':
+      return (
+        variable[1][0].type + ' ' + variable[1][0].id + ' and ' +
+        variable[1][1].type + ' ' + variable[1][1].id + ' on ' +
+        variable[1][0].field + ' = ' + variable[1][1].field
+      );
+    case 'expression':
+      return variable[1][0];
+    default:
+      return JSON.stringify(v);
+  }
+}
 
 class SieveComponent extends React.Component {
   constructor(props){
@@ -416,21 +416,6 @@ class SieveComponent extends React.Component {
   render() {
     var self = this;
 
-    function v2dd(variable){
-      switch(variable[0]){
-        case 'join':
-          return (
-            variable[1][0].type + ' ' + variable[1][0].id + ' and ' +
-            variable[1][1].type + ' ' + variable[1][1].id + ' on ' +
-            variable[1][0].field + ' = ' + variable[1][1].field
-          );
-        case 'expression':
-          return variable[1][0];
-        default:
-          return JSON.stringify(v);
-      }
-    }
-
     return (
       <div className="sieve">
         {this.props.errors.server ? <Alert bsStyle="danger">{this.props.errors.server}</Alert> : null}
@@ -447,7 +432,7 @@ class SieveComponent extends React.Component {
             this.props.input_variables.map((variable)=>{
               return [
                 <dt>{variable[0]}</dt>,
-                <dd>{v2dd(variable)}</dd>
+                <dd>{var2description(variable)}</dd>
               ];
             })
             }</dl>
@@ -467,10 +452,10 @@ class SieveComponent extends React.Component {
           <div className='pull-right'>
             <ButtonToolbar>
               <ButtonGroup>
-                <Button onClick={() => {addOperator('*')}}>x</Button>
-                <Button onClick={() => {addOperator('/')}}>/</Button>
-                <Button onClick={() => {addOperator('+')}}>+</Button>
-                <Button onClick={() => {addOperator('-')}}>-</Button>
+                <AddBinOpModal op='*' {...this.props}>x</AddBinOpModal>
+                <AddBinOpModal op='/' {...this.props}>/</AddBinOpModal>
+                <AddBinOpModal op='+' {...this.props}>+</AddBinOpModal>
+                <AddBinOpModal op='-' {...this.props}>-</AddBinOpModal>
               </ButtonGroup>
             </ButtonToolbar>
           </div>

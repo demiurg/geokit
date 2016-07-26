@@ -15,6 +15,8 @@ var UPDATE_TREE = 'UPDATE_TREE';
 var REMOVE_VARIABLE = 'REMOVE_VARIABLE';
 var ADD_VARIABLE = 'ADD_VARIABLE';
 
+var ADD_TREE_NODE = 'ADD_TREE_NODE';
+
 function requestLayers() {
   return {
     type: REQUEST_LAYERS
@@ -118,6 +120,13 @@ function addInputVariable(variable) {
     type: ADD_VARIABLE,
     id: nextVariableId++,
     variable: variable
+  };
+}
+
+function addTreeNode(node) {
+  return {
+    type: ADD_TREE_NODE,
+    node: node
   };
 }
 "use strict";
@@ -1152,9 +1161,25 @@ function input_variables() {
       return [].concat(state, [action.variable
       //input_variable(undefined, action)
       ]);
+    default:
+      return state;
+  }
+}
+
+function tree() {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+  var action = arguments[1];
+
+  switch (action.type) {
+    case ADD_TREE_NODE:
+      return action.node;
+    default:
+      return state;
   }
 }
 "use strict";
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1226,6 +1251,10 @@ function sieveApp() {
       return Object.assign({}, state, {
         tree: action.tree
       });
+    case ADD_TREE_NODE:
+      return Object.assign({}, state, {
+        tree: tree(state.tree, action)
+      });
     case ADD_VARIABLE:
       return Object.assign({}, state, {
         input_variables: input_variables(state.input_variables, action)
@@ -1248,6 +1277,9 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
     },
     onAddInputVariable: function onAddInputVariable(variable) {
       dispatch(addInputVariable(variable));
+    },
+    onAddTreeOp: function onAddTreeOp(op) {
+      dispatch(addTreeNode(op));
     }
   };
 };
@@ -1561,27 +1593,13 @@ var AddBinOpModal = function (_React$Component4) {
 
   AddBinOpModal.prototype.use = function use() {
     var form = $(this.form).serializeArray();
-    var variable = ['join', [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]];
-    this.props.onAddInputVariable(variable);
+    var variable = [this.props.op, [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]];
+    this.props.onAddTreeOp(variable);
     this.setState({ showModal: false });
   };
 
   AddBinOpModal.prototype.render = function render() {
     var _this8 = this;
-
-    var i2o = function i2o(type, item, i) {
-      return function (item, i) {
-        if (item.field_names) {
-          return item.field_names.map(function (field, j) {
-            return React.createElement(
-              "option",
-              { value: "{\"type\": \"" + type + "\", \"id\": \"" + item.name + "\", \"field\": \"" + field + "\"}" },
-              field + "/" + item.name
-            );
-          });
-        }
-      };
-    };
 
     return React.createElement(
       Button,
@@ -1589,7 +1607,7 @@ var AddBinOpModal = function (_React$Component4) {
         bsStyle: "primary",
         onClick: this.open.bind(this)
       },
-      this.props.children ? this.props.children : "Add Input",
+      this.props.children ? this.props.children : this.props.op,
       React.createElement(
         Modal,
         { show: this.state.showModal, onHide: this.close.bind(this) },
@@ -1599,7 +1617,7 @@ var AddBinOpModal = function (_React$Component4) {
           React.createElement(
             Modal.Title,
             null,
-            "Adding Input Variable"
+            "Adding Binary Operation"
           )
         ),
         React.createElement(
@@ -1616,12 +1634,18 @@ var AddBinOpModal = function (_React$Component4) {
               React.createElement(
                 ControlLabel,
                 null,
-                "Left"
+                "Left operand"
               ),
               React.createElement(
                 FormControl,
                 { componentClass: "select", placeholder: "select", name: "left" },
-                this.props.layers.items.map(i2o('Layer')).concat(this.props.tables.items.map(i2o('Table')))
+                this.props.input_variables.map(function (v, i) {
+                  return React.createElement(
+                    "option",
+                    { value: i },
+                    var2description(v)
+                  );
+                })
               )
             ),
             React.createElement(
@@ -1630,12 +1654,19 @@ var AddBinOpModal = function (_React$Component4) {
               React.createElement(
                 ControlLabel,
                 null,
-                "Right"
+                "Right operand"
               ),
               React.createElement(
                 FormControl,
                 { componentClass: "select", placeholder: "select", name: "right" },
-                this.props.layers.items.map(i2o('Layer')).concat(this.props.tables.items.map(i2o('Table')))
+                this.props.input_variables.map(function (v, i) {
+                  return React.createElement(
+                    "option",
+                    { value: i },
+                    var2description(v)
+                  );
+                }),
+                "                "
               )
             )
           )
@@ -1646,7 +1677,7 @@ var AddBinOpModal = function (_React$Component4) {
           React.createElement(
             Button,
             { onClick: this.use.bind(this) },
-            "Use Variable"
+            "Use Operation"
           ),
           React.createElement(
             Button,
@@ -1660,6 +1691,17 @@ var AddBinOpModal = function (_React$Component4) {
 
   return AddBinOpModal;
 }(React.Component);
+
+function var2description(variable) {
+  switch (variable[0]) {
+    case 'join':
+      return variable[1][0].type + ' ' + variable[1][0].id + ' and ' + variable[1][1].type + ' ' + variable[1][1].id + ' on ' + variable[1][0].field + ' = ' + variable[1][1].field;
+    case 'expression':
+      return variable[1][0];
+    default:
+      return JSON.stringify(v);
+  }
+}
 
 var SieveComponent = function (_React$Component5) {
   _inherits(SieveComponent, _React$Component5);
@@ -1730,17 +1772,6 @@ var SieveComponent = function (_React$Component5) {
   SieveComponent.prototype.render = function render() {
     var self = this;
 
-    function v2dd(variable) {
-      switch (variable[0]) {
-        case 'join':
-          return variable[1][0].type + ' ' + variable[1][0].id + ' and ' + variable[1][1].type + ' ' + variable[1][1].id + ' on ' + variable[1][0].field + ' = ' + variable[1][1].field;
-        case 'expression':
-          return variable[1][0];
-        default:
-          return JSON.stringify(v);
-      }
-    }
-
     return React.createElement(
       "div",
       { className: "sieve" },
@@ -1775,7 +1806,7 @@ var SieveComponent = function (_React$Component5) {
             ), React.createElement(
               "dd",
               null,
-              v2dd(variable)
+              var2description(variable)
             )];
           })
         ) : "Add some!",
@@ -1815,31 +1846,23 @@ var SieveComponent = function (_React$Component5) {
               ButtonGroup,
               null,
               React.createElement(
-                Button,
-                { onClick: function onClick() {
-                    addOperator('*');
-                  } },
+                AddBinOpModal,
+                _extends({ op: "*" }, this.props),
                 "x"
               ),
               React.createElement(
-                Button,
-                { onClick: function onClick() {
-                    addOperator('/');
-                  } },
+                AddBinOpModal,
+                _extends({ op: "/" }, this.props),
                 "/"
               ),
               React.createElement(
-                Button,
-                { onClick: function onClick() {
-                    addOperator('+');
-                  } },
+                AddBinOpModal,
+                _extends({ op: "+" }, this.props),
                 "+"
               ),
               React.createElement(
-                Button,
-                { onClick: function onClick() {
-                    addOperator('-');
-                  } },
+                AddBinOpModal,
+                _extends({ op: "-" }, this.props),
                 "-"
               )
             )

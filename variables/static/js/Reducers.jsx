@@ -90,5 +90,16 @@ function input_variables(state=[], action){
         action.variable
         //input_variable(undefined, action)
       ];
+    default:
+      return state;
+  }
+}
+
+function tree(state={}, action){
+  switch (action.type){
+    case ADD_TREE_NODE:
+      return action.node;
+    default:
+      return state;
   }
 }

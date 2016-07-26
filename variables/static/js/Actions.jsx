@@ -15,6 +15,7 @@ const UPDATE_TREE = 'UPDATE_TREE';
 const REMOVE_VARIABLE = 'REMOVE_VARIABLE';
 const ADD_VARIABLE = 'ADD_VARIABLE';
 
+const ADD_TREE_NODE = 'ADD_TREE_NODE';
 
 function requestLayers() {
   return {
@@ -120,5 +121,12 @@ function addInputVariable(variable){
     type: ADD_VARIABLE,
     id: nextVariableId++,
     variable
+  }
+}
+
+function addTreeNode(node){
+  return {
+    type: ADD_TREE_NODE,
+    node: node
   }
 }
