@@ -155,7 +155,7 @@ class AddInputModal extends React.Component {
       if (item.field_names){
         return item.field_names.map((field, j) => (
           <option value={
-            `{"type": "${type}", "field": "${field}", "name": "${item.name}"}`
+            `{"type": "${type}", "id": "${item.name}", "field": "${field}"}`
           }>
             {`${field}/${item.name}`}
           </option>
@@ -183,9 +183,9 @@ class AddInputModal extends React.Component {
                 <FormControl componentClass="select" placeholder="select" name="left">
                   {
                     this.props.layers.items.map(
-                      i2o('layer')
+                      i2o('Layer')
                     ).concat(
-                      this.props.tables.items.map(i2o('table'))
+                      this.props.tables.items.map(i2o('Table'))
                     )
                   }
                 </FormControl>
@@ -195,9 +195,9 @@ class AddInputModal extends React.Component {
                 <FormControl componentClass="select" placeholder="select" name="right">
                   {
                     this.props.layers.items.map(
-                      i2o('layer')
+                      i2o('Layer')
                     ).concat(
-                      this.props.tables.items.map(i2o('table'))
+                      this.props.tables.items.map(i2o('Table'))
                     )
                   }
                 </FormControl>
@@ -300,9 +300,9 @@ class SieveComponent extends React.Component {
               return [
                 <dt>{variable[0]}</dt>,
                 <dd>{
-                  variable[0].type + ' ' + variable[0].name + ' and ' +
-                  variable[1].type + ' ' + variable[1].name + ' on ' +
-                  variable[0].field +   ' = ' + variable[1].field
+                  variable[1][0].type + ' ' + variable[1][0].id + ' and ' +
+                  variable[1][1].type + ' ' + variable[1][1].id + ' on ' +
+                  variable[1][0].field +   ' = ' + variable[1][1].field
                 }</dd>
               ];
             })

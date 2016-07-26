@@ -1363,7 +1363,7 @@ var AddInputModal = function (_React$Component2) {
           return item.field_names.map(function (field, j) {
             return React.createElement(
               "option",
-              { value: "{\"type\": \"" + type + "\", \"field\": \"" + field + "\", \"name\": \"" + item.name + "\"}" },
+              { value: "{\"type\": \"" + type + "\", \"id\": \"" + item.name + "\", \"field\": \"" + field + "\"}" },
               field + "/" + item.name
             );
           });
@@ -1413,7 +1413,7 @@ var AddInputModal = function (_React$Component2) {
               React.createElement(
                 FormControl,
                 { componentClass: "select", placeholder: "select", name: "left" },
-                this.props.layers.items.map(i2o('layer')).concat(this.props.tables.items.map(i2o('table')))
+                this.props.layers.items.map(i2o('Layer')).concat(this.props.tables.items.map(i2o('Table')))
               )
             ),
             React.createElement(
@@ -1427,7 +1427,7 @@ var AddInputModal = function (_React$Component2) {
               React.createElement(
                 FormControl,
                 { componentClass: "select", placeholder: "select", name: "right" },
-                this.props.layers.items.map(i2o('layer')).concat(this.props.tables.items.map(i2o('table')))
+                this.props.layers.items.map(i2o('Layer')).concat(this.props.tables.items.map(i2o('Table')))
               )
             )
           )
@@ -1560,7 +1560,7 @@ var SieveComponent = function (_React$Component3) {
             ), React.createElement(
               "dd",
               null,
-              variable[0].type + ' ' + variable[0].name + ' and ' + variable[1].type + ' ' + variable[1].name + ' on ' + variable[0].field + ' = ' + variable[1].field
+              variable[1][0].type + ' ' + variable[1][0].id + ' and ' + variable[1][1].type + ' ' + variable[1][1].id + ' on ' + variable[1][0].field + ' = ' + variable[1][1].field
             )];
           })
         ) : "Add some!",
