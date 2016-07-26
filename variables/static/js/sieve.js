@@ -113,7 +113,7 @@ function fetchVariables() {
 
 var nextVariableId = 0;
 
-function addInputVariable(variabe) {
+function addInputVariable(variable) {
   return {
     type: ADD_VARIABLE,
     id: nextVariableId++,
@@ -1149,7 +1149,9 @@ function input_variables() {
 
   switch (action.type) {
     case ADD_VARIABLE:
-      return [].concat(state, [input_variable(undefined, action)]);
+      return [].concat(state, [action.variable
+      //input_variable(undefined, action)
+      ]);
   }
 }
 "use strict";
@@ -1347,8 +1349,8 @@ var AddInputModal = function (_React$Component2) {
 
   AddInputModal.prototype.use = function use() {
     var form = $(this.form).serializeArray();
-    var variable = ['join', [form[0]['value'], form[1]['value']]];
-    this.prop;
+    var variable = ['join', [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]];
+    this.props.onAddInputVariable(variable);
     this.setState({ showModal: false });
   };
 
@@ -1361,7 +1363,7 @@ var AddInputModal = function (_React$Component2) {
           return item.field_names.map(function (field, j) {
             return React.createElement(
               "option",
-              { value: "{type: \"" + type + "\", field: \"" + field + "\", name: \"" + item.name + "\"}" },
+              { value: "{\"type\": \"" + type + "\", \"field\": \"" + field + "\", \"name\": \"" + item.name + "\"}" },
               field + "/" + item.name
             );
           });
@@ -1520,6 +1522,10 @@ var SieveComponent = function (_React$Component3) {
   SieveComponent.prototype.render = function render() {
     var self = this;
 
+    function var2desc(v) {
+      return v.variable;
+    }
+
     return React.createElement(
       "div",
       { className: "sieve" },
@@ -1543,7 +1549,21 @@ var SieveComponent = function (_React$Component3) {
             null,
             "Input Variables"
           ) },
-        this.props.input_variables.length ? JSON.stringify(this.props.input_variables.length) : "Add some!",
+        this.props.input_variables.length ? React.createElement(
+          "dl",
+          { className: "dl-horizontal" },
+          this.props.input_variables.map(function (variable) {
+            return [React.createElement(
+              "dt",
+              null,
+              variable[0]
+            ), React.createElement(
+              "dd",
+              null,
+              variable[0].type + ' ' + variable[0].name + ' and ' + variable[1].type + ' ' + variable[1].name + ' on ' + variable[0].field + ' = ' + variable[1].field
+            )];
+          })
+        ) : "Add some!",
         React.createElement(
           AddInputModal,
           this.props,

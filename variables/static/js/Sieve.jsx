@@ -144,9 +144,9 @@ class AddInputModal extends React.Component {
     var form = $(this.form).serializeArray();
     var variable = [
       'join',
-      [form[0]['value'], form[1]['value']]
+      [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]
     ];
-    this.prop
+    this.props.onAddInputVariable(variable);
     this.setState({ showModal: false });
   }
 
@@ -155,7 +155,7 @@ class AddInputModal extends React.Component {
       if (item.field_names){
         return item.field_names.map((field, j) => (
           <option value={
-            `{type: "${type}", field: "${field}", name: "${item.name}"}`
+            `{"type": "${type}", "field": "${field}", "name": "${item.name}"}`
           }>
             {`${field}/${item.name}`}
           </option>
@@ -278,6 +278,11 @@ class SieveComponent extends React.Component {
   render() {
     var self = this;
 
+
+    function var2desc(v){
+      return v.variable
+    }
+
     return (
       <div className="sieve">
         {this.props.errors.server ? <Alert bsStyle="danger">{this.props.errors.server}</Alert> : null}
@@ -289,7 +294,21 @@ class SieveComponent extends React.Component {
         </Panel>
 
         <Panel header={<h3>Input Variables</h3>}>
-          {this.props.input_variables.length ? JSON.stringify(this.props.input_variables.length) : "Add some!"}
+          {this.props.input_variables.length ?
+            <dl className="dl-horizontal">{
+            this.props.input_variables.map((variable)=>{
+              return [
+                <dt>{variable[0]}</dt>,
+                <dd>{
+                  variable[0].type + ' ' + variable[0].name + ' and ' +
+                  variable[1].type + ' ' + variable[1].name + ' on ' +
+                  variable[0].field +   ' = ' + variable[1].field
+                }</dd>
+              ];
+            })
+            }</dl>
+            : "Add some!"
+          }
           <AddInputModal {...this.props} >Add Input</AddInputModal>
         </Panel>
 

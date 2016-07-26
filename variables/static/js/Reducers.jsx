@@ -87,7 +87,8 @@ function input_variables(state=[], action){
     case ADD_VARIABLE:
       return [
         ...state,
-        input_variable(undefined, action)
+        action.variable
+        //input_variable(undefined, action)
       ];
   }
 }

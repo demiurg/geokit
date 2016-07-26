@@ -115,7 +115,7 @@ function fetchVariables(){
 
 let nextVariableId = 0;
 
-function addInputVariable(variabe){
+function addInputVariable(variable){
   return {
     type: ADD_VARIABLE,
     id: nextVariableId++,
