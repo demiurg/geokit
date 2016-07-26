@@ -11,12 +11,12 @@ from variables.models import Variable
 def test_example_0_5(set_schema):
     tmin = Variable(tree=['join', [
         {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
-        {'model': 'GeoKitTable', 'id': 'cnty24k97_data', 'field': 'fid'},
+        {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
         'tmin'
     ]])
     tmax = Variable(tree=['join', [
         {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
-        {'model': 'GeoKitTable', 'id': 'cnty24k97_data', 'field': 'fid'},
+        {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
         'tmax'
     ]])
     print(tmin.data())

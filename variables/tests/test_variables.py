@@ -77,7 +77,7 @@ def test_temporal_mean_operator():
 def test_join_operator(set_schema):
     v = Variable(tree=['join', [
         {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
-        {'model': 'GeoKitTable', 'id': 'cnty24k97_data', 'field': 'fid'},
+        {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
         'tmin'
     ]])
     np.testing.assert_array_equal(v.data(), np.array([
@@ -86,7 +86,7 @@ def test_join_operator(set_schema):
     ]))
 
     v = Variable(tree=['join', [
-        {'model': 'GeoKitTable', 'id': 'cnty24k97_data', 'field': 'fid'},
+        {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
         {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
         'tmin'
     ]])
@@ -96,8 +96,8 @@ def test_join_operator(set_schema):
     ]))
 
     v = Variable(tree=['join', [
-        {'model': 'GeoKitTable', 'id': 1, 'field': 'fid'},
-        {'model': 'GeoKitTable', 'id': 2, 'field': 'fid'},
+        {'model': 'Table', 'id': 1, 'field': 'fid'},
+        {'model': 'Table', 'id': 2, 'field': 'fid'},
         'test'
     ]])
     with pytest.raises(ValueError):

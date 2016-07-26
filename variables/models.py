@@ -181,22 +181,22 @@ class Variable(models.Model):
         '''
         Serialization format:
         `{
-            'model': 'GeoKitTable',
+            'model': 'Table',
             'id': 1,
             'field': 'fid'
         }`
         '''
         if left['model'] == 'Layer':
-            if right['model'] != 'GeoKitTable':
-                raise ValueError("Arguments must be a Layer and GeoKitTable")
+            if right['model'] != 'Table':
+                raise ValueError("Arguments must be a Layer and Table")
             layer = Layer.objects.get(pk=left['id'])
             layer_field = left['field']
             table = GeoKitTable.objects.get(pk=right['id'])
             table_field = right['field']
 
-        if left['model'] == 'GeoKitTable':
+        if left['model'] == 'Table':
             if right['model'] != 'Layer':
-                raise ValueError("Arguments must be a Layer and GeoKitTable")
+                raise ValueError("Arguments must be a Layer and Table")
             layer = Layer.objects.get(pk=right['id'])
             layer_field = right['field']
             table = GeoKitTable.objects.get(pk=left['id'])
