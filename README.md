@@ -74,4 +74,7 @@ py.test geokit_tables                       # everything under that dir
 py.test geokit_tables/tests/test_forms.py   # only the tests in this file
 # just run this one named test:
 py.test geokit_tables/tests/test_forms.py::test_the_thing
+
+# for a coverage report:
+py.test --cov=APP_NAME ...
 ```
