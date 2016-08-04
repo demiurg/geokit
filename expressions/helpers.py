@@ -1,6 +1,6 @@
 import numpy as np
 import sympy
-from sortedcontainers import SortedDict
+from sortedcontainers import SortedDict, SortedSet
 
 from django.db import connection
 
@@ -95,6 +95,9 @@ def compare_to_date(date, comparison, benchmark):
 
 
 def join_layer_and_table(layer_name, layer_field, table_name, table_field, variable):
+
+    # TODO: Explain algorithm in docstring
+
     query = """
         SELECT t1.id, t1.properties, t2.id, t2.properties, t2.date FROM """ +\
         connection.schema_name + """.layers_feature t1
@@ -108,22 +111,29 @@ def join_layer_and_table(layer_name, layer_field, table_name, table_field, varia
     # dict of dicts:  outer key is feature IDs, inner key is dates, inner
     # values are geokit_tables.Record.properties.
     results = {}
-    for (f_id, _, _, t_props, t_date) in cursor.fetchall():
+    for (f_id, _, _, t_props, t_date) in cursor.fetchall():  # TODO: Mock cursor.fetchall() and unit test algorithm
         if f_id not in results:
             results[f_id] = SortedDict()
         results[f_id][t_date] = t_props[variable]
 
     if results == {}:  # did you find any data?
-        return [[]], None, None
+        return [[]], [], []
 
     spatial_key = results.keys()  # list of layers_feature.id
-    # list of geokit_tables_record.date
-    temporal_key = list(results[spatial_key[0]].keys())
+
+    # find the common set of dates
+    temporal_key = results[spatial_key[0]].keys()
+    for _, row in results.iteritems():
+        temporal_key = SortedSet([date for date in temporal_key if date in row.keys()])
 
     # result_matrix is just the natural list of lists taken from results,
     # but with the keys removed.
     result_matrix = []
     for _, vals in results.iteritems():
-        result_matrix.append(vals.values())
+        row = []
+        for date, val in vals.iteritems():
+            if date in temporal_key:
+                row.append(val)
+        result_matrix.append(row)
 
-    return result_matrix, temporal_key, spatial_key
+    return result_matrix, list(temporal_key), spatial_key

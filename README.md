@@ -76,5 +76,5 @@ py.test geokit_tables/tests/test_forms.py   # only the tests in this file
 py.test geokit_tables/tests/test_forms.py::test_the_thing
 
 # for a coverage report:
-py.test --cov=APP_NAME ...
+py.test --cov-report term-missing --cov=APP_NAME geokit_tables
 ```

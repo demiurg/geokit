@@ -27,7 +27,7 @@ class Record(models.Model):
     include mean high temperature, mean cloud cover, and total precipitation.
     """
     table = models.ForeignKey(GeoKitTable)
-    date = DateRangeField(null=True)
+    date = models.DateField(null=True)
     properties = JSONField(null=True)
 
     def __unicode__(self):

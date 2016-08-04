@@ -1,10 +1,12 @@
 from __future__ import unicode_literals
 
+import pdb
+
 import numpy as np
 import numpy.ma as ma
 
 from django.db import models
-from django.contrib.postgres.fields import ArrayField, DateRangeField, JSONField
+from django.contrib.postgres.fields import ArrayField, JSONField
 
 from geokit_tables.models import GeoKitTable
 from layers.models import Layer
@@ -14,7 +16,7 @@ from expressions.helpers import join_layer_and_table
 
 class Variable(models.Model):
     name = models.CharField(primary_key=True, max_length=75)
-    temporal_domain = ArrayField(DateRangeField())
+    temporal_domain = ArrayField(models.DateField())
     spatial_domain = ArrayField(models.IntegerField())
     tree = JSONField()
     units = models.CharField(max_length=100)
@@ -68,35 +70,35 @@ class Variable(models.Model):
         def f(left, right):
             left_val, right_val = self.resolve_arguments(left, right)
 
-            if type(left) == np.ndarray and type(right) == np.ndarray and left.shape != right.shape:
+            if type(left_val['values']) == np.ndarray and type(right_val['values']) == np.ndarray and left_val['values'].shape != right_val['values'].shape:
                 raise ValueError("Arguments must be of equal dimensions")
 
-            return func(left_val, right_val)
+            values = func(left_val['values'], right_val['values'])
+            return {'values': values, 'spatial_key': left_val['spatial_key'], 'temporal_key': left_val['temporal_key']}  # Left and right keys are identical
         return f
 
     def MeanOperator(self, left, right):
         left_val, right_val = self.resolve_arguments(left, right)
 
-        if left_val.shape != right_val.shape:
+        if left_val['values'].shape != right_val['values'].shape:
             raise ValueError("Arguments must be of equal dimensions")
 
-        return np.mean([left_val, right_val], axis=0)
+        values = np.mean([left_val['values'], right_val['values']], axis=0)
+        return {'values': values, 'spatial_key': left['spatial_key'], 'temporal_key': left['temporal_key']}  # Left and right keys are identical
 
     def SpatialMeanOperator(self, val):
         (val,) = self.resolve_arguments(val)
 
-        mean_vals = np.mean(val, axis=0)
+        mean_vals = np.mean(val['values'], axis=0)
 
-        self.current_dimensions['spatial_domain'] = []
-        return mean_vals.reshape(1, len(mean_vals))
+        return {'values': mean_vals.reshape(1, len(mean_vals)), 'spatial_key': [], 'temporal_key': val['temporal_key']}
 
     def TemporalMeanOperator(self, val):
         (val,) = self.resolve_arguments(val)
 
-        mean_vals = np.mean(val, axis=1)
+        mean_vals = np.mean(val['values'], axis=1)
 
-        self.current_dimensions['temporal_domain'] = []
-        return mean_vals.reshape(len(mean_vals), 1)
+        return {'values': mean_vals.reshape(len(mean_vals), 1), 'spatial_key': val['spatial_key'], 'temporal_key': []}
 
     def SpatialFilterOperator(self, val, filter_):
         '''
@@ -109,18 +111,21 @@ class Variable(models.Model):
         (val,) = self.resolve_arguments(val)
 
         indices_to_delete = set()
-        for i, feature in enumerate(self.current_dimensions['spatial_domain']):
+        for i, feature in enumerate(val['spatial_key']):
+            contains = False
             for geometry in filter_['containing_geometries']:
-                contains = geometry.contains(feature.geometry)
+                if geometry.contains(feature.geometry):
+                    contains = True
+                    break
 
-                if filter_['filter_type'] == 'inclusive' and not contains:
-                    indices_to_delete.add(i)
-                elif filter_['filter_type'] == 'exlcusive' and contains:
+            if filter_['filter_type'] == 'inclusive' and not contains:
+                indices_to_delete.add(i)
+            elif filter_['filter_type'] == 'exlcusive' and contains:
                     indices_to_delete.add(i)
 
-        val = np.delete(val, list(indices_to_delete), 0)
-        self.current_dimensions['spatial_domain'] = list(np.delete(self.current_dimensions['spatial_domain'], list(indices_to_delete)))
-        return val
+        values = np.delete(val['values'], list(indices_to_delete), 0)
+        spatial_key = np.delete(val['spatial_key'], list(indices_to_delete))
+        return {'values': values, 'spatial_key': spatial_key, 'temporal_key': val['spatial_key']}
 
     def TemporalFilterOperator(self, val, filter_):
         '''
@@ -133,18 +138,21 @@ class Variable(models.Model):
         (val,) = self.resolve_arguments(val)
 
         indices_to_delete = set()
-        for i, date in enumerate(self.current_dimensions['temporal_domain']):
+        for i, date in enumerate(val['temporal_key']):
+            in_range = False
             for date_range in filter_['date_ranges']:
-                in_range = date_range['start'] <= date <= date_range['end']
+                if date_range['start'] <= date <= date_range['end']:
+                    in_range = True
+                    break
 
-                if filter_['filter_type'] == 'inclusive' and not in_range:
-                    indices_to_delete.add(i)
-                elif filter_['filter_type'] == 'exclusive' and in_range:
-                    indices_to_delete.add(i)
+            if filter_['filter_type'] == 'inclusive' and not in_range:
+                indices_to_delete.add(i)
+            elif filter_['filter_type'] == 'exclusive' and in_range:
+                indices_to_delete.add(i)
 
-        val = np.delete(val, list(indices_to_delete), 1)
-        self.current_dimensions['temporal_domain'] = list(np.delete(self.current_dimensions['temporal_domain'], list(indices_to_delete)))
-        return val
+        values = np.delete(val['values'], list(indices_to_delete), 1)
+        temporal_key = list(np.delete(val['temporal_key'], list(indices_to_delete)))
+        return {'values': values, 'spatial_key': val['spatial_key'], 'temporal_key': temporal_key}
 
     def ValueFilterOperator(self, val, filter_):
         '''
@@ -155,10 +163,10 @@ class Variable(models.Model):
         }`
         '''
         (val,) = self.resolve_arguments(val)
-        if hasattr(val, 'mask'):
-            data = val.data
+        if hasattr(val['values'], 'mask'):
+            data = val['values'].data
         else:
-            data = val
+            data = val['values']
 
         if filter_['comparison'] == '<':
             mask = data < filter_['comparator']
@@ -172,10 +180,10 @@ class Variable(models.Model):
             mask = data > filter_['comparator']
 
         if hasattr(val, 'mask'):
-            val.mask = np.bitwise_or(val.mask, mask)
-            return val
+            val['values'].mask = np.bitwise_or(val['values'].mask, mask)
+            return {'values': val, 'spatial_key': val['spatial_key'], 'temporal_key': val['temporal_key']}
         else:
-            return ma.masked_array(val, mask=mask)
+            return {'values': ma.masked_array(val['values'], mask=mask), 'spatial_key': val['spatial_key'], 'temporal_key': val['temporal_key']}
 
     def JoinOperator(self, left, right, field):
         '''
@@ -202,4 +210,5 @@ class Variable(models.Model):
             table = GeoKitTable.objects.get(pk=left['id'])
             table_field = left['field']
 
-        return np.array(join_layer_and_table(layer.name, layer_field, table.name, table_field, field)[0]).astype('float64')
+        values, t_key, s_key = join_layer_and_table(layer.name, layer_field, table.name, table_field, field)
+        return {'values': np.array(values).astype('float64'), 'temporal_key': t_key, 'spatial_key': s_key}

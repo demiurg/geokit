@@ -1288,7 +1288,7 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
 var DropdownComponent = function DropdownComponent(_ref) {
   var things = _ref.things;
   var onclick = _ref.onclick;
-  return(
+  return (
     // TODO something different when layers.isFetching
 
     React.createElement(
@@ -1645,7 +1645,12 @@ var AddBinOpModal = function (_React$Component4) {
                     { value: i },
                     var2description(v)
                   );
-                })
+                }),
+                React.createElement(
+                  "option",
+                  { key: this.props.input_variables.length, value: JSON.stringify(this.props.tree) },
+                  "tree"
+                )
               )
             ),
             React.createElement(
