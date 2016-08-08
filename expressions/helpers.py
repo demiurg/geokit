@@ -2,7 +2,7 @@ import numpy as np
 import sympy
 from sortedcontainers import SortedDict, SortedSet
 
-from django.db import connection
+import django.db
 
 
 class ExpressionResult(sympy.Atom):
@@ -95,23 +95,41 @@ def compare_to_date(date, comparison, benchmark):
 
 
 def join_layer_and_table(layer_name, layer_field, table_name, table_field, variable):
+    """
+    Query returns all rows from respective table records and layer features joined via a column
+    in each's `property` field. This returns a result similar to:
 
-    # TODO: Explain algorithm in docstring
+      (1, {properties...}, 3, {properties...}, date(2010, 1, 1)),
+      (1, {properties...}, 3, {properties...}, date(2010, 1, 2)),
+      (2, {properties...}, 3, {properties...}, date(2010, 1, 2)),
+
+    As the results are iterated over, each row is placed into a 2 layer deep dict where the outer
+    key is the feature ID, and the inner key is the date.
+
+      {
+        1: {date(2010, 1, 1): {properties...}, date(2010, 1, 2): {properties...}},
+        2: {date(2010, 1, 1): {properites...}
+      }
+
+    The keys of every inner dict are compared to find the common temporal key, and the extra rows
+    are discarded. The properties are extracted for the 2 layer dict into a 2D array, and the keys
+    from both layers of dicts are used for the spatial and temoporal keys.
+    """
 
     query = """
         SELECT t1.id, t1.properties, t2.id, t2.properties, t2.date FROM """ +\
-        connection.schema_name + """.layers_feature t1
-            JOIN """ + connection.schema_name + """.geokit_tables_record t2
+        django.db.connection.schema_name + """.layers_feature t1
+            JOIN """ + django.db.connection.schema_name + """.geokit_tables_record t2
             ON t1.properties->>%s = t2.properties->>%s
             WHERE t1.layer_id = %s AND t2.table_id = %s
     """
-    cursor = connection.cursor()
+    cursor = django.db.connection.cursor()
     cursor.execute(query, [layer_field, table_field, layer_name, table_name])
 
     # dict of dicts:  outer key is feature IDs, inner key is dates, inner
     # values are geokit_tables.Record.properties.
     results = {}
-    for (f_id, _, _, t_props, t_date) in cursor.fetchall():  # TODO: Mock cursor.fetchall() and unit test algorithm
+    for (f_id, _, _, t_props, t_date) in cursor.fetchall():
         if f_id not in results:
             results[f_id] = SortedDict()
         results[f_id][t_date] = t_props[variable]

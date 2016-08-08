@@ -120,9 +120,9 @@ class Variable(models.Model):
 
             if filter_['filter_type'] == 'inclusive' and not contains:
                 indices_to_delete.add(i)
-            elif filter_['filter_type'] == 'exlcusive' and contains:
-                    indices_to_delete.add(i)
-
+            elif filter_['filter_type'] == 'exclusive' and contains:
+                indices_to_delete.add(i)
+        print indices_to_delete
         values = np.delete(val['values'], list(indices_to_delete), 0)
         spatial_key = np.delete(val['spatial_key'], list(indices_to_delete))
         return {'values': values, 'spatial_key': spatial_key, 'temporal_key': val['spatial_key']}
@@ -179,9 +179,9 @@ class Variable(models.Model):
         elif filter_['comparison'] == '>':
             mask = data > filter_['comparator']
 
-        if hasattr(val, 'mask'):
+        if hasattr(val['values'], 'mask'):
             val['values'].mask = np.bitwise_or(val['values'].mask, mask)
-            return {'values': val, 'spatial_key': val['spatial_key'], 'temporal_key': val['temporal_key']}
+            return {'values': val['values'], 'spatial_key': val['spatial_key'], 'temporal_key': val['temporal_key']}
         else:
             return {'values': ma.masked_array(val['values'], mask=mask), 'spatial_key': val['spatial_key'], 'temporal_key': val['temporal_key']}
 
