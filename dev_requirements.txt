@@ -1,5 +1,5 @@
 -r requirements.txt
-pyetst
+pytest
 mock
 pytest-django
 pytest-cov

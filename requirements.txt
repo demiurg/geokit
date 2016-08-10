@@ -1,8 +1,7 @@
-django>=1.9
+django==1.9
 djangorestframework>=3.4
 wagtail>=1.5
 sympy==0.7.6
-#tilestache
 modestmaps
 psycopg2==2.6.1
 Fiona==1.6.0
