@@ -17,6 +17,7 @@
                 <tr class="table-headers">
                     <th>Name</th>
                     <th>Description</th>
+                    <th>Field names</th>
                     <th>Rows</th>
                 </tr>
             </thead>
@@ -30,6 +31,9 @@
                     </td>
                     <td class="description">
                         {{ table.description }}
+                    </td>
+                    <td class="properties">
+                        {{ table.field_names|join:", " }}
                     </td>
                     <td>
                         {{ table.record_set.count }}

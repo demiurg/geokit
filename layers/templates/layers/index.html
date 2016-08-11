@@ -16,6 +16,7 @@
                 <tr class="table-headers">
                     <th>Name</th>
                     <th>Bounds</th>
+                    <th>Field names</th>
                     <th>Features</th>
                     <th>Created</th>
                     <th>Modified</th>
@@ -29,8 +30,11 @@
                             <a href="{% url 'layers:edit' layer.pk %}">{{ layer.name }}</a>
                         </h2>
                     </td>
-                    <td>{{layer.bounds}}</td>
-                    <td>{{layer.feature_set.all.count}}</td>
+                    <td>{{ layer.bounds|join:", " }}</td>
+                    <td class="properties">
+                        {{ layer.field_names|join:", " }}
+                    </td>
+                    <td>{{ layer.feature_set.all.count }}</td>
                     <td>
                         <div class="human-readable-date" title="{{ layer.created|date:"d M Y H:i" }}">
                         {{ layer.created|timesince }} ago
