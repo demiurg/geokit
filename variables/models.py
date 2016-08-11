@@ -70,11 +70,19 @@ class Variable(models.Model):
         def f(left, right):
             left_val, right_val = self.resolve_arguments(left, right)
 
-            if type(left_val['values']) == np.ndarray and type(right_val['values']) == np.ndarray and left_val['values'].shape != right_val['values'].shape:
+            if (
+                type(left_val['values']) == np.ndarray and
+                type(right_val['values']) == np.ndarray and
+                left_val['values'].shape != right_val['values'].shape
+            ):
                 raise ValueError("Arguments must be of equal dimensions")
 
             values = func(left_val['values'], right_val['values'])
-            return {'values': values, 'spatial_key': left_val['spatial_key'], 'temporal_key': left_val['temporal_key']}  # Left and right keys are identical
+            return {
+                'values': values,
+                'spatial_key': left_val['spatial_key'],
+                'temporal_key': left_val['temporal_key']
+            }  # Left and right keys are identical
         return f
 
     def MeanOperator(self, left, right):
@@ -84,21 +92,33 @@ class Variable(models.Model):
             raise ValueError("Arguments must be of equal dimensions")
 
         values = np.mean([left_val['values'], right_val['values']], axis=0)
-        return {'values': values, 'spatial_key': left['spatial_key'], 'temporal_key': left['temporal_key']}  # Left and right keys are identical
+        return {
+            'values': values,
+            'spatial_key': left['spatial_key'],
+            'temporal_key': left['temporal_key']
+        }  # Left and right keys are identical
 
     def SpatialMeanOperator(self, val):
         (val,) = self.resolve_arguments(val)
 
         mean_vals = np.mean(val['values'], axis=0)
 
-        return {'values': mean_vals.reshape(1, len(mean_vals)), 'spatial_key': [], 'temporal_key': val['temporal_key']}
+        return {
+            'values': mean_vals.reshape(1, len(mean_vals)),
+            'spatial_key': [],
+            'temporal_key': val['temporal_key']
+        }
 
     def TemporalMeanOperator(self, val):
         (val,) = self.resolve_arguments(val)
 
         mean_vals = np.mean(val['values'], axis=1)
 
-        return {'values': mean_vals.reshape(len(mean_vals), 1), 'spatial_key': val['spatial_key'], 'temporal_key': []}
+        return {
+            'values': mean_vals.reshape(len(mean_vals), 1),
+            'spatial_key': val['spatial_key'],
+            'temporal_key': []
+        }
 
     def SpatialFilterOperator(self, val, filter_):
         '''
@@ -125,7 +145,11 @@ class Variable(models.Model):
         print indices_to_delete
         values = np.delete(val['values'], list(indices_to_delete), 0)
         spatial_key = np.delete(val['spatial_key'], list(indices_to_delete))
-        return {'values': values, 'spatial_key': spatial_key, 'temporal_key': val['spatial_key']}
+        return {
+            'values': values,
+            'spatial_key': spatial_key,
+            'temporal_key': val['spatial_key']
+        }
 
     def TemporalFilterOperator(self, val, filter_):
         '''
@@ -152,7 +176,11 @@ class Variable(models.Model):
 
         values = np.delete(val['values'], list(indices_to_delete), 1)
         temporal_key = list(np.delete(val['temporal_key'], list(indices_to_delete)))
-        return {'values': values, 'spatial_key': val['spatial_key'], 'temporal_key': temporal_key}
+        return {
+            'values': values,
+            'spatial_key': val['spatial_key'],
+            'temporal_key': temporal_key
+        }
 
     def ValueFilterOperator(self, val, filter_):
         '''
@@ -181,9 +209,17 @@ class Variable(models.Model):
 
         if hasattr(val['values'], 'mask'):
             val['values'].mask = np.bitwise_or(val['values'].mask, mask)
-            return {'values': val['values'], 'spatial_key': val['spatial_key'], 'temporal_key': val['temporal_key']}
+            return {
+                'values': val['values'],
+                'spatial_key': val['spatial_key'],
+                'temporal_key': val['temporal_key']
+            }
         else:
-            return {'values': ma.masked_array(val['values'], mask=mask), 'spatial_key': val['spatial_key'], 'temporal_key': val['temporal_key']}
+            return {
+                'values': ma.masked_array(val['values'], mask=mask),
+                'spatial_key': val['spatial_key'],
+                'temporal_key': val['temporal_key']
+            }
 
     def JoinOperator(self, left, right, field):
         '''
@@ -210,5 +246,11 @@ class Variable(models.Model):
             table = GeoKitTable.objects.get(pk=left['id'])
             table_field = left['field']
 
-        values, t_key, s_key = join_layer_and_table(layer.name, layer_field, table.name, table_field, field)
-        return {'values': np.array(values).astype('float64'), 'temporal_key': t_key, 'spatial_key': s_key}
+        values, t_key, s_key = join_layer_and_table(
+            layer.name, layer_field, table.name, table_field, field
+        )
+
+        return {
+            'values': np.array(values).astype('float64'),
+            'temporal_key': t_key, 'spatial_key': s_key
+        }
