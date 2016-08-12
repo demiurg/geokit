@@ -1288,7 +1288,7 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
 var DropdownComponent = function DropdownComponent(_ref) {
   var things = _ref.things;
   var onclick = _ref.onclick;
-  return (
+  return(
     // TODO something different when layers.isFetching
 
     React.createElement(
@@ -1396,7 +1396,7 @@ var AddDataInputModal = function (_React$Component2) {
             return React.createElement(
               "option",
               { value: "{\"type\": \"" + type + "\", \"id\": \"" + item.name + "\", \"field\": \"" + field + "\"}" },
-              field + "/" + item.name
+              item.name + "/" + field
             );
           });
         }
@@ -1481,11 +1481,11 @@ var AddDataInputModal = function (_React$Component2) {
   return AddDataInputModal;
 }(React.Component);
 
-var AddNumberInputModal = function (_React$Component3) {
-  _inherits(AddNumberInputModal, _React$Component3);
+var AddExpressionInputModal = function (_React$Component3) {
+  _inherits(AddExpressionInputModal, _React$Component3);
 
-  function AddNumberInputModal(props) {
-    _classCallCheck(this, AddNumberInputModal);
+  function AddExpressionInputModal(props) {
+    _classCallCheck(this, AddExpressionInputModal);
 
     var _this5 = _possibleConstructorReturn(this, _React$Component3.call(this, props));
 
@@ -1493,22 +1493,22 @@ var AddNumberInputModal = function (_React$Component3) {
     return _this5;
   }
 
-  AddNumberInputModal.prototype.close = function close() {
+  AddExpressionInputModal.prototype.close = function close() {
     this.setState({ showModal: false });
   };
 
-  AddNumberInputModal.prototype.open = function open() {
+  AddExpressionInputModal.prototype.open = function open() {
     this.setState({ showModal: true });
   };
 
-  AddNumberInputModal.prototype.use = function use() {
+  AddExpressionInputModal.prototype.use = function use() {
     var form = $(this.form).serializeArray();
     var variable = ['expression', [JSON.parse(form[0]['value'])]];
     this.props.onAddInputVariable(variable);
     this.setState({ showModal: false });
   };
 
-  AddNumberInputModal.prototype.render = function render() {
+  AddExpressionInputModal.prototype.render = function render() {
     var _this6 = this;
 
     return React.createElement(
@@ -1568,19 +1568,126 @@ var AddNumberInputModal = function (_React$Component3) {
     );
   };
 
-  return AddNumberInputModal;
+  return AddExpressionInputModal;
 }(React.Component);
 
-var AddBinOpModal = function (_React$Component4) {
-  _inherits(AddBinOpModal, _React$Component4);
+var AddUnaOpModal = function (_React$Component4) {
+  _inherits(AddUnaOpModal, _React$Component4);
 
-  function AddBinOpModal(props) {
-    _classCallCheck(this, AddBinOpModal);
+  function AddUnaOpModal(props) {
+    _classCallCheck(this, AddUnaOpModal);
 
     var _this7 = _possibleConstructorReturn(this, _React$Component4.call(this, props));
 
     _this7.state = { showModal: false };
     return _this7;
+  }
+
+  AddUnaOpModal.prototype.close = function close() {
+    this.setState({ showModal: false });
+  };
+
+  AddUnaOpModal.prototype.open = function open() {
+    this.setState({ showModal: true });
+  };
+
+  AddUnaOpModal.prototype.use = function use() {
+    var form = $(this.form).serializeArray();
+    var variable = [this.props.op, [JSON.parse(form[0]['value'])]];
+    this.props.onAddTreeOp(variable);
+    this.setState({ showModal: false });
+  };
+
+  AddUnaOpModal.prototype.render = function render() {
+    var _this8 = this;
+
+    return React.createElement(
+      Button,
+      {
+        bsStyle: "primary",
+        onClick: this.open.bind(this)
+      },
+      this.props.children ? this.props.children : this.props.op,
+      React.createElement(
+        Modal,
+        { show: this.state.showModal, onHide: this.close.bind(this) },
+        React.createElement(
+          Modal.Header,
+          { closeButton: true },
+          React.createElement(
+            Modal.Title,
+            null,
+            "Adding Unary Operation"
+          )
+        ),
+        React.createElement(
+          Modal.Body,
+          null,
+          React.createElement(
+            "form",
+            { ref: function ref(_ref4) {
+                _this8.form = _ref4;
+              } },
+            React.createElement(
+              FormGroup,
+              { controlId: "leftSelect" },
+              React.createElement(
+                ControlLabel,
+                null,
+                "Operand"
+              ),
+              React.createElement(
+                FormControl,
+                { componentClass: "select", placeholder: "select", name: "left" },
+                React.createElement(
+                  "option",
+                  {
+                    key: this.props.input_variables.length,
+                    value: JSON.stringify(this.props.tree) },
+                  "tree"
+                ),
+                this.props.input_variables.map(function (v, i) {
+                  return React.createElement(
+                    "option",
+                    { key: i, value: i },
+                    join2description(v)
+                  );
+                })
+              )
+            )
+          )
+        ),
+        React.createElement(
+          Modal.Footer,
+          null,
+          React.createElement(
+            Button,
+            { onClick: this.use.bind(this) },
+            "Use Operation"
+          ),
+          React.createElement(
+            Button,
+            { onClick: this.close.bind(this) },
+            "Close"
+          )
+        )
+      )
+    );
+  };
+
+  return AddUnaOpModal;
+}(React.Component);
+
+var AddBinOpModal = function (_React$Component5) {
+  _inherits(AddBinOpModal, _React$Component5);
+
+  function AddBinOpModal(props) {
+    _classCallCheck(this, AddBinOpModal);
+
+    var _this9 = _possibleConstructorReturn(this, _React$Component5.call(this, props));
+
+    _this9.state = { showModal: false };
+    return _this9;
   }
 
   AddBinOpModal.prototype.close = function close() {
@@ -1599,7 +1706,7 @@ var AddBinOpModal = function (_React$Component4) {
   };
 
   AddBinOpModal.prototype.render = function render() {
-    var _this8 = this;
+    var _this10 = this;
 
     return React.createElement(
       Button,
@@ -1625,8 +1732,8 @@ var AddBinOpModal = function (_React$Component4) {
           null,
           React.createElement(
             "form",
-            { ref: function ref(_ref4) {
-                _this8.form = _ref4;
+            { ref: function ref(_ref5) {
+                _this10.form = _ref5;
               } },
             React.createElement(
               FormGroup,
@@ -1642,13 +1749,15 @@ var AddBinOpModal = function (_React$Component4) {
                 this.props.input_variables.map(function (v, i) {
                   return React.createElement(
                     "option",
-                    { value: i },
-                    var2description(v)
+                    { key: i, value: JSON.stringify(v) },
+                    join2description(v)
                   );
                 }),
                 React.createElement(
                   "option",
-                  { key: this.props.input_variables.length, value: JSON.stringify(this.props.tree) },
+                  {
+                    key: this.props.input_variables.length,
+                    value: JSON.stringify(this.props.tree) },
                   "tree"
                 )
               )
@@ -1668,12 +1777,14 @@ var AddBinOpModal = function (_React$Component4) {
                   return React.createElement(
                     "option",
                     { key: i, value: JSON.stringify(v) },
-                    var2description(v)
+                    join2description(v)
                   );
                 }),
                 React.createElement(
                   "option",
-                  { key: this.props.input_variables.length, value: JSON.stringify(this.props.tree) },
+                  {
+                    key: this.props.input_variables.length,
+                    value: JSON.stringify(this.props.tree) },
                   "tree"
                 )
               )
@@ -1701,7 +1812,7 @@ var AddBinOpModal = function (_React$Component4) {
   return AddBinOpModal;
 }(React.Component);
 
-function var2description(variable) {
+function join2description(variable) {
   switch (variable[0]) {
     case 'join':
       return variable[1][0].type + ' ' + variable[1][0].id + ' and ' + variable[1][1].type + ' ' + variable[1][1].id + ' on ' + variable[1][0].field + ' = ' + variable[1][1].field;
@@ -1712,13 +1823,13 @@ function var2description(variable) {
   }
 }
 
-var SieveComponent = function (_React$Component5) {
-  _inherits(SieveComponent, _React$Component5);
+var SieveComponent = function (_React$Component6) {
+  _inherits(SieveComponent, _React$Component6);
 
   function SieveComponent(props) {
     _classCallCheck(this, SieveComponent);
 
-    return _possibleConstructorReturn(this, _React$Component5.call(this, props));
+    return _possibleConstructorReturn(this, _React$Component6.call(this, props));
   }
 
   SieveComponent.prototype.validateVariable = function validateVariable() {
@@ -1744,7 +1855,7 @@ var SieveComponent = function (_React$Component5) {
   };
 
   SieveComponent.prototype.saveVariable = function saveVariable(e) {
-    var _this10 = this;
+    var _this12 = this;
 
     e.stopPropagation();
     var validationResponse = this.validateVariable();
@@ -1766,7 +1877,7 @@ var SieveComponent = function (_React$Component5) {
           if (200 <= xhr.status && xhr.status < 300) {
             window.location.href = window.redirect_after_save;
           } else {
-            _this10.setState({ errors: { server: xhr.response } });
+            _this12.setState({ errors: { server: xhr.response } });
           }
         }
       };
@@ -1815,7 +1926,7 @@ var SieveComponent = function (_React$Component5) {
             ), React.createElement(
               "dd",
               null,
-              var2description(variable)
+              join2description(variable)
             )];
           })
         ) : "Add some!",
@@ -1834,9 +1945,9 @@ var SieveComponent = function (_React$Component5) {
                 "Add Data Input"
               ),
               React.createElement(
-                AddNumberInputModal,
+                AddExpressionInputModal,
                 this.props,
-                "Add Numeric Input"
+                "Add Expression Input"
               )
             )
           )
@@ -1854,6 +1965,11 @@ var SieveComponent = function (_React$Component5) {
             React.createElement(
               ButtonGroup,
               null,
+              React.createElement(
+                AddBinOpModal,
+                _extends({ op: "select" }, this.props),
+                "Select"
+              ),
               React.createElement(
                 AddBinOpModal,
                 _extends({ op: "*" }, this.props),
@@ -1880,7 +1996,11 @@ var SieveComponent = function (_React$Component5) {
         React.createElement(
           "p",
           null,
-          JSON.stringify(this.props.tree)
+          React.createElement(
+            TreeView,
+            null,
+            this.props.tree
+          )
         )
       ),
       React.createElement(
@@ -1892,6 +2012,67 @@ var SieveComponent = function (_React$Component5) {
   };
 
   return SieveComponent;
+}(React.Component);
+
+var TreeView = function (_React$Component7) {
+  _inherits(TreeView, _React$Component7);
+
+  function TreeView() {
+    _classCallCheck(this, TreeView);
+
+    return _possibleConstructorReturn(this, _React$Component7.apply(this, arguments));
+  }
+
+  TreeView.prototype.render = function render() {
+    console.log(this.props.children, Array.isArray(this.props.children));
+    if (this.props.children.length && this.props.children.length == 2) {
+      var op = this.props.children[0];
+      var left = this.props.children[1][0];
+      var right = this.props.children[1][1];
+      console.log(left, right, op);
+
+      if (op == 'expression') {
+        return React.createElement(
+          "b",
+          null,
+          left
+        );
+      } else if (op == 'join') {
+        return React.createElement(
+          "span",
+          null,
+          join2description(this.props.children)
+        );
+      } else {
+        var result = React.createElement(
+          "span",
+          null,
+          "(",
+          React.createElement(
+            TreeView,
+            null,
+            left
+          ),
+          op,
+          React.createElement(
+            TreeView,
+            null,
+            right
+          ),
+          ")"
+        );
+        return result;
+      }
+    } else {
+      return React.createElement(
+        "span",
+        null,
+        JSON.stringify(this.props.children)
+      );
+    }
+  };
+
+  return TreeView;
 }(React.Component);
 
 var Sieve = ReactRedux.connect(mapStateToProps, mapDispatchToProps)(SieveComponent);
