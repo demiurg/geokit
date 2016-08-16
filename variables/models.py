@@ -14,6 +14,11 @@ from layers.models import Layer
 from expressions.helpers import join_layer_and_table
 
 
+class DataSource(object):
+    def __init__(sources):
+        pass
+
+
 class Variable(models.Model):
     name = models.CharField(primary_key=True, max_length=75)
     temporal_domain = ArrayField(models.DateField())
@@ -52,6 +57,7 @@ class Variable(models.Model):
             'tfilter': self.TemporalFilterOperator,
 
             'join': self.JoinOperator,
+            'select': self.SelectOperator,
         }
 
         return operator_table[text]
@@ -221,7 +227,42 @@ class Variable(models.Model):
                 'temporal_key': val['temporal_key']
             }
 
-    def JoinOperator(self, left, right, field):
+    def JoinOperator(self, left, right):
+        '''
+        Serialization format:
+        `{
+            'model': 'Table',
+            'id': 1,
+            'field': 'fid'
+        }`
+        '''
+        if left['model'] == 'Layer':
+            if right['model'] != 'Table':
+                raise ValueError("Arguments must be a Layer and Table")
+            layer = Layer.objects.get(pk=left['id'])
+            layer_field = left['field']
+            table = GeoKitTable.objects.get(pk=right['id'])
+            table_field = right['field']
+
+        if left['model'] == 'Table':
+            if right['model'] != 'Layer':
+                raise ValueError("Arguments must be a Layer and Table")
+            layer = Layer.objects.get(pk=right['id'])
+            layer_field = right['field']
+            table = GeoKitTable.objects.get(pk=left['id'])
+            table_field = left['field']
+
+        values, t_key, s_key = join_layer_and_table(
+            layer.name, layer_field, table.name, table_field, field
+        )
+
+        return {
+            'values': np.array(values).astype('float64'),
+            'temporal_key': t_key, 'spatial_key': s_key
+        }
+
+
+    def JoinOperator(self, left, right):
         '''
         Serialization format:
         `{

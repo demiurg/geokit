@@ -412,6 +412,81 @@ class AddBinOpModal extends React.Component {
   }
 }
 
+class AddSelectModal extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = { showModal: false};
+  }
+
+  close() {
+    this.setState({ showModal: false });
+  }
+
+  open() {
+    this.setState({ showModal: true });
+  }
+
+  use() {
+    var form = $(this.form).serializeArray();
+    var variable = [
+      this.props.op,
+      [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]
+    ];
+    this.props.onAddTreeOp(variable);
+    this.setState({ showModal: false });
+  }
+
+  render(){
+    return (
+      <Button
+        bsStyle="primary"
+        onClick={this.open.bind(this)}
+      >
+        {this.props.children ? this.props.children : this.props.op}
+        <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Select Variable</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <form ref={(ref)=>{this.form=ref}}>
+              <FormGroup controlId="leftSelect">
+                <ControlLabel>Left operand</ControlLabel>
+                <FormControl componentClass="select" placeholder="select" name="left">
+                  { this.props.input_variables.map((v, i) => (
+                    <option key={i} value={JSON.stringify(v)}>{join2description(v)}</option>
+                  )) }
+                  <option
+                    key={this.props.input_variables.length}
+                    value={JSON.stringify(this.props.tree)}>
+                    tree
+                  </option>
+                </FormControl>
+              </FormGroup>
+              <FormGroup controlId="rightSelect">
+                <ControlLabel>Right operand</ControlLabel>
+                <FormControl componentClass="select" placeholder="select" name="right">
+                  { this.props.input_variables.map((v, i) => (
+                    <option key={i} value={JSON.stringify(v)}>{join2description(v)}</option>
+                  )) }
+                  <option
+                    key={this.props.input_variables.length}
+                    value={JSON.stringify(this.props.tree)}>
+                    tree
+                  </option>
+                </FormControl>
+              </FormGroup>
+            </form>
+          </Modal.Body>
+          <Modal.Footer>
+           <Button onClick={this.use.bind(this)}>Use Operation</Button>
+           <Button onClick={this.close.bind(this)}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+      </Button>
+    );
+  }
+}
+
 function join2description(variable){
   switch(variable[0]){
     case 'join':
@@ -526,7 +601,7 @@ class SieveComponent extends React.Component {
           <div className='pull-right'>
             <ButtonToolbar>
               <ButtonGroup>
-                <AddBinOpModal op='select' {...this.props}>Select</AddBinOpModal>
+                <AddSelectModal op='select' {...this.props}>Select</AddSelectModal>
                 <AddBinOpModal op='*' {...this.props}>x</AddBinOpModal>
                 <AddBinOpModal op='/' {...this.props}>/</AddBinOpModal>
                 <AddBinOpModal op='+' {...this.props}>+</AddBinOpModal>
