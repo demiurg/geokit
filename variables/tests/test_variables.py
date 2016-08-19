@@ -89,7 +89,7 @@ def test_temporal_mean_operator():
 
     np.testing.assert_array_equal(v.data()['values'], np.array([[2], [5], [8]]))
 
-
+'''
 @pytest.mark.django_db
 def test_join_select_operator(set_schema, monkeypatch):
     with mock.patch('django.db.connection') as connection:
@@ -149,11 +149,12 @@ def test_join_select_operator(set_schema, monkeypatch):
         ])
         with pytest.raises(ValueError):
             v.data()
-
+'''
 
 @pytest.mark.django_db
-def test_join_operator(set_schema, monkeypatch):
+def test_join_wselect_operator(set_schema, monkeypatch):
     with mock.patch('django.db.connection') as connection:
+        connection.schema_name = 'test'
         connection.cursor.return_value.fetchall.return_value = [
             (1, None, None, {'tmin': 2}, date(2010, 1, 1)),
             (1, None, None, {'tmin': 5}, date(2010, 1, 2)),

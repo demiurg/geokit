@@ -93,7 +93,6 @@ def compare_to_date(date, comparison, benchmark):
 
     return False
 
-
 def join_layer_and_table(layer_name, layer_field, table_name, table_field, variable):
     """
     Query returns all rows from respective table records and layer features joined via a column
@@ -123,6 +122,7 @@ def join_layer_and_table(layer_name, layer_field, table_name, table_field, varia
             ON t1.properties->>%s = t2.properties->>%s
             WHERE t1.layer_id = %s AND t2.table_id = %s
     """
+
     cursor = django.db.connection.cursor()
     cursor.execute(query, [layer_field, table_field, layer_name, table_name])
 
@@ -155,3 +155,4 @@ def join_layer_and_table(layer_name, layer_field, table_name, table_field, varia
         result_matrix.append(row)
 
     return result_matrix, list(temporal_key), spatial_key
+
