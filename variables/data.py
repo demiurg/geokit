@@ -3,6 +3,8 @@ import sympy
 from sortedcontainers import SortedDict, SortedSet
 
 import django.db
+from pandas.io import sql
+from pandas.io.sql import read_frame
 
 
 class DataSource(object):
@@ -18,6 +20,8 @@ class DataSource(object):
                 self.tables.append(source)
 
     def select(self, name):
+        self.name = name
+
         selects = []
         froms = []
 
@@ -26,7 +30,7 @@ class DataSource(object):
 
             f_wheres = []
             for layer in self.layers:
-                f_wheres.append("layer_id = {}".format(layer['id']))
+                f_wheres.append("layer_id = '{}'".format(layer['id']))
 
             froms.append(
                 "(SELECT id as feature_id,  properties->>'{0}' as joiner "
@@ -43,10 +47,10 @@ class DataSource(object):
 
             r_wheres = []
             for table in self.tables:
-                r_wheres.append("r.table_id = {}".format(table['id']))
+                r_wheres.append("table_id = '{}'".format(table['id']))
 
             froms.append(
-                "(SELECT id as record_id, data,"
+                "(SELECT id as record_id, date,"
                 " properties->>'{0}' as joiner, properties->>'{1}' as {1} "
                 "FROM {2!s}.geokit_tables_record "
                 "WHERE {3}) r".format(
@@ -62,7 +66,33 @@ class DataSource(object):
             ", ".join(froms),
         )
 
-        return query
+        cursor = django.db.connection.cursor()
+        cursor.execute(query)
+
+        self.df = read_frame(
+            query,
+            django.db.connection,
+            index_col='date',
+            params=None
+        )
+
+        return self.df
+
+    def variable(self):
+
+        if self.df.empty:  # did you find any data?
+            values, t_key, s_key = [[]], [], []
+
+        s_key = self.df['feature_id'].unique()
+        t_key = self.df.index.unique()
+        values = self.df.groupby(['feature_id'])[self.name].apply(list)
+        # fix to values in future
+        values = np.array(values.tolist(), dtype='float64')
+        return {
+            'values': values,
+            'temporal_key': t_key, 'spatial_key': s_key
+        }
+
 
 def join_layer_and_table(layer_name, layer_field, table_name, table_field, variable):
     """

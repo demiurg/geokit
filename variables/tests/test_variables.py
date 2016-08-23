@@ -1,5 +1,5 @@
 from datetime import date
-
+from collections import namedtuple
 import pytest
 import mock
 import numpy as np
@@ -9,7 +9,6 @@ from django.contrib.gis.geos import GEOSGeometry
 
 from layers.models import Feature
 from variables.models import Variable
-
 
 def _scalar_val(val):
     return {'values': val, 'spatial_key': [], 'temporal_key': []}
@@ -89,25 +88,49 @@ def test_temporal_mean_operator():
 
     np.testing.assert_array_equal(v.data()['values'], np.array([[2], [5], [8]]))
 
-'''
+
 @pytest.mark.django_db
-def test_join_select_operator(set_schema, monkeypatch):
+def test_select_join_operator(set_schema, monkeypatch):
+    mockobj = mock.Mock(side_effect=KeyError('foo'))
     with mock.patch('django.db.connection') as connection:
+        connection.schema_name = 'test'
+        connection.cursor.return_value.description.__iter__.return_value = (
+            ( 'feature_id', 23, None, 4, None, None, None),
+            ( 'record_id', 23, None, 4, None, None, None),
+            ( 'date', 1082, None, 4, None, None, None),
+            ( 'tmin', 25, None, -1, None, None, None)
+        )
+
         connection.cursor.return_value.fetchall.return_value = [
-            (1, None, None, {'tmin': 2}, date(2010, 1, 1)),
-            (1, None, None, {'tmin': 5}, date(2010, 1, 2)),
-            (2, None, None, {'tmin': 4}, date(2010, 1, 1)),
-            (2, None, None, {'tmin': 8}, date(2010, 1, 2)),
+            (1, 1, date(2010, 1, 1), 2),
+            (1, 2, date(2010, 1, 2), 5),
+            (2, 1, date(2010, 1, 1), 4),
+            (2, 2, date(2010, 1, 2), 8),
         ]
 
         v = Variable(tree=[
             'select', [
-                'join', [
+                ['join', [
                     {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
                     {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
-                ]
-            ],
-            'tmin'
+                ]],
+                'tmin',
+            ]
+        ])
+
+        values = v.data()['values']
+        np.testing.assert_array_equal(values, np.array([
+            [2, 5], [4, 8]
+        ]))
+
+        v = Variable(tree=[
+            'select', [
+                ['join', [
+                    {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
+                    {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
+                ]],
+                'tmin'
+            ]
         ])
         np.testing.assert_array_equal(v.data()['values'], np.array([
             [2, 5], [4, 8]
@@ -115,44 +138,31 @@ def test_join_select_operator(set_schema, monkeypatch):
 
         v = Variable(tree=[
             'select', [
-                'join', [
-                    {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
-                    {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
-                ]
-            ],
-            'tmin'
-        ])
-        np.testing.assert_array_equal(v.data()['values'], np.array([
-            [2, 5], [4, 8]
-        ]))
-
-        v = Variable(tree=[
-            'select', [
-                'join', [
+                ['join', [
                     {'model': 'Table', 'id': 1, 'field': 'fid'},
                     {'model': 'Table', 'id': 2, 'field': 'fid'},
-                ]
-            ],
-            'test'
+                ]],
+                'test'
+            ]
         ])
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             v.data()
 
         v = Variable(tree=[
             'select', [
-                'join', [
+                ['join', [
                     {'model': 'Layer', 'id': 1, 'field': 'fid'},
                     {'model': 'Layer', 'id': 2, 'field': 'fid'},
-                ]
-            ],
-            'test'
+                ]],
+                'test'
+            ]
         ])
-        with pytest.raises(ValueError):
+        with pytest.raises(KeyError):
             v.data()
-'''
+
 
 @pytest.mark.django_db
-def test_join_wselect_operator(set_schema, monkeypatch):
+def test_join_operator(set_schema, monkeypatch):
     with mock.patch('django.db.connection') as connection:
         connection.schema_name = 'test'
         connection.cursor.return_value.fetchall.return_value = [
@@ -167,6 +177,7 @@ def test_join_wselect_operator(set_schema, monkeypatch):
             {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
             'tmin'
         ]])
+
         np.testing.assert_array_equal(v.data()['values'], np.array([
             [2, 5], [4, 8]
         ]))
@@ -176,9 +187,12 @@ def test_join_wselect_operator(set_schema, monkeypatch):
             {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
             'tmin'
         ]])
+
         np.testing.assert_array_equal(v.data()['values'], np.array([
             [2, 5], [4, 8]
         ]))
+
+        # THIS JOIN only works between tables and layers
 
         v = Variable(tree=['join', [
             {'model': 'Table', 'id': 1, 'field': 'fid'},

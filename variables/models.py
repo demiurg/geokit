@@ -35,7 +35,7 @@ class Variable(models.Model):
         return operator(*self.tree[1])
 
     def __unicode__(self):
-        return self.name
+        return self.name if self.name else unicode(self.tree)
 
     def resolve_operator(self, text):
         operator_table = {
@@ -223,7 +223,7 @@ class Variable(models.Model):
                 'temporal_key': val['temporal_key']
             }
 
-    def SelectOperator(self, join, name):
+    def SelectOperator(self, val, name):
         '''
         Serialization format:
         `{
@@ -232,26 +232,13 @@ class Variable(models.Model):
             'field': 'fid'
         }`
         '''
-        qs = Record.objects.raw(
-            "SELECT id, date, properties->>'fid' as fid from geokit_tables_record"
-        )
-        v = qs[0]
 
-        return {
-            'values': np.array(values).astype('float64'),
-            'temporal_key': t_key, 'spatial_key': s_key
-        }
-
+        (source,) = self.resolve_arguments(val)
+        source.select(name)
+        return source.variable()
 
     def JoinLazy(self, left, right):
-        values, t_key, s_key = join_layer_and_table(
-            layer.name, layer_field, table.name, table_field, field
-        )
-
-        ds = DataSource(left, right)
-        q = ds.select(field)
-        return q
-
+        return DataSource(left, right)
 
     def JoinOperator(self, left, right, field=None):
         '''
