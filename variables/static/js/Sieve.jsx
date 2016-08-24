@@ -132,6 +132,19 @@ class VariableButtonGroup extends React.Component {
 }
 
 
+var i2o = (type, item, i) => { return (item, i) => {
+  if (item.field_names){
+    return item.field_names.map((field, j) => (
+      <option value={
+        `{"type": "${type}", "id": "${item.name}", "field": "${field}"}`
+      }>
+        {`${item.name}/${field}`}
+      </option>
+    ))
+  }
+}};
+
+
 class AddDataInputModal extends React.Component {
   constructor(props){
     super(props);
@@ -148,27 +161,18 @@ class AddDataInputModal extends React.Component {
 
   use() {
     var form = $(this.form).serializeArray();
-    var variable = [
-      'join',
-      [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]
-    ];
+    var variable = {
+      name: form[2]['value'],
+      node: [
+        'join',
+        [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]
+      ]
+    };
     this.props.onAddInputVariable(variable);
     this.setState({ showModal: false });
   }
 
   render(){
-    var i2o = (type, item, i) => { return (item, i) => {
-      if (item.field_names){
-        return item.field_names.map((field, j) => (
-          <option value={
-            `{"type": "${type}", "id": "${item.name}", "field": "${field}"}`
-          }>
-            {`${item.name}/${field}`}
-          </option>
-        ))
-      }
-    }};
-
     return (
       <Button
         bsStyle="primary"
@@ -204,6 +208,10 @@ class AddDataInputModal extends React.Component {
                     )
                   }
                 </FormControl>
+              </FormGroup>
+              <FormGroup controlId="name">
+                <ControlLabel>Name</ControlLabel>
+                <FormControl name="name" type="text"/>
               </FormGroup>
             </form>
           </Modal.Body>
@@ -274,69 +282,6 @@ class AddExpressionInputModal extends React.Component {
 }
 
 
-class AddUnaOpModal extends React.Component {
-  constructor(props){
-    super(props);
-    this.state = { showModal: false};
-  }
-
-  close() {
-    this.setState({ showModal: false });
-  }
-
-  open() {
-    this.setState({ showModal: true });
-  }
-
-  use() {
-    var form = $(this.form).serializeArray();
-    var variable = [
-      this.props.op,
-      [JSON.parse(form[0]['value'])]
-    ];
-    this.props.onAddTreeOp(variable);
-    this.setState({ showModal: false });
-  }
-
-  render(){
-    return (
-      <Button
-        bsStyle="primary"
-        onClick={this.open.bind(this)}
-      >
-        {this.props.children ? this.props.children : this.props.op}
-        <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
-          <Modal.Header closeButton>
-            <Modal.Title>Adding Unary Operation</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <form ref={(ref)=>{this.form=ref}}>
-              <FormGroup controlId="leftSelect">
-                <ControlLabel>Operand</ControlLabel>
-                <FormControl componentClass="select" placeholder="select" name="left">
-                  <option
-                    key={this.props.input_variables.length}
-                    value={JSON.stringify(this.props.tree)}>
-                    tree
-                  </option>
-                  { this.props.input_variables.map((v, i) => (
-                    <option key={i} value={i}>{join2description(v)}</option>
-                  )) }
-                </FormControl>
-              </FormGroup>
-            </form>
-          </Modal.Body>
-          <Modal.Footer>
-           <Button onClick={this.use.bind(this)}>Use Operation</Button>
-           <Button onClick={this.close.bind(this)}>Close</Button>
-          </Modal.Footer>
-        </Modal>
-      </Button>
-    );
-  }
-}
-
-
 class AddBinOpModal extends React.Component {
   constructor(props){
     super(props);
@@ -378,7 +323,9 @@ class AddBinOpModal extends React.Component {
                 <ControlLabel>Left operand</ControlLabel>
                 <FormControl componentClass="select" placeholder="select" name="left">
                   { this.props.input_variables.map((v, i) => (
-                    <option key={i} value={JSON.stringify(v)}>{join2description(v)}</option>
+                    <option key={i} value={JSON.stringify(v.node)}>
+                      {v.name ? v.name : rendertree(v)}
+                    </option>
                   )) }
                   <option
                     key={this.props.input_variables.length}
@@ -391,8 +338,9 @@ class AddBinOpModal extends React.Component {
                 <ControlLabel>Right operand</ControlLabel>
                 <FormControl componentClass="select" placeholder="select" name="right">
                   { this.props.input_variables.map((v, i) => (
-                    <option key={i} value={JSON.stringify(v)}>{join2description(v)}</option>
-                  )) }
+                    <option key={i} value={JSON.stringify(v.node)}>
+                      {v.name ? v.name : rendertree(v)}
+                    </option>                  )) }
                   <option
                     key={this.props.input_variables.length}
                     value={JSON.stringify(this.props.tree)}>
@@ -437,6 +385,20 @@ class AddSelectModal extends React.Component {
   }
 
   render(){
+    var property = (
+        <FormGroup controlId="rightSelect">
+          <ControlLabel>Variable Property</ControlLabel>
+          <FormControl componentClass="select" placeholder="select" name="right">
+            {
+              this.props.layers.items.map(
+                i2o('Layer')
+              ).concat(
+                this.props.tables.items.map(i2o('Table'))
+              )
+            }
+          </FormControl>
+        </FormGroup>
+      );
     return (
       <Button
         bsStyle="primary"
@@ -450,31 +412,16 @@ class AddSelectModal extends React.Component {
           <Modal.Body>
             <form ref={(ref)=>{this.form=ref}}>
               <FormGroup controlId="leftSelect">
-                <ControlLabel>Left operand</ControlLabel>
+                <ControlLabel>Input Variable</ControlLabel>
                 <FormControl componentClass="select" placeholder="select" name="left">
-                  { this.props.input_variables.map((v, i) => (
-                    <option key={i} value={JSON.stringify(v)}>{join2description(v)}</option>
-                  )) }
-                  <option
-                    key={this.props.input_variables.length}
-                    value={JSON.stringify(this.props.tree)}>
-                    tree
-                  </option>
+                  {this.props.input_variables.map((v, i) => (
+                    <option key={i} value={JSON.stringify(v.node)}>
+                      {v.name ? v.name : rendertree(v)}
+                    </option>
+                  ))}
                 </FormControl>
               </FormGroup>
-              <FormGroup controlId="rightSelect">
-                <ControlLabel>Right operand</ControlLabel>
-                <FormControl componentClass="select" placeholder="select" name="right">
-                  { this.props.input_variables.map((v, i) => (
-                    <option key={i} value={JSON.stringify(v)}>{join2description(v)}</option>
-                  )) }
-                  <option
-                    key={this.props.input_variables.length}
-                    value={JSON.stringify(this.props.tree)}>
-                    tree
-                  </option>
-                </FormControl>
-              </FormGroup>
+              {property}
             </form>
           </Modal.Body>
           <Modal.Footer>
@@ -484,21 +431,6 @@ class AddSelectModal extends React.Component {
         </Modal>
       </Button>
     );
-  }
-}
-
-function join2description(variable){
-  switch(variable[0]){
-    case 'join':
-      return (
-        variable[1][0].type + ' ' + variable[1][0].id + ' and ' +
-        variable[1][1].type + ' ' + variable[1][1].id + ' on ' +
-        variable[1][0].field + ' = ' + variable[1][1].field
-      );
-    case 'expression':
-      return variable[1][0];
-    default:
-      return JSON.stringify(v);
   }
 }
 
@@ -580,8 +512,8 @@ class SieveComponent extends React.Component {
             <dl className="dl-horizontal">{
             this.props.input_variables.map((variable)=>{
               return [
-                <dt>{variable[0]}</dt>,
-                <dd>{join2description(variable)}</dd>
+                <dt>{variable.name}</dt>,
+                <dd>{rendertree(variable.node)}</dd>
               ];
             })
             }</dl>
@@ -610,7 +542,7 @@ class SieveComponent extends React.Component {
             </ButtonToolbar>
           </div>
           <p>
-            <TreeView>{this.props.tree}</TreeView>
+            {rendertree(this.props.tree)}
           </p>
 
         </Panel>
@@ -621,30 +553,39 @@ class SieveComponent extends React.Component {
   }
 }
 
+
+var rendertree = (tree) => {
+    console.log('render: ', tree);
+    if (tree.length && tree.length == 2){
+      var op = tree[0];
+      var left = tree[1][0];
+      var right = tree[1][1];
+
+      switch (op) {
+        case 'select':
+          return "Select " + right.id + "/" + right.field + " from (" + rendertree(left) + ")";
+        case 'expression':
+          return left;
+        case 'join':
+          let variable = tree;
+          let str = "Join "
+            variable[1][0].type + ' ' + variable[1][0].id + ' and ' +
+            variable[1][1].type + ' ' + variable[1][1].id + ' on ' +
+            variable[1][0].field + ' = ' + variable[1][1].field
+          ;
+          return str;
+        default:
+          return rendertree(left) + " " + op + " " + rendertree(right);
+      }
+    } else {
+      return JSON.stringify(tree);
+    }
+};
+
+
 class TreeView extends React.Component {
   render(){
-    console.log(this.props.children, Array.isArray(this.props.children));
-    if (this.props.children.length && this.props.children.length == 2){
-      var op = this.props.children[0];
-      var left = this.props.children[1][0];
-      var right = this.props.children[1][1];
-      console.log(left, right, op);
-
-      if (op == 'expression'){
-        return <b>{left}</b>;
-      } else if (op == 'join'){
-        return <span>{join2description(this.props.children)}</span>;
-      }else{
-        var result = <span>(
-          <TreeView>{left}</TreeView>
-          {op}
-          <TreeView>{right}</TreeView>
-        )</span>;
-        return result;
-      }
-    }else{
-      return <span>{JSON.stringify(this.props.children)}</span>;
-    }
+    return <span>{rendertree(this.props.children)}</span>;
   }
 }
 
