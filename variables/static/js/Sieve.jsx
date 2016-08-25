@@ -159,26 +159,28 @@ class AddDataInputModal extends React.Component {
     this.setState({ showModal: true });
   }
 
-  use() {
+  validate = (e) => {
     var form = $(this.form).serializeArray();
-    var variable = {
-      name: form[2]['value'],
-      node: [
-        'join',
-        [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]
-      ]
-    };
-    this.props.onAddInputVariable(variable);
+    if (form[0]['value'] && form[1]['value'] && form[2]['value']){
+      var variable = {
+        name: form[2]['value'],
+        node: [
+          'join',
+          [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]
+        ]
+      };
+      this.setState({
+        variable: variable
+      });
+    }
+  };
+
+  use() {
+    this.props.onAddInputVariable(this.state.variable);
     this.setState({ showModal: false });
   }
 
   render(){
-    var validate = (e) => {
-      var form = $(this.form).serializeArray();
-      this.setState({
-        variable: form[0]['value'] && form[1]['value'] && form[2]['value']
-      });
-    }
     return (
       <Button
         bsStyle="primary"
@@ -190,7 +192,7 @@ class AddDataInputModal extends React.Component {
             <Modal.Title>Adding Input Variable</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <form ref={(ref)=>{this.form=ref}} onChange={validate}>
+            <form ref={(ref)=>{this.form=ref}} onChange={this.validate.bind(this)}>
               <FormGroup controlId="leftSelect">
                 <ControlLabel>Left</ControlLabel>
                 <FormControl componentClass="select" placeholder="select" name="left">
@@ -370,10 +372,14 @@ class AddBinOpModal extends React.Component {
   }
 }
 
+
 class AddSelectModal extends React.Component {
   constructor(props){
     super(props);
-    this.state = { showModal: false, variable: null};
+    this.state = {
+      showModal: false,
+      select_node: null
+    };
   }
 
   close() {
@@ -384,18 +390,13 @@ class AddSelectModal extends React.Component {
     this.setState({ showModal: true });
   }
 
-  onselect = (form) => {
-    var form = $(form).serializeArray();
-    var variable = [
-      this.props.op,
-      [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]
-    ];
-    this.setState({ variable: variable});
+  onSelectNode = (select_node) => {
+    this.setState({ select_node: select_node});
   };
 
   use() {
-    if (this.state.variable){
-      this.props.onAddTreeOp(this.state.variable);
+    if (this.state.select_node){
+      this.props.onAddTreeOp(this.state.select_node);
       this.setState({ showModal: false });
     }else{
       alert('Select a variable to use.');
@@ -414,10 +415,10 @@ class AddSelectModal extends React.Component {
             <Modal.Title>Select Variable</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <SelectForm onselect={this.onselect} {...this.props} />
+            <SelectForm onSelectNode={this.onSelectNode} {...this.props} />
           </Modal.Body>
           <Modal.Footer>
-           { this.state.variable ?
+           { this.state.select_node ?
              <Button onClick={this.use.bind(this)}>Use Variable</Button> :
              null }
            <Button onClick={this.close.bind(this)}>Close</Button>
@@ -429,18 +430,39 @@ class AddSelectModal extends React.Component {
 }
 
 class SelectForm extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {variable: null, select_variable: null, select_property: null};
+  }
+
+  onVariableChange = (e) => {
+    if (e.target.value){
+      this.setState({select_variable: JSON.parse(e.target.value)});
+    }
+  };
+
+  onPropertyChange = (e) => {
+    //this.setState({select_property: JSON.parse(e.target.value)});
+    if (e.target.value){
+      var node = [
+        'select',
+        [this.state.select_variable, JSON.parse(e.target.value)]
+      ];
+      this.props.onSelectNode(node);
+    }
+  };
+
   render(){
-    var onChange = (e) => {
-      this.props.onselect(this.form);
-    };
-    var property = (
+    var property = null;
+    if (this.state.select_variable){
+      property = (
         <FormGroup controlId="rightSelect">
-          <ControlLabel>Variable Property</ControlLabel>
+          <ControlLabel>Variable&nbsp;Property</ControlLabel>
           <FormControl
             componentClass="select"
             placeholder="select"
             name="right"
-            onChange={onChange}>
+            onChange={this.onPropertyChange.bind(this)}>
             <option key={9999} value={null} >Not Selected</option>
             {
               this.props.layers.items.map(
@@ -452,11 +474,17 @@ class SelectForm extends React.Component {
           </FormControl>
         </FormGroup>
       );
+    }
     return (
       <form ref={(ref)=>{this.form=ref}}>
         <FormGroup controlId="leftSelect">
-          <ControlLabel>Input Variable</ControlLabel>
-          <FormControl componentClass="select" placeholder="select" name="left">
+          <ControlLabel>Input&nbsp;Variable</ControlLabel>
+          <FormControl
+            componentClass="select"
+            placeholder="select"
+            name="left"
+            onChange={this.onVariableChange.bind(this)}>
+            <option key={9999} value={null} >Not Selected</option>
             {this.props.input_variables.map((v, i) => (
               <option key={i} value={JSON.stringify(v.node)}>
                 {v.name ? v.name : rendertree(v)}
@@ -603,7 +631,6 @@ var rendertree = (tree) => {
         case 'expression':
           return left;
         case 'join':
-          console.log(left, right);
           let str = "Join " +
             left.type + ' ' + left.id + ' and ' +
             right.type + ' ' + right.id + ' on ' +

@@ -1381,6 +1381,19 @@ var AddDataInputModal = function (_React$Component2) {
 
     var _this3 = _possibleConstructorReturn(this, _React$Component2.call(this, props));
 
+    _this3.validate = function (e) {
+      var form = $(_this3.form).serializeArray();
+      if (form[0]['value'] && form[1]['value'] && form[2]['value']) {
+        var variable = {
+          name: form[2]['value'],
+          node: ['join', [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]]
+        };
+        _this3.setState({
+          variable: variable
+        });
+      }
+    };
+
     _this3.state = { showModal: false, variable: null };
     return _this3;
   }
@@ -1394,24 +1407,13 @@ var AddDataInputModal = function (_React$Component2) {
   };
 
   AddDataInputModal.prototype.use = function use() {
-    var form = $(this.form).serializeArray();
-    var variable = {
-      name: form[2]['value'],
-      node: ['join', [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]]
-    };
-    this.props.onAddInputVariable(variable);
+    this.props.onAddInputVariable(this.state.variable);
     this.setState({ showModal: false });
   };
 
   AddDataInputModal.prototype.render = function render() {
     var _this4 = this;
 
-    var validate = function validate(e) {
-      var form = $(_this4.form).serializeArray();
-      _this4.setState({
-        variable: form[0]['value'] && form[1]['value'] && form[2]['value']
-      });
-    };
     return React.createElement(
       Button,
       {
@@ -1438,7 +1440,7 @@ var AddDataInputModal = function (_React$Component2) {
             "form",
             { ref: function ref(_ref2) {
                 _this4.form = _ref2;
-              }, onChange: validate },
+              }, onChange: this.validate.bind(this) },
             React.createElement(
               FormGroup,
               { controlId: "leftSelect" },
@@ -1734,13 +1736,14 @@ var AddSelectModal = function (_React$Component5) {
 
     var _this9 = _possibleConstructorReturn(this, _React$Component5.call(this, props));
 
-    _this9.onselect = function (form) {
-      var form = $(form).serializeArray();
-      var variable = [_this9.props.op, [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]];
-      _this9.setState({ variable: variable });
+    _this9.onSelectNode = function (select_node) {
+      _this9.setState({ select_node: select_node });
     };
 
-    _this9.state = { showModal: false, variable: null };
+    _this9.state = {
+      showModal: false,
+      select_node: null
+    };
     return _this9;
   }
 
@@ -1753,8 +1756,8 @@ var AddSelectModal = function (_React$Component5) {
   };
 
   AddSelectModal.prototype.use = function use() {
-    if (this.state.variable) {
-      this.props.onAddTreeOp(this.state.variable);
+    if (this.state.select_node) {
+      this.props.onAddTreeOp(this.state.select_node);
       this.setState({ showModal: false });
     } else {
       alert('Select a variable to use.');
@@ -1784,12 +1787,12 @@ var AddSelectModal = function (_React$Component5) {
         React.createElement(
           Modal.Body,
           null,
-          React.createElement(SelectForm, _extends({ onselect: this.onselect }, this.props))
+          React.createElement(SelectForm, _extends({ onSelectNode: this.onSelectNode }, this.props))
         ),
         React.createElement(
           Modal.Footer,
           null,
-          this.state.variable ? React.createElement(
+          this.state.select_node ? React.createElement(
             Button,
             { onClick: this.use.bind(this) },
             "Use Variable"
@@ -1810,41 +1813,58 @@ var AddSelectModal = function (_React$Component5) {
 var SelectForm = function (_React$Component6) {
   _inherits(SelectForm, _React$Component6);
 
-  function SelectForm() {
+  function SelectForm(props) {
     _classCallCheck(this, SelectForm);
 
-    return _possibleConstructorReturn(this, _React$Component6.apply(this, arguments));
+    var _this10 = _possibleConstructorReturn(this, _React$Component6.call(this, props));
+
+    _this10.onVariableChange = function (e) {
+      if (e.target.value) {
+        _this10.setState({ select_variable: JSON.parse(e.target.value) });
+      }
+    };
+
+    _this10.onPropertyChange = function (e) {
+      //this.setState({select_property: JSON.parse(e.target.value)});
+      if (e.target.value) {
+        var node = ['select', [_this10.state.select_variable, JSON.parse(e.target.value)]];
+        _this10.props.onSelectNode(node);
+      }
+    };
+
+    _this10.state = { variable: null, select_variable: null, select_property: null };
+    return _this10;
   }
 
   SelectForm.prototype.render = function render() {
     var _this11 = this;
 
-    var onChange = function onChange(e) {
-      _this11.props.onselect(_this11.form);
-    };
-    var property = React.createElement(
-      FormGroup,
-      { controlId: "rightSelect" },
-      React.createElement(
-        ControlLabel,
-        null,
-        "Variable Property"
-      ),
-      React.createElement(
-        FormControl,
-        {
-          componentClass: "select",
-          placeholder: "select",
-          name: "right",
-          onChange: onChange },
+    var property = null;
+    if (this.state.select_variable) {
+      property = React.createElement(
+        FormGroup,
+        { controlId: "rightSelect" },
         React.createElement(
-          "option",
-          { key: 9999, value: null },
-          "Not Selected"
+          ControlLabel,
+          null,
+          "Variable Property"
         ),
-        this.props.layers.items.map(i2o('Layer')).concat(this.props.tables.items.map(i2o('Table')))
-      )
-    );
+        React.createElement(
+          FormControl,
+          {
+            componentClass: "select",
+            placeholder: "select",
+            name: "right",
+            onChange: this.onPropertyChange.bind(this) },
+          React.createElement(
+            "option",
+            { key: 9999, value: null },
+            "Not Selected"
+          ),
+          this.props.layers.items.map(i2o('Layer')).concat(this.props.tables.items.map(i2o('Table')))
+        )
+      );
+    }
     return React.createElement(
       "form",
       { ref: function ref(_ref5) {
@@ -1856,11 +1876,20 @@ var SelectForm = function (_React$Component6) {
         React.createElement(
           ControlLabel,
           null,
-          "Input Variable"
+          "Input Variable"
         ),
         React.createElement(
           FormControl,
-          { componentClass: "select", placeholder: "select", name: "left" },
+          {
+            componentClass: "select",
+            placeholder: "select",
+            name: "left",
+            onChange: this.onVariableChange.bind(this) },
+          React.createElement(
+            "option",
+            { key: 9999, value: null },
+            "Not Selected"
+          ),
           this.props.input_variables.map(function (v, i) {
             return React.createElement(
               "option",
@@ -2077,7 +2106,6 @@ var rendertree = function rendertree(tree) {
       case 'expression':
         return left;
       case 'join':
-        console.log(left, right);
         var str = "Join " + left.type + ' ' + left.id + ' and ' + right.type + ' ' + right.id + ' on ' + left.field + ' = ' + right.field;
         return str;
       default:
