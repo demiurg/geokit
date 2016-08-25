@@ -148,7 +148,7 @@ var i2o = (type, item, i) => { return (item, i) => {
 class AddDataInputModal extends React.Component {
   constructor(props){
     super(props);
-    this.state = { showModal: false};
+    this.state = { showModal: false, variable: null};
   }
 
   close() {
@@ -173,6 +173,12 @@ class AddDataInputModal extends React.Component {
   }
 
   render(){
+    var validate = (e) => {
+      var form = $(this.form).serializeArray();
+      this.setState({
+        variable: form[0]['value'] && form[1]['value'] && form[2]['value'])
+      });
+    }
     return (
       <Button
         bsStyle="primary"
@@ -184,7 +190,7 @@ class AddDataInputModal extends React.Component {
             <Modal.Title>Adding Input Variable</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <form ref={(ref)=>{this.form=ref}}>
+            <form ref={(ref)=>{this.form=ref}} onChange={validate}>
               <FormGroup controlId="leftSelect">
                 <ControlLabel>Left</ControlLabel>
                 <FormControl componentClass="select" placeholder="select" name="left">
@@ -216,7 +222,9 @@ class AddDataInputModal extends React.Component {
             </form>
           </Modal.Body>
           <Modal.Footer>
-           <Button onClick={this.use.bind(this)}>Use Variable</Button>
+           { this.state.variable ?
+              <Button onClick={this.use.bind(this)}>Use Variable</Button> :
+              null }
            <Button onClick={this.close.bind(this)}>Close</Button>
           </Modal.Footer>
         </Modal>
