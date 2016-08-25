@@ -176,7 +176,7 @@ class AddDataInputModal extends React.Component {
     var validate = (e) => {
       var form = $(this.form).serializeArray();
       this.setState({
-        variable: form[0]['value'] && form[1]['value'] && form[2]['value'])
+        variable: form[0]['value'] && form[1]['value'] && form[2]['value']
       });
     }
     return (
@@ -217,7 +217,9 @@ class AddDataInputModal extends React.Component {
               </FormGroup>
               <FormGroup controlId="name">
                 <ControlLabel>Name</ControlLabel>
-                <FormControl name="name" type="text"/>
+                <FormControl
+                  name="name" type="text" placeholder="enter variable name"
+                />
               </FormGroup>
             </form>
           </Modal.Body>

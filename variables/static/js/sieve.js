@@ -1381,7 +1381,7 @@ var AddDataInputModal = function (_React$Component2) {
 
     var _this3 = _possibleConstructorReturn(this, _React$Component2.call(this, props));
 
-    _this3.state = { showModal: false };
+    _this3.state = { showModal: false, variable: null };
     return _this3;
   }
 
@@ -1406,6 +1406,12 @@ var AddDataInputModal = function (_React$Component2) {
   AddDataInputModal.prototype.render = function render() {
     var _this4 = this;
 
+    var validate = function validate(e) {
+      var form = $(_this4.form).serializeArray();
+      _this4.setState({
+        variable: form[0]['value'] && form[1]['value'] && form[2]['value']
+      });
+    };
     return React.createElement(
       Button,
       {
@@ -1432,7 +1438,7 @@ var AddDataInputModal = function (_React$Component2) {
             "form",
             { ref: function ref(_ref2) {
                 _this4.form = _ref2;
-              } },
+              }, onChange: validate },
             React.createElement(
               FormGroup,
               { controlId: "leftSelect" },
@@ -1469,18 +1475,20 @@ var AddDataInputModal = function (_React$Component2) {
                 null,
                 "Name"
               ),
-              React.createElement(FormControl, { name: "name", type: "text" })
+              React.createElement(FormControl, {
+                name: "name", type: "text", placeholder: "enter variable name"
+              })
             )
           )
         ),
         React.createElement(
           Modal.Footer,
           null,
-          React.createElement(
+          this.state.variable ? React.createElement(
             Button,
             { onClick: this.use.bind(this) },
             "Use Variable"
-          ),
+          ) : null,
           React.createElement(
             Button,
             { onClick: this.close.bind(this) },
