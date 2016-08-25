@@ -129,6 +129,14 @@ function addTreeNode(node) {
     node: node
   };
 }
+
+function updateMetadata(metadata) {
+  return {
+    type: UPDATE_METADATA,
+    name: metadata.title,
+    description: metadata.description
+  };
+}
 "use strict";
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
@@ -1213,7 +1221,7 @@ var FormGroup = _ReactBootstrap.FormGroup;
 /* app */
 
 var initialState = Object.assign({
-  title: "",
+  name: "",
   description: "",
   spatialDomain: null,
   temporalDomain: { start: null, end: null },
@@ -1244,8 +1252,8 @@ function sieveApp() {
       });
     case UPDATE_METADATA:
       return Object.assign({}, state, {
-        title: action.metadata.title,
-        description: action.metadata.description
+        name: action.name,
+        description: action.description
       });
     case UPDATE_TREE:
       return Object.assign({}, state, {
@@ -1266,7 +1274,7 @@ function sieveApp() {
 
 var mapStateToProps = function mapStateToProps(state) {
   return Object.assign({}, state, {
-    metadata: { title: state.title, description: state.description }
+    metadata: { title: state.name, description: state.description }
   });
 };
 
@@ -1810,34 +1818,151 @@ var AddSelectModal = function (_React$Component5) {
   return AddSelectModal;
 }(React.Component);
 
-var SelectForm = function (_React$Component6) {
-  _inherits(SelectForm, _React$Component6);
+var AddMeanModal = function (_React$Component6) {
+  _inherits(AddMeanModal, _React$Component6);
+
+  function AddMeanModal(props) {
+    _classCallCheck(this, AddMeanModal);
+
+    var _this10 = _possibleConstructorReturn(this, _React$Component6.call(this, props));
+
+    _this10.onSelectNode = function (select_node) {
+      _this10.setState({ select_node: select_node });
+    };
+
+    _this10.state = {
+      showModal: false,
+      select_node: null
+    };
+    return _this10;
+  }
+
+  AddMeanModal.prototype.close = function close() {
+    this.setState({ showModal: false });
+  };
+
+  AddMeanModal.prototype.open = function open() {
+    this.setState({ showModal: true });
+  };
+
+  AddMeanModal.prototype.use = function use() {
+    if (this.state.select_node) {
+      this.props.onAddTreeOp(this.state.select_node);
+      this.setState({ showModal: false });
+    } else {
+      alert('Select a variable to use.');
+    }
+  };
+
+  AddMeanModal.prototype.render = function render() {
+    var _this11 = this;
+
+    return React.createElement(
+      Button,
+      {
+        bsStyle: "primary",
+        onClick: this.open.bind(this)
+      },
+      this.props.children ? this.props.children : this.props.op,
+      React.createElement(
+        Modal,
+        { show: this.state.showModal, onHide: this.close.bind(this) },
+        React.createElement(
+          Modal.Header,
+          { closeButton: true },
+          React.createElement(
+            Modal.Title,
+            null,
+            "Mean Operation"
+          )
+        ),
+        React.createElement(
+          Modal.Body,
+          null,
+          React.createElement(SelectForm, _extends({ onSelectNode: this.onSelectNode }, this.props)),
+          React.createElement(
+            "form",
+            { ref: function ref(_ref5) {
+                _this11.form = _ref5;
+              } },
+            React.createElement(
+              FormGroup,
+              { controlId: "rightSelect" },
+              React.createElement(
+                ControlLabel,
+                null,
+                "Right operand"
+              ),
+              React.createElement(
+                FormControl,
+                { componentClass: "select", placeholder: "select", name: "right" },
+                React.createElement(
+                  "option",
+                  {
+                    key: this.props.input_variables.length,
+                    value: JSON.stringify(this.props.tree) },
+                  "tree"
+                ),
+                this.props.input_variables.map(function (v, i) {
+                  return React.createElement(
+                    "option",
+                    { key: i, value: JSON.stringify(v.node) },
+                    v.name ? v.name : rendertree(v)
+                  );
+                })
+              )
+            )
+          )
+        ),
+        React.createElement(
+          Modal.Footer,
+          null,
+          this.state.select_node ? React.createElement(
+            Button,
+            { onClick: this.use.bind(this) },
+            "Use Variable"
+          ) : null,
+          React.createElement(
+            Button,
+            { onClick: this.close.bind(this) },
+            "Close"
+          )
+        )
+      )
+    );
+  };
+
+  return AddMeanModal;
+}(React.Component);
+
+var SelectForm = function (_React$Component7) {
+  _inherits(SelectForm, _React$Component7);
 
   function SelectForm(props) {
     _classCallCheck(this, SelectForm);
 
-    var _this10 = _possibleConstructorReturn(this, _React$Component6.call(this, props));
+    var _this12 = _possibleConstructorReturn(this, _React$Component7.call(this, props));
 
-    _this10.onVariableChange = function (e) {
+    _this12.onVariableChange = function (e) {
       if (e.target.value) {
-        _this10.setState({ select_variable: JSON.parse(e.target.value) });
+        _this12.setState({ select_variable: JSON.parse(e.target.value) });
       }
     };
 
-    _this10.onPropertyChange = function (e) {
+    _this12.onPropertyChange = function (e) {
       //this.setState({select_property: JSON.parse(e.target.value)});
       if (e.target.value) {
-        var node = ['select', [_this10.state.select_variable, JSON.parse(e.target.value)]];
-        _this10.props.onSelectNode(node);
+        var node = ['select', [_this12.state.select_variable, JSON.parse(e.target.value)]];
+        _this12.props.onSelectNode(node);
       }
     };
 
-    _this10.state = { variable: null, select_variable: null, select_property: null };
-    return _this10;
+    _this12.state = { variable: null, select_variable: null, select_property: null };
+    return _this12;
   }
 
   SelectForm.prototype.render = function render() {
-    var _this11 = this;
+    var _this13 = this;
 
     var property = null;
     if (this.state.select_variable) {
@@ -1867,8 +1992,8 @@ var SelectForm = function (_React$Component6) {
     }
     return React.createElement(
       "form",
-      { ref: function ref(_ref5) {
-          _this11.form = _ref5;
+      { ref: function ref(_ref6) {
+          _this13.form = _ref6;
         } },
       React.createElement(
         FormGroup,
@@ -1906,13 +2031,13 @@ var SelectForm = function (_React$Component6) {
   return SelectForm;
 }(React.Component);
 
-var SieveComponent = function (_React$Component7) {
-  _inherits(SieveComponent, _React$Component7);
+var SieveComponent = function (_React$Component8) {
+  _inherits(SieveComponent, _React$Component8);
 
   function SieveComponent(props) {
     _classCallCheck(this, SieveComponent);
 
-    return _possibleConstructorReturn(this, _React$Component7.call(this, props));
+    return _possibleConstructorReturn(this, _React$Component8.call(this, props));
   }
 
   SieveComponent.prototype.validateVariable = function validateVariable() {
@@ -1938,7 +2063,7 @@ var SieveComponent = function (_React$Component7) {
   };
 
   SieveComponent.prototype.saveVariable = function saveVariable(e) {
-    var _this13 = this;
+    var _this15 = this;
 
     e.stopPropagation();
     var validationResponse = this.validateVariable();
@@ -1960,7 +2085,7 @@ var SieveComponent = function (_React$Component7) {
           if (200 <= xhr.status && xhr.status < 300) {
             window.location.href = window.redirect_after_save;
           } else {
-            _this13.setState({ errors: { server: xhr.response } });
+            _this15.setState({ errors: { server: xhr.response } });
           }
         }
       };
@@ -1978,10 +2103,10 @@ var SieveComponent = function (_React$Component7) {
     return React.createElement(
       "div",
       { className: "sieve" },
-      this.props.errors.server ? React.createElement(
+      this.state.errors.server ? React.createElement(
         Alert,
         { bsStyle: "danger" },
-        this.props.errors.server
+        this.state.errors.server
       ) : null,
       React.createElement(
         Panel,
@@ -2054,6 +2179,11 @@ var SieveComponent = function (_React$Component7) {
                 "Select"
               ),
               React.createElement(
+                AddMeanModal,
+                _extends({ op: "mean" }, this.props),
+                "Mean"
+              ),
+              React.createElement(
                 AddBinOpModal,
                 _extends({ op: "*" }, this.props),
                 "x"
@@ -2094,7 +2224,7 @@ var SieveComponent = function (_React$Component7) {
 }(React.Component);
 
 var rendertree = function rendertree(tree) {
-  console.log('render: ', tree);
+  //console.log('render: ', tree);
   if (tree.length && tree.length == 2) {
     var op = tree[0];
     var left = tree[1][0];
@@ -2116,13 +2246,13 @@ var rendertree = function rendertree(tree) {
   }
 };
 
-var TreeView = function (_React$Component8) {
-  _inherits(TreeView, _React$Component8);
+var TreeView = function (_React$Component9) {
+  _inherits(TreeView, _React$Component9);
 
   function TreeView() {
     _classCallCheck(this, TreeView);
 
-    return _possibleConstructorReturn(this, _React$Component8.apply(this, arguments));
+    return _possibleConstructorReturn(this, _React$Component9.apply(this, arguments));
   }
 
   TreeView.prototype.render = function render() {

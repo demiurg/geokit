@@ -7,7 +7,7 @@ const {
 /* app */
 
 var initialState = Object.assign({
-  title: "",
+  name: "",
   description: "",
   spatialDomain: null,
   temporalDomain: {start: null, end: null},
@@ -36,8 +36,8 @@ function sieveApp(state=initialState, action){
       });
     case UPDATE_METADATA:
       return Object.assign({}, state, {
-        title: action.metadata.title,
-        description: action.metadata.description
+        name: action.name,
+        description: action.description
       });
     case UPDATE_TREE:
       return Object.assign({}, state, {
@@ -59,7 +59,7 @@ function sieveApp(state=initialState, action){
 
 var mapStateToProps = (state) => {
   return Object.assign({}, state, {
-    metadata: {title: state.title, description: state.description}
+    metadata: {title: state.name, description: state.description}
   });
 };
 
@@ -429,6 +429,80 @@ class AddSelectModal extends React.Component {
   }
 }
 
+
+class AddMeanModal extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      showModal: false,
+      select_node: null
+    };
+  }
+
+  close() {
+    this.setState({ showModal: false });
+  }
+
+  open() {
+    this.setState({ showModal: true });
+  }
+
+  onSelectNode = (select_node) => {
+    this.setState({ select_node: select_node});
+  };
+
+  use() {
+    if (this.state.select_node){
+      this.props.onAddTreeOp(this.state.select_node);
+      this.setState({ showModal: false });
+    }else{
+      alert('Select a variable to use.');
+    }
+  }
+
+  render(){
+    return (
+      <Button
+        bsStyle="primary"
+        onClick={this.open.bind(this)}
+      >
+        {this.props.children ? this.props.children : this.props.op}
+        <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Mean Operation</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <SelectForm onSelectNode={this.onSelectNode} {...this.props} />
+            <form ref={(ref)=>{this.form=ref}}>
+              <FormGroup controlId="rightSelect">
+                <ControlLabel>Right operand</ControlLabel>
+                <FormControl componentClass="select" placeholder="select" name="right">
+                  <option
+                    key={this.props.input_variables.length}
+                    value={JSON.stringify(this.props.tree)}>
+                    tree
+                  </option>
+                  { this.props.input_variables.map((v, i) => (
+                    <option key={i} value={JSON.stringify(v.node)}>
+                      {v.name ? v.name : rendertree(v)}
+                    </option>)) }
+                </FormControl>
+              </FormGroup>
+            </form>
+          </Modal.Body>
+          <Modal.Footer>
+           { this.state.select_node ?
+             <Button onClick={this.use.bind(this)}>Use Variable</Button> :
+             null }
+           <Button onClick={this.close.bind(this)}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+      </Button>
+    );
+  }
+}
+
+
 class SelectForm extends React.Component {
   constructor(props){
     super(props);
@@ -563,7 +637,7 @@ class SieveComponent extends React.Component {
 
     return (
       <div className="sieve">
-        {this.props.errors.server ? <Alert bsStyle="danger">{this.props.errors.server}</Alert> : null}
+        {this.state.errors.server ? <Alert bsStyle="danger">{this.state.errors.server}</Alert> : null}
         <Panel>
           <MetaData
             ref='metadata'
@@ -598,6 +672,7 @@ class SieveComponent extends React.Component {
             <ButtonToolbar>
               <ButtonGroup>
                 <AddSelectModal op='select' {...this.props}>Select</AddSelectModal>
+                <AddMeanModal op='mean' {...this.props}>Mean</AddMeanModal>
                 <AddBinOpModal op='*' {...this.props}>x</AddBinOpModal>
                 <AddBinOpModal op='/' {...this.props}>/</AddBinOpModal>
                 <AddBinOpModal op='+' {...this.props}>+</AddBinOpModal>
@@ -619,7 +694,7 @@ class SieveComponent extends React.Component {
 
 
 var rendertree = (tree) => {
-    console.log('render: ', tree);
+    //console.log('render: ', tree);
     if (tree.length && tree.length == 2){
       var op = tree[0];
       var left = tree[1][0];

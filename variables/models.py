@@ -21,6 +21,8 @@ class Variable(models.Model):
     spatial_domain = ArrayField(models.IntegerField())
     tree = JSONField()
     units = models.CharField(max_length=100)
+    created = models.DateTimeField(auto_now_add=True, editable=False)
+    modified = models.DateTimeField(auto_now=True)
 
     def __init__(self, *args, **kwargs):
         super(Variable, self).__init__(*args, **kwargs)

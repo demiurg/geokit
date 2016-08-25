@@ -130,3 +130,11 @@ function addTreeNode(node){
     node: node
   }
 }
+
+function updateMetadata(metadata){
+  return {
+    type: UPDATE_METADATA,
+    name: metadata.title,
+    description: metadata.description
+  }
+}
