@@ -12,10 +12,15 @@ const REQUEST_VARIABLES = 'REQUEST_VARIABLES';
 const UPDATE_METADATA = 'UPDATE_METADATA';
 const UPDATE_TREE = 'UPDATE_TREE';
 
-const REMOVE_VARIABLE = 'REMOVE_VARIABLE';
-const ADD_VARIABLE = 'ADD_VARIABLE';
+const REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
+const ADD_INPUT_VARIABLE = 'ADD_INPUT_VARIABLE';
 
 const ADD_TREE_NODE = 'ADD_TREE_NODE';
+
+const SAVE_VARIABLE = 'SAVE_VARIABLE';
+const POST_VARIABLE = 'POST_VARIABLE';
+const GET_VARIABLE = 'GET_VARIABLE';
+
 
 function requestLayers() {
   return {
@@ -118,7 +123,7 @@ let nextVariableId = 0;
 
 function addInputVariable(variable){
   return {
-    type: ADD_VARIABLE,
+    type: ADD_INPUT_VARIABLE,
     id: nextVariableId++,
     variable
   }

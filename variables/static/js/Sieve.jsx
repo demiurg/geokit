@@ -47,7 +47,7 @@ function sieveApp(state=initialState, action){
       return Object.assign({}, state, {
         tree: tree(state.tree, action)
       });
-    case ADD_VARIABLE:
+    case ADD_INPUT_VARIABLE:
       return Object.assign({}, state, {
         input_variables: input_variables(state.input_variables, action)
       });

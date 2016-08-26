@@ -58,16 +58,21 @@ function getCookie(name) {
 
 window.redirect_after_save = "{% url 'variables:index' %}";
 
-var sieve_props = {};
-
 {% if variable %}
-sieve_props = {initialData: {
-  {% if variable.description %}description: "{{ variable.description }}",{% endif %}
-  {% if variable.temporal_domain %}temporal_domain: {start: new Date("{{ variable.temporal_domain.lower }}"), end: new Date("{{ variable.temporal_domain.upper }}")},{% endif %}
-  id: {{ variable.pk }},
+var sieve_props = {initialData: {
+  description: "{{ variable.description }}",
+  temporal_domain: {
+    start: new Date("{{ variable.temporal_domain.lower }}"),
+    end: new Date("{{ variable.temporal_domain.upper }}"),
+  }
+  created: "{{ variable.created }}",
+  modified: "{{ variable.modified }}",
+  id: "{{ variable.pk }}",
   name: "{{ variable.name }}",
-  tree: "{{ variable.tree }}"
+  tree: JSON.parse("{{ variable.tree }}")
 }};
+{% else %}
+var sieve_props = {};
 {% endif %}
 
 // Webpacking in browser is kind of a kludge...
