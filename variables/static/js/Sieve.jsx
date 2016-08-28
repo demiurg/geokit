@@ -13,12 +13,16 @@ var initialState = Object.assign({
   temporalDomain: {start: null, end: null},
   errors: {},
   tree: {},
-  input_variables: []
+  input_variables: [],
+  modified: null
 }, sieve_props.initialData);
 
 
 function sieveApp(state=initialState, action){
   switch (action.type){
+    case SAVE_VARIABLE:
+    case POST_VARIABLE:
+    case GET_VARIABLE:
     case REQUEST_LAYERS:
     case RECEIVE_LAYERS:
       return Object.assign({}, state, {
@@ -435,7 +439,7 @@ class AddMeanModal extends React.Component {
     super(props);
     this.state = {
       showModal: false,
-      select_node: null
+      node: null
     };
   }
 
@@ -447,13 +451,19 @@ class AddMeanModal extends React.Component {
     this.setState({ showModal: true });
   }
 
-  onSelectNode = (select_node) => {
-    this.setState({ select_node: select_node});
+  onSelectNode = (node) => {
+    this.setState({ node: node});
   };
 
   use() {
-    if (this.state.select_node){
-      this.props.onAddTreeOp(this.state.select_node);
+    if (this.state.node){
+      var form = $(this.form).serializeArray();
+      var right = JSON.parse(form[0]['value']);
+
+      var mean_node = [
+        'mean', [this.state.node, right]
+      ];
+      this.props.onAddTreeOp(mean_node);
       this.setState({ showModal: false });
     }else{
       alert('Select a variable to use.');
@@ -491,7 +501,7 @@ class AddMeanModal extends React.Component {
             </form>
           </Modal.Body>
           <Modal.Footer>
-           { this.state.select_node ?
+           { this.state.node ?
              <Button onClick={this.use.bind(this)}>Use Variable</Button> :
              null }
            <Button onClick={this.close.bind(this)}>Close</Button>
@@ -572,9 +582,13 @@ class SelectForm extends React.Component {
   }
 }
 
+
 class SieveComponent extends React.Component {
   constructor(props){
     super(props);
+    this.state = {
+      errors: {}
+    }
   }
 
   validateVariable() {
@@ -635,6 +649,8 @@ class SieveComponent extends React.Component {
   render() {
     var self = this;
 
+    function createMarkup() { return {__html: rendertree(self.props.tree)}; };
+
     return (
       <div className="sieve">
         {this.state.errors.server ? <Alert bsStyle="danger">{this.state.errors.server}</Alert> : null}
@@ -680,8 +696,7 @@ class SieveComponent extends React.Component {
               </ButtonGroup>
             </ButtonToolbar>
           </div>
-          <p>
-            {rendertree(this.props.tree)}
+          <p dangerouslySetInnerHTML={createMarkup()}>
           </p>
 
         </Panel>
@@ -701,6 +716,8 @@ var rendertree = (tree) => {
       var right = tree[1][1];
 
       switch (op) {
+        case 'mean':
+          return 'Mean of (' + rendertree(left) + ', ' + rendertree(right) + ') ';
         case 'select':
           return "Select " + right.id + "/" + right.field + " from (" + rendertree(left) + ")";
         case 'expression':

@@ -12,10 +12,14 @@ var REQUEST_VARIABLES = 'REQUEST_VARIABLES';
 var UPDATE_METADATA = 'UPDATE_METADATA';
 var UPDATE_TREE = 'UPDATE_TREE';
 
-var REMOVE_VARIABLE = 'REMOVE_VARIABLE';
-var ADD_VARIABLE = 'ADD_VARIABLE';
+var REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
+var ADD_INPUT_VARIABLE = 'ADD_INPUT_VARIABLE';
 
 var ADD_TREE_NODE = 'ADD_TREE_NODE';
+
+var SAVE_VARIABLE = 'SAVE_VARIABLE';
+var POST_VARIABLE = 'POST_VARIABLE';
+var GET_VARIABLE = 'GET_VARIABLE';
 
 function requestLayers() {
   return {
@@ -117,7 +121,7 @@ var nextVariableId = 0;
 
 function addInputVariable(variable) {
   return {
-    type: ADD_VARIABLE,
+    type: ADD_INPUT_VARIABLE,
     id: nextVariableId++,
     variable: variable
   };
@@ -135,6 +139,39 @@ function updateMetadata(metadata) {
     type: UPDATE_METADATA,
     name: metadata.title,
     description: metadata.description
+  };
+}
+
+function postVariables(json) {
+  return {
+    type: POST_VARIABLE,
+    variable: json
+  };
+}
+
+function getVariable(json) {
+  return {
+    type: GET_VARIABLE,
+    variable: json,
+    receivedAt: Date.now()
+  };
+}
+
+function saveVariable(json) {
+  return function (dispatch) {
+    dispatch(postVariable(json));
+
+    return $.ajax({
+      url: '/api/variables',
+      dataType: 'json',
+      cache: 'false',
+      success: function success(data) {
+        dispatch(getVariable(data));
+      },
+      error: function error(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }
+    });
   };
 }
 "use strict";
@@ -1150,7 +1187,7 @@ function variables() {
 
 function input_variable(state, action) {
   switch (action.type) {
-    case 'ADD_VARIABLE':
+    case 'ADD_INPUT_VARIABLE':
       return {
         id: action.id,
         variable: action.variable
@@ -1165,7 +1202,7 @@ function input_variables() {
   var action = arguments[1];
 
   switch (action.type) {
-    case ADD_VARIABLE:
+    case ADD_INPUT_VARIABLE:
       return [].concat(state, [action.variable
       //input_variable(undefined, action)
       ]);
@@ -1227,7 +1264,8 @@ var initialState = Object.assign({
   temporalDomain: { start: null, end: null },
   errors: {},
   tree: {},
-  input_variables: []
+  input_variables: [],
+  modified: null
 }, sieve_props.initialData);
 
 function sieveApp() {
@@ -1235,6 +1273,9 @@ function sieveApp() {
   var action = arguments[1];
 
   switch (action.type) {
+    case SAVE_VARIABLE:
+    case POST_VARIABLE:
+    case GET_VARIABLE:
     case REQUEST_LAYERS:
     case RECEIVE_LAYERS:
       return Object.assign({}, state, {
@@ -1263,7 +1304,7 @@ function sieveApp() {
       return Object.assign({}, state, {
         tree: tree(state.tree, action)
       });
-    case ADD_VARIABLE:
+    case ADD_INPUT_VARIABLE:
       return Object.assign({}, state, {
         input_variables: input_variables(state.input_variables, action)
       });
@@ -1296,7 +1337,7 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
 var DropdownComponent = function DropdownComponent(_ref) {
   var things = _ref.things;
   var onclick = _ref.onclick;
-  return(
+  return (
     // TODO something different when layers.isFetching
 
     React.createElement(
@@ -1826,13 +1867,13 @@ var AddMeanModal = function (_React$Component6) {
 
     var _this10 = _possibleConstructorReturn(this, _React$Component6.call(this, props));
 
-    _this10.onSelectNode = function (select_node) {
-      _this10.setState({ select_node: select_node });
+    _this10.onSelectNode = function (node) {
+      _this10.setState({ node: node });
     };
 
     _this10.state = {
       showModal: false,
-      select_node: null
+      node: null
     };
     return _this10;
   }
@@ -1846,8 +1887,12 @@ var AddMeanModal = function (_React$Component6) {
   };
 
   AddMeanModal.prototype.use = function use() {
-    if (this.state.select_node) {
-      this.props.onAddTreeOp(this.state.select_node);
+    if (this.state.node) {
+      var form = $(this.form).serializeArray();
+      var right = JSON.parse(form[0]['value']);
+
+      var mean_node = ['mean', [this.state.node, right]];
+      this.props.onAddTreeOp(mean_node);
       this.setState({ showModal: false });
     } else {
       alert('Select a variable to use.');
@@ -1917,7 +1962,7 @@ var AddMeanModal = function (_React$Component6) {
         React.createElement(
           Modal.Footer,
           null,
-          this.state.select_node ? React.createElement(
+          this.state.node ? React.createElement(
             Button,
             { onClick: this.use.bind(this) },
             "Use Variable"
@@ -2037,7 +2082,12 @@ var SieveComponent = function (_React$Component8) {
   function SieveComponent(props) {
     _classCallCheck(this, SieveComponent);
 
-    return _possibleConstructorReturn(this, _React$Component8.call(this, props));
+    var _this14 = _possibleConstructorReturn(this, _React$Component8.call(this, props));
+
+    _this14.state = {
+      errors: {}
+    };
+    return _this14;
   }
 
   SieveComponent.prototype.validateVariable = function validateVariable() {
@@ -2099,6 +2149,10 @@ var SieveComponent = function (_React$Component8) {
 
   SieveComponent.prototype.render = function render() {
     var self = this;
+
+    function createMarkup() {
+      return { __html: rendertree(self.props.tree) };
+    };
 
     return React.createElement(
       "div",
@@ -2206,11 +2260,7 @@ var SieveComponent = function (_React$Component8) {
             )
           )
         ),
-        React.createElement(
-          "p",
-          null,
-          rendertree(this.props.tree)
-        )
+        React.createElement("p", { dangerouslySetInnerHTML: createMarkup() })
       ),
       React.createElement(
         ButtonInput,
@@ -2231,6 +2281,8 @@ var rendertree = function rendertree(tree) {
     var right = tree[1][1];
 
     switch (op) {
+      case 'mean':
+        return 'Mean of (' + rendertree(left) + ', ' + rendertree(right) + ') ';
       case 'select':
         return "Select " + right.id + "/" + right.field + " from (" + rendertree(left) + ")";
       case 'expression':

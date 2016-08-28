@@ -72,7 +72,7 @@ function variables(state={
 
 function input_variable(state, action){
   switch (action.type){
-    case 'ADD_VARIABLE':
+    case 'ADD_INPUT_VARIABLE':
       return {
         id: action.id,
         variable: action.variable
@@ -84,7 +84,7 @@ function input_variable(state, action){
 
 function input_variables(state=[], action){
   switch (action.type) {
-    case ADD_VARIABLE:
+    case ADD_INPUT_VARIABLE:
       return [
         ...state,
         action.variable

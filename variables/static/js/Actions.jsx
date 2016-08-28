@@ -143,3 +143,36 @@ function updateMetadata(metadata){
     description: metadata.description
   }
 }
+
+function postVariables(json) {
+  return {
+    type: POST_VARIABLE,
+    variable: json
+  }
+}
+
+function getVariable(json){
+  return {
+    type: GET_VARIABLE,
+    variable: json,
+    receivedAt: Date.now()
+  }
+}
+
+function saveVariable(json){
+  return function(dispatch){
+    dispatch(postVariable(json));
+
+    return $.ajax({
+      url: '/api/variables',
+      dataType: 'json',
+      cache: 'false',
+      success: function(data) {
+        dispatch(getVariable(data));
+      },
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }
+    });
+  };
+}
