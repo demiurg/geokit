@@ -173,7 +173,10 @@ li.sequence-member:hover {
 footer .dropdown .dropdown-toggle {
     background-color: rgba(0, 0, 0, 0.20);
 }
-input[type="button"], .button, button, .btn, .btn-default, header .button {
+footer .dropdown .dropdown-toggle:hover {
+  background-color: rgba(0, 0, 0, 0.30);
+}
+input[type="button"], .button, button, .btn, .btn-default, header .button, .dropdown .dropdown-toggle  {
     background-color: $button;
     border: 0;
     color: #EAE6E7;
