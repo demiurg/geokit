@@ -2,6 +2,7 @@ $color-primary: #70575b;
 $color-secondary: #b49b9f;
 $color-red-light: rgb(240, 236, 227);
 $color-red-light-border: rgb(192, 167, 171);
+$color-text-dark: #666666;
 $button: rgba(112, 87, 91, 1.00);
 $button-hover: rgba(90, 70, 73, 1.00);
 
@@ -23,6 +24,10 @@ a:hover, .listing .title h2 a:hover {
 
 .listing .children a {
     color: #ffffff;
+}
+
+.listing {
+  color: $color-text-dark;
 }
 
 form.status-tag:hover, a.status-tag:hover, a.status-tag.primary:hover {
@@ -84,8 +89,8 @@ input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"
     background-color: #7a7d7a;
 }
 
-.page-explorer .listing .index a {
-    color: rgb(235, 235, 235);
+.page-explorer .listing .index a.status-tag.primary {
+    color: $color-primary;
 }
 
 .content {
@@ -198,8 +203,10 @@ input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .but
     color: $color-primary;
 }
 
-.listing .index .button.bicolor {
-    background-color: $color-primary;
+.listing .index .button.bicolor, .page-explorer .listing .index .button.bicolor {
+  background: $color-primary;
+  background-color: $color-primary;
+  border-color: $color-primary;
 }
 
 .listing tr:hover td.children {
@@ -207,7 +214,7 @@ input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .but
 }
 
 .listing td.children:hover {
-    background-color: #color-secondary;
+    background-color: $color-secondary;
 }
 
 .nav-main a:hover, .nav-main a:focus {
@@ -228,4 +235,13 @@ input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .but
 
 .listing .table-headers {
     border-bottom: 1px solid $color-red-light-border;
+}
+
+.t-inverted .u-btn-current:hover, .t-default .u-btn-current:hover {
+    background-color: $color-primary;
+    border-color: $color-primary;
+}
+
+.t-default .u-btn-current {
+    color: $color-text-dark;
 }
