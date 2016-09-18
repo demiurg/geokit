@@ -7,7 +7,7 @@ from django.contrib.auth import login as auth_login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.db import connection
 
-from forms import SignupForm, LoginForm, GeoKitSiteForm
+from forms import LandingSignupForm, SignupForm, LoginForm, GeoKitSiteForm
 from models import GeoKitSite
 
 
@@ -19,8 +19,12 @@ def index(request):
         return render(request, 'account/home.html', {
             "sites": sites
         })
+    else:
+        form = LandingSignupForm()
 
-    return render(request, 'account/landing.html')
+    return render(request, 'account/landing.html', {
+        'form': form
+    })
 
 
 @login_required
