@@ -115,6 +115,11 @@ class SignupForm(CrispyForm, forms.Form):
         return self.cleaned_data
 
 class LandingSignupForm(LandingForm, forms.Form):
+    def __init__(self, *args, **kwargs):
+        super(LandingSignupForm, self).__init__(*args, **kwargs)
+        self.helper.form_action = 'signup'
+
+
     first_name = forms.CharField(max_length=30, label=_("First name"), required=True)
     last_name = forms.CharField(max_length=30, label=_("Last name"), required=True)
 
@@ -146,3 +151,18 @@ class LandingSignupForm(LandingForm, forms.Form):
         if email2 and email2 and email1 != email2:
                 raise forms.ValidationError(_("The emails must match."))
         return self.cleaned_data
+
+class LandingLoginForm(LandingForm, forms.Form):
+    def __init__(self, *args, **kwargs):
+        super(LandingLoginForm, self).__init__(*args, **kwargs)
+        self.helper.form_action = 'login'
+
+
+    email = forms.EmailField(
+        widget=forms.TextInput(attrs=dict(attrs_dict, maxlength=75)),
+        label=_("Email address")
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs=attrs_dict, render_value=False),
+        label=_("Password")
+    )
