@@ -54,6 +54,10 @@ class LoginForm(CrispyForm, forms.Form):
 
 class GeoKitSiteForm(CrispyForm, forms.ModelForm):
     def __init__(self, *args, **kwargs):
+        self.form_class = kwargs.pop('form_class', None)
+        self.no_labels = kwargs.pop('no_labels', None)
+        self.form_action = kwargs.pop('form_action', None)
+
         super(GeoKitSiteForm, self).__init__(*args, **kwargs)
 
     schema_name = forms.CharField(
