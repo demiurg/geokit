@@ -20,11 +20,13 @@ def index(request):
             "sites": sites
         })
     else:
-        form_login = LoginForm(form_action='/login/', no_labels=True)
-        print form_login.form_action
+        form_menu_login = LoginForm(form_action='/login/', no_labels=True, auto_id=False)
+        form_menu_signup = SignupForm(form_action='/signup/', no_labels=True, auto_id=False)
+        form_body_signup = SignupForm(form_action='/signup/', no_labels=True, auto_id=False)
 
     return render(request, 'account/landing.html', {
-            'form_login': form_login
+            'form_menu_login': form_menu_login,
+            'form_menu_signup': form_menu_signup
         }
     )
 
