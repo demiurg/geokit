@@ -7,7 +7,7 @@ from django.contrib.auth import login as auth_login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.db import connection
 
-from forms import LandingSignupForm, LandingLoginForm, SignupForm, LoginForm, GeoKitSiteForm
+from forms import SignupForm, LoginForm, GeoKitSiteForm
 from models import GeoKitSite
 
 
@@ -20,13 +20,13 @@ def index(request):
             "sites": sites
         })
     else:
-        form_signup = LandingSignupForm()
-        form_login = LandingLoginForm()
+        form_login = LoginForm(form_action='/login/', no_labels=True)
+        print form_login.form_action
 
     return render(request, 'account/landing.html', {
-        'form_signup': form_signup,
-        'form_login': form_login
-    })
+            'form_login': form_login
+        }
+    )
 
 
 @login_required
@@ -79,7 +79,7 @@ def site_edit(request, schema_name):
 
 def signup(request):
     if request.method == 'POST':
-        form = SignupForm(request.POST)
+        form = SignupForm(request.POST, form_class='form-horizontal')
         if form.is_valid():
             password = User.objects.make_random_password()
             email = User.objects.normalize_email(form.cleaned_data['email1'])
@@ -130,7 +130,8 @@ def signup(request):
 
 def login(request):
     if request.method == 'POST':
-        form = LoginForm(request.POST)
+        form = LoginForm(request.POST, form_class='form-horizontal')
+
         if form.is_valid():
             try:
                 user = User.objects.get(email=form.cleaned_data['email'])
@@ -151,6 +152,7 @@ def login(request):
 
     else:
         form = LoginForm()
+        print form
 
     return render(request, 'account/form.html', {
         'title': 'Log in',
