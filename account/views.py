@@ -22,11 +22,12 @@ def index(request):
     else:
         form_menu_login = LoginForm(form_action='/login/', no_labels=True, auto_id=False)
         form_menu_signup = SignupForm(form_action='/signup/', no_labels=True, auto_id=False)
-        form_body_signup = SignupForm(form_action='/signup/', no_labels=True, auto_id=False)
+        form_body_signup = SignupForm(form_action='/signup/', no_labels=True, auto_id='signup-form')
 
     return render(request, 'account/landing.html', {
             'form_menu_login': form_menu_login,
-            'form_menu_signup': form_menu_signup
+            'form_menu_signup': form_menu_signup,
+            'form_body_signup': form_body_signup
         }
     )
 

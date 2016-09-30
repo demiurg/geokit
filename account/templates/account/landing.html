@@ -1,6 +1,7 @@
 {% extends 'account/base.html' %}
 
 {% load static %}
+{% load crispy_forms_tags %}
 
 {% block extra_head %}
 <style>
@@ -33,13 +34,15 @@
     padding-left: 10%;
     width: 100%;
   }
-  input:focus, select:focus, textarea:focus, button:focus {
-    outline: none;
+  input:focus, select:focus, textarea:focus, button:focus, .btn:focus, .btn-primary:focus {
+    outline: 0;
   }
-  .signup-form input:focus {
+  .signup-form input:focus, .form-control:focus {
     border: 1px solid rgba(131, 107, 100, 1.00);
+    box-shadow: none;
+    box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25);
   }
-  .signup-form button {
+  .signup-form button, .signup-form .btn, .signup-form .btn-primary {
     background-color: rgba(131, 107, 100, 1.00);
     border: 0;
     border-radius: 10px;
@@ -268,16 +271,7 @@
     <div class="row">
       <div class="col-sm-4 col-lg-3">
         <div class="signup-form">
-          <form id="signup-form" name="signup-form" method="post" action="">
-            <div class="signup-form-site-notification">
-              <p></p>
-            </div>
-            <input type="text" name="email" id="signup-email" placeholder="Email address" />
-            <input type="text" name="name-first" id="signup-name-first" placeholder="First name" />
-            <input type="text" name="name-last" id="signup-name-last" placeholder="Last name" />
-            <input type="text" name="name-site" id="signup-name-site" placeholder="Site name" onkeyup="searchSiteSignup()" />
-            <button type="submit" id="signup-submit" onclick="signup()">Sign up</button>
-          </form>
+          {% crispy form_body_signup %}
         </div>
       </div>
       <div class="col-sm-8 col-lg-9">

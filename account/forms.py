@@ -11,6 +11,7 @@ from models import GeoKitSite
 class CrispyForm(object):
     def __init__(self, *args, **kwargs):
         super(CrispyForm, self).__init__(*args, **kwargs)
+
         self.helper = FormHelper()
         self.helper.form_action = self.form_action
 
@@ -25,6 +26,8 @@ class CrispyForm(object):
             self.helper.form_class = 'form-horizontal'
             self.helper.field_class = 'col-md-8 col-sm-12 col-xs-12'
             self.helper.add_input(Submit('submit', 'Submit', css_class='col-sm-offset-4'))
+        elif (self.form_class is not None):
+            self.helper.form_class = self.form_class
         else:
             self.helper.add_input(Submit('submit', 'Submit'))
 
