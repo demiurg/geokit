@@ -130,6 +130,12 @@
     padding: 0 15px 0 15px;
     height: 45px;
   }
+  .help-block {
+    display: none;
+  }
+  #name {
+    display: none;
+  }
   @media (min-width: 768px) {
     .signup-form {
       border-bottom: 0;
@@ -188,7 +194,8 @@
           })
             .done(function(data) {
               if (data.available === true) {
-                $("#signup-name-site").val(data.site_name);
+                $("#schema_name").val(data.site_name);
+                $("#name").val(data.site_name);
                 $(".signup-form-site-notification p").css("color", "rgba(117, 127, 100, 1.00)");
                 $(".signup-form-site-notification p").html("<i class='fa fa-check-circle'></i> Your site name is available. Finish signing up to get started.");
                 $(".signup-form-site-notification").css("display", "block");
@@ -197,7 +204,7 @@
                 }, {
                   duration: 500,
                   complete: function() {
-                    $("#signup-email").focus();
+                    $("#email1").focus();
                   }
                 });
               } else {
@@ -209,7 +216,7 @@
                 }, {
                   duration: 500,
                   complete: function() {
-                    $("#signup-email").focus();
+                    $("#email1").focus();
                   }
                 });
               }
@@ -220,7 +227,7 @@
         }
       }
       function searchSiteSignup() {
-        if ($("#signup-name-site").val() != "") {
+        if ($("#schema-name").val() != "") {
           $.get('/availability/'+$("#signup-name-site").val() + '/', {
             beforeSend: function(xhr) {
               xhr.setRequestHeader("X-CSRFToken", csrftoken);
@@ -274,6 +281,9 @@
     <div class="row">
       <div class="col-sm-4 col-lg-3">
         <div class="signup-form">
+          <div class="signup-form-site-notification">
+            <p></p>
+          </div>
           {% crispy form_body_signup %}
         </div>
       </div>
