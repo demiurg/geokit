@@ -41,3 +41,6 @@ class GeoKitSite(TenantMixin):
     def is_available(cls, name):
         return cls.is_allowed(name) and \
             not cls.objects.filter(schema_name=name).exists()
+
+    def __unicode__(self):
+        return '%s - %s' % (self.user, self.name)

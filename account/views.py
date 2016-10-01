@@ -7,7 +7,7 @@ from django.contrib.auth import login as auth_login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.db import connection
 
-from forms import SignupForm, LoginForm, GeoKitSiteForm
+from forms import SignupForm, SignupSiteForm, LoginForm, GeoKitSiteForm
 from models import GeoKitSite
 
 
@@ -22,7 +22,7 @@ def index(request):
     else:
         form_menu_login = LoginForm(form_action='/login/', no_labels=True, auto_id=False)
         form_menu_signup = SignupForm(form_action='/signup/', no_labels=True, auto_id=False)
-        form_body_signup = SignupForm(form_action='/signup/', no_labels=True, auto_id='signup-form')
+        form_body_signup = SignupSiteForm(form_action='/signup/', no_labels=True, auto_id='signup-form')
 
     return render(request, 'account/landing.html', {
             'form_menu_login': form_menu_login,
@@ -32,24 +32,28 @@ def index(request):
     )
 
 
+def site_creator(form, user):
+    site = form.save(commit=False)
+    site.user = user
+    site.domain_url = form.cleaned_data['schema_name'] + '.localhost'
+    site.save()
+
+    try:
+        CLONE = "SELECT clone_schema('test', '{}', TRUE);".format(site.schema_name)
+        cursor = connection.cursor()
+        cursor.execute(CLONE)
+
+        site.save()
+    except:
+        form.add_error("Unknown error occured creating the site.")
+
+
 @login_required
 def site_create(request):
     if request.method == 'POST':
         form = GeoKitSiteForm(request.POST)
         if form.is_valid():
-            site = form.save(commit=False)
-            site.user = request.user
-            site.domain_url = form.cleaned_data['schema_name'] + '.localhost'
-            site.save()
-
-            try:
-                CLONE = "SELECT clone_schema('test', '{}', TRUE);".format(site.schema_name)
-                cursor = connection.cursor()
-                cursor.execute(CLONE)
-
-                site.save()
-            except:
-                form.add_error("Unknown error occured creating the site.")
+            site_creator(form, request.user)
 
             return redirect('home')
     else:
@@ -82,7 +86,10 @@ def site_edit(request, schema_name):
 
 def signup(request):
     if request.method == 'POST':
-        form = SignupForm(request.POST, form_class='form-horizontal')
+        if request.POST.get('schema_name') and request.POST.get('name'):
+            form = SignupSiteForm(request.POST)
+        else:
+            form = SignupForm(request.POST)
         if form.is_valid():
             password = User.objects.make_random_password()
             email = User.objects.normalize_email(form.cleaned_data['email1'])
@@ -117,6 +124,10 @@ def signup(request):
             )
             if result_user:
                 auth_login(request, result_user)
+                # Register site if user provided that information during signup
+                if request.POST.get('schema_name') and request.POST.get('name'):
+                    site_creator(form, result_user)
+
                 return redirect('home')
             else:
                 form.add_error('password', 'Internal error logging in. Check email for password and try to login.')
