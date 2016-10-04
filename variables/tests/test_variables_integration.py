@@ -1,4 +1,3 @@
-from datetime import date
 from dateutil.rrule import rrule, DAILY
 import pytest
 import numpy as np
@@ -28,11 +27,11 @@ def test_example_0_5(set_schema):
             {
                 'filter_type': 'inclusive',
                 'date_ranges': [
-                    {'start': date(2010, 6, 1), 'end': date(2010, 8, 31)},
-                    {'start': date(2011, 6, 1), 'end': date(2011, 8, 31)},
-                    {'start': date(2012, 6, 1), 'end': date(2012, 8, 31)},
-                    {'start': date(2013, 6, 1), 'end': date(2013, 8, 31)},
-                    {'start': date(2014, 6, 1), 'end': date(2014, 8, 31)}
+                    {'start': '2010-06-01', 'end': '2010-08-31'},
+                    {'start': '2011-06-01', 'end': '2011-08-31'},
+                    {'start': '2012-06-01', 'end': '2012-08-31'},
+                    {'start': '2013-06-01', 'end': '2013-08-31'},
+                    {'start': '2014-06-01', 'end': '2014-08-31'}
                 ]
             }
         ]],
@@ -73,11 +72,11 @@ def test_example_0_5_select(set_schema):
             {
                 'filter_type': 'inclusive',
                 'date_ranges': [
-                    {'start': date(2010, 6, 1), 'end': date(2010, 8, 31)},
-                    {'start': date(2011, 6, 1), 'end': date(2011, 8, 31)},
-                    {'start': date(2012, 6, 1), 'end': date(2012, 8, 31)},
-                    {'start': date(2013, 6, 1), 'end': date(2013, 8, 31)},
-                    {'start': date(2014, 6, 1), 'end': date(2014, 8, 31)}
+                    {'start': '2010-06-01', 'end': '2010-08-31'},
+                    {'start': '2011-06-01', 'end': '2011-08-31'},
+                    {'start': '2012-06-01', 'end': '2012-08-31'},
+                    {'start': '2013-06-01', 'end': '2013-08-31'},
+                    {'start': '2014-06-01', 'end': '2014-08-31'}
                 ]
             }
         ]],
