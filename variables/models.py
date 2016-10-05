@@ -145,7 +145,6 @@ class Variable(models.Model):
                 indices_to_delete.add(i)
             elif filter_['filter_type'] == 'exclusive' and contains:
                 indices_to_delete.add(i)
-        print indices_to_delete
         values = np.delete(val['values'], list(indices_to_delete), 0)
         spatial_key = np.delete(val['spatial_key'], list(indices_to_delete))
         return {
