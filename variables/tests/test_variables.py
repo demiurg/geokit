@@ -280,8 +280,8 @@ def test_temporal_filter_operator():
             'temporal_key': [date(2010, 1, 1), date(2010, 2, 1), date(2010, 3, 1), date(2010, 4, 1), date(2010, 5, 1), date(2010, 6, 1), date(2010, 7, 1), date(2010, 8, 1)]
         },
         {'filter_type': 'inclusive', 'date_ranges': [
-            {'start': date(2010, 2, 1), 'end': date(2010, 4, 1)},
-            {'start': date(2010, 6, 1), 'end': date(2010, 8, 1)},
+            {'start': '2010-02-01', 'end': '2010-04-01'},
+            {'start': '2010-06-01', 'end': '2010-08-01'},
         ]}
     ]])
     np.testing.assert_array_equal(v.data()['values'], [[2, 3, 4, 6, 7, 8], [2, 3, 4, 6, 7, 8]])
@@ -293,8 +293,8 @@ def test_temporal_filter_operator():
             'temporal_key': [date(2010, 1, 1), date(2010, 2, 1), date(2010, 3, 1), date(2010, 4, 1), date(2010, 5, 1), date(2010, 6, 1), date(2010, 7, 1), date(2010, 8, 1)]
         },
         {'filter_type': 'exclusive', 'date_ranges': [
-            {'start': date(2010, 2, 1), 'end': date(2010, 4, 1)},
-            {'start': date(2010, 6, 1), 'end': date(2010, 8, 1)},
+            {'start': '2010-02-01', 'end': '2010-04-01'},
+            {'start': '2010-06-01', 'end': '2010-08-01'},
         ]}
     ]])
     np.testing.assert_array_equal(v.data()['values'], [[1, 5], [1, 5]])

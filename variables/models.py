@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-import pdb
+from datetime import datetime
 
 import numpy as np
 import numpy.ma as ma
@@ -8,10 +8,9 @@ import numpy.ma as ma
 from django.db import models
 from django.contrib.postgres.fields import ArrayField, JSONField
 
-from geokit_tables.models import GeoKitTable, Record
-from layers.models import Layer, Feature
+from geokit_tables.models import GeoKitTable
+from layers.models import Layer
 
-from expressions.helpers import join_layer_and_table
 from data import DataSource, join_layer_and_table
 
 
@@ -147,7 +146,6 @@ class Variable(models.Model):
                 indices_to_delete.add(i)
             elif filter_['filter_type'] == 'exclusive' and contains:
                 indices_to_delete.add(i)
-        print indices_to_delete
         values = np.delete(val['values'], list(indices_to_delete), 0)
         spatial_key = np.delete(val['spatial_key'], list(indices_to_delete))
         return {
@@ -160,7 +158,7 @@ class Variable(models.Model):
         '''
         Filter format:
         `{
-            'date_ranges': [{'start': datetime.date(2000,1,1), 'end': datetime.date(2005,5,1)}, {...}],
+            'date_ranges': [{'start': '2010-01-01', 'end': '2005-05-30'}, {...}],
             'filter_type': 'inclusive'
         }`
         '''
@@ -170,7 +168,9 @@ class Variable(models.Model):
         for i, date in enumerate(val['temporal_key']):
             in_range = False
             for date_range in filter_['date_ranges']:
-                if date_range['start'] <= date <= date_range['end']:
+                start = datetime.strptime(date_range['start'], "%Y-%m-%d").date()
+                end = datetime.strptime(date_range['end'], "%Y-%m-%d").date()
+                if start <= date <= end:
                     in_range = True
                     break
 

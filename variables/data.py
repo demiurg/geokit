@@ -4,7 +4,7 @@ from sortedcontainers import SortedDict, SortedSet
 
 import django.db
 from pandas.io import sql
-from pandas.io.sql import read_frame
+from pandas.io.sql import read_sql
 
 
 class DataSource(object):
@@ -69,7 +69,7 @@ class DataSource(object):
         cursor = django.db.connection.cursor()
         cursor.execute(query)
 
-        self.df = read_frame(
+        self.df = read_sql(
             query,
             django.db.connection,
             index_col='date',
