@@ -16,11 +16,12 @@ from data import DataSource, join_layer_and_table
 
 
 class Variable(models.Model):
-    name = models.CharField(primary_key=True, max_length=75)
-    temporal_domain = ArrayField(models.DateField())
-    spatial_domain = ArrayField(models.IntegerField())
+    name = models.CharField(primary_key=True, max_length=75, blank=False)
+    description = models.TextField(null=True, blank=True)
+    temporal_domain = ArrayField(models.DateField(), null=True, blank=True)
+    spatial_domain = ArrayField(models.IntegerField(), null=True, blank=True)
     tree = JSONField()
-    units = models.CharField(max_length=100)
+    units = models.CharField(max_length=100, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True, editable=False)
     modified = models.DateTimeField(auto_now=True)
 

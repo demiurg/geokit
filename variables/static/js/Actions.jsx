@@ -9,7 +9,8 @@ const RECEIVE_TABLES = 'RECEIVE_TABLES';
 const RECEIVE_VARIABLES = 'RECEIVE_VARIABLES';
 const REQUEST_VARIABLES = 'REQUEST_VARIABLES';
 
-const UPDATE_METADATA = 'UPDATE_METADATA';
+const UPDATE_NAME = 'UPDATE_NAME';
+const UPDATE_DESCRIPTION = 'UPDATE_DESCRIPTION';
 const UPDATE_TREE = 'UPDATE_TREE';
 
 const REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
@@ -136,18 +137,23 @@ function addTreeNode(node){
   }
 }
 
-function updateMetadata(metadata){
+function updateName(name){
   return {
-    type: UPDATE_METADATA,
-    name: metadata.title,
-    description: metadata.description
+    type: UPDATE_NAME,
+    name: name
   }
 }
 
-function postVariables(json) {
+function updateDescription(description){
   return {
-    type: POST_VARIABLE,
-    variable: json
+    type: UPDATE_DESCRIPTION,
+    description: description
+  }
+}
+
+function postVariables() {
+  return {
+    type: POST_VARIABLE
   }
 }
 
@@ -161,7 +167,7 @@ function getVariable(json){
 
 function saveVariable(json){
   return function(dispatch){
-    dispatch(postVariable(json));
+    dispatch(postVariable());
 
     return $.ajax({
       url: '/api/variables',

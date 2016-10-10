@@ -38,9 +38,12 @@ function sieveApp(state=initialState, action){
       return Object.assign({}, state, {
         variables: variables(state[action.variables], action)
       });
-    case UPDATE_METADATA:
+    case UPDATE_NAME:
       return Object.assign({}, state, {
-        name: action.name,
+        name: action.name
+      });
+    case UPDATE_ DESCRIPTION:
+      return Object.assign({}, state, {
         description: action.description
       });
     case UPDATE_TREE:
@@ -482,7 +485,6 @@ class AddMeanModal extends React.Component {
             <Modal.Title>Mean Operation</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <SelectForm onSelectNode={this.onSelectNode} {...this.props} />
             <form ref={(ref)=>{this.form=ref}}>
               <FormGroup controlId="rightSelect">
                 <ControlLabel>Right operand</ControlLabel>
@@ -499,6 +501,7 @@ class AddMeanModal extends React.Component {
                 </FormControl>
               </FormGroup>
             </form>
+            <SelectForm onSelectNode={this.onSelectNode} {...this.props} />
           </Modal.Body>
           <Modal.Footer>
            { this.state.node ?
@@ -584,13 +587,6 @@ class SelectForm extends React.Component {
 
 
 class SieveComponent extends React.Component {
-  constructor(props){
-    super(props);
-    this.state = {
-      errors: {}
-    }
-  }
-
   validateVariable() {
     var errors = {},
         isValid = true,
@@ -602,7 +598,7 @@ class SieveComponent extends React.Component {
 
     if (!data.name || data.name === '') {
       isValid = false;
-      errors.name = "You must provide a title.";
+      errors.title = "You must provide a title.";
     }
 
     if (!data.tree || data.tree === '') {
@@ -641,7 +637,6 @@ class SieveComponent extends React.Component {
 
       xhr.send(JSON.stringify(validationResponse.data));
     } else {
-      console.log(validationResponse.errors);
       this.setState({errors: validationResponse.errors});
     }
   }
@@ -655,10 +650,29 @@ class SieveComponent extends React.Component {
       <div className="sieve">
         {this.state.errors.server ? <Alert bsStyle="danger">{this.state.errors.server}</Alert> : null}
         <Panel>
-          <MetaData
-            ref='metadata'
-            updateMetadata={this.props.onMetadataChange.bind(this)}
-            title={this.props.metadata.title} description={this.props.metadata.description} />
+          <div className="sieve-metadata">
+            <div className="sieve-metadata-title">
+              <Input
+                ref='titleInput'
+                type="text"
+                placeholder="Title..."
+                value={this.props.name}
+                onChange={this.onTitleChange.bind(this)}
+                validationState={
+                  (this.props.errors && this.props.errors.title) ?
+                  this.props.errors.title : null 
+                }
+              />
+            </div>
+            <div className="sieve-metadata-description">
+              <Input type="textarea"
+                ref="descriptionInput"
+                placeholder="Description..."
+                value={this.props.description}
+                onChange={this.onDescriptionChange.bind(this)}
+                style={{resize:"vertical"}} />
+            </div>
+          </div>
         </Panel>
 
         <Panel header={<h3>Input Variables</h3>}>
@@ -708,7 +722,7 @@ class SieveComponent extends React.Component {
 }
 
 
-var rendertree = (tree) => {
+var rendertree = (tree, level) => {
     //console.log('render: ', tree);
     if (tree.length && tree.length == 2){
       var op = tree[0];

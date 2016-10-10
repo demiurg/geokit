@@ -22,7 +22,12 @@ class MetaData extends React.Component {
             type="text"
             placeholder="Title..."
             value={this.props.title}
-            onChange={this.onTitleChange.bind(this)} />
+            onChange={this.onTitleChange.bind(this)}
+            validationState={
+              (this.props.errors && this.props.errors.title) ?
+              this.props.errors.title : null 
+            }
+          />
         </div>
         <div className="sieve-metadata-description">
           <Input type="textarea"

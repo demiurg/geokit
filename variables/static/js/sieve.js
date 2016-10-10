@@ -142,10 +142,9 @@ function updateMetadata(metadata) {
   };
 }
 
-function postVariables(json) {
+function postVariables() {
   return {
-    type: POST_VARIABLE,
-    variable: json
+    type: POST_VARIABLE
   };
 }
 
@@ -159,7 +158,7 @@ function getVariable(json) {
 
 function saveVariable(json) {
   return function (dispatch) {
-    dispatch(postVariable(json));
+    dispatch(postVariable());
 
     return $.ajax({
       url: '/api/variables',
@@ -1337,7 +1336,7 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
 var DropdownComponent = function DropdownComponent(_ref) {
   var things = _ref.things;
   var onclick = _ref.onclick;
-  return (
+  return(
     // TODO something different when layers.isFetching
 
     React.createElement(
@@ -1924,7 +1923,6 @@ var AddMeanModal = function (_React$Component6) {
         React.createElement(
           Modal.Body,
           null,
-          React.createElement(SelectForm, _extends({ onSelectNode: this.onSelectNode }, this.props)),
           React.createElement(
             "form",
             { ref: function ref(_ref5) {
@@ -1957,7 +1955,8 @@ var AddMeanModal = function (_React$Component6) {
                 })
               )
             )
-          )
+          ),
+          React.createElement(SelectForm, _extends({ onSelectNode: this.onSelectNode }, this.props))
         ),
         React.createElement(
           Modal.Footer,
@@ -2273,7 +2272,7 @@ var SieveComponent = function (_React$Component8) {
   return SieveComponent;
 }(React.Component);
 
-var rendertree = function rendertree(tree) {
+var rendertree = function rendertree(tree, level) {
   //console.log('render: ', tree);
   if (tree.length && tree.length == 2) {
     var op = tree[0];
