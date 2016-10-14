@@ -7,7 +7,7 @@ const {
 /* app */
 
 var initialState = Object.assign({
-  name: "",
+  name: {value: "", error: false},
   description: "",
   spatialDomain: null,
   temporalDomain: {start: null, end: null},

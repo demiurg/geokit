@@ -15,7 +15,7 @@ from data import DataSource, join_layer_and_table
 
 
 class Variable(models.Model):
-    name = models.CharField(primary_key=True, max_length=75, blank=False)
+    name = models.SlugField(primary_key=True, max_length=75, blank=False)
     description = models.TextField(null=True, blank=True)
     temporal_domain = ArrayField(models.DateField(), null=True, blank=True)
     spatial_domain = ArrayField(models.IntegerField(), null=True, blank=True)
@@ -37,7 +37,7 @@ class Variable(models.Model):
         return operator(*self.tree[1])
 
     def __unicode__(self):
-        return self.name if self.name else unicode(self.tree)
+        return self.name
 
     def resolve_operator(self, text):
         operator_table = {

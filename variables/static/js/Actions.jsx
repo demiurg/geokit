@@ -138,9 +138,12 @@ function addTreeNode(node){
 }
 
 function updateName(name){
+  if (!name){
+    
+  }
   return {
     type: UPDATE_NAME,
-    name: name
+    name: {name, error}
   }
 }
 
