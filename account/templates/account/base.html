@@ -1,81 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="no-js" lang="en">
   <head>
     <meta charset="utf-8">
     <title>GeoKit</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
-    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
-    <script>
-      // using jQuery
-      function getCookie(name) {
-          var cookieValue = null;
-          if (document.cookie && document.cookie != '') {
-              var cookies = document.cookie.split(';');
-              for (var i = 0; i < cookies.length; i++) {
-                  var cookie = jQuery.trim(cookies[i]);
-                  // Does this cookie string begin with the name we want?
-                  if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                      cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                      break;
-                  }
-              }
-          }
-          return cookieValue;
-      }
-      var csrftoken = getCookie('csrftoken');
-
-    </script>
-    <style>
-      nav {
-        background-color: transparent;
-      }
-      .navbar-default {
-        background-color: transparent;
-        border: 0;
-      }
-      .navbar-default a.navbar-brand, .navbar-default a.navbar-brand:hover, .navbar-default a.navbar-brand:active, .navbar-default a.navbar-brand:focus {
-        color: #ffffff;
-      }
-      .navbar-default .navbar-nav li a, .navbar-default .navbar-nav li a:hover, .navbar-default .navbar-nav li a:active, .navbar-default .navbar-nav li a:focus {
-        color: #ffffff;
-      }
-      .navbar-collapse {
-        border: 0;
-      }
-      .navbar-default .nav-geokit > .open > a,
-        .navbar-default .nav-geokit > .open > a:focus,
-        .navbar-default .nav-geokit > .open > a:active,
-        .navbar-default .nav-geokit > .open > a:hover {
-        background-color: rgba(119, 135, 116, 1.00);
-        border-top-left-radius: 5px;
-        border-top-right-radius: 5px;
-        color: #ffffff;
-        font-weight: bold;
-        margin-top: 5px;
-        padding-top: 10px;
-        padding-bottom: 10px;
-      }
-      .navbar-default .nav-geokit li a {
-        font-weight: bold;
-      }
-      .nav-geokit  li ul {
-        background-color: rgba(119, 135, 116, 1.00);
-        border: 0;
-        box-shadow: none;
-      }
-      .nav-geokit > li > .dropdown-menu {
-        border-top-left-radius: 5px;
-      }
-      .nav-geokit > li > .dropdown-menu a:hover {
-        background-color: rgba(94,115,96, 0.55);
-      }
-    </style>
     {% block extra_head %}
     {% endblock %}
   </head>
-  <body>
+  {% block body_class %}<body>{% endblock %}
     {% block body %}
 
     {% endblock %}

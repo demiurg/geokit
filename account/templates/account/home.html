@@ -2,19 +2,74 @@
 
 {% load static %}
 
+{% block body_class %}
+<body class="homepage">
+{% endblock %}
+
 {% block content %}
-<p>{{sites.count}} sites</p>
-{% for s in sites %}
-<p>
-    {{s.name}},
-    url: <a href='http://{{s.schema_name}}.{{request.META.HTTP_HOST}}'>
-        {{s.schema_name}}.{{request.META.HTTP_HOST}}
-    </a>,
-    <a href='{% url "site_edit" s.schema_name %}'>Edit</a>,
-    Admin: <a href='http://{{s.schema_name}}.{{request.META.HTTP_HOST}}/admin/'>
-        {{s.schema_name}}.{{request.META.HTTP_HOST}}/admin/
-    </a>
-</p>
-{% endfor %}
-<p><a href='{% url 'site_create' %}'>Add GeoKit site</a></p>
+<div>
+  <div>
+    <header class="merged nice-padding">
+        <div class="row row-flush">
+          <div class="col1">
+            <div class="avatar icon icon-user"><img src="//www.gravatar.com/avatar/e0a5a0ec9f4b3e135c08225516591561?s=100&d=blank" /></div>
+          </div>
+          <div class="col9">
+            <h1>Welcome to the geokit account manager</h1>
+            <h2>{{ user }}</h2>
+          </div>
+        </div>
+    </header>
+    <section class="panel summary nice-padding">
+      <h2 class="visuallyhidden">Site summary</h2>
+      <ul class="stats">
+    <li class="icon icon-doc-empty-inverse">
+    <a href="/admin/pages/2/">
+        
+            <span>2</span> Pages
+        
+        </a>
+    </li>
+
+            
+                
+
+    <li class="icon icon-image">
+        <a href="/builder/admin/images/">
+        
+            <span>0</span> Images
+        
+        </a>
+    </li>
+
+            
+                
+
+    <li class="icon icon-doc-full-inverse">
+        <a href="/builder/admin/documents/">
+        
+            <span>0</span> Documents
+        
+        </a>
+    </li>
+
+            
+        </ul>
+    </section>
+    <p>{{sites.count}} sites</p>
+    {% for s in sites %}
+    <p>
+        {{s.name}},
+        url: <a href='http://{{s.schema_name}}.{{request.META.HTTP_HOST}}'>
+            {{s.schema_name}}.{{request.META.HTTP_HOST}}
+        </a>,
+        <a href='{% url "site_edit" s.schema_name %}'>Edit</a>,
+        Admin: <a href='http://{{s.schema_name}}.{{request.META.HTTP_HOST}}/admin/'>
+            {{s.schema_name}}.{{request.META.HTTP_HOST}}/admin/
+        </a>
+    </p>
+    {% endfor %}
+    <p><a href="{% url 'site_create' %}">Add GeoKit site</a></p>
+  </div>
+</div>
 {% endblock %}
