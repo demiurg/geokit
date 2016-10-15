@@ -229,9 +229,10 @@
         }
       }
       function searchSiteSignup() {
-        if ($("#schema-name").val() != "") {
-          $.get('/availability/'+$("#signup-name-site").val() + '/', {
+        if ($("#schema_name").val() != "") {
+          $.ajax('/availability/'+$("#schema_name").val() + '/', {
             beforeSend: function(xhr) {
+              
               xhr.setRequestHeader("X-CSRFToken", csrftoken);
             }
           })
@@ -259,6 +260,9 @@
           if ($("#search-input").val() != "") {
             $(".search-alert").css("display", "none");
           }
+        });
+        $("#schema_name").keyup(function() {
+          searchSiteSignup();
         });
       });
 </script>
