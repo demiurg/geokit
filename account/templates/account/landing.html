@@ -178,8 +178,10 @@
 
 <script type="text/javascript">
       function setNavBackgroundColor() {
-        if ($(document).scrollTop() > 0 && $("nav").css("background-color") === "transparent") {
-          $("nav").css("background-color", "rgba(112, 87, 91, 0.85)");
+        if ($(document).scrollTop() > 0) {
+          if ($(".navbar-default").css("background-color") == "transparent" || $(".navbar-default").css("background-color") == "rgba(0, 0, 0, 0)") {
+            $(".navbar-default").css("background-color", "rgba(112, 87, 91, 1.00)");
+          }
         } else if ($(document).scrollTop() == 0 && $("#search").height() && $("nav").css("background-color") != "transparent") {
           $("nav").css("background-color", "transparent");
         }
