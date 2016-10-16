@@ -6,12 +6,23 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
-    <div class="row">
-    	<h1 class="page-header">{{title}}</h1>
-        <div class="col-md-8 col-md-push-2">
-            <form action="./{% if next %}?next={{next}}{% endif %}" method="post" class="form">
-                {% crispy form %}
-            </form>
+    <header class="merged nice-padding">
+      <div class="row row-flush">
+        <div class="col1">
+          <div class="avatar icon icon-user"><img src="//www.gravatar.com/avatar/e0a5a0ec9f4b3e135c08225516591561?s=100&d=blank" /></div>
         </div>
+        <div class="col9">
+          <h1>Welcome to the geokit account manager.</h1>
+          <h2>You are editing {{ site.name }}.</h2>
+        </div>
+        <div class="col1">
+          <a class="bicolor button button-small icon icon-plus white" href="{% url 'site_create' %}" title="Create a new site">Create a new site</a>
+        </div>
+      </div>
+    </header>
+    <div class="tab-content">
+      <form action="./{% if next %}?next={{next}}{% endif %}" method="post" class="form">
+        {% crispy form %}
+      </form>
     </div>
 {% endblock %}

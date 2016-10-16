@@ -72,13 +72,14 @@ def site_edit(request, schema_name):
         raise Http404
 
     if request.method == 'POST':
-        form = GeoKitSiteForm(request.POST, instance=site)
+        form = GeoKitSiteForm(request.POST, instance=site, wagtail_submit=True)
         if form.is_valid():
             pass
     else:
-        form = GeoKitSiteForm(instance=site)
+        form = GeoKitSiteForm(instance=site, wagtail_submit=True)
 
     return render(request, 'account/form.html', {
+        'site': site,
         'title': 'Edit Site',
         'form': form
     })

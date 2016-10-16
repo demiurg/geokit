@@ -14,9 +14,9 @@ class CrispyForm(object):
 
         self.helper = FormHelper()
         self.helper.form_action = self.form_action
+        layout = self.helper.layout = Layout()
 
         if (self.no_labels is not None and self.no_labels == True):
-            layout = self.helper.layout = Layout()
             for field_name, field in self.fields.items():
                 layout.append(Field(field_name, placeholder=field.label))
             self.helper.form_show_labels = False
@@ -29,7 +29,10 @@ class CrispyForm(object):
         elif (self.form_class is not None):
             self.helper.form_class = self.form_class
         else:
-            self.helper.add_input(Submit('submit', 'Submit'))
+            if (self.wagtail_submit is not None and self.wagtail_submit == True):
+                self.helper.add_input(Submit('submit', 'Submit', css_class='button'))
+            else:
+                self.helper.add_input(Submit('submit', 'Submit'))
 
 
 attrs_dict = {'class': 'required', 'style': 'font-weight: bold;'}
@@ -57,6 +60,8 @@ class GeoKitSiteForm(CrispyForm, forms.ModelForm):
         self.form_class = kwargs.pop('form_class', None)
         self.no_labels = kwargs.pop('no_labels', None)
         self.form_action = kwargs.pop('form_action', None)
+        self.wagtail_submit = kwargs.pop('wagtail_submit', None)
+        print self.wagtail_submit
 
         super(GeoKitSiteForm, self).__init__(*args, **kwargs)
         
