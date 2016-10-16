@@ -51,13 +51,13 @@ def site_creator(form, user):
 @login_required
 def site_create(request):
     if request.method == 'POST':
-        form = GeoKitSiteForm(request.POST)
+        form = GeoKitSiteForm(request.POST, wagtail_submit=True)
         if form.is_valid():
             site_creator(form, request.user)
 
             return redirect('home')
     else:
-        form = GeoKitSiteForm()
+        form = GeoKitSiteForm(wagtail_submit=True)
 
     return render(request, 'account/form.html', {
         'title': 'Create Site',
@@ -88,9 +88,9 @@ def site_edit(request, schema_name):
 def signup(request):
     if request.method == 'POST':
         if request.POST.get('schema_name') and request.POST.get('name'):
-            form = SignupSiteForm(request.POST)
+            form = SignupSiteForm(request.POST, wagtail_submit=True)
         else:
-            form = SignupForm(request.POST)
+            form = SignupForm(request.POST, wagtail_submit=True)
         if form.is_valid():
             password = User.objects.make_random_password()
             email = User.objects.normalize_email(form.cleaned_data['email1'])
@@ -135,7 +135,7 @@ def signup(request):
 
             return redirect('home')
     else:
-        form = SignupForm()
+        form = SignupForm(wagtail_submit=True)
 
     return render(request, 'account/form.html', {
         'title': 'Sign up',
@@ -145,7 +145,7 @@ def signup(request):
 
 def login(request):
     if request.method == 'POST':
-        form = LoginForm(request.POST, form_class='form-horizontal')
+        form = LoginForm(request.POST, form_class='form-horizontal', wagtail_submit=True)
 
         if form.is_valid():
             try:
@@ -166,7 +166,7 @@ def login(request):
                 form.add_error('email', "User does not exist")
 
     else:
-        form = LoginForm()
+        form = LoginForm(wagtail_submit=True)
         print form
 
     return render(request, 'account/form.html', {

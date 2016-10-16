@@ -42,6 +42,7 @@ class LoginForm(CrispyForm, forms.Form):
         self.form_class = kwargs.pop('form_class', None)
         self.no_labels = kwargs.pop('no_labels', None)
         self.form_action = kwargs.pop('form_action', None)
+        self.wagtail_submit = kwargs.pop('wagtail_submit', None)
 
         super(LoginForm, self).__init__(*args, **kwargs)
 
@@ -141,6 +142,7 @@ class SignupForm(CrispyForm, forms.Form):
         self.form_class = kwargs.pop('form_class', None)
         self.no_labels = kwargs.pop('no_labels', None)
         self.form_action = kwargs.pop('form_action', None)
+        self.wagtail_submit = kwargs.pop('wagtail_submit', None)
 
         super(SignupForm, self).__init__(*args, **kwargs)
     """
