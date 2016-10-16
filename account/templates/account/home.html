@@ -3,73 +3,70 @@
 {% load static %}
 
 {% block body_class %}
-<body class="homepage">
+<body class="page-explorer">
 {% endblock %}
 
 {% block content %}
 <div>
   <div>
     <header class="merged nice-padding">
-        <div class="row row-flush">
-          <div class="col1">
-            <div class="avatar icon icon-user"><img src="//www.gravatar.com/avatar/e0a5a0ec9f4b3e135c08225516591561?s=100&d=blank" /></div>
-          </div>
-          <div class="col9">
-            <h1>Welcome to the geokit account manager</h1>
-            <h2>{{ user }}</h2>
-          </div>
+      <div class="row row-flush">
+        <div class="col1">
+          <div class="avatar icon icon-user"><img src="//www.gravatar.com/avatar/e0a5a0ec9f4b3e135c08225516591561?s=100&d=blank" /></div>
         </div>
+        <div class="col9">
+          <h1>Welcome to the geokit account manager.</h1>
+          <h2>This is a list of sites that belong to {{ user }}</h2>
+        </div>
+        <div class="col1">
+          <a class="bicolor button button-small icon icon-plus white" href="{% url 'site_create' %}" title="Create a new site">Create a new site</a>
+        </div>
+      </div>
     </header>
-    <section class="panel summary nice-padding">
-      <h2 class="visuallyhidden">Site summary</h2>
-      <ul class="stats">
-    <li class="icon icon-doc-empty-inverse">
-    <a href="/admin/pages/2/">
-        
-            <span>2</span> Pages
-        
-        </a>
-    </li>
-
-            
+    <table class="listing full-width ">
+      <col width="55%" />
+      <col width="5%" />
+      <col width="40%" />
+      <thead>
+        <tr class="index">
+          <td class="title">
+            <ul class="actions">
+              <li>
                 
-
-    <li class="icon icon-image">
-        <a href="/builder/admin/images/">
-        
-            <span>0</span> Images
-        
-        </a>
-    </li>
-
-            
-                
-
-    <li class="icon icon-doc-full-inverse">
-        <a href="/builder/admin/documents/">
-        
-            <span>0</span> Documents
-        
-        </a>
-    </li>
-
-            
-        </ul>
-    </section>
-    <p>{{sites.count}} sites</p>
-    {% for s in sites %}
-    <p>
-        {{s.name}},
-        url: <a href='http://{{s.schema_name}}.{{request.META.HTTP_HOST}}'>
-            {{s.schema_name}}.{{request.META.HTTP_HOST}}
-        </a>,
-        <a href='{% url "site_edit" s.schema_name %}'>Edit</a>,
-        Admin: <a href='http://{{s.schema_name}}.{{request.META.HTTP_HOST}}/admin/'>
-            {{s.schema_name}}.{{request.META.HTTP_HOST}}/admin/
-        </a>
-    </p>
-    {% endfor %}
-    <p><a href="{% url 'site_create' %}">Add GeoKit site</a></p>
+              </li>
+            </ul>
+          </td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr class="table-headers">
+          <th>Title</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for site in sites %}
+        <tr>
+          <td valign="top">
+            <h2>
+              <a href="http://{{ site.schema_name}}.{{ request.META.HTTP_HOST }}" title="View this page">{{ site.name }}</a>
+            </h2>
+          </td>
+          <td valign="top">
+            <a href="{% url 'site_edit' site.schema_name %}" class="status-tag primary">
+              Edit
+            </a>
+          </td>
+          <td valign="top">
+            <a href="http://{{ site.schema_name}}.{{ request.META.HTTP_HOST}}/admin/" class="status-tag primary">
+              Manage this site
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 {% endblock %}
