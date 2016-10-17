@@ -9,7 +9,8 @@ var RECEIVE_TABLES = 'RECEIVE_TABLES';
 var RECEIVE_VARIABLES = 'RECEIVE_VARIABLES';
 var REQUEST_VARIABLES = 'REQUEST_VARIABLES';
 
-var UPDATE_METADATA = 'UPDATE_METADATA';
+var UPDATE_NAME = 'UPDATE_NAME';
+var UPDATE_DESCRIPTION = 'UPDATE_DESCRIPTION';
 var UPDATE_TREE = 'UPDATE_TREE';
 
 var REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
@@ -134,11 +135,21 @@ function addTreeNode(node) {
   };
 }
 
-function updateMetadata(metadata) {
+function updateName(name) {
+  var error = null;
+  if (!name || !name.match(/[a-zA-Z0-9]+/)) {
+    error = "Name is not alphanumeric or contains spaces.";
+  }
   return {
-    type: UPDATE_METADATA,
-    name: metadata.title,
-    description: metadata.description
+    type: UPDATE_NAME,
+    name: { value: name, error: error }
+  };
+}
+
+function updateDescription(description) {
+  return {
+    type: UPDATE_DESCRIPTION,
+    description: description
   };
 }
 
@@ -218,7 +229,9 @@ var MetaData = function (_React$Component) {
           type: "text",
           placeholder: "Title...",
           value: this.props.title,
-          onChange: this.onTitleChange.bind(this) })
+          onChange: this.onTitleChange.bind(this),
+          validationState: this.props.errors && this.props.errors.title ? this.props.errors.title : null
+        })
       ),
       React.createElement(
         "div",
@@ -1232,7 +1245,6 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var _ReactBootstrap = ReactBootstrap;
-var Table = _ReactBootstrap.Table;
 var Panel = _ReactBootstrap.Panel;
 var ButtonGroup = _ReactBootstrap.ButtonGroup;
 var ButtonToolbar = _ReactBootstrap.ButtonToolbar;
@@ -1241,27 +1253,22 @@ var Button = _ReactBootstrap.Button;
 var Row = _ReactBootstrap.Row;
 var Col = _ReactBootstrap.Col;
 var Alert = _ReactBootstrap.Alert;
-var Input = _ReactBootstrap.Input;
-var OverlayTrigger = _ReactBootstrap.OverlayTrigger;
-var Tooltip = _ReactBootstrap.Tooltip;
 var Tabs = _ReactBootstrap.Tabs;
-var Tab = _ReactBootstrap.Tab;
 var DropdownButton = _ReactBootstrap.DropdownButton;
 var MenuItem = _ReactBootstrap.MenuItem;
 var Modal = _ReactBootstrap.Modal;
-var FieldGroup = _ReactBootstrap.FieldGroup;
 var FormControl = _ReactBootstrap.FormControl;
 var ControlLabel = _ReactBootstrap.ControlLabel;
 var FormGroup = _ReactBootstrap.FormGroup;
+var HelpBlock = _ReactBootstrap.HelpBlock;
 
 /* app */
 
 var initialState = Object.assign({
-  name: "",
+  name: { value: "", error: false },
   description: "",
   spatialDomain: null,
   temporalDomain: { start: null, end: null },
-  errors: {},
   tree: {},
   input_variables: [],
   modified: null
@@ -1290,9 +1297,12 @@ function sieveApp() {
       return Object.assign({}, state, {
         variables: variables(state[action.variables], action)
       });
-    case UPDATE_METADATA:
+    case UPDATE_NAME:
       return Object.assign({}, state, {
-        name: action.name,
+        name: action.name
+      });
+    case UPDATE_DESCRIPTION:
+      return Object.assign({}, state, {
         description: action.description
       });
     case UPDATE_TREE:
@@ -1313,15 +1323,23 @@ function sieveApp() {
 }
 
 var mapStateToProps = function mapStateToProps(state) {
+  var errors = Object.assign({}, state.errors);
+  if (state.name.error) {
+    errors['name'] = state.name.error;
+  }
   return Object.assign({}, state, {
-    metadata: { title: state.name, description: state.description }
+    errors: errors,
+    name: state.name.value
   });
 };
 
 var mapDispatchToProps = function mapDispatchToProps(dispatch) {
   return {
-    onMetadataChange: function onMetadataChange(metadata) {
-      dispatch(updateMetadata(metadata));
+    onNameChange: function onNameChange(e) {
+      dispatch(updateName(e.target.value));
+    },
+    onDescriptionChange: function onDescriptionChange(e) {
+      dispatch(updateDescription(e.target.value));
     },
     onAddInputVariable: function onAddInputVariable(variable) {
       dispatch(addInputVariable(variable));
@@ -2078,15 +2096,10 @@ var SelectForm = function (_React$Component7) {
 var SieveComponent = function (_React$Component8) {
   _inherits(SieveComponent, _React$Component8);
 
-  function SieveComponent(props) {
+  function SieveComponent() {
     _classCallCheck(this, SieveComponent);
 
-    var _this14 = _possibleConstructorReturn(this, _React$Component8.call(this, props));
-
-    _this14.state = {
-      errors: {}
-    };
-    return _this14;
+    return _possibleConstructorReturn(this, _React$Component8.apply(this, arguments));
   }
 
   SieveComponent.prototype.validateVariable = function validateVariable() {
@@ -2100,7 +2113,7 @@ var SieveComponent = function (_React$Component8) {
 
     if (!data.name || data.name === '') {
       isValid = false;
-      errors.name = "You must provide a title.";
+      errors.title = "You must provide a title.";
     }
 
     if (!data.tree || data.tree === '') {
@@ -2141,7 +2154,6 @@ var SieveComponent = function (_React$Component8) {
 
       xhr.send(JSON.stringify(validationResponse.data));
     } else {
-      console.log(validationResponse.errors);
       this.setState({ errors: validationResponse.errors });
     }
   };
@@ -2156,18 +2168,52 @@ var SieveComponent = function (_React$Component8) {
     return React.createElement(
       "div",
       { className: "sieve" },
-      this.state.errors.server ? React.createElement(
+      this.props.errors.server ? React.createElement(
         Alert,
         { bsStyle: "danger" },
-        this.state.errors.server
+        this.props.errors.server
       ) : null,
       React.createElement(
         Panel,
         null,
-        React.createElement(MetaData, {
-          ref: "metadata",
-          updateMetadata: this.props.onMetadataChange.bind(this),
-          title: this.props.metadata.title, description: this.props.metadata.description })
+        React.createElement(
+          "div",
+          { className: "sieve-metadata" },
+          React.createElement(
+            "div",
+            { className: "sieve-metadata-title" },
+            React.createElement(
+              FormGroup,
+              { controlId: "name", validationState: this.props.errors.name ? 'error' : null },
+              React.createElement(FormControl, {
+                componentClass: "input",
+                placeholder: "Name...",
+                initialValue: this.props.name,
+                onChange: this.props.onNameChange.bind(this)
+              }),
+              React.createElement(
+                HelpBlock,
+                null,
+                this.props.errors.name ? this.props.errors.name : "Name must be alphanumeric, without spaces."
+              )
+            )
+          ),
+          React.createElement(
+            "div",
+            { className: "sieve-metadata-description" },
+            React.createElement(
+              FormGroup,
+              { controlId: "name" },
+              React.createElement(FormControl, {
+                componentClass: "textarea",
+                placeholder: "Description...",
+                initialValue: this.props.description,
+                onChange: this.props.onDescriptionChange.bind(this),
+                style: { resize: "vertical" }
+              })
+            )
+          )
+        )
       ),
       React.createElement(
         Panel,
@@ -2339,3 +2385,5 @@ var sieve_defined = new CustomEvent('sievedefined', {
   detail: { sieve: sieve }
 });
 document.dispatchEvent(sieve_defined);
+
+//# sourceMappingURL=sieve.js.map

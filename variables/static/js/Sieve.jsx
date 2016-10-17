@@ -1,7 +1,7 @@
 const {
-  Table, Panel, ButtonGroup, ButtonToolbar, ButtonInput, Button, Row, Col,
-  Alert, Input, OverlayTrigger, Tooltip, Tabs, Tab, DropdownButton, MenuItem,
-  Modal, FieldGroup, FormControl, ControlLabel, FormGroup
+  Panel, ButtonGroup, ButtonToolbar, ButtonInput, Button, Row, Col,
+  Alert, Tabs, DropdownButton, MenuItem,
+  Modal, FormControl, ControlLabel, FormGroup, HelpBlock
 } = ReactBootstrap;
 
 /* app */
@@ -11,7 +11,6 @@ var initialState = Object.assign({
   description: "",
   spatialDomain: null,
   temporalDomain: {start: null, end: null},
-  errors: {},
   tree: {},
   input_variables: [],
   modified: null
@@ -42,7 +41,7 @@ function sieveApp(state=initialState, action){
       return Object.assign({}, state, {
         name: action.name
       });
-    case UPDATE_ DESCRIPTION:
+    case UPDATE_DESCRIPTION:
       return Object.assign({}, state, {
         description: action.description
       });
@@ -65,15 +64,23 @@ function sieveApp(state=initialState, action){
 
 
 var mapStateToProps = (state) => {
+  var errors = Object.assign({}, state.errors);
+  if (state.name.error){
+    errors['name'] = state.name.error;
+  }
   return Object.assign({}, state, {
-    metadata: {title: state.name, description: state.description}
+    errors: errors,
+    name: state.name.value,
   });
 };
 
 var mapDispatchToProps = (dispatch) => {
   return {
-    onMetadataChange: (metadata) => {
-      dispatch(updateMetadata(metadata));
+    onNameChange: (e) => {
+      dispatch(updateName(e.target.value));
+    },
+    onDescriptionChange: (e) => {
+      dispatch(updateDescription(e.target.value));
     },
     onAddInputVariable: (variable) => {
       dispatch(addInputVariable(variable));
@@ -648,29 +655,36 @@ class SieveComponent extends React.Component {
 
     return (
       <div className="sieve">
-        {this.state.errors.server ? <Alert bsStyle="danger">{this.state.errors.server}</Alert> : null}
+        {this.props.errors.server ? <Alert bsStyle="danger">{this.props.errors.server}</Alert> : null}
         <Panel>
           <div className="sieve-metadata">
             <div className="sieve-metadata-title">
-              <Input
-                ref='titleInput'
-                type="text"
-                placeholder="Title..."
-                value={this.props.name}
-                onChange={this.onTitleChange.bind(this)}
-                validationState={
-                  (this.props.errors && this.props.errors.title) ?
-                  this.props.errors.title : null 
-                }
-              />
+              <FormGroup controlId="name" validationState={
+                  this.props.errors.name ? 'error' : null
+                }>
+                <FormControl
+                  componentClass="input"
+                  placeholder="Name..."
+                  initialValue={this.props.name}
+                  onChange={this.props.onNameChange.bind(this)}
+                />
+                <HelpBlock>{
+                  this.props.errors.name ?
+                  this.props.errors.name :
+                  "Name must be alphanumeric, without spaces."
+                }</HelpBlock>
+              </FormGroup>
             </div>
             <div className="sieve-metadata-description">
-              <Input type="textarea"
-                ref="descriptionInput"
-                placeholder="Description..."
-                value={this.props.description}
-                onChange={this.onDescriptionChange.bind(this)}
-                style={{resize:"vertical"}} />
+              <FormGroup controlId="name">
+                <FormControl
+                  componentClass="textarea"
+                  placeholder="Description..."
+                  initialValue={this.props.description}
+                  onChange={this.props.onDescriptionChange.bind(this)}
+                  style={{resize:"vertical"}}
+                />
+              </FormGroup>
             </div>
           </div>
         </Panel>
