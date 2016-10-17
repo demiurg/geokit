@@ -187,3 +187,6 @@ input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .but
 
 .t-default .u-btn-current {
   color: #666666; }
+
+#submit-id-submit {
+  width: auto; }
