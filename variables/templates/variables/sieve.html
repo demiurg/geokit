@@ -57,6 +57,7 @@ function getCookie(name) {
 <script>
 
 window.redirect_after_save = "{% url 'variables:index' %}";
+var csrf_token = "{{ csrf_token }}";
 
 {% if variable %}
 var sieve_props = {initialData: {

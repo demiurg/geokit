@@ -12,6 +12,7 @@ const REQUEST_VARIABLES = 'REQUEST_VARIABLES';
 const UPDATE_NAME = 'UPDATE_NAME';
 const UPDATE_DESCRIPTION = 'UPDATE_DESCRIPTION';
 const UPDATE_TREE = 'UPDATE_TREE';
+const UPDATE_ERRORS = 'UPDATE_ERRORS';
 
 const REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
 const ADD_INPUT_VARIABLE = 'ADD_INPUT_VARIABLE';
@@ -26,7 +27,7 @@ const RECIEVE_VARIABLE = 'RECIEVE_VARIABLE';
 function requestLayers() {
   return {
     type: REQUEST_LAYERS
-  }
+  };
 }
 
 
@@ -35,7 +36,7 @@ function receiveLayers(json){
     type: RECEIVE_LAYERS,
     layers: json,
     receivedAt: Date.now()
-  }
+  };
 }
 
 function fetchLayers(){
@@ -59,7 +60,7 @@ function fetchLayers(){
 function requestTables() {
   return {
     type: REQUEST_TABLES
-  }
+  };
 }
 
 function receiveTables(json){
@@ -67,7 +68,7 @@ function receiveTables(json){
     type: RECEIVE_TABLES,
     tables: json,
     receivedAt: Date.now()
-  }
+  };
 }
 
 function fetchTables(){
@@ -91,7 +92,7 @@ function fetchTables(){
 function requestVariables() {
   return {
     type: REQUEST_VARIABLES
-  }
+  };
 }
 
 function receiveVariables(json){
@@ -99,7 +100,7 @@ function receiveVariables(json){
     type: RECEIVE_VARIABLES,
     variables: json,
     receivedAt: Date.now()
-  }
+  };
 }
 
 function fetchVariables(){
@@ -127,14 +128,14 @@ function addInputVariable(variable){
     type: ADD_INPUT_VARIABLE,
     id: nextVariableId++,
     variable
-  }
+  };
 }
 
 function addTreeNode(node){
   return {
     type: ADD_TREE_NODE,
     node: node
-  }
+  };
 }
 
 function updateName(name){
@@ -145,20 +146,20 @@ function updateName(name){
   return {
     type: UPDATE_NAME,
     name: {value: name, error: error}
-  }
+  };
 }
 
 function updateDescription(description){
   return {
     type: UPDATE_DESCRIPTION,
     description: description
-  }
+  };
 }
 
 function postVariable() {
   return {
     type: POST_VARIABLE
-  }
+  };
 }
 
 function recieveVariable(json){
@@ -166,10 +167,19 @@ function recieveVariable(json){
     type: GET_VARIABLE,
     variable: json,
     receivedAt: Date.now()
-  }
+  };
+}
+
+function updateErrors(errors={}){
+  return {
+    type: UPDATE_ERRORS,
+    errors: errors
+  };
 }
 
 function saveVariable(variable){
+  variable['csrfmiddlewaretoken'] = window.csrf_token;
+
   return function(dispatch){
     dispatch(postVariable());
 
@@ -183,7 +193,8 @@ function saveVariable(variable){
         console.log(data);
       },
       error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
+        var errors = xhr.responseJSON;
+        dispatch(updateErrors(errors));
       }
     });
   };

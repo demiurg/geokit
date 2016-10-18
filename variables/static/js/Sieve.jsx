@@ -7,11 +7,12 @@ const {
 /* app */
 
 var initialState = Object.assign({
-  name: {value: "", error: false},
+  errors: {},
+  name: {value: "", errors: []},
+  tree: {value: {}, errors: []},
   description: "",
   spatialDomain: null,
   temporalDomain: {start: null, end: null},
-  tree: {},
   input_variables: [],
   modified: null
 }, sieve_props.initialData);
@@ -49,6 +50,13 @@ function sieveApp(state=initialState, action){
       return Object.assign({}, state, {
         tree: action.tree
       });
+    case UPDATE_ERRORS:
+      return Object.assign({}, state, {
+        errors: action.errors ? action.errors : {
+          name: state.name.errors.join(''),
+          tree: state.tree.errors.join('')
+        }
+      });
     case ADD_TREE_NODE:
       return Object.assign({}, state, {
         tree: tree(state.tree, action)
@@ -62,15 +70,10 @@ function sieveApp(state=initialState, action){
   }
 }
 
-
 var mapStateToProps = (state) => {
-  var errors = Object.assign({}, state.errors);
-  if (state.name.error){
-    errors['name'] = state.name.error;
-  }
   return Object.assign({}, state, {
-    errors: errors,
     name: state.name.value,
+    tree: state.tree.value
   });
 };
 
@@ -81,9 +84,11 @@ var mapDispatchToProps = (dispatch) => {
     },
     onNameChange: (e) => {
       dispatch(updateName(e.target.value));
+      dispatch(updateErrors());
     },
     onDescriptionChange: (e) => {
       dispatch(updateDescription(e.target.value));
+      dispatch(updateErrors());
     },
     onAddInputVariable: (variable) => {
       dispatch(addInputVariable(variable));
@@ -673,12 +678,18 @@ class SieveComponent extends React.Component {
               </ButtonGroup>
             </ButtonToolbar>
           </div>
+          {this.props.errors.tree ?
+            <Alert bsStyle="danger">
+            <p>{this.props.errors.tree}</p>
+            </Alert>
+          : null}
           <p dangerouslySetInnerHTML={createMarkup()}>
           </p>
 
         </Panel>
 
         <ButtonInput bsSize="large" onClick={(e)=>{
+          e.stopPropagation();
           var s = self.props;
           self.props.onSaveVariable({
             name: s.name.value,

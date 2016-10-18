@@ -12,6 +12,7 @@ var REQUEST_VARIABLES = 'REQUEST_VARIABLES';
 var UPDATE_NAME = 'UPDATE_NAME';
 var UPDATE_DESCRIPTION = 'UPDATE_DESCRIPTION';
 var UPDATE_TREE = 'UPDATE_TREE';
+var UPDATE_ERRORS = 'UPDATE_ERRORS';
 
 var REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
 var ADD_INPUT_VARIABLE = 'ADD_INPUT_VARIABLE';
@@ -167,7 +168,18 @@ function recieveVariable(json) {
   };
 }
 
+function updateErrors() {
+  var errors = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+  return {
+    type: UPDATE_ERRORS,
+    errors: errors
+  };
+}
+
 function saveVariable(variable) {
+  variable['csrfmiddlewaretoken'] = window.csrf_token;
+
   return function (dispatch) {
     dispatch(postVariable());
 
@@ -181,7 +193,8 @@ function saveVariable(variable) {
         console.log(data);
       },
       error: function error(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
+        var errors = xhr.responseJSON;
+        dispatch(updateErrors(errors));
       }
     });
   };
@@ -1267,11 +1280,12 @@ var HelpBlock = _ReactBootstrap.HelpBlock;
 /* app */
 
 var initialState = Object.assign({
-  name: { value: "", error: false },
+  errors: {},
+  name: { value: "", errors: [] },
+  tree: { value: {}, errors: [] },
   description: "",
   spatialDomain: null,
   temporalDomain: { start: null, end: null },
-  tree: {},
   input_variables: [],
   modified: null
 }, sieve_props.initialData);
@@ -1311,6 +1325,13 @@ function sieveApp() {
       return Object.assign({}, state, {
         tree: action.tree
       });
+    case UPDATE_ERRORS:
+      return Object.assign({}, state, {
+        errors: action.errors ? action.errors : {
+          name: state.name.errors.join(''),
+          tree: state.tree.errors.join('')
+        }
+      });
     case ADD_TREE_NODE:
       return Object.assign({}, state, {
         tree: tree(state.tree, action)
@@ -1325,13 +1346,9 @@ function sieveApp() {
 }
 
 var mapStateToProps = function mapStateToProps(state) {
-  var errors = Object.assign({}, state.errors);
-  if (state.name.error) {
-    errors['name'] = state.name.error;
-  }
   return Object.assign({}, state, {
-    errors: errors,
-    name: state.name.value
+    name: state.name.value,
+    tree: state.tree.value
   });
 };
 
@@ -1342,9 +1359,11 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
     },
     onNameChange: function onNameChange(e) {
       dispatch(updateName(e.target.value));
+      dispatch(updateErrors());
     },
     onDescriptionChange: function onDescriptionChange(e) {
       dispatch(updateDescription(e.target.value));
+      dispatch(updateErrors());
     },
     onAddInputVariable: function onAddInputVariable(variable) {
       dispatch(addInputVariable(variable));
@@ -2254,11 +2273,21 @@ var SieveComponent = function (_React$Component8) {
             )
           )
         ),
+        this.props.errors.tree ? React.createElement(
+          Alert,
+          { bsStyle: "danger" },
+          React.createElement(
+            "p",
+            null,
+            this.props.errors.tree
+          )
+        ) : null,
         React.createElement("p", { dangerouslySetInnerHTML: createMarkup() })
       ),
       React.createElement(
         ButtonInput,
         { bsSize: "large", onClick: function onClick(e) {
+            e.stopPropagation();
             var s = self.props;
             self.props.onSaveVariable({
               name: s.name.value,
