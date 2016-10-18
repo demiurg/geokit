@@ -20,7 +20,7 @@ var ADD_TREE_NODE = 'ADD_TREE_NODE';
 
 var SAVE_VARIABLE = 'SAVE_VARIABLE';
 var POST_VARIABLE = 'POST_VARIABLE';
-var GET_VARIABLE = 'GET_VARIABLE';
+var RECIEVE_VARIABLE = 'RECIEVE_VARIABLE';
 
 function requestLayers() {
   return {
@@ -153,13 +153,13 @@ function updateDescription(description) {
   };
 }
 
-function postVariables() {
+function postVariable() {
   return {
     type: POST_VARIABLE
   };
 }
 
-function getVariable(json) {
+function recieveVariable(json) {
   return {
     type: GET_VARIABLE,
     variable: json,
@@ -167,16 +167,18 @@ function getVariable(json) {
   };
 }
 
-function saveVariable(json) {
+function saveVariable(variable) {
   return function (dispatch) {
     dispatch(postVariable());
 
     return $.ajax({
-      url: '/api/variables',
+      url: '/api/variables/',
       dataType: 'json',
       cache: 'false',
+      data: variable,
+      method: 'POST',
       success: function success(data) {
-        dispatch(getVariable(data));
+        console.log(data);
       },
       error: function error(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
@@ -1281,7 +1283,7 @@ function sieveApp() {
   switch (action.type) {
     case SAVE_VARIABLE:
     case POST_VARIABLE:
-    case GET_VARIABLE:
+    case RECIEVE_VARIABLE:
     case REQUEST_LAYERS:
     case RECEIVE_LAYERS:
       return Object.assign({}, state, {
@@ -1335,6 +1337,9 @@ var mapStateToProps = function mapStateToProps(state) {
 
 var mapDispatchToProps = function mapDispatchToProps(dispatch) {
   return {
+    onSaveVariable: function onSaveVariable(v) {
+      dispatch(saveVariable(v));
+    },
     onNameChange: function onNameChange(e) {
       dispatch(updateName(e.target.value));
     },
@@ -2102,62 +2107,6 @@ var SieveComponent = function (_React$Component8) {
     return _possibleConstructorReturn(this, _React$Component8.apply(this, arguments));
   }
 
-  SieveComponent.prototype.validateVariable = function validateVariable() {
-    var errors = {},
-        isValid = true,
-        data = {
-      name: this.props.metadata.title,
-      description: this.props.metadata.description,
-      tree: this.props.tree
-    };
-
-    if (!data.name || data.name === '') {
-      isValid = false;
-      errors.title = "You must provide a title.";
-    }
-
-    if (!data.tree || data.tree === '') {
-      isValid = false;
-      errors.tree = "You must specify variable text.";
-    }
-
-    return { isValid: isValid, errors: errors, data: data };
-  };
-
-  SieveComponent.prototype.saveVariable = function saveVariable(e) {
-    var _this15 = this;
-
-    e.stopPropagation();
-    var validationResponse = this.validateVariable();
-
-    if (validationResponse.isValid) {
-      var xhr = new XMLHttpRequest();
-
-      if (this.props.initialData) {
-        xhr.open("PUT", "/api/variables/" + this.props.initialData.id + "/", true);
-      } else {
-        xhr.open("POST", "/api/variables/", true);
-      }
-
-      xhr.setRequestHeader("Content-type", "application/json");
-      xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
-
-      xhr.onreadystatechange = function () {
-        if (xhr.readyState == 4) {
-          if (200 <= xhr.status && xhr.status < 300) {
-            window.location.href = window.redirect_after_save;
-          } else {
-            _this15.setState({ errors: { server: xhr.response } });
-          }
-        }
-      };
-
-      xhr.send(JSON.stringify(validationResponse.data));
-    } else {
-      this.setState({ errors: validationResponse.errors });
-    }
-  };
-
   SieveComponent.prototype.render = function render() {
     var self = this;
 
@@ -2189,7 +2138,7 @@ var SieveComponent = function (_React$Component8) {
                 componentClass: "input",
                 placeholder: "Name...",
                 initialValue: this.props.name,
-                onChange: this.props.onNameChange.bind(this)
+                onChange: self.props.onNameChange
               }),
               React.createElement(
                 HelpBlock,
@@ -2208,7 +2157,7 @@ var SieveComponent = function (_React$Component8) {
                 componentClass: "textarea",
                 placeholder: "Description...",
                 initialValue: this.props.description,
-                onChange: this.props.onDescriptionChange.bind(this),
+                onChange: self.props.onDescriptionChange,
                 style: { resize: "vertical" }
               })
             )
@@ -2309,7 +2258,16 @@ var SieveComponent = function (_React$Component8) {
       ),
       React.createElement(
         ButtonInput,
-        { bsSize: "large", onClick: this.saveVariable.bind(this) },
+        { bsSize: "large", onClick: function onClick(e) {
+            var s = self.props;
+            self.props.onSaveVariable({
+              name: s.name.value,
+              tree: s.tree,
+              description: s.description,
+              temporal_domain: s.temporal_domain,
+              spatial_domain: s.spatial_domain
+            });
+          } },
         "Save"
       )
     );

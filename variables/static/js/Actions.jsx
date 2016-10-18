@@ -20,7 +20,7 @@ const ADD_TREE_NODE = 'ADD_TREE_NODE';
 
 const SAVE_VARIABLE = 'SAVE_VARIABLE';
 const POST_VARIABLE = 'POST_VARIABLE';
-const GET_VARIABLE = 'GET_VARIABLE';
+const RECIEVE_VARIABLE = 'RECIEVE_VARIABLE';
 
 
 function requestLayers() {
@@ -155,13 +155,13 @@ function updateDescription(description){
   }
 }
 
-function postVariables() {
+function postVariable() {
   return {
     type: POST_VARIABLE
   }
 }
 
-function getVariable(json){
+function recieveVariable(json){
   return {
     type: GET_VARIABLE,
     variable: json,
@@ -169,16 +169,18 @@ function getVariable(json){
   }
 }
 
-function saveVariable(json){
+function saveVariable(variable){
   return function(dispatch){
     dispatch(postVariable());
 
     return $.ajax({
-      url: '/api/variables',
+      url: '/api/variables/',
       dataType: 'json',
       cache: 'false',
+      data: variable,
+      method: 'POST',
       success: function(data) {
-        dispatch(getVariable(data));
+        console.log(data);
       },
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
