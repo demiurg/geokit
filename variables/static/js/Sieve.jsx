@@ -7,9 +7,9 @@ const {
 /* app */
 
 var initialState = Object.assign({
-  errors: {},
-  name: {value: "", errors: []},
-  tree: {value: {}, errors: []},
+  errors: {"name": null, "tree": null},
+  name: "",
+  tree: {},
   description: "",
   spatialDomain: null,
   temporalDomain: {start: null, end: null},
@@ -20,9 +20,6 @@ var initialState = Object.assign({
 
 function sieveApp(state=initialState, action){
   switch (action.type){
-    case SAVE_VARIABLE:
-    case POST_VARIABLE:
-    case RECIEVE_VARIABLE:
     case REQUEST_LAYERS:
     case RECEIVE_LAYERS:
       return Object.assign({}, state, {
@@ -40,7 +37,8 @@ function sieveApp(state=initialState, action){
       });
     case UPDATE_NAME:
       return Object.assign({}, state, {
-        name: action.name
+        name: action.name,
+        errors: Object.assign({}, state.errors, {name: action.error})
       });
     case UPDATE_DESCRIPTION:
       return Object.assign({}, state, {
@@ -48,14 +46,12 @@ function sieveApp(state=initialState, action){
       });
     case UPDATE_TREE:
       return Object.assign({}, state, {
-        tree: action.tree
+        tree: action.tree,
+        errors: Object.assign({}, state.errors, {tree: action.error})
       });
     case UPDATE_ERRORS:
       return Object.assign({}, state, {
-        errors: action.errors ? action.errors : {
-          name: state.name.errors.join(''),
-          tree: state.tree.errors.join('')
-        }
+        errors: action.errors
       });
     case ADD_TREE_NODE:
       return Object.assign({}, state, {
@@ -71,10 +67,7 @@ function sieveApp(state=initialState, action){
 }
 
 var mapStateToProps = (state) => {
-  return Object.assign({}, state, {
-    name: state.name.value,
-    tree: state.tree.value
-  });
+  return Object.assign({}, state);
 };
 
 var mapDispatchToProps = (dispatch) => {
@@ -84,11 +77,9 @@ var mapDispatchToProps = (dispatch) => {
     },
     onNameChange: (e) => {
       dispatch(updateName(e.target.value));
-      dispatch(updateErrors());
     },
     onDescriptionChange: (e) => {
       dispatch(updateDescription(e.target.value));
-      dispatch(updateErrors());
     },
     onAddInputVariable: (variable) => {
       dispatch(addInputVariable(variable));
@@ -690,13 +681,12 @@ class SieveComponent extends React.Component {
 
         <ButtonInput bsSize="large" onClick={(e)=>{
           e.stopPropagation();
-          var s = self.props;
           self.props.onSaveVariable({
-            name: s.name.value,
-            tree: s.tree,
-            description: s.description,
-            temporal_domain: s.temporal_domain,
-            spatial_domain: s.spatial_domain
+            name: self.props.name,
+            tree: self.props.tree,
+            description: self.props.description,
+            temporal_domain: self.props.temporal_domain,
+            spatial_domain: self.props.spatial_domain
           });
         }}>Save</ButtonInput>
       </div>

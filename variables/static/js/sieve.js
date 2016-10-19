@@ -143,7 +143,8 @@ function updateName(name) {
   }
   return {
     type: UPDATE_NAME,
-    name: { value: name, error: error }
+    name: name,
+    error: error
   };
 }
 
@@ -169,7 +170,7 @@ function recieveVariable(json) {
 }
 
 function updateErrors() {
-  var errors = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+  var errors = arguments.length <= 0 || arguments[0] === undefined ? { "name": null, "tree": null } : arguments[0];
 
   return {
     type: UPDATE_ERRORS,
@@ -193,7 +194,13 @@ function saveVariable(variable) {
         console.log(data);
       },
       error: function error(xhr, status, err) {
-        var errors = xhr.responseJSON;
+        var server_errors = xhr.responseJSON;
+        var errors = {};
+        var keys = Object.keys(server_errors);
+        for (var i = 0; i < keys.length; i++) {
+          errors[keys[i]] = server_errors[keys[i]].join(' ');
+        }
+        console.log(errors);
         dispatch(updateErrors(errors));
       }
     });
@@ -1280,9 +1287,9 @@ var HelpBlock = _ReactBootstrap.HelpBlock;
 /* app */
 
 var initialState = Object.assign({
-  errors: {},
-  name: { value: "", errors: [] },
-  tree: { value: {}, errors: [] },
+  errors: { "name": null, "tree": null },
+  name: "",
+  tree: {},
   description: "",
   spatialDomain: null,
   temporalDomain: { start: null, end: null },
@@ -1295,9 +1302,6 @@ function sieveApp() {
   var action = arguments[1];
 
   switch (action.type) {
-    case SAVE_VARIABLE:
-    case POST_VARIABLE:
-    case RECIEVE_VARIABLE:
     case REQUEST_LAYERS:
     case RECEIVE_LAYERS:
       return Object.assign({}, state, {
@@ -1315,7 +1319,8 @@ function sieveApp() {
       });
     case UPDATE_NAME:
       return Object.assign({}, state, {
-        name: action.name
+        name: action.name,
+        errors: Object.assign({}, state.errors, { name: action.error })
       });
     case UPDATE_DESCRIPTION:
       return Object.assign({}, state, {
@@ -1323,14 +1328,12 @@ function sieveApp() {
       });
     case UPDATE_TREE:
       return Object.assign({}, state, {
-        tree: action.tree
+        tree: action.tree,
+        errors: Object.assign({}, state.errors, { tree: action.error })
       });
     case UPDATE_ERRORS:
       return Object.assign({}, state, {
-        errors: action.errors ? action.errors : {
-          name: state.name.errors.join(''),
-          tree: state.tree.errors.join('')
-        }
+        errors: action.errors
       });
     case ADD_TREE_NODE:
       return Object.assign({}, state, {
@@ -1346,10 +1349,7 @@ function sieveApp() {
 }
 
 var mapStateToProps = function mapStateToProps(state) {
-  return Object.assign({}, state, {
-    name: state.name.value,
-    tree: state.tree.value
-  });
+  return Object.assign({}, state);
 };
 
 var mapDispatchToProps = function mapDispatchToProps(dispatch) {
@@ -1359,11 +1359,9 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
     },
     onNameChange: function onNameChange(e) {
       dispatch(updateName(e.target.value));
-      dispatch(updateErrors());
     },
     onDescriptionChange: function onDescriptionChange(e) {
       dispatch(updateDescription(e.target.value));
-      dispatch(updateErrors());
     },
     onAddInputVariable: function onAddInputVariable(variable) {
       dispatch(addInputVariable(variable));
@@ -2288,13 +2286,12 @@ var SieveComponent = function (_React$Component8) {
         ButtonInput,
         { bsSize: "large", onClick: function onClick(e) {
             e.stopPropagation();
-            var s = self.props;
             self.props.onSaveVariable({
-              name: s.name.value,
-              tree: s.tree,
-              description: s.description,
-              temporal_domain: s.temporal_domain,
-              spatial_domain: s.spatial_domain
+              name: self.props.name,
+              tree: self.props.tree,
+              description: self.props.description,
+              temporal_domain: self.props.temporal_domain,
+              spatial_domain: self.props.spatial_domain
             });
           } },
         "Save"

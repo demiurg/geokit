@@ -145,7 +145,8 @@ function updateName(name){
   }
   return {
     type: UPDATE_NAME,
-    name: {value: name, error: error}
+    name: name,
+    error: error
   };
 }
 
@@ -170,7 +171,7 @@ function recieveVariable(json){
   };
 }
 
-function updateErrors(errors={}){
+function updateErrors(errors={"name": null, "tree": null}){
   return {
     type: UPDATE_ERRORS,
     errors: errors
@@ -193,7 +194,12 @@ function saveVariable(variable){
         console.log(data);
       },
       error: function(xhr, status, err) {
-        var errors = xhr.responseJSON;
+        var server_errors = xhr.responseJSON;
+        var errors = {};
+        var keys = Object.keys(server_errors);
+        for (var i=0; i<keys.length; i++){
+          errors[keys[i]] = server_errors[keys[i]].join(' ');
+        }
         dispatch(updateErrors(errors));
       }
     });
