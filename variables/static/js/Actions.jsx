@@ -140,7 +140,7 @@ function addTreeNode(node){
 
 function updateName(name){
   var error = null;
-  if (!name || !name.match(/[a-zA-Z0-9]+/)){
+  if (!name || !name.match(/^[a-zA-Z0-9]+$/)){
     error = "Name is not alphanumeric or contains spaces.";
   }
   return {
