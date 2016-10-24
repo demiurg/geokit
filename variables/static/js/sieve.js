@@ -188,8 +188,10 @@ function saveVariable(variable) {
       url: '/api/variables/',
       dataType: 'json',
       cache: 'false',
-      data: variable,
+      data: JSON.stringify(variable),
       method: 'POST',
+      contentType: "application/json",
+      processData: false,
       success: function success(data) {
         console.log(data);
       },
@@ -1294,7 +1296,7 @@ var initialState = Object.assign({
   temporalDomain: { start: null, end: null },
   input_variables: [],
   modified: null
-}, sieve_props.initialData);
+}, window.sieve_props);
 
 function sieveApp() {
   var state = arguments.length <= 0 || arguments[0] === undefined ? initialState : arguments[0];

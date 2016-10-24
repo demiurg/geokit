@@ -15,7 +15,7 @@ var initialState = Object.assign({
   temporalDomain: {start: null, end: null},
   input_variables: [],
   modified: null
-}, sieve_props.initialData);
+}, window.sieve_props);
 
 
 function sieveApp(state=initialState, action){

@@ -18,12 +18,10 @@ def add(request):
     return render(request, 'variables/sieve.html')
 
 
-def edit(request, expression_id):
+def edit(request, variable_id):
     variable = get_object_or_404(Variable, pk=variable_id)
-    filters = json.dumps(variable.filters)
     return render(request, 'variables/sieve.html', {
-        'variable': variable,
-        'filters': filters,
+        'variable': variable
     })
 
 

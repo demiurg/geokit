@@ -59,22 +59,33 @@ function getCookie(name) {
 window.redirect_after_save = "{% url 'variables:index' %}";
 var csrf_token = "{{ csrf_token }}";
 
+var sieve_props = {};
 {% if variable %}
-var sieve_props = {initialData: {
+sieve_props = {
   description: "{{ variable.description }}",
   temporal_domain: {
     start: new Date("{{ variable.temporal_domain.lower }}"),
     end: new Date("{{ variable.temporal_domain.upper }}"),
-  }
+  },
   created: "{{ variable.created }}",
   modified: "{{ variable.modified }}",
   id: "{{ variable.pk }}",
   name: "{{ variable.name }}",
   tree: JSON.parse("{{ variable.tree }}")
-}};
-{% else %}
-var sieve_props = {};
+};
 {% endif %}
+
+function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+}
+$.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+            xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+        }
+    }
+});
 
 // Webpacking in browser is kind of a kludge...
 document.addEventListener('sievedefined', function(e) {

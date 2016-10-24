@@ -179,8 +179,6 @@ function updateErrors(errors={"name": null, "tree": null}){
 }
 
 function saveVariable(variable){
-  variable['csrfmiddlewaretoken'] = window.csrf_token;
-
   return function(dispatch){
     dispatch(postVariable());
 
@@ -188,8 +186,10 @@ function saveVariable(variable){
       url: '/api/variables/',
       dataType: 'json',
       cache: 'false',
-      data: variable,
+      data: JSON.stringify(variable),
       method: 'POST',
+      contentType: "application/json",
+      processData: false,
       success: function(data) {
         console.log(data);
       },
