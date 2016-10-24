@@ -138,7 +138,7 @@ function addTreeNode(node) {
 
 function updateName(name) {
   var error = null;
-  if (!name || !name.match(/[a-zA-Z0-9]+/)) {
+  if (!name || !name.match(/^[a-zA-Z0-9]+$/)) {
     error = "Name is not alphanumeric or contains spaces.";
   }
   return {
@@ -200,7 +200,6 @@ function saveVariable(variable) {
         for (var i = 0; i < keys.length; i++) {
           errors[keys[i]] = server_errors[keys[i]].join(' ');
         }
-        console.log(errors);
         dispatch(updateErrors(errors));
       }
     });
@@ -1614,7 +1613,10 @@ var AddExpressionInputModal = function (_React$Component3) {
 
   AddExpressionInputModal.prototype.use = function use() {
     var form = $(this.form).serializeArray();
-    var variable = ['expression', [JSON.parse(form[0]['value'])]];
+    var variable = {
+      node: ['expression', [JSON.parse(form[1]['value'])]],
+      name: form[0]['value']
+    };
     this.props.onAddInputVariable(variable);
     this.setState({ showModal: false });
   };
@@ -1649,6 +1651,18 @@ var AddExpressionInputModal = function (_React$Component3) {
             { ref: function ref(_ref3) {
                 _this6.form = _ref3;
               } },
+            React.createElement(
+              FormGroup,
+              { controlId: "name" },
+              React.createElement(
+                ControlLabel,
+                null,
+                "Name"
+              ),
+              React.createElement(FormControl, {
+                name: "name", type: "text", placeholder: "enter variable name"
+              })
+            ),
             React.createElement(
               FormGroup,
               { controlId: "numericText" },
@@ -2304,7 +2318,7 @@ var SieveComponent = function (_React$Component8) {
 
 var rendertree = function rendertree(tree, level) {
   //console.log('render: ', tree);
-  if (tree.length && tree.length == 2) {
+  if (tree && tree.length && tree.length == 2) {
     var op = tree[0];
     var left = tree[1][0];
     var right = tree[1][1];
