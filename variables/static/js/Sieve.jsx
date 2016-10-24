@@ -612,12 +612,22 @@ class AddMeanModal extends React.Component {
 class SelectForm extends React.Component {
   constructor(props){
     super(props);
-    this.state = {variable: null, select_variable: null, select_property: null};
+    this.state = {
+      variable: null,
+      select_variable: null,
+      select_property: null
+    };
   }
 
   onVariableChange = (e) => {
     if (e.target.value){
-      this.setState({select_variable: JSON.parse(e.target.value)});
+      var v = JSON.parse(e.target.value);
+      if( v[0] == 'select' ){
+        this.props.onSelectNode(v);
+        this.setState({variable: v});
+      } else {
+        this.setState({select_variable: v});
+      }
     }
   };
 
@@ -635,25 +645,28 @@ class SelectForm extends React.Component {
   render(){
     var property = null;
     if (this.state.select_variable){
-      property = (
-        <FormGroup controlId="rightSelect">
-          <ControlLabel>Variable&nbsp;Property</ControlLabel>
-          <FormControl
-            componentClass="select"
-            placeholder="select"
-            name="right"
-            onChange={this.onPropertyChange.bind(this)}>
-            <option key={9999} value={null} >Not Selected</option>
-            {
-              this.props.layers.items.map(
-                i2o('Layer')
-              ).concat(
-                this.props.tables.items.map(i2o('Table'))
-              )
-            }
-          </FormControl>
-        </FormGroup>
-      );
+      if (this.state.select_variable[0] == 'join') {
+        var options = this.props.layers.items.filter((item) => {
+          return true;
+        }).map(
+          i2o('Layer')
+        ).concat(
+          this.props.tables.items.map(i2o('Table'))
+        );
+        property = (
+          <FormGroup controlId="rightSelect">
+            <ControlLabel>Variable&nbsp;Property</ControlLabel>
+            <FormControl
+              componentClass="select"
+              placeholder="select"
+              name="right"
+              onChange={this.onPropertyChange.bind(this)}>
+              <option key={9999} value={null} >Not Selected</option>
+              {options}
+            </FormControl>
+          </FormGroup>
+        );
+      }
     }
     return (
       <form ref={(ref)=>{this.form=ref}}>
