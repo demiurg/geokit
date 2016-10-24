@@ -63,6 +63,11 @@ def test_example_0_5_select(set_schema):
             'tmax'
         ]
     ])
+    t_avg = Variable(tree=['mean', [
+        tmin.data(),
+        tmax.data()
+    ]])
+    print t_avg.data()['values']
     t_summer = Variable(
         tree=['tfilter', [
             ['mean', [
@@ -85,4 +90,4 @@ def test_example_0_5_select(set_schema):
     )
     t_norm_summer = Variable(tree=['tmean', [t_summer.data()]])
 
-    np.testing.assert_array_equal(t_norm_summer.data()['values'], np.array([[13.175], [22.4]]))
+    np.testing.assert_array_equal(t_norm_summer.data()['values'], np.array([[7.45], [17.7]]))
