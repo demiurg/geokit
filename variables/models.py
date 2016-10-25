@@ -12,6 +12,7 @@ from geokit_tables.models import GeoKitTable
 from layers.models import Layer
 
 from data import DataSource, join_layer_and_table
+import json
 
 
 class Variable(models.Model):
@@ -20,6 +21,7 @@ class Variable(models.Model):
     temporal_domain = ArrayField(models.DateField(), null=True, blank=True)
     spatial_domain = ArrayField(models.IntegerField(), null=True, blank=True)
     tree = JSONField()
+    input_variables = JSONField(null=True)
     units = models.CharField(max_length=100, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True, editable=False)
     modified = models.DateTimeField(auto_now=True)
@@ -31,6 +33,9 @@ class Variable(models.Model):
             'spatial_domain': self.spatial_domain,
             'temporal_domain': self.temporal_domain
         }
+
+    def tree_json(self):
+        return json.dumps(self.tree)
 
     def data(self):
         operator = self.resolve_operator(self.tree[0])

@@ -14,7 +14,7 @@ var initialState = Object.assign({
   spatialDomain: null,
   temporalDomain: {start: null, end: null},
   input_variables: [],
-  modified: null
+  modified: null,
 }, window.sieve_props);
 
 
@@ -701,7 +701,13 @@ class SieveComponent extends React.Component {
     return (
       <div className="sieve">
         {this.props.errors.server ? <Alert bsStyle="danger">{this.props.errors.server}</Alert> : null}
-        <Panel>
+        <Panel header={
+          this.props.created ?
+          <h3>
+            Variable {this.props.name}
+            <small>  created on {this.props.created} and last modified {this.props.modified}</small>
+          </h3> : null
+        }>
           <div className="sieve-metadata">
             <div className="sieve-metadata-title">
               <FormGroup controlId="name" validationState={
@@ -710,8 +716,9 @@ class SieveComponent extends React.Component {
                 <FormControl
                   componentClass="input"
                   placeholder="Name..."
-                  initialValue={this.props.name}
+                  initialValue={self.props.name}
                   onChange={self.props.onNameChange}
+                  value={self.props.name}
                 />
                 <HelpBlock>{
                   this.props.errors.name ?
@@ -725,7 +732,8 @@ class SieveComponent extends React.Component {
                 <FormControl
                   componentClass="textarea"
                   placeholder="Description..."
-                  initialValue={this.props.description}
+                  initialValue={self.props.description}
+                  value={self.props.description}
                   onChange={self.props.onDescriptionChange}
                   style={{resize:"vertical"}}
                 />
@@ -782,6 +790,9 @@ class SieveComponent extends React.Component {
 
         <ButtonInput bsSize="large" onClick={(e)=>{
           e.stopPropagation();
+          if (self.props.errors.name || self.props.errors.tree){
+            return;
+          }
           self.props.onSaveVariable({
             name: self.props.name,
             tree: self.props.tree,
@@ -796,33 +807,42 @@ class SieveComponent extends React.Component {
 }
 
 
-var rendertree = (tree, level) => {
+var rendertree = (tree, level=0) => {
     //console.log('render: ', tree);
+    var tab = "<br>" + Array(level * 4).join("&nbsp;");
+    var nl = level + 1;
     if (tree && tree.length && tree.length == 2){
       var op = tree[0];
       var left = tree[1][0];
       var right = tree[1][1];
 
+      var html = '';
       switch (op) {
         case 'mean':
-          return 'Mean of (' + rendertree(left) + ', ' + rendertree(right) + ') ';
+          html = 'Mean of (' + rendertree(left, nl) + ', ' + rendertree(right, nl) + ') ';
+          break;
         case 'select':
-          return "Select " + right.id + "/" + right.field + " from (" + rendertree(left) + ")";
+          html = "Select " + right.id + "/" + right.field + " from (" + rendertree(left, nl) + ")";
+          break;
         case 'expression':
-          return left;
+          html = left;
+          break;
         case 'join':
           let str = "Join " +
             left.type + ' ' + left.id + ' and ' +
             right.type + ' ' + right.id + ' on ' +
             left.field + ' = ' + right.field
           ;
-          return str;
+          html = str;
+          break;
         default:
-          return rendertree(left) + " " + op + " " + rendertree(right);
+          html = rendertree(left, nl) + " " + op + " " + rendertree(right, nl);
       }
     } else {
-      return JSON.stringify(tree);
+      html = JSON.stringify(tree);
     }
+
+    return tab + html;
 };
 
 

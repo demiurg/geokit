@@ -179,8 +179,6 @@ function updateErrors() {
 }
 
 function saveVariable(variable) {
-  variable['csrfmiddlewaretoken'] = window.csrf_token;
-
   return function (dispatch) {
     dispatch(postVariable());
 
@@ -2288,7 +2286,20 @@ var SieveComponent = function (_React$Component9) {
       ) : null,
       React.createElement(
         Panel,
-        null,
+        { header: this.props.created ? React.createElement(
+            "h3",
+            null,
+            "Variable ",
+            this.props.name,
+            React.createElement(
+              "small",
+              null,
+              "  created on ",
+              this.props.created,
+              " and last modified ",
+              this.props.modified
+            )
+          ) : null },
         React.createElement(
           "div",
           { className: "sieve-metadata" },
@@ -2301,8 +2312,9 @@ var SieveComponent = function (_React$Component9) {
               React.createElement(FormControl, {
                 componentClass: "input",
                 placeholder: "Name...",
-                initialValue: this.props.name,
-                onChange: self.props.onNameChange
+                initialValue: self.props.name,
+                onChange: self.props.onNameChange,
+                value: self.props.name
               }),
               React.createElement(
                 HelpBlock,
@@ -2320,7 +2332,7 @@ var SieveComponent = function (_React$Component9) {
               React.createElement(FormControl, {
                 componentClass: "textarea",
                 placeholder: "Description...",
-                initialValue: this.props.description,
+                initialValue: self.props.description,
                 onChange: self.props.onDescriptionChange,
                 style: { resize: "vertical" }
               })
@@ -2454,29 +2466,40 @@ var SieveComponent = function (_React$Component9) {
   return SieveComponent;
 }(React.Component);
 
-var rendertree = function rendertree(tree, level) {
+var rendertree = function rendertree(tree) {
+  var level = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+
   //console.log('render: ', tree);
+  var tab = "<br>" + Array(level * 4).join("&nbsp;");
+  var nl = level + 1;
   if (tree && tree.length && tree.length == 2) {
     var op = tree[0];
     var left = tree[1][0];
     var right = tree[1][1];
 
+    var html = '';
     switch (op) {
       case 'mean':
-        return 'Mean of (' + rendertree(left) + ', ' + rendertree(right) + ') ';
+        html = 'Mean of (' + rendertree(left, nl) + ', ' + rendertree(right, nl) + ') ';
+        break;
       case 'select':
-        return "Select " + right.id + "/" + right.field + " from (" + rendertree(left) + ")";
+        html = "Select " + right.id + "/" + right.field + " from (" + rendertree(left, nl) + ")";
+        break;
       case 'expression':
-        return left;
+        html = left;
+        break;
       case 'join':
         var str = "Join " + left.type + ' ' + left.id + ' and ' + right.type + ' ' + right.id + ' on ' + left.field + ' = ' + right.field;
-        return str;
+        html = str;
+        break;
       default:
-        return rendertree(left) + " " + op + " " + rendertree(right);
+        html = rendertree(left, nl) + " " + op + " " + rendertree(right, nl);
     }
   } else {
-    return JSON.stringify(tree);
+    html = JSON.stringify(tree);
   }
+
+  return tab + html;
 };
 
 var TreeView = function (_React$Component10) {

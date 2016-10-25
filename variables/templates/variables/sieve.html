@@ -27,7 +27,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/redux-thunk/2.1.0/redux-thunk.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/redux-form/6.0.0/redux-form.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/EventEmitter/5.1.0/EventEmitter.js"></script>
-<script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+<script src="https://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+<script src="https://history.js/1.8/bundled-uncompressed/html4+html5/jquery.history.js"></script>
+
 <script>
 function getCookie(name) {
     var cookieValue = null;
@@ -63,15 +65,11 @@ var sieve_props = {};
 {% if variable %}
 sieve_props = {
   description: "{{ variable.description }}",
-  temporal_domain: {
-    start: new Date("{{ variable.temporal_domain.lower }}"),
-    end: new Date("{{ variable.temporal_domain.upper }}"),
-  },
   created: "{{ variable.created }}",
   modified: "{{ variable.modified }}",
   id: "{{ variable.pk }}",
   name: "{{ variable.name }}",
-  tree: JSON.parse("{{ variable.tree }}")
+  tree: {{ variable.tree_json|safe }}
 };
 {% endif %}
 
