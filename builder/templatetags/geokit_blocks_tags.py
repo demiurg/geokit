@@ -11,36 +11,35 @@ register = template.Library()
 @register.inclusion_tag('builder/templatetags/graph_data.html')
 def graph_data(graph_block):
     variable = graph_block['variable']
-    values = variable.data()
+    evaluated_variable = variable.data()
     data = {'type': None, 'values': []}
 
-    rows, cols = values.shape
+    rows, cols = evaluated_variable['values'].shape
     if rows == 1:
         # Build timeseries
-        data['type'] = 'timeseries'
-        for i, value in enumerate(values[0]):
-            date_range = variable.temporal_domain[i]
-            date = date_range.lower + (date_range.upper - date_range.lower) / 2  # Get midpoint
+        data['timeseries'] = True
+        for i, value in enumerate(evaluated_variable['values'][0]):
+            date = evaluated_variable['temporal_key'][i]
             data['values'].append({
-                'date': date.isoformat(),
+                'date': date.strftime("%Y-%m-%d %H:%M:%S"),
                 'value': value
             })
     elif cols == 1:
         # Build scatterplot by location
-        features = list(Feature.objects.filter(pk__in=variable.spatial_domain).values())
+        features = list(Feature.objects.filter(pk__in=evaluated_variable['spatial_key']).values())
 
-        data['type'] = 'scatter'
-        for i, value in enumerate(values):
-            metadata = [feature for feature in features if feature['id'] == variable.spatial_key[i]][0]
+        data['scatter'] = True
+        for i, value in enumerate(evaluated_variable['values']):
+            metadata = [feature for feature in features if feature['id'] == evaluated_variable['spatial_key'][i]][0]
             del metadata['geometry']
             data['values'].append({
-                'location_id': variable.spatial_domain[i],
+                'location_id': evaluated_variable['spatial_key'][i],
                 'metadata': metadata,
                 'value': value[0]
             })
     else:
         pass
-    return {'data': json.dumps(data)}
+    return {'data': data}
 
 
 @register.simple_tag

@@ -9,23 +9,23 @@
 <script>
 var data = {% graph_data self %};
 
-var margin = {top: 20, right: 40, bottom: 30, left: 40},
+/*var margin = {top: 20, right: 40, bottom: 30, left: 40},
     width  = 500 - margin.left - margin.right,
     height = 300 - margin.top - margin.bottom;
 
 if (data.type == 'scatter') {
   (function(data) {
-    var x_scale = d3.scale.ordinal()
+    var x_scale = Plotly.d3.scale.ordinal()
                         .domain(data.values.map(function(d) { return d.location_id; }))
                         .rangePoints([0, width]);
 
-    var y_scale = d3.scale.linear()
-                          .domain([0, d3.max(data.values, function(d) {
+    var y_scale = Plotly.d3.scale.linear()
+                          .domain([0, Plotly.d3.max(data.values, function(d) {
                               return d.value;
                           })])
                           .range([height, 0]);
 
-    var graph = d3.select("#graph-{{ self.id }}")
+    var graph = Plotly.d3.select("#graph-{{ self.id }}")
                 .append("svg")
                     .attr("width", width + margin.left + margin.right)
                     .attr("height", height + margin.top + margin.bottom)
@@ -56,12 +56,12 @@ if (data.type == 'scatter') {
                 tooltip.attr("display", "none");
             });
 
-    var x_axis = d3.svg.axis()
+    var x_axis = Plotly.d3.svg.axis()
                     .scale(x_scale)
                     .tickValues(x_scale.domain().filter(function() { return false; }))
                     .orient("bottom");
 
-    var y_axis = d3.svg.axis()
+    var y_axis = Plotly.d3.svg.axis()
                     .scale(y_scale)
                     .orient("left");
 
@@ -76,28 +76,28 @@ if (data.type == 'scatter') {
   })(data);
 } else if (data.type == 'timeseries') {
   (function(data) {
-    var parse_date = d3.time.format("%Y-%m-%d").parse;
-    var x_scale = d3.time.scale()
+    var parse_date = Plotly.d3.time.format("%Y-%m-%d").parse;
+    var x_scale = Plotly.d3.time.scale()
                         .domain([
-                            d3.min(data.values, function(d) { return parse_date(d.date); }),
-                            d3.max(data.values, function(d) { return parse_date(d.date); })
+                            Plotly.d3.min(data.values, function(d) { return parse_date(d.date); }),
+                            Plotly.d3.max(data.values, function(d) { return parse_date(d.date); })
                         ])
                         .range([0, width]);
 
-    var y_scale = d3.scale.linear()
-                          .domain([0, d3.max(data.values, function(d) {
+    var y_scale = Plotly.d3.scale.linear()
+                          .domain([0, Plotly.d3.max(data.values, function(d) {
                             return d.value;
                           })])
                           .range([height, 0]);
 
-    var graph = d3.select("#graph-{{ self.id }}")
+    var graph = Plotly.d3.select("#graph-{{ self.id }}")
                 .append("svg")
                     .attr("width", width + margin.left + margin.right)
                     .attr("height", height + margin.top + margin.bottom)
                 .append("g")
                     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    var line = d3.svg.line()
+    var line = Plotly.d3.svg.line()
         .x(function(d) { return x_scale(parse_date(d.date)); })
         .y(function(d) { return y_scale(d.value); });
 
@@ -106,11 +106,11 @@ if (data.type == 'scatter') {
           .attr("class", "graph-line")
           .attr("d", line);
 
-    var x_axis = d3.svg.axis()
+    var x_axis = Plotly.d3.svg.axis()
                     .scale(x_scale)
                     .orient("bottom");
 
-    var y_axis = d3.svg.axis()
+    var y_axis = Plotly.d3.svg.axis()
                     .scale(y_scale)
                     .orient("left");
 
@@ -123,5 +123,7 @@ if (data.type == 'scatter') {
         .attr("class", "axis")
         .call(y_axis);
   })(data);
-}
+} */
+
+Plotly.newPlot('graph-{{ self.id }}', [data]);
 </script>
