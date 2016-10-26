@@ -1,1 +1,15 @@
-{{ data|safe }}
+{% if data.timeseries %} 
+{
+    x: [{% for d in data.values %}"{{ d.date }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+    y: [{% for d in data.values %}{{ d.value }}{% if not forloop.last %},{% endif %}{% endfor %}],
+    type: 'scatter'
+}
+{% endif %}
+
+{% if data.scatter %}
+{
+    x: [{% for d in data.values %}{{ d.location_id }}{% if not forloop.last %},{% endif %}{% endfor %}],
+    y: [{% for d in data.values %}{{ d.value }}{% if not forloop.last %},{% endif %}{% endfor %}],
+    type: 'scatter'
+}
+{% endif %}
