@@ -21,7 +21,7 @@ class Variable(models.Model):
     temporal_domain = ArrayField(models.DateField(), null=True, blank=True)
     spatial_domain = ArrayField(models.IntegerField(), null=True, blank=True)
     tree = JSONField()
-    input_variables = JSONField(null=True)
+    input_variables = JSONField(null=True, default=[])
     units = models.CharField(max_length=100, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True, editable=False)
     modified = models.DateTimeField(auto_now=True)
@@ -36,6 +36,9 @@ class Variable(models.Model):
 
     def tree_json(self):
         return json.dumps(self.tree)
+
+    def input_variables_json(self):
+        return json.dumps(self.input_variables)
 
     def data(self):
         operator = self.resolve_operator(self.tree[0])
