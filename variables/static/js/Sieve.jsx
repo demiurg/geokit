@@ -109,7 +109,6 @@ var DropdownComponent = ({things, onclick}) => (
   </DropdownButton>
 )
 
-
 DropdownComponent.propTypes = {
   onclick: React.PropTypes.func.isRequired,
   things: React.PropTypes.shape({
@@ -117,6 +116,7 @@ DropdownComponent.propTypes = {
     items: React.PropTypes.array.isRequired
   }).isRequired
 };
+
 
 class VariableButtonGroup extends React.Component {
   /*static propTypes = {
@@ -267,10 +267,13 @@ class AddExpressionInputModal extends React.Component {
 
   use() {
     var form = $(this.form).serializeArray();
-    var variable = [
-      'expression',
-      [JSON.parse(form[0]['value'])]
-    ];
+    var variable = {
+      node: [
+        'expression',
+        [JSON.parse(form[1]['value'])]
+      ],
+      name: form[0]['value']
+    };
     this.props.onAddInputVariable(variable);
     this.setState({ showModal: false });
   }
@@ -289,10 +292,94 @@ class AddExpressionInputModal extends React.Component {
           </Modal.Header>
           <Modal.Body>
             <form ref={(ref)=>{this.form=ref}}>
+              <FormGroup controlId="name">
+                <ControlLabel>Name</ControlLabel>
+                <FormControl
+                  name="name" type="text" placeholder="enter variable name"
+                />
+              </FormGroup>
               <FormGroup controlId="numericText">
                 <ControlLabel>Expression</ControlLabel>
                 <FormControl componentClass="textarea" placeholder="type number, like '1'" name="numericText">
                 </FormControl>
+              </FormGroup>
+            </form>
+          </Modal.Body>
+          <Modal.Footer>
+           <Button onClick={this.use.bind(this)}>Use Variable</Button>
+           <Button onClick={this.close.bind(this)}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+      </Button>
+    );
+  }
+}
+
+
+class AddSelectInputModal extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      showModal: false,
+      select_node: null
+    };
+  }
+
+  close() {
+    this.setState({ showModal: false });
+  }
+
+  open() {
+    this.setState({ showModal: true });
+  }
+
+  onSelectNode = (select_node) => {
+    this.setState({ select_node: select_node});
+  };
+
+  use() {
+    if (this.state.select_node){
+      this.props.onAddTreeOp(this.state.select_node);
+      this.setState({ showModal: false });
+    }else{
+      alert('Select a variable to use.');
+    }
+  }
+
+  use() {
+    if (this.state.select_node){
+      var form = $(this.form).serializeArray();
+      var variable = {
+        node: this.state.select_node,
+        name: form[0]['value']
+      };
+      this.props.onAddInputVariable(variable);
+      this.setState({ showModal: false });
+    }else{
+      alert('Select a variable to use.');
+    }
+  }
+
+  render(){
+    return (
+      <Button
+        bsStyle="primary"
+        onClick={this.open.bind(this)}
+      >
+        {this.props.children ? this.props.children : "Add Input"}
+
+        <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Adding Input Variable</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <SelectForm onSelectNode={this.onSelectNode} {...this.props} />
+            <form ref={(ref)=>{this.form=ref}}>
+              <FormGroup controlId="name">
+                <ControlLabel>Name</ControlLabel>
+                <FormControl
+                  name="name" type="text" placeholder="enter variable name"
+                />
               </FormGroup>
             </form>
           </Modal.Body>
@@ -525,12 +612,22 @@ class AddMeanModal extends React.Component {
 class SelectForm extends React.Component {
   constructor(props){
     super(props);
-    this.state = {variable: null, select_variable: null, select_property: null};
+    this.state = {
+      variable: null,
+      select_variable: null,
+      select_property: null
+    };
   }
 
   onVariableChange = (e) => {
     if (e.target.value){
-      this.setState({select_variable: JSON.parse(e.target.value)});
+      var v = JSON.parse(e.target.value);
+      if( v[0] == 'select' ){
+        this.props.onSelectNode(v);
+        this.setState({variable: v});
+      } else {
+        this.setState({select_variable: v});
+      }
     }
   };
 
@@ -548,25 +645,28 @@ class SelectForm extends React.Component {
   render(){
     var property = null;
     if (this.state.select_variable){
-      property = (
-        <FormGroup controlId="rightSelect">
-          <ControlLabel>Variable&nbsp;Property</ControlLabel>
-          <FormControl
-            componentClass="select"
-            placeholder="select"
-            name="right"
-            onChange={this.onPropertyChange.bind(this)}>
-            <option key={9999} value={null} >Not Selected</option>
-            {
-              this.props.layers.items.map(
-                i2o('Layer')
-              ).concat(
-                this.props.tables.items.map(i2o('Table'))
-              )
-            }
-          </FormControl>
-        </FormGroup>
-      );
+      if (this.state.select_variable[0] == 'join') {
+        var options = this.props.layers.items.filter((item) => {
+          return true;
+        }).map(
+          i2o('Layer')
+        ).concat(
+          this.props.tables.items.map(i2o('Table'))
+        );
+        property = (
+          <FormGroup controlId="rightSelect">
+            <ControlLabel>Variable&nbsp;Property</ControlLabel>
+            <FormControl
+              componentClass="select"
+              placeholder="select"
+              name="right"
+              onChange={this.onPropertyChange.bind(this)}>
+              <option key={9999} value={null} >Not Selected</option>
+              {options}
+            </FormControl>
+          </FormGroup>
+        );
+      }
     }
     return (
       <form ref={(ref)=>{this.form=ref}}>
@@ -651,6 +751,7 @@ class SieveComponent extends React.Component {
               <ButtonGroup>
                 <AddDataInputModal {...this.props} >Add Data Input</AddDataInputModal>
                 <AddExpressionInputModal {...this.props} >Add Expression Input</AddExpressionInputModal>
+                <AddSelectInputModal {...this.props}>Select Input</AddSelectInputModal>
               </ButtonGroup>
             </ButtonToolbar>
           </div>
@@ -697,7 +798,7 @@ class SieveComponent extends React.Component {
 
 var rendertree = (tree, level) => {
     //console.log('render: ', tree);
-    if (tree.length && tree.length == 2){
+    if (tree && tree.length && tree.length == 2){
       var op = tree[0];
       var left = tree[1][0];
       var right = tree[1][1];
