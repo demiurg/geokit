@@ -10,13 +10,15 @@ os.chdir(proj_path)
 import django
 django.setup()
 from variables.models import Result
+from geokit import settings
 #TODO: Actually import gips
-sys.path.append('/home/remery/Projects/GipsAlg/gips/')
-sys.path.append('/home/remery/Projects/GipsAlg/gips-bin/gipsbin/')
+print settings.GIPS_PATH
+print settings.GIPSBIN_PATH
+sys.path.append(settings.GIPS_PATH)
+sys.path.append(settings.GIPSBIN_PATH)
 import gips
 from zonalsummary import ZonalSummary
 from tenant_schemas.utils import schema_context
-
 
 G_SITE = ''
 
@@ -55,7 +57,7 @@ def make_result(result):
             r.save()
 
 def main():
-
+    return
     path = os.path.dirname(os.path.abspath(__file__))
     desc = '''A wrapper for the ZonalSummary tool which creates Result objects
     from the output.'''

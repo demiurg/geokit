@@ -16,7 +16,8 @@ import sys
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE_DIR = os.path.dirname(PROJECT_DIR)
-
+GIPSBIN_PATH = os.path.join(os.path.sep, 'gipsbin')
+GIPS_PATH = os.path.join(os.path.sep, 'gips')
 
 RUNSERVER = False
 if 'runserver' in sys.argv:
