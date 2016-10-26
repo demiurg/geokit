@@ -14,4 +14,4 @@ class VariableChooserBlock(ChooserBlock):
         pass
 
     def get_prep_value(self, variable):
-        return variable.id
+        return variable.pk
