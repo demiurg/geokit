@@ -98,8 +98,8 @@ class Variable(models.Model):
         values = np.mean([left_val['values'], right_val['values']], axis=0)
         return {
             'values': values,
-            'spatial_key': left['spatial_key'],
-            'temporal_key': left['temporal_key']
+            'spatial_key': left_val['spatial_key'],
+            'temporal_key': left_val['temporal_key']
         }  # Left and right keys are identical
 
     def SpatialMeanOperator(self, val):
