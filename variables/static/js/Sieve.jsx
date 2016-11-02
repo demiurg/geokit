@@ -796,6 +796,7 @@ class SieveComponent extends React.Component {
           self.props.onSaveVariable({
             name: self.props.name,
             tree: self.props.tree,
+            input_variables: self.props.input_variables,
             description: self.props.description,
             temporal_domain: self.props.temporal_domain,
             spatial_domain: self.props.spatial_domain

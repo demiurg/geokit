@@ -301,4 +301,3 @@ class Result(models.Model):
     product = models.CharField(max_length=255)
     sd = models.FloatField(null=True, blank=True)
     fid = models.IntegerField()
-
