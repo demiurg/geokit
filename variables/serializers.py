@@ -18,5 +18,6 @@ class VariableSerializer(serializers.HyperlinkedModelSerializer):
             'name': {
                 'read_only': False,
                 'required': True,
-            }
+            },
+            'partial': True
         }
