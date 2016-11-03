@@ -26,9 +26,9 @@
                 {% for variable in variables %}
                 <tr>
                     <td class="title">
-                        {% comment %}<a href="{% url 'variables:edit' variable.pk %}">{% endcomment %}
+                        <a href="{% url 'variables:edit' variable.pk %}">
                             {{ variable.name }}
-                        {% comment %}</a>{% endcomment %}
+                        </a>
                     </td>
                     <td class="description">
                         {{ variable.description }}

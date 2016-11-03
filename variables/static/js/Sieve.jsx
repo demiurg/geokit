@@ -15,6 +15,7 @@ var initialState = Object.assign({
   temporalDomain: {start: null, end: null},
   input_variables: [],
   modified: null,
+  created: null,
 }, window.sieve_props);
 
 
@@ -61,6 +62,10 @@ function sieveApp(state=initialState, action){
       return Object.assign({}, state, {
         input_variables: input_variables(state.input_variables, action)
       });
+    case UPDATE_MODIFIED:
+      return Object.assign({}, state, {
+        modified: action.modified
+      });
     default:
       return state;
   }
@@ -72,8 +77,8 @@ var mapStateToProps = (state) => {
 
 var mapDispatchToProps = (dispatch) => {
   return {
-    onSaveVariable: (v) => {
-      dispatch(saveVariable(v));
+    onSaveVariable: (v, c) => {
+      dispatch(saveVariable(v, c));
     },
     onNameChange: (e) => {
       dispatch(updateName(e.target.value));
@@ -700,7 +705,7 @@ class SieveComponent extends React.Component {
 
     return (
       <div className="sieve">
-        {this.props.errors.server ? <Alert bsStyle="danger">{this.props.errors.server}</Alert> : null}
+        {this.props.errors.detail ? <Alert bsStyle="danger">{this.props.errors.detail}</Alert> : null}
         <Panel header={
           this.props.created ?
           <h3>
@@ -710,22 +715,24 @@ class SieveComponent extends React.Component {
         }>
           <div className="sieve-metadata">
             <div className="sieve-metadata-title">
-              <FormGroup controlId="name" validationState={
+              {this.props.created ? null :
+                <FormGroup controlId="name" validationState={
                   this.props.errors.name ? 'error' : null
                 }>
-                <FormControl
-                  componentClass="input"
-                  placeholder="Name..."
-                  initialValue={self.props.name}
-                  onChange={self.props.onNameChange}
-                  value={self.props.name}
-                />
-                <HelpBlock>{
-                  this.props.errors.name ?
-                  this.props.errors.name :
-                  "Name must be alphanumeric, without spaces."
-                }</HelpBlock>
-              </FormGroup>
+                  <FormControl
+                    componentClass="input"
+                    placeholder="Name..."
+                    initialValue={self.props.name}
+                    onChange={self.props.onNameChange}
+                    value={self.props.name}
+                  />
+                  <HelpBlock>{
+                    this.props.errors.name ?
+                    this.props.errors.name :
+                    "Name must be alphanumeric, without spaces."
+                  }</HelpBlock>
+                </FormGroup>
+              }
             </div>
             <div className="sieve-metadata-description">
               <FormGroup controlId="name">
@@ -796,10 +803,11 @@ class SieveComponent extends React.Component {
           self.props.onSaveVariable({
             name: self.props.name,
             tree: self.props.tree,
+            input_variables: self.props.input_variables,
             description: self.props.description,
             temporal_domain: self.props.temporal_domain,
             spatial_domain: self.props.spatial_domain
-          });
+          }, self.props.created);
         }}>Save</ButtonInput>
       </div>
     );

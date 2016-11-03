@@ -21,7 +21,8 @@ class TenantMiddleware(object):
         # the tenant metadata is stored.
         connection.set_schema_to_public()
 
-        hostname = remove_www(request.get_host().split(':')[0])
+        host = request.get_host()
+        hostname = remove_www(host.split(':')[0])
         subdomain = None
         for allowed in settings.GEOKIT_HOSTS:
             if hostname == allowed:

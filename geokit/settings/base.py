@@ -28,7 +28,8 @@ if 'runserver' in sys.argv:
 
 # used to distinguish tenant portion of domain from the rest of it
 GEOKIT_HOSTS = [
-    'geokit.localhost', 'geokit.io',
+    '.geokit.localhost', 'geokit.localhost',
+    '.geokit.io', 'geokit.io',
 ]
 
 ALLOWED_HOSTS = list(GEOKIT_HOSTS)

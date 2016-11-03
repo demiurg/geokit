@@ -13,6 +13,7 @@ const UPDATE_NAME = 'UPDATE_NAME';
 const UPDATE_DESCRIPTION = 'UPDATE_DESCRIPTION';
 const UPDATE_TREE = 'UPDATE_TREE';
 const UPDATE_ERRORS = 'UPDATE_ERRORS';
+const UPDATE_MODIFIED = 'UPDATE_MODIFIED';
 
 const REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
 const ADD_INPUT_VARIABLE = 'ADD_INPUT_VARIABLE';
@@ -22,7 +23,6 @@ const ADD_TREE_NODE = 'ADD_TREE_NODE';
 const SAVE_VARIABLE = 'SAVE_VARIABLE';
 const POST_VARIABLE = 'POST_VARIABLE';
 const RECIEVE_VARIABLE = 'RECIEVE_VARIABLE';
-
 
 function requestLayers() {
   return {
@@ -165,7 +165,7 @@ function postVariable() {
 
 function recieveVariable(json){
   return {
-    type: GET_VARIABLE,
+    type: RECIEVE_VARIABLE,
     variable: json,
     receivedAt: Date.now()
   };
@@ -178,27 +178,45 @@ function updateErrors(errors={"name": null, "tree": null}){
   };
 }
 
-function saveVariable(variable){
+function updateModified(time=null){
+  return {
+    type: UPDATE_MODIFIED,
+    modified: time
+  };
+}
+
+function saveVariable(variable, created){
   return function(dispatch){
     dispatch(postVariable());
 
     return $.ajax({
-      url: '/api/variables/',
+      url: '/api/variables/' + (created ? variable.name + '/' : ''),
       dataType: 'json',
       cache: 'false',
       data: JSON.stringify(variable),
-      method: 'POST',
+      method: created ? 'PATCH' : 'POST',
       contentType: "application/json",
       processData: false,
       success: function(data) {
-        console.log(data);
+        dispatch(updateModified(data.modified));
+        dispatch(updateErrors());
       },
       error: function(xhr, status, err) {
         var server_errors = xhr.responseJSON;
         var errors = {};
-        var keys = Object.keys(server_errors);
-        for (var i=0; i<keys.length; i++){
-          errors[keys[i]] = server_errors[keys[i]].join(' ');
+        if (server_errors){
+          var keys = Object.keys(server_errors);
+          for (var i=0; i<keys.length; i++){
+            var error = '';
+            if (Array.isArray(server_errors[keys[i]])){
+              error = server_errors[keys[i]].join(' ');
+            }else{
+              error = server_errors[keys[i]];
+            }
+            errors[keys[i]] = error;
+          }
+        }else{
+          errors['detail'] = err;
         }
         dispatch(updateErrors(errors));
       }

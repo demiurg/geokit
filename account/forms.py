@@ -16,7 +16,7 @@ class CrispyForm(object):
         self.helper.form_action = self.form_action
         layout = self.helper.layout = Layout()
 
-        if (self.no_labels is not None and self.no_labels == True):
+        if (self.no_labels is not None and self.no_labels is True):
             for field_name, field in self.fields.items():
                 layout.append(Field(field_name, placeholder=field.label))
             self.helper.form_show_labels = False
@@ -29,13 +29,14 @@ class CrispyForm(object):
         elif (self.form_class is not None):
             self.helper.form_class = self.form_class
         else:
-            if (self.wagtail_submit is not None and self.wagtail_submit == True):
+            if (self.wagtail_submit is not None and self.wagtail_submit is True):
                 self.helper.add_input(Submit('submit', 'Submit', css_class='button'))
             else:
                 self.helper.add_input(Submit('submit', 'Submit'))
 
 
 attrs_dict = {'class': 'required', 'style': 'font-weight: bold;'}
+
 
 class LoginForm(CrispyForm, forms.Form):
     def __init__(self, *args, **kwargs):
@@ -57,16 +58,6 @@ class LoginForm(CrispyForm, forms.Form):
 
 
 class GeoKitSiteForm(CrispyForm, forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        self.form_class = kwargs.pop('form_class', None)
-        self.no_labels = kwargs.pop('no_labels', None)
-        self.form_action = kwargs.pop('form_action', None)
-        self.wagtail_submit = kwargs.pop('wagtail_submit', None)
-        print self.wagtail_submit
-
-        super(GeoKitSiteForm, self).__init__(*args, **kwargs)
-        
-
     schema_name = forms.CharField(
         label=_("URL name"),
         help_text=(
@@ -81,10 +72,20 @@ class GeoKitSiteForm(CrispyForm, forms.ModelForm):
             )
         ]
     )
+
     name = forms.CharField(
         label=_("Full name"),
         help_text='This is a more descriptive name for your GeoKit site.'
     )
+
+    def __init__(self, *args, **kwargs):
+        self.form_class = kwargs.pop('form_class', None)
+        self.no_labels = kwargs.pop('no_labels', None)
+        self.form_action = kwargs.pop('form_action', None)
+        self.wagtail_submit = kwargs.pop('wagtail_submit', None)
+        print self.wagtail_submit
+
+        super(GeoKitSiteForm, self).__init__(*args, **kwargs)
 
     class Meta:
         model = GeoKitSite
@@ -136,6 +137,7 @@ class SignupSiteForm(GeoKitSiteForm, forms.Form):
         if email2 and email2 and email1 != email2:
                 raise forms.ValidationError(_("The emails must match."))
         return self.cleaned_data
+
 
 class SignupForm(CrispyForm, forms.Form):
     def __init__(self, *args, **kwargs):
