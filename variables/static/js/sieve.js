@@ -13,6 +13,7 @@ var UPDATE_NAME = 'UPDATE_NAME';
 var UPDATE_DESCRIPTION = 'UPDATE_DESCRIPTION';
 var UPDATE_TREE = 'UPDATE_TREE';
 var UPDATE_ERRORS = 'UPDATE_ERRORS';
+var UPDATE_MODIFIED = 'UPDATE_MODIFIED';
 
 var REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
 var ADD_INPUT_VARIABLE = 'ADD_INPUT_VARIABLE';
@@ -163,7 +164,7 @@ function postVariable() {
 
 function recieveVariable(json) {
   return {
-    type: GET_VARIABLE,
+    type: RECIEVE_VARIABLE,
     variable: json,
     receivedAt: Date.now()
   };
@@ -178,27 +179,47 @@ function updateErrors() {
   };
 }
 
-function saveVariable(variable) {
+function updateModified() {
+  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+
+  return {
+    type: UPDATE_MODIFIED,
+    modified: time
+  };
+}
+
+function saveVariable(variable, created) {
   return function (dispatch) {
     dispatch(postVariable());
 
     return $.ajax({
-      url: '/api/variables/',
+      url: '/api/variables/' + (created ? variable.name + '/' : ''),
       dataType: 'json',
       cache: 'false',
       data: JSON.stringify(variable),
-      method: 'POST',
+      method: created ? 'PATCH' : 'POST',
       contentType: "application/json",
       processData: false,
       success: function success(data) {
-        console.log(data);
+        dispatch(updateModified(data.modified));
+        dispatch(updateErrors());
       },
       error: function error(xhr, status, err) {
         var server_errors = xhr.responseJSON;
         var errors = {};
-        var keys = Object.keys(server_errors);
-        for (var i = 0; i < keys.length; i++) {
-          errors[keys[i]] = server_errors[keys[i]].join(' ');
+        if (server_errors) {
+          var keys = Object.keys(server_errors);
+          for (var i = 0; i < keys.length; i++) {
+            var error = '';
+            if (Array.isArray(server_errors[keys[i]])) {
+              error = server_errors[keys[i]].join(' ');
+            } else {
+              error = server_errors[keys[i]];
+            }
+            errors[keys[i]] = error;
+          }
+        } else {
+          errors['detail'] = err;
         }
         dispatch(updateErrors(errors));
       }
@@ -1293,7 +1314,8 @@ var initialState = Object.assign({
   spatialDomain: null,
   temporalDomain: { start: null, end: null },
   input_variables: [],
-  modified: null
+  modified: null,
+  created: null
 }, window.sieve_props);
 
 function sieveApp() {
@@ -1342,6 +1364,10 @@ function sieveApp() {
       return Object.assign({}, state, {
         input_variables: input_variables(state.input_variables, action)
       });
+    case UPDATE_MODIFIED:
+      return Object.assign({}, state, {
+        modified: action.modified
+      });
     default:
       return state;
   }
@@ -1353,8 +1379,8 @@ var mapStateToProps = function mapStateToProps(state) {
 
 var mapDispatchToProps = function mapDispatchToProps(dispatch) {
   return {
-    onSaveVariable: function onSaveVariable(v) {
-      dispatch(saveVariable(v));
+    onSaveVariable: function onSaveVariable(v, c) {
+      dispatch(saveVariable(v, c));
     },
     onNameChange: function onNameChange(e) {
       dispatch(updateName(e.target.value));
@@ -2279,10 +2305,10 @@ var SieveComponent = function (_React$Component9) {
     return React.createElement(
       "div",
       { className: "sieve" },
-      this.props.errors.server ? React.createElement(
+      this.props.errors.detail ? React.createElement(
         Alert,
         { bsStyle: "danger" },
-        this.props.errors.server
+        this.props.errors.detail
       ) : null,
       React.createElement(
         Panel,
@@ -2306,7 +2332,7 @@ var SieveComponent = function (_React$Component9) {
           React.createElement(
             "div",
             { className: "sieve-metadata-title" },
-            React.createElement(
+            this.props.created ? null : React.createElement(
               FormGroup,
               { controlId: "name", validationState: this.props.errors.name ? 'error' : null },
               React.createElement(FormControl, {
@@ -2333,6 +2359,7 @@ var SieveComponent = function (_React$Component9) {
                 componentClass: "textarea",
                 placeholder: "Description...",
                 initialValue: self.props.description,
+                value: self.props.description,
                 onChange: self.props.onDescriptionChange,
                 style: { resize: "vertical" }
               })
@@ -2450,13 +2477,17 @@ var SieveComponent = function (_React$Component9) {
         ButtonInput,
         { bsSize: "large", onClick: function onClick(e) {
             e.stopPropagation();
+            if (self.props.errors.name || self.props.errors.tree) {
+              return;
+            }
             self.props.onSaveVariable({
               name: self.props.name,
               tree: self.props.tree,
+              input_variables: self.props.input_variables,
               description: self.props.description,
               temporal_domain: self.props.temporal_domain,
               spatial_domain: self.props.spatial_domain
-            });
+            }, self.props.created);
           } },
         "Save"
       )

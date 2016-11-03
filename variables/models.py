@@ -16,7 +16,7 @@ import json
 
 
 class Variable(models.Model):
-    name = models.SlugField(max_length=75, blank=False, unique=True)
+    name = models.SlugField(max_length=75, blank=False, primary_key=True)
     description = models.TextField(null=True, blank=True)
     temporal_domain = ArrayField(models.DateField(), null=True, blank=True)
     spatial_domain = ArrayField(models.IntegerField(), null=True, blank=True)
@@ -288,16 +288,3 @@ class Variable(models.Model):
             'values': np.array(values).astype('float64'),
             'temporal_key': t_key, 'spatial_key': s_key
         }
-
-
-class Result(models.Model):
-    band = models.CharField(max_length=255)
-    count = models.IntegerField(null=True, blank=True)
-    date = models.DateField()
-    maximum = models.FloatField(null=True, blank=True)
-    mean = models.FloatField(null=True, blank=True)
-    skew = models.FloatField(null=True, blank=True)
-    minimum = models.FloatField(null=True, blank=True)
-    product = models.CharField(max_length=255)
-    sd = models.FloatField(null=True, blank=True)
-    fid = models.IntegerField()
