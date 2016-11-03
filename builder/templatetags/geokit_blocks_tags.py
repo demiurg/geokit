@@ -45,17 +45,18 @@ def graph_data(graph_block):
 @register.simple_tag
 def map_data(map_block):
     variable = map_block['variable']
-    values = variable.data()
+    evaluated_variable = variable.data()
+    values = evaluated_variable['values']
     data = []
 
     rows, cols = values.shape
     if cols == 1:
-        features = Feature.objects.filter(pk__in=variable.spatial_domain)
+        features = Feature.objects.filter(pk__in=evaluated_variable['spatial_key'])
 
         for i, value in enumerate(values):
-            geometries = [feature for feature in features if feature.pk == variable.spatial_domain[i]]
+            geometries = [feature for feature in features if feature.pk == evaluated_variable['spatial_key'][i]]
             geojson = json.loads(serialize('geojson', geometries, fields=('geometry')))
-            geojson['features'][0]['properties'][map_block['expression'].name] = value[0]
+            geojson['features'][0]['properties'][map_block['variable'].name] = value[0]
 
             data.append(geojson['features'][0])
 

@@ -34,12 +34,12 @@ L.geoJson(data, {
     return {
       color: "#000",
       weight: 1,
-      fillColor: getColor(layer.properties.{{ self.expression.name }}),
+      fillColor: getColor(layer.properties.{{ self.variable.name }}),
       fillOpacity: 1
     };
   },
   onEachFeature: function(feature, layer) {
-    layer.bindPopup(String(feature.properties.{{ self.expression.name }}));
+    layer.bindPopup(String(feature.properties.{{ self.variable.name }}));
   }
 }).addTo(map);
 
