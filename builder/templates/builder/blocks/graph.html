@@ -6,9 +6,8 @@
   </div>
 </div>
 
+<script src="/static/js/block_components.js"></script>
 <script>
-var data = {% graph_data self %};
-
 /*var margin = {top: 20, right: 40, bottom: 30, left: 40},
     width  = 500 - margin.left - margin.right,
     height = 300 - margin.top - margin.bottom;
@@ -125,5 +124,7 @@ if (data.type == 'scatter') {
   })(data);
 } */
 
-Plotly.newPlot('graph-{{ self.id }}', [data]);
+//Plotly.newPlot('graph-{{ self.id }}', [data]);
+
+console.log(React);
 </script>
