@@ -130,6 +130,13 @@ function addInputVariable(variable) {
   };
 }
 
+function removeInputVariable(idx) {
+  return {
+    type: REMOVE_INPUT_VARIABLE,
+    index: idx
+  };
+}
+
 function addTreeNode(node) {
   return {
     type: ADD_TREE_NODE,
@@ -1260,6 +1267,8 @@ function input_variables() {
       return [].concat(state, [action.variable
       //input_variable(undefined, action)
       ]);
+    case REMOVE_INPUT_VARIABLE:
+      return state.slice(0, action.index).concat(state.slice(action.index + 1));
     default:
       return state;
   }
@@ -1361,6 +1370,7 @@ function sieveApp() {
         tree: tree(state.tree, action)
       });
     case ADD_INPUT_VARIABLE:
+    case REMOVE_INPUT_VARIABLE:
       return Object.assign({}, state, {
         input_variables: input_variables(state.input_variables, action)
       });
@@ -1390,6 +1400,9 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
     },
     onAddInputVariable: function onAddInputVariable(variable) {
       dispatch(addInputVariable(variable));
+    },
+    onRemoveInputVariable: function onRemoveInputVariable(i) {
+      dispatch(removeInputVariable(i));
     },
     onAddTreeOp: function onAddTreeOp(op) {
       dispatch(addTreeNode(op));
@@ -2301,6 +2314,9 @@ var SieveComponent = function (_React$Component9) {
     function createMarkup() {
       return { __html: rendertree(self.props.tree) };
     };
+    function returnHTML(html) {
+      return { __html: html };
+    };
 
     return React.createElement(
       "div",
@@ -2376,17 +2392,24 @@ var SieveComponent = function (_React$Component9) {
           ) },
         this.props.input_variables.length ? React.createElement(
           "dl",
-          { className: "dl-horizontal" },
-          this.props.input_variables.map(function (variable) {
+          null,
+          this.props.input_variables.map(function (variable, idx) {
             return [React.createElement(
               "dt",
               null,
-              variable.name
-            ), React.createElement(
-              "dd",
-              null,
-              rendertree(variable.node)
-            )];
+              variable.name,
+              React.createElement(
+                "div",
+                { className: "pull-right" },
+                React.createElement(
+                  "a",
+                  { className: "btn btn-sm", onClick: function onClick() {
+                      return self.props.onRemoveInputVariable(idx);
+                    } },
+                  "Remove"
+                )
+              )
+            ), React.createElement("dd", { dangerouslySetInnerHTML: { __html: rendertree(variable.node) } })];
           })
         ) : "Add some!",
         React.createElement(
@@ -2501,7 +2524,7 @@ var rendertree = function rendertree(tree) {
   var level = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
 
   //console.log('render: ', tree);
-  var tab = "<br>" + Array(level * 4).join("&nbsp;");
+  var tab = Array(level * 4).join("&nbsp;");
   var nl = level + 1;
   if (tree && tree.length && tree.length == 2) {
     var op = tree[0];
@@ -2530,7 +2553,7 @@ var rendertree = function rendertree(tree) {
     html = JSON.stringify(tree);
   }
 
-  return tab + html;
+  return tab + html + "<br>";
 };
 
 var TreeView = function (_React$Component10) {

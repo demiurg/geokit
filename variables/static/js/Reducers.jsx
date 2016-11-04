@@ -90,6 +90,12 @@ function input_variables(state=[], action){
         action.variable
         //input_variable(undefined, action)
       ];
+    case REMOVE_INPUT_VARIABLE:
+      return state.slice(
+        0, action.index
+      ).concat(
+        state.slice(action.index+1)
+      );
     default:
       return state;
   }

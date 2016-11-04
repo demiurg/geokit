@@ -131,6 +131,13 @@ function addInputVariable(variable){
   };
 }
 
+function removeInputVariable(idx){
+  return {
+    type: REMOVE_INPUT_VARIABLE,
+    index: idx
+  }
+}
+
 function addTreeNode(node){
   return {
     type: ADD_TREE_NODE,

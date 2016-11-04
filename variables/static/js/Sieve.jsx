@@ -59,6 +59,7 @@ function sieveApp(state=initialState, action){
         tree: tree(state.tree, action)
       });
     case ADD_INPUT_VARIABLE:
+    case REMOVE_INPUT_VARIABLE:
       return Object.assign({}, state, {
         input_variables: input_variables(state.input_variables, action)
       });
@@ -88,6 +89,9 @@ var mapDispatchToProps = (dispatch) => {
     },
     onAddInputVariable: (variable) => {
       dispatch(addInputVariable(variable));
+    },
+    onRemoveInputVariable: (i) => {
+      dispatch(removeInputVariable(i));
     },
     onAddTreeOp: (op) => {
       dispatch(addTreeNode(op));
@@ -702,6 +706,7 @@ class SieveComponent extends React.Component {
     var self = this;
 
     function createMarkup() { return {__html: rendertree(self.props.tree)}; };
+    function returnHTML(html) { return {__html: html}};
 
     return (
       <div className="sieve">
@@ -751,11 +756,16 @@ class SieveComponent extends React.Component {
 
         <Panel header={<h3>Input Variables</h3>}>
           {this.props.input_variables.length ?
-            <dl className="dl-horizontal">{
-            this.props.input_variables.map((variable)=>{
+            <dl>{
+            this.props.input_variables.map((variable, idx)=>{
               return [
-                <dt>{variable.name}</dt>,
-                <dd>{rendertree(variable.node)}</dd>
+                <dt>
+                  {variable.name}
+                  <div className='pull-right'>
+                    <a className='btn btn-sm' onClick={() => self.props.onRemoveInputVariable(idx)}>Remove</a>
+                  </div>
+                </dt>,
+                <dd dangerouslySetInnerHTML={{__html: rendertree(variable.node)}}></dd>
               ];
             })
             }</dl>
@@ -817,7 +827,7 @@ class SieveComponent extends React.Component {
 
 var rendertree = (tree, level=0) => {
     //console.log('render: ', tree);
-    var tab = "<br>" + Array(level * 4).join("&nbsp;");
+    var tab = Array(level * 4).join("&nbsp;");
     var nl = level + 1;
     if (tree && tree.length && tree.length == 2){
       var op = tree[0];
@@ -850,7 +860,7 @@ var rendertree = (tree, level=0) => {
       html = JSON.stringify(tree);
     }
 
-    return tab + html;
+    return tab + html + "<br>";
 };
 
 
