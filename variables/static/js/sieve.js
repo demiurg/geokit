@@ -1414,7 +1414,7 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
 var DropdownComponent = function DropdownComponent(_ref) {
   var things = _ref.things;
   var onclick = _ref.onclick;
-  return (
+  return(
     // TODO something different when layers.isFetching
 
     React.createElement(
@@ -2230,9 +2230,10 @@ var SelectForm = function (_React$Component8) {
     var property = null;
     if (this.state.select_variable) {
       if (this.state.select_variable[0] == 'join') {
-        var options = this.props.layers.items.filter(function (item) {
-          return true;
-        }).map(i2o('Layer')).concat(this.props.tables.items.map(i2o('Table')));
+        var of_variable = function of_variable(item) {
+          return _this15.state.select_variable[1][0]['id'] == item['name'] || _this15.state.select_variable[1][1]['id'] == item['name'];
+        };
+        var options = this.props.layers.items.filter(of_variable).map(i2o('Layer')).concat(this.props.tables.items.filter(of_variable).map(i2o('Table')));
         property = React.createElement(
           FormGroup,
           { controlId: "rightSelect" },

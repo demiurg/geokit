@@ -500,7 +500,7 @@ class AddSelectModal extends React.Component {
   }
 
   onSelectNode = (select_node) => {
-    this.setState({ select_node: select_node});
+    this.setState({select_node: select_node});
   };
 
   use() {
@@ -557,7 +557,7 @@ class AddMeanModal extends React.Component {
   }
 
   onSelectNode = (node) => {
-    this.setState({ node: node});
+    this.setState({node: node});
   };
 
   use() {
@@ -655,12 +655,14 @@ class SelectForm extends React.Component {
     var property = null;
     if (this.state.select_variable){
       if (this.state.select_variable[0] == 'join') {
-        var options = this.props.layers.items.filter((item) => {
-          return true;
-        }).map(
+        let of_variable = (item) => {
+          return this.state.select_variable[1][0]['id'] == item['name'] ||
+            this.state.select_variable[1][1]['id'] == item['name'];
+        };
+        var options = this.props.layers.items.filter(of_variable).map(
           i2o('Layer')
         ).concat(
-          this.props.tables.items.map(i2o('Table'))
+          this.props.tables.items.filter(of_variable).map(i2o('Table'))
         );
         property = (
           <FormGroup controlId="rightSelect">
