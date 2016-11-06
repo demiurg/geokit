@@ -710,7 +710,6 @@ class SelectForm extends React.Component {
 
 class SieveComponent extends React.Component {
   render() {
-    console.log('render');
     var self = this;
 
     function createMarkup() { return {__html: rendertree(self.props.tree)}; };
