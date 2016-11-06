@@ -195,8 +195,7 @@ function updateModified(time=null){
 function saveVariable(variable, created){
   return function(dispatch){
     dispatch(postVariable());
-    console.log(variable);
-    return;
+
     return $.ajax({
       url: '/api/variables/' + (created ? variable.name + '/' : ''),
       dataType: 'json',
