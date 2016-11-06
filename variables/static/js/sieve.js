@@ -2535,10 +2535,10 @@ var rendertree = function rendertree(tree) {
     var html = '';
     switch (op) {
       case 'mean':
-        html = 'Mean of (' + rendertree(left, nl) + ', ' + rendertree(right, nl) + ') ';
+        html = 'Mean of ( <br>' + rendertree(left, nl) + rendertree(right, nl) + tab + ') ';
         break;
       case 'select':
-        html = "Select " + right.id + "/" + right.field + " from (" + rendertree(left, nl) + ")";
+        html = "Select " + right.id + "/" + right.field + " from (<br>" + tab + rendertree(left, nl) + tab + ")";
         break;
       case 'expression':
         html = left;
