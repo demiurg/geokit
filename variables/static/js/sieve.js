@@ -1324,7 +1324,8 @@ var initialState = Object.assign({
   temporalDomain: { start: null, end: null },
   input_variables: [],
   modified: null,
-  created: null
+  created: null,
+  changed: false
 }, window.sieve_props);
 
 function sieveApp() {
@@ -1349,15 +1350,18 @@ function sieveApp() {
       });
     case UPDATE_NAME:
       return Object.assign({}, state, {
+        changed: true,
         name: action.name,
         errors: Object.assign({}, state.errors, { name: action.error })
       });
     case UPDATE_DESCRIPTION:
       return Object.assign({}, state, {
+        changed: true,
         description: action.description
       });
     case UPDATE_TREE:
       return Object.assign({}, state, {
+        changed: true,
         tree: action.tree,
         errors: Object.assign({}, state.errors, { tree: action.error })
       });
@@ -1372,6 +1376,7 @@ function sieveApp() {
     case ADD_INPUT_VARIABLE:
     case REMOVE_INPUT_VARIABLE:
       return Object.assign({}, state, {
+        changed: true,
         input_variables: input_variables(state.input_variables, action)
       });
     case UPDATE_MODIFIED:
@@ -2310,6 +2315,7 @@ var SieveComponent = function (_React$Component9) {
   }
 
   SieveComponent.prototype.render = function render() {
+    console.log('render');
     var self = this;
 
     function createMarkup() {
@@ -2317,6 +2323,21 @@ var SieveComponent = function (_React$Component9) {
     };
     function returnHTML(html) {
       return { __html: html };
+    };
+
+    var onSave = function onSave(e) {
+      e.stopPropagation();
+      if (self.props.errors.name || self.props.errors.tree) {
+        return;
+      }
+      self.props.onSaveVariable({
+        name: self.props.name,
+        tree: self.props.tree,
+        input_variables: self.props.input_variables,
+        description: self.props.description,
+        temporal_domain: self.props.temporal_domain,
+        spatial_domain: self.props.spatial_domain
+      }, self.props.created);
     };
 
     return React.createElement(
@@ -2497,24 +2518,11 @@ var SieveComponent = function (_React$Component9) {
         ) : null,
         React.createElement("p", { dangerouslySetInnerHTML: createMarkup() })
       ),
-      React.createElement(
+      self.props.changed && !self.props.errors.name && !self.props.errors.tree ? React.createElement(
         ButtonInput,
-        { bsSize: "large", onClick: function onClick(e) {
-            e.stopPropagation();
-            if (self.props.errors.name || self.props.errors.tree) {
-              return;
-            }
-            self.props.onSaveVariable({
-              name: self.props.name,
-              tree: self.props.tree,
-              input_variables: self.props.input_variables,
-              description: self.props.description,
-              temporal_domain: self.props.temporal_domain,
-              spatial_domain: self.props.spatial_domain
-            }, self.props.created);
-          } },
+        { bsSize: "large", onClick: onSave },
         "Save"
-      )
+      ) : null
     );
   };
 
