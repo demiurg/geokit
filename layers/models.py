@@ -24,24 +24,24 @@ class Layer(models.Model):
 
     def mapnik_query(self):
         return """(
-                    SELECT
-                        ST_CollectionExtract(geometry, 1) AS geometry,
-                        id AS id
-                    FROM layers_feature
-                    WHERE layer_id = '{0}'
-                    UNION
-                    SELECT
-                        ST_CollectionExtract(geometry, 2) AS geometry,
-                        id AS id
-                    FROM layers_feature
-                    WHERE layer_id = '{0}'
-                    UNION
-                    SELECT
-                        ST_CollectionExtract(geometry, 3) AS geometry,
-                        id AS id
-                    FROM layers_feature
-                    WHERE layer_id = '{0}'
-                ) as extr""".format(self.name)
+            SELECT
+                ST_CollectionExtract(geometry, 1) AS geometry,
+                id AS id
+            FROM layers_feature
+            WHERE layer_id = '{0}'
+            UNION
+            SELECT
+                ST_CollectionExtract(geometry, 2) AS geometry,
+                id AS id
+            FROM layers_feature
+            WHERE layer_id = '{0}'
+            UNION
+            SELECT
+                ST_CollectionExtract(geometry, 3) AS geometry,
+                id AS id
+            FROM layers_feature
+            WHERE layer_id = '{0}'
+        ) as extr""".format(self.name)
 
     def query_hash(self):
         return md5.md5(self.mapnik_query()).hexdigest()

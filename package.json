@@ -22,9 +22,7 @@
   "scripts": {
     "test": "mocha --compilers js:babel-core/register --recursive",
     "test:watch": "npm run test -- --watch",
-    "build": "npm run build_sieve && npm run build_block_components",
-    "build_sieve": "babel variables/static/js/*.jsx --out-file variables/static/js/sieve.js --source-maps",
-    "build_block_components": "babel builder/static/js/block_components/*.jsx --out-file builder/static/js/block_components.js --source-maps"
+    "build": "babel variables/static/js/*.jsx --out-file variables/static/js/sieve.js --source-maps",
   },
   "repository": {
     "type": "git",

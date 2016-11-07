@@ -8,9 +8,9 @@
 ._*
 .venv/
 venv/
-static/
-media/
-media
+/static
+/media
 public/
+/node_modules
 !*.gitkeep
 geokit/settings/local.py
