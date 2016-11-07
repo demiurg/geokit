@@ -125,6 +125,5 @@ if (data.type == 'scatter') {
 } */
 
 //Plotly.newPlot('graph-{{ self.id }}', [data]);
-
-console.log(React);
+bindGraph("{{ self.variable }}", document.getElementById("graph-{{ self.id }}"));
 </script>
