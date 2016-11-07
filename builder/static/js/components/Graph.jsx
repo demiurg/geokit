@@ -31,7 +31,6 @@ export default class Graph extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         if (!this.state.error) {
-            console.log(this.state.data);
             Plotly.newPlot('graph', [this.state.data]);
         }
     }
