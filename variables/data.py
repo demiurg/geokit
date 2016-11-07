@@ -14,12 +14,20 @@ class DataSource(object):
         self.fields = []
 
         for source in sources:
-            if source['model'] == 'Layer':
+            if ('model' in source and source['model'] == 'Layer') or \
+               ('type' in source and source['type'] == 'Layer'):
                 self.layers.append(source)
-            elif source['model'] == 'Table':
+            elif ('model' in source and source['model'] == 'Table') or \
+               ('type' in source and source['type'] == 'Table'):
                 self.tables.append(source)
 
-    def select(self, name):
+    def select(self, field):
+        if type(field) == dict:
+            name = field['field']
+        elif type(field) in (str, unicode):
+            name = field
+        else:
+            raise Exception("Wrong field type: {}".format(type(field)))
         self.name = name
 
         selects = []
