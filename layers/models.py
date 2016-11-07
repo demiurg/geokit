@@ -55,5 +55,14 @@ class Feature(models.Model):
     geometry = models.GeometryCollectionField(srid=3857)
     properties = JSONField(null=True)
 
+    @property
+    def verbose_name(self):
+        if self.properties.has_key('name'):
+            return self.properties['name']
+        elif self.properties.has_key('NAME'):
+            return self.properties['NAME']
+        else:
+            return self.properties['fid']
+
     def __unicode__(self):
         return unicode(self.pk)
