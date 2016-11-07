@@ -1371,6 +1371,7 @@ function sieveApp() {
       });
     case ADD_TREE_NODE:
       return Object.assign({}, state, {
+        changed: true,
         tree: tree(state.tree, action)
       });
     case ADD_INPUT_VARIABLE:
@@ -2315,7 +2316,6 @@ var SieveComponent = function (_React$Component9) {
   }
 
   SieveComponent.prototype.render = function render() {
-    console.log('render');
     var self = this;
 
     function createMarkup() {
@@ -2464,7 +2464,11 @@ var SieveComponent = function (_React$Component9) {
       ),
       React.createElement(
         Panel,
-        null,
+        { header: React.createElement(
+            "h3",
+            null,
+            "Operation Tree"
+          ) },
         React.createElement(
           "div",
           { className: "pull-right" },
@@ -2519,8 +2523,8 @@ var SieveComponent = function (_React$Component9) {
         React.createElement("p", { dangerouslySetInnerHTML: createMarkup() })
       ),
       self.props.changed && !self.props.errors.name && !self.props.errors.tree ? React.createElement(
-        ButtonInput,
-        { bsSize: "large", onClick: onSave },
+        Button,
+        { onClick: onSave },
         "Save"
       ) : null
     );

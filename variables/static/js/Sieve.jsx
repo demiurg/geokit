@@ -60,6 +60,7 @@ function sieveApp(state=initialState, action){
       });
     case ADD_TREE_NODE:
       return Object.assign({}, state, {
+        changed: true,
         tree: tree(state.tree, action)
       });
     case ADD_INPUT_VARIABLE:
@@ -804,7 +805,7 @@ class SieveComponent extends React.Component {
           </div>
         </Panel>
 
-        <Panel>
+        <Panel header={<h3>Operation Tree</h3>}>
           <div className='pull-right'>
             <ButtonToolbar>
               <ButtonGroup>
@@ -827,7 +828,7 @@ class SieveComponent extends React.Component {
 
         </Panel>
         {self.props.changed && !self.props.errors.name && !self.props.errors.tree ?
-          <ButtonInput bsSize="large" onClick={onSave}>Save</ButtonInput>
+          <Button onClick={onSave}>Save</Button>
           :
           null
         }
