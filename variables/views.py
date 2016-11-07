@@ -46,7 +46,7 @@ def map_data(request, variable_id):
 
             data.append(geojson['features'][0])
 
-    return JsonResponse(data)
+    return JsonResponse(data, safe=False)
 
 
 def graph_data(request, variable_id):
