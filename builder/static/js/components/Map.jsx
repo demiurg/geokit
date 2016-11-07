@@ -12,7 +12,7 @@ export default class Map extends React.Component {
 
     componentDidMount() {
         // make AJAX call
-        $.ajax('/admin/variables/map/'+this.props.variable_id, {
+        $.ajax('/api/variables/'+this.props.variable_id+'map/', {
             dataType: 'json',
             success: (data, status, xhr) => {
                 this.setState({
