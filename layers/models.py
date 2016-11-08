@@ -6,7 +6,7 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 
 class Layer(models.Model):
     name = models.SlugField(
-        primary_key=True, max_length=250,
+        unique=True, max_length=250,
         help_text=(
             'The name of the layer as it will appear in URLs '
             'e.g http://domain.com/blog/my-slug/ and '

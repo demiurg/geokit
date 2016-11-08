@@ -13,7 +13,6 @@ router.register(r'variables', variable_views.VariableViewSet)
 urlpatterns = [
     url(r'^account/', include('account.urls')),
     url(r'^builder/', include('builder.urls')),
-    url(r'^expressions/', include('expressions.urls')),
     url(r'^layers/', include('layers.urls')),
 
     url(r'^api/', include(router.urls)),

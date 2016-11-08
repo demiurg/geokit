@@ -5,6 +5,7 @@ from modelcluster.fields import ParentalKey
 from django.apps import apps
 from django.contrib.gis.db import models
 from django.shortcuts import render, redirect
+from django.contrib.auth.models import User
 
 from wagtail.wagtailcore import blocks
 from wagtail.wagtailcore.models import Page
@@ -16,7 +17,7 @@ from wagtail.wagtailimages.blocks import ImageChooserBlock
 
 from builder.blocks import GraphBlock, MapBlock, TableBlock
 from builder.forms import GeoKitFormBuilder
-
+import re
 
 GEOKIT_FORM_FIELD_CHOICES = FORM_FIELD_CHOICES + (
     ('map_select', 'Map Select'),
@@ -46,6 +47,56 @@ class CustomPage(Page):
         FieldPanel('title'),
         StreamFieldPanel('body'),
     ]
+
+
+class FormVariable(models.Model):
+    name = models.CharField(max_length=100)
+    value = models.TextField()
+    user = models.ForeignKey(User)
+
+    def save(self, *args, **kwargs):
+        """
+        If a user resubmits a form, the new bindings should overwrite the
+        existing ones.
+        """
+        FormVariable.objects.filter(name=self.name, user=self.user).delete()
+
+        super(FormVariable, self).save(*args, **kwargs)
+
+    def deserialize(self):
+        """
+        Currently, variables that are objects or iterables are stored in the
+        database using their textual representation. While this is probaly
+        not a good long term solution, this method deserializes these values.
+        """
+        OBJECT_RE = re.compile(r'^<(\w+): (\d+)>$')
+        ARRAY_RE = re.compile(r'^\[(.+)\]$')
+        model_name_map = {
+            'Feature': 'layers.Feature',
+        }
+
+        object_match = re.match(OBJECT_RE, self.value)
+        array_match = re.match(ARRAY_RE, self.value)
+
+        if object_match:
+            model_class = apps.get_model(model_name_map[object_match.group(1)])
+            object_id = object_match.group(2)
+            return model_class.objects.get(pk=object_id)
+        elif array_match:
+            items = re.split(r', *', array_match.group(1))
+
+            deserialized_items = []
+            for item in items:
+                object_match = re.match(OBJECT_RE, item)
+                if object_match:
+                    model_class = apps.get_model(model_name_map[object_match.group(1)])
+                    object_id = object_match.group(2)
+                    deserialized_items.append(model_class.objects.get(pk=object_id))
+                else:
+                    deserialized_items.append(item)
+            return deserialized_items
+        else:
+            return self.value
 
 
 class FormVariableField(AbstractFormField):
@@ -87,7 +138,6 @@ class CustomFormPage(CustomPage):
                     # Currently, this saves model instances (such as Features)
                     # serialized using their unicode representations. Maybe this
                     # should be less hacky?
-                    FormVariable = apps.get_model(app_label='expressions', model_name='FormVariable')
                     var = FormVariable(name=var, value=value, user=request.user)
                     var.save()
 

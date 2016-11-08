@@ -8,7 +8,7 @@ class GeoKitTable(models.Model):
     """Metadata for a particular table of time-series data.
 
     Actual data is kept in Record objects."""
-    name = models.SlugField(primary_key=True, max_length=250)
+    name = models.SlugField(max_length=250, unique=True)
     description = models.TextField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True, editable=False)
     modified = models.DateTimeField(auto_now=True)

@@ -16,7 +16,7 @@ import json
 
 
 class Variable(models.Model):
-    name = models.SlugField(max_length=75, blank=False, primary_key=True)
+    name = models.SlugField(max_length=75, blank=False)
     description = models.TextField(null=True, blank=True)
     temporal_domain = ArrayField(models.DateField(), null=True, blank=True)
     spatial_domain = ArrayField(models.IntegerField(), null=True, blank=True)
