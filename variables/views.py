@@ -86,19 +86,20 @@ class VariableViewSet(viewsets.ModelViewSet):
         if rows == 1:
             # Build timeseries
             data['type'] = 'timeseries'
+            data['mode'] = 'lines'
             for i, value in enumerate(evaluated_variable['values'][0]):
                 date = evaluated_variable['temporal_key'][i]
                 data['x'].append(date.strftime("%Y-%m-%d %H:%M:%S"))
                 data['y'].append(value)
         elif cols == 1:
             # Build scatterplot by location
-            features = list(Feature.objects.filter(pk__in=evaluated_variable['spatial_key']).values())
+            features = list(Feature.objects.filter(pk__in=evaluated_variable['spatial_key']))
 
             data['type'] = 'scatter'
+            data['mode'] = 'markers'
             for i, value in enumerate(evaluated_variable['values']):
-                metadata = [feature for feature in features if feature['id'] == evaluated_variable['spatial_key'][i]][0]
-                del metadata['geometry']
-                data['x'].append(evaluated_variable['spatial_key'][i])
+                f = [feature for feature in features if feature.pk == evaluated_variable['spatial_key'][i]][0]
+                data['x'].append(f.verbose_name)
                 data['y'].append(value[0])
         else:
             data['invalid'] = True
