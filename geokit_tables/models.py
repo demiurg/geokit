@@ -13,6 +13,8 @@ class GeoKitTable(models.Model):
     created = models.DateTimeField(auto_now_add=True, editable=False)
     modified = models.DateTimeField(auto_now=True)
     field_names = ArrayField(models.TextField(), null=True)
+    # http://toblerity.org/fiona/manual.html#keeping-schemas-simple
+    schema = JSONField(null=True)
 
     def __unicode__(self):
         return self.name
@@ -27,9 +29,12 @@ class Record(models.Model):
     include mean high temperature, mean cloud cover, and total precipitation.
     """
     table = models.ForeignKey(GeoKitTable)
-    date = models.DateField(null=True)
+    date_range = DateRangeField(null=True)
     properties = JSONField(null=True)
 
     def __unicode__(self):
         """Explicitly convert primary key to unicode & return it."""
         return unicode(self.pk)
+
+    def date(self):
+        return self.date_range.lower

@@ -267,6 +267,7 @@ def add(request):
                 field_names = col.schema['properties'].keys()
                 field_names.append("fid")
                 l.field_names = field_names
+                l.properties = col.schema['properties']
                 l.status = 0
                 l.save()
 

@@ -15,6 +15,8 @@ class Layer(models.Model):
     )
     bounds = ArrayField(models.FloatField(), size=4, null=True)
     field_names = ArrayField(models.TextField(), null=True)
+    # http://toblerity.org/fiona/manual.html#keeping-schemas-simple
+    schema = JSONField(null=True)
     description = models.TextField(null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True, editable=False)
     modified = models.DateTimeField(auto_now=True)
