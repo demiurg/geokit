@@ -1,7 +1,8 @@
+from datetime import datetime
+from dateutil.rrule import rrule, WEEKLY
 import json
 
 from django.core.serializers import serialize
-from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 
 from rest_framework import viewsets, status
@@ -91,9 +92,22 @@ class VariableViewSet(viewsets.ModelViewSet):
 
         return Response(data)
 
+    def graph_test_data(self):
+        data = {'x': [], 'y': [], 'type': 'timeseries', 'mode': 'lines'}
+        data['x'] = list(rrule(freq=WEEKLY, count=20, dtstart=datetime(2010, 1, 1)))
+
+        random.seed()
+        for _ in range(20):
+            data['y'].append(random.randint(0, 100))
+
+        return data
+
     @detail_route(url_path='graph')
     def graph_data(self, request, pk=None):
         variable = get_object_or_404(Variable, pk=pk)
+
+        return Response(self.graph_test_data())
+
         evaluated_variable = variable.data()
 
         data = {'x': [], 'y': []}
