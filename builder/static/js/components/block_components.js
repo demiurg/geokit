@@ -5,8 +5,8 @@ import Map from './Map'
 import Graph from './Graph'
 
 
-function bindMap(variable_id, dom_element) {
-    ReactDOM.render(<Map variable_id={variable_id} />, dom_element);
+function bindMap(variable, color_ramp, dom_element) {
+    ReactDOM.render(<Map variable_id={variable.id} variable_name={variable.name} color_ramp={color_ramp} />, dom_element);
 }
 
 function bindGraph(variable_id, dom_element) {

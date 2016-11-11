@@ -17,4 +17,4 @@ class LayerChooserBlock(ChooserBlock):
         if layer is None:
             return None
         else:
-            return layer.name
+            return layer.pk

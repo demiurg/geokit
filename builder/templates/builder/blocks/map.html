@@ -8,5 +8,14 @@
 
 <script src="/static/js/block_components.js"></script>
 <script>
-  bindMap("{{ self.variable }}", document.getElementById("map-{{ self.id }}"));
+  bindMap({
+      name: "{{ self.variable }}",
+      id: {{ self.variable.pk }}
+    },
+    [
+      {% for color in self.color_ramp %}
+      [{{ color.value }}, "{{ color.color }}"]{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ],
+    document.getElementById("map-{{ self.id }}"));
 </script>

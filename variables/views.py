@@ -12,6 +12,9 @@ from layers.models import Feature
 from variables.models import Variable
 from variables.serializers import VariableSerializer
 
+import random
+from django.core import serializers
+
 
 def index(request):
     variables = Variable.objects.all()
@@ -54,9 +57,22 @@ class VariableViewSet(viewsets.ModelViewSet):
 
         #return Response(serializer.data, status=status.HTTP_201_CREATED, headers=self.get_success_headers(serializer.data))
 
+    def map_test_data(self, variable):
+        features = Feature.objects.all()[:10]
+        data = json.loads(serializers.serialize("geojson", features))['features']
+
+        random.seed()
+        for feature in data:
+            feature['properties'][variable.name] = random.randint(0, 100)
+
+        return data
+
     @detail_route(url_path='map')
     def map_data(self, request, pk=None):
         variable = get_object_or_404(Variable, pk=pk)
+
+        return Response(self.map_test_data(variable))  # FOR TESTING MAP DURING DEVELOPMENT ONLY; DELETE!
+
         evaluated_variable = variable.data()
 
         values = evaluated_variable['values']

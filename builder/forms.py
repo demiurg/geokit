@@ -1,6 +1,6 @@
 from collections import OrderedDict
 
-from django.forms import ModelChoiceField, ModelMultipleChoiceField
+from django.forms import CharField, ModelChoiceField, ModelMultipleChoiceField, Widget
 
 from wagtail.wagtailforms.forms import FormBuilder
 

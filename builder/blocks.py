@@ -1,8 +1,10 @@
 import uuid
 
-from wagtail.wagtailcore.blocks import CharBlock, ListBlock, StructBlock
+from django.forms import CharField
 
-from layers.blocks import LayerChooserBlock
+from wagtail.wagtailcore.blocks import CharBlock, FieldBlock, ListBlock, StructBlock
+
+from builder.widgets import ColorWidget
 from variables.blocks import VariableChooserBlock
 
 
@@ -20,16 +22,20 @@ class GraphBlock(StructBlock):
         return super(GraphBlock, self).render(value)
 
 
-class ColorValueBlock(StructBlock):
-    min_value = CharBlock()
-    max_value = CharBlock()
-    color = CharBlock()
+class ColorBlock(FieldBlock):
+    def __init__(self, required=True, *args, **kwargs):
+        self.field = CharField(widget=ColorWidget)
+        super(ColorBlock, self).__init__(*args, **kwargs)
+
+
+class ColorStopBlock(StructBlock):
+    value = CharBlock()
+    color = ColorBlock()
 
 
 class MapBlock(StructBlock):
-    layer = LayerChooserBlock()
     variable = VariableChooserBlock()
-    color_ramp = ListBlock(ColorValueBlock())
+    color_ramp = ListBlock(ColorStopBlock())
 
     class Meta:
         template = 'builder/blocks/map.html'
