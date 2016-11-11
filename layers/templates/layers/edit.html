@@ -65,7 +65,7 @@
 
 
             {% comment %}
-            var mvtURL = '/builder/admin/layers/{{ layer.name }}/{z}/{x}/{y}.pbf';
+            var mvtURL = '/builder/admin/layers/{{ layer.pk }}/{z}/{x}/{y}.pbf';
             var config = {
                 url: mvtURL,
                 getIDForLayerFeature: function(feature) { return feature.properties.id; }
@@ -114,7 +114,7 @@
                 "fillOpacity": 0.7
             };
 
-            var geojsonURL = '/layers/{{ layer.name }}/{z}/{x}/{y}.json';
+            var geojsonURL = '/layers/{{ layer.pk }}/{z}/{x}/{y}.json';
             var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
                 clipTiles: true,
                 unique: function(feature) {

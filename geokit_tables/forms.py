@@ -12,10 +12,6 @@ class GeoKitTableForm(forms.ModelForm):
     in the file is the daterange field.
     """
     csv_file = forms.FileField(required=True)
-    date_column = forms.CharField(required=False, help_text=(
-        "Specify the column that contains the date range in "
-        "ISO 8601 format (<start>/<end>)."
-    ))
 
     class Meta:
         model = GeoKitTable

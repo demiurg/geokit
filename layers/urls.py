@@ -9,5 +9,5 @@ router.register(r'features', views.FeatureViewSet)
 router.register(r'layers', views.LayerViewSet)
 
 urlpatterns = [
-    url(r'(\w+)/(\d+)/(\d+)/(\d+)\.json$', views.tile_json, name='layers_tile_json'),
+    url(r'(\d+)/(\d+)/(\d+)/(\d+)\.json$', views.tile_json, name='layers_tile_json'),
 ]
