@@ -1,5 +1,19 @@
+from django.forms import Widget
 from django.forms.widgets import Select, SelectMultiple
 from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
+
+
+class ColorWidget(Widget):
+    def render(self, name, value, attrs=None):
+        if not value:
+            value_string = ""
+        else:
+            value_string = 'value="{value}"'.format(value=value)
+
+        return mark_safe(
+            '<input class="color-ramp-picker" style="box-sizing: content-box" type="color" name="{name}" {value_string} />'.format(name=name, value_string=value_string)
+        )
 
 
 class MapSelectWidget(Select):

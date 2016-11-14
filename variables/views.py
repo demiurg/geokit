@@ -1,7 +1,8 @@
+from datetime import datetime
+from dateutil.rrule import rrule, WEEKLY
 import json
 
 from django.core.serializers import serialize
-from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 
 from rest_framework import viewsets, status
@@ -11,6 +12,9 @@ from rest_framework.response import Response
 from layers.models import Feature
 from variables.models import Variable
 from variables.serializers import VariableSerializer
+
+import random
+from django.core import serializers
 
 
 def index(request):
@@ -54,9 +58,22 @@ class VariableViewSet(viewsets.ModelViewSet):
 
         #return Response(serializer.data, status=status.HTTP_201_CREATED, headers=self.get_success_headers(serializer.data))
 
+    def map_test_data(self, variable):
+        features = Feature.objects.all()[:10]
+        data = json.loads(serializers.serialize("geojson", features))['features']
+
+        random.seed()
+        for feature in data:
+            feature['properties'][variable.name] = random.randint(0, 100)
+
+        return data
+
     @detail_route(url_path='map')
     def map_data(self, request, pk=None):
         variable = get_object_or_404(Variable, pk=pk)
+
+        return Response(self.map_test_data(variable))  # FOR TESTING MAP DURING DEVELOPMENT ONLY; DELETE!
+
         evaluated_variable = variable.data()
 
         values = evaluated_variable['values']
@@ -75,9 +92,22 @@ class VariableViewSet(viewsets.ModelViewSet):
 
         return Response(data)
 
+    def graph_test_data(self):
+        data = {'x': [], 'y': [], 'type': 'timeseries', 'mode': 'lines'}
+        data['x'] = list(rrule(freq=WEEKLY, count=20, dtstart=datetime(2010, 1, 1)))
+
+        random.seed()
+        for _ in range(20):
+            data['y'].append(random.randint(0, 100))
+
+        return data
+
     @detail_route(url_path='graph')
     def graph_data(self, request, pk=None):
         variable = get_object_or_404(Variable, pk=pk)
+
+        return Response(self.graph_test_data())
+
         evaluated_variable = variable.data()
 
         data = {'x': [], 'y': []}

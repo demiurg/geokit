@@ -8,5 +8,11 @@
 
 <script src="/static/js/block_components.js"></script>
 <script>
-  bindGraph("{{ self.variable }}", document.getElementById("graph-{{ self.id }}"));
+  bindGraph(
+      {
+        id: {{ self.variable.id }},
+        name: "{{ self.variable.name }}"
+      },
+      document.getElementById("graph-{{ self.id }}")
+  );
 </script>
