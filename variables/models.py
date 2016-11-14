@@ -11,7 +11,7 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 from geokit_tables.models import GeoKitTable
 from layers.models import Layer
 
-from data import DataSource, join_layer_and_table
+from data import DataSource
 import json
 
 
@@ -250,43 +250,5 @@ class Variable(models.Model):
         source.select(name)
         return source.variable()
 
-    def JoinLazy(self, left, right):
+    def JoinOperator(self, left, right):
         return DataSource(left, right)
-
-    def JoinOperator(self, left, right, field=None):
-        '''
-        Serialization format:
-        `{
-            'model': 'Table',
-            'id': 1,
-            'field': 'fid'
-        }`
-        '''
-
-        if field is None:
-            return self.JoinLazy(left, right)
-
-        if left['model'] == 'Layer':
-            if right['model'] != 'Table':
-                raise ValueError("Arguments must be a Layer and Table")
-            layer = Layer.objects.get(pk=left['id'])
-            layer_field = left['field']
-            table = GeoKitTable.objects.get(pk=right['id'])
-            table_field = right['field']
-
-        if left['model'] == 'Table':
-            if right['model'] != 'Layer':
-                raise ValueError("Arguments must be a Layer and Table")
-            layer = Layer.objects.get(pk=right['id'])
-            layer_field = right['field']
-            table = GeoKitTable.objects.get(pk=left['id'])
-            table_field = left['field']
-
-        values, t_key, s_key = join_layer_and_table(
-            layer.name, layer_field, table.name, table_field, field
-        )
-
-        return {
-            'values': np.array(values).astype('float64'),
-            'temporal_key': t_key, 'spatial_key': s_key
-        }

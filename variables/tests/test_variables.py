@@ -163,56 +163,6 @@ def test_select_join_operator(set_schema, monkeypatch):
             v.data()
 
 
-@pytest.mark.django_db
-def test_join_operator(set_schema, monkeypatch):
-    with mock.patch('django.db.connection') as connection:
-        connection.schema_name = 'test'
-        connection.cursor.return_value.fetchall.return_value = [
-            (1, None, None, {'tmin': 2}, DateRange(date(2010, 1, 1), date(2010, 1, 1))),
-            (1, None, None, {'tmin': 5}, DateRange(date(2010, 1, 2), date(2010, 1, 2))),
-            (2, None, None, {'tmin': 4}, DateRange(date(2010, 1, 1), date(2010, 1, 1))),
-            (2, None, None, {'tmin': 8}, DateRange(date(2010, 1, 2), date(2010, 1, 2))),
-        ]
-
-        v = Variable(tree=['join', [
-            {'model': 'Layer', 'id': 1, 'name': 'cnty24k97', 'field': 'fid'},
-            {'model': 'Table', 'id': 1, 'name': 'cnty24k97_data', 'field': 'fid'},
-            'tmin'
-        ]])
-
-        np.testing.assert_array_equal(v.data()['values'], np.array([
-            [2, 5], [4, 8]
-        ]))
-
-        v = Variable(tree=['join', [
-            {'model': 'Table', 'id': 1, 'name': 'cnty24k97_data', 'field': 'fid'},
-            {'model': 'Layer', 'id': 1, 'name': 'cnty24k97', 'field': 'fid'},
-            'tmin'
-        ]])
-
-        np.testing.assert_array_equal(v.data()['values'], np.array([
-            [2, 5], [4, 8]
-        ]))
-
-        # THIS JOIN only works between tables and layers
-
-        v = Variable(tree=['join', [
-            {'model': 'Table', 'id': 1, 'field': 'fid'},
-            {'model': 'Table', 'id': 2, 'field': 'fid'},
-            'test'
-        ]])
-        with pytest.raises(ValueError):
-            v.data()
-
-        v = Variable(tree=['join', [
-            {'model': 'Layer', 'id': 1, 'field': 'fid'},
-            {'model': 'Layer', 'id': 2, 'field': 'fid'},
-            'test'
-        ]])
-        with pytest.raises(ValueError):
-            v.data()
-
-
 def test_value_filter_operator():
     test_matrix = {'values': np.array([[1, 2], [3, 4]]), 'spatial_key': spatial_key, 'temporal_key': temporal_key}
 
