@@ -1,5 +1,7 @@
 from datetime import date
 from collections import namedtuple
+from psycopg2.extras import DateRange
+
 import pytest
 import mock
 import numpy as np
@@ -102,17 +104,17 @@ def test_select_join_operator(set_schema, monkeypatch):
         )
 
         connection.cursor.return_value.fetchall.return_value = [
-            (1, 1, date(2010, 1, 1), 2),
-            (1, 2, date(2010, 1, 2), 5),
-            (2, 1, date(2010, 1, 1), 4),
-            (2, 2, date(2010, 1, 2), 8),
+            (1, 1, DateRange(date(2010, 1, 1), date(2010, 1, 1)), 2),
+            (1, 2, DateRange(date(2010, 1, 2), date(2010, 1, 2)), 5),
+            (2, 1, DateRange(date(2010, 1, 1), date(2010, 1, 1)), 4),
+            (2, 2, DateRange(date(2010, 1, 2), date(2010, 1, 2)), 8),
         ]
 
         v = Variable(tree=[
             'select', [
                 ['join', [
-                    {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
-                    {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
+                    {'model': 'Layer', 'id': 1, 'field': 'fid'},
+                    {'model': 'Table', 'id': 1, 'field': 'fid'},
                 ]],
                 'tmin',
             ]
@@ -126,8 +128,8 @@ def test_select_join_operator(set_schema, monkeypatch):
         v = Variable(tree=[
             'select', [
                 ['join', [
-                    {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
-                    {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
+                    {'model': 'Layer', 'id': 1, 'field': 'fid'},
+                    {'model': 'Table', 'id': 1, 'field': 'fid'},
                 ]],
                 'tmin'
             ]
@@ -166,15 +168,15 @@ def test_join_operator(set_schema, monkeypatch):
     with mock.patch('django.db.connection') as connection:
         connection.schema_name = 'test'
         connection.cursor.return_value.fetchall.return_value = [
-            (1, None, None, {'tmin': 2}, date(2010, 1, 1)),
-            (1, None, None, {'tmin': 5}, date(2010, 1, 2)),
-            (2, None, None, {'tmin': 4}, date(2010, 1, 1)),
-            (2, None, None, {'tmin': 8}, date(2010, 1, 2)),
+            (1, None, None, {'tmin': 2}, DateRange(date(2010, 1, 1), date(2010, 1, 1))),
+            (1, None, None, {'tmin': 5}, DateRange(date(2010, 1, 2), date(2010, 1, 2))),
+            (2, None, None, {'tmin': 4}, DateRange(date(2010, 1, 1), date(2010, 1, 1))),
+            (2, None, None, {'tmin': 8}, DateRange(date(2010, 1, 2), date(2010, 1, 2))),
         ]
 
         v = Variable(tree=['join', [
-            {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
-            {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
+            {'model': 'Layer', 'id': 1, 'name': 'cnty24k97', 'field': 'fid'},
+            {'model': 'Table', 'id': 1, 'name': 'cnty24k97_data', 'field': 'fid'},
             'tmin'
         ]])
 
@@ -183,8 +185,8 @@ def test_join_operator(set_schema, monkeypatch):
         ]))
 
         v = Variable(tree=['join', [
-            {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
-            {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
+            {'model': 'Table', 'id': 1, 'name': 'cnty24k97_data', 'field': 'fid'},
+            {'model': 'Layer', 'id': 1, 'name': 'cnty24k97', 'field': 'fid'},
             'tmin'
         ]])
 
@@ -272,12 +274,22 @@ def test_spatial_filter():
     ]])
     np.testing.assert_array_equal(v.data()['values'], [[5, 6, 7, 8]])
 
+
 def test_temporal_filter_operator():
     v = Variable(tree=['tfilter', [
         {
             'values': np.array([[1, 2, 3, 4, 5, 6, 7, 8], [1, 2, 3, 4, 5, 6, 7, 8]]),
             'spatial_key': [],
-            'temporal_key': [date(2010, 1, 1), date(2010, 2, 1), date(2010, 3, 1), date(2010, 4, 1), date(2010, 5, 1), date(2010, 6, 1), date(2010, 7, 1), date(2010, 8, 1)]
+            'temporal_key': [
+                DateRange(date(2010, 1, 1), date(2010, 1, 1)),
+                DateRange(date(2010, 2, 1), date(2010, 2, 1)),
+                DateRange(date(2010, 3, 1), date(2010, 3, 1)),
+                DateRange(date(2010, 4, 1), date(2010, 4, 1)),
+                DateRange(date(2010, 5, 1), date(2010, 5, 1)),
+                DateRange(date(2010, 6, 1), date(2010, 6, 1)),
+                DateRange(date(2010, 7, 1), date(2010, 7, 1)),
+                DateRange(date(2010, 8, 1), date(2010, 8, 1))
+            ]
         },
         {'filter_type': 'inclusive', 'date_ranges': [
             {'start': '2010-02-01', 'end': '2010-04-01'},
@@ -290,7 +302,16 @@ def test_temporal_filter_operator():
         {
             'values': np.array([[1, 2, 3, 4, 5, 6, 7, 8], [1, 2, 3, 4, 5, 6, 7, 8]]),
             'spatial_key': [],
-            'temporal_key': [date(2010, 1, 1), date(2010, 2, 1), date(2010, 3, 1), date(2010, 4, 1), date(2010, 5, 1), date(2010, 6, 1), date(2010, 7, 1), date(2010, 8, 1)]
+            'temporal_key': [
+                DateRange(date(2010, 1, 1), date(2010, 1, 1)),
+                DateRange(date(2010, 2, 1), date(2010, 2, 1)),
+                DateRange(date(2010, 3, 1), date(2010, 3, 1)),
+                DateRange(date(2010, 4, 1), date(2010, 4, 1)),
+                DateRange(date(2010, 5, 1), date(2010, 5, 1)),
+                DateRange(date(2010, 6, 1), date(2010, 6, 1)),
+                DateRange(date(2010, 7, 1), date(2010, 7, 1)),
+                DateRange(date(2010, 8, 1), date(2010, 8, 1))
+            ]
         },
         {'filter_type': 'exclusive', 'date_ranges': [
             {'start': '2010-02-01', 'end': '2010-04-01'},

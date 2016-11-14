@@ -173,12 +173,14 @@ class Variable(models.Model):
         (val,) = self.resolve_arguments(val)
 
         indices_to_delete = set()
-        for i, date in enumerate(val['temporal_key']):
+        for i, a_date_range in enumerate(val['temporal_key']):
             in_range = False
-            for date_range in filter_['date_ranges']:
-                start = datetime.strptime(date_range['start'], "%Y-%m-%d").date()
-                end = datetime.strptime(date_range['end'], "%Y-%m-%d").date()
-                if start <= date <= end:
+            for b_date_range in filter_['date_ranges']:
+                start = datetime.strptime(b_date_range['start'], "%Y-%m-%d").date()
+                end = datetime.strptime(b_date_range['end'], "%Y-%m-%d").date()
+                start = max(start, a_date_range.lower)
+                end = min(end, a_date_range.upper)
+                if ((end - start).days + 1) > 0:
                     in_range = True
                     break
 

@@ -9,13 +9,13 @@ from variables.models import Variable
 @pytest.mark.django_db
 def test_example_0_5(set_schema):
     tmin = Variable(tree=['join', [
-        {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
-        {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
+        {'model': 'Layer', 'id': 1, 'name': 'cnty24k97', 'field': 'fid'},
+        {'model': 'Table', 'id': 1, 'name': 'cnty24k97_data', 'field': 'fid'},
         'tmin'
     ]])
     tmax = Variable(tree=['join', [
-        {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
-        {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
+        {'model': 'Layer', 'id': 1, 'name': 'cnty24k97', 'field': 'fid'},
+        {'model': 'Table', 'id': 1, 'name': 'cnty24k97_data', 'field': 'fid'},
         'tmax'
     ]])
     t_summer = Variable(
@@ -48,8 +48,8 @@ def test_example_0_5_select(set_schema):
     tmin = Variable(tree=[
         'select', [
             ['join', [
-                {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
-                {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
+                {'model': 'Layer', 'id': 1, 'name': 'cnty24k97', 'field': 'fid'},
+                {'model': 'Table', 'id': 1, 'name': 'cnty24k97_data', 'field': 'fid'},
             ]],
             'tmin'
         ]
@@ -57,8 +57,8 @@ def test_example_0_5_select(set_schema):
     tmax = Variable(tree=[
         'select', [
             ['join', [
-                {'model': 'Layer', 'id': 'cnty24k97', 'field': 'fid'},
-                {'model': 'Table', 'id': 'cnty24k97_data', 'field': 'fid'},
+                {'model': 'Layer', 'id': 1, 'name': 'cnty24k97', 'field': 'fid'},
+                {'model': 'Table', 'id': 1, 'name': 'cnty24k97_data', 'field': 'fid'},
             ]],
             'tmax'
         ]
