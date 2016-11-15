@@ -1,5 +1,4 @@
 from datetime import date
-from collections import namedtuple
 from psycopg2.extras import DateRange
 
 import pytest

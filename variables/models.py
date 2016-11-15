@@ -8,9 +8,6 @@ import numpy.ma as ma
 from django.db import models
 from django.contrib.postgres.fields import ArrayField, JSONField
 
-from geokit_tables.models import GeoKitTable
-from layers.models import Layer
-
 from data import DataSource
 import json
 

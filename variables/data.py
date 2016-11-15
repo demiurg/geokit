@@ -14,11 +14,9 @@ class DataSource(object):
         self.fields = []
 
         for source in sources:
-            if ('model' in source and source['model'] == 'Layer') or \
-               ('type' in source and source['type'] == 'Layer'):
+            if ('type' in source and source['type'] == 'Layer'):
                 self.layers.append(source)
-            elif ('model' in source and source['model'] == 'Table') or \
-               ('type' in source and source['type'] == 'Table'):
+            elif ('type' in source and source['type'] == 'Table'):
                 self.tables.append(source)
 
     def select(self, field):

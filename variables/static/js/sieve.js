@@ -1497,7 +1497,7 @@ var i2o = function i2o(type, item, i) {
       return item.field_names.map(function (field, j) {
         return React.createElement(
           "option",
-          { value: "{\"type\": \"" + type + "\", \"id\": \"" + item.name + "\", \"field\": \"" + field + "\"}" },
+          { value: "{\"type\": \"" + type + "\", \"name\": \"" + item.name + "\", \"id\": " + item.id + ", \"field\": \"" + field + "\"}" },
           item.name + "/" + field
         );
       });
@@ -2550,13 +2550,13 @@ var rendertree = function rendertree(tree) {
         html = 'Mean of ( <br>' + rendertree(left, nl) + rendertree(right, nl) + tab + ') ';
         break;
       case 'select':
-        html = "Select " + right.id + "/" + right.field + " from (<br>" + tab + rendertree(left, nl) + tab + ")";
+        html = "Select " + right.name + "/" + right.field + " from (<br>" + tab + rendertree(left, nl) + tab + ")";
         break;
       case 'expression':
         html = left;
         break;
       case 'join':
-        var str = "Join " + left.type + ' ' + left.id + ' and ' + right.type + ' ' + right.id + ' on ' + left.field + ' = ' + right.field;
+        var str = "Join " + left.type + ' ' + left.name + ' and ' + right.type + ' ' + right.name + ' on ' + left.field + ' = ' + right.field;
         html = str;
         break;
       default:
