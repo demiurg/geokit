@@ -81,14 +81,13 @@ def test_date(create_tables):
 @pytest.mark.django_db
 def test_range(create_tables):
     table = create_tables[4]
-    t = GeoKitTable()
     schema = get_schema(table)
     data = get_data(table)
     get_daterange = get_daterange_partial(schema, data[0])
     for row in data:
         r = get_daterange(row)
         assert r is not None
-        print r
+
 
 @pytest.mark.django_db
 def test_records(create_tables):
