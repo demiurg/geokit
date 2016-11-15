@@ -67,7 +67,7 @@ def get_daterange_partial(schema, row):
         return None
 
     if len(columns) == 2:
-        if row[columns[0]] > row[columns[1]]:
+        if row[columns[0]] <= row[columns[1]]:
             lower, upper = columns[0], columns[1]
         else:
             lower, upper = columns[1], columns[0]

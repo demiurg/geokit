@@ -3,7 +3,7 @@ import datetime
 
 import pytest
 
-from util import test_data, test_dates, test_years, test_nodate
+from util import test_data, test_dates, test_years, test_nodate, test_drange
 from csvkit import table as csvtable
 from geokit_tables.views import get_schema, get_data, get_daterange_partial
 from geokit_tables.models import Record, GeoKitTable
@@ -13,7 +13,7 @@ from geokit_tables.models import Record, GeoKitTable
 def create_tables():
     """Set up a schemas with CSV data for correct data type inference."""
     tables = []
-    for fake_csv in (test_data, test_dates, test_years, test_nodate):
+    for fake_csv in (test_data, test_dates, test_years, test_nodate, test_drange,):
         with io.StringIO(fake_csv) as fake_csv:
             tables.append(csvtable.Table.from_csv(fake_csv, name="test"))
 
@@ -77,6 +77,18 @@ def test_date(create_tables):
     get_daterange = get_daterange_partial({'date': 'date'}, row)
     assert get_daterange(row) is not None
 
+
+@pytest.mark.django_db
+def test_range(create_tables):
+    table = create_tables[4]
+    t = GeoKitTable()
+    schema = get_schema(table)
+    data = get_data(table)
+    get_daterange = get_daterange_partial(schema, data[0])
+    for row in data:
+        r = get_daterange(row)
+        assert r is not None
+        print r
 
 @pytest.mark.django_db
 def test_records(create_tables):
