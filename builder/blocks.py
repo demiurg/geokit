@@ -48,7 +48,7 @@ class MapBlock(StructBlock):
 
 
 class TableBlock(StructBlock):
-    variables = ListBlock(VariableChooserBlock())
+    variable = VariableChooserBlock()
 
     class Meta:
         template = 'builder/blocks/table.html'

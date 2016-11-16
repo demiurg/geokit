@@ -1,6 +1,18 @@
 {% load geokit_blocks_tags %}
-{% load utility_tags %}
 
 <div class="panel panel-default">
-  {% table_data self %}
+  <div class="panel-body">
+    <div id="table-{{ self.id }}"></div>
+  </div>
 </div>
+
+<script src="/static/js/block_components.js"></script>
+<script>
+  window.bindTable(
+      {
+        id: {{ self.variable.id }},
+        name: "{{ self.variable.name }}",
+      },
+      document.getElementById("table-{{ self.id }}")
+  );
+</script>

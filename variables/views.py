@@ -135,3 +135,45 @@ class VariableViewSet(viewsets.ModelViewSet):
             data['invalid'] = True
 
         return Response(data)
+
+    def table_test_data(self):
+        data = {'dimension': 'time', 'values': []}
+
+        random.seed()
+        #for f in Feature.objects.all()[:20]:
+            #data['values'].append({'feature': f.verbose_name, 'value': random.randint(0, 100)})
+        for d in list(rrule(freq=WEEKLY, count=20, dtstart=datetime(2010, 1, 1))):
+            data['values'].append({'date': d.strftime("%Y-%m-%d"), 'value': random.randint(0,100)})
+
+        return data
+
+    @detail_route(url_path='table')
+    def table_data(self, request, pk=None):
+        variable = get_object_or_404(Variable, pk=pk)
+
+        return Response(self.table_test_data())
+
+        evaluated_variable = variable.data()
+
+        data = {}
+
+        rows, cols = evaluated_variable['values'].shape
+        if rows == 1:
+            data['dimension'] = 'time'
+            data['values'] = []
+            for i, value in enumerate(evaluated_variable['values'][0]):
+                date = evaluated_variable['temporal_key'][i]
+                data['values'].append({'date': date.strftime("%Y-%m-%d"), 'value': value})
+        elif cols == 1:
+            features = list(Feature.objects.filter(pk__in=evaluated_variable['spatial_key']))
+
+            data['dimension'] = 'space'
+            data['values'] = []
+            for i, value in enumerate(evaluated_variable['values'][0]):
+                f = [feature for feature in features if feature.pk == evaluated_variable['spatial_key'][i]][0]
+                data['values'].append({'feature': f.verbose_name, 'value': value})
+        else:
+            # Can't handle this presently...
+            data['invalid'] = True
+
+        return Response(data)
