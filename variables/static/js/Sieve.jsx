@@ -164,7 +164,7 @@ var i2o = (type, item, i) => { return (item, i) => {
   if (item.field_names){
     return item.field_names.map((field, j) => (
       <option value={
-        `{"type": "${type}", "id": "${item.name}", "field": "${field}"}`
+        `{"type": "${type}", "name": "${item.name}", "id": ${item.id}, "field": "${field}"}`
       }>
         {`${item.name}/${field}`}
       </option>
@@ -856,7 +856,7 @@ var rendertree = (tree, level=0) => {
             tab + ') ';
           break;
         case 'select':
-          html = "Select " + right.id + "/" + right.field + " from (<br>" +
+          html = "Select " + right.name + "/" + right.field + " from (<br>" +
             tab + rendertree(left, nl) +
             tab + ")";
           break;
@@ -865,8 +865,8 @@ var rendertree = (tree, level=0) => {
           break;
         case 'join':
           let str = "Join " +
-            left.type + ' ' + left.id + ' and ' +
-            right.type + ' ' + right.id + ' on ' +
+            left.type + ' ' + left.name + ' and ' +
+            right.type + ' ' + right.name + ' on ' +
             left.field + ' = ' + right.field
           ;
           html = str;

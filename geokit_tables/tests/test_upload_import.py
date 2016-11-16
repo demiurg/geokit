@@ -3,9 +3,9 @@ import datetime
 
 import pytest
 
-from util import test_data, test_dates, test_years
+from util import test_data, test_dates, test_years, test_nodate, test_drange
 from csvkit import table as csvtable
-from geokit_tables.views import get_schema, get_data, get_daterange
+from geokit_tables.views import get_schema, get_data, get_daterange_partial
 from geokit_tables.models import Record, GeoKitTable
 
 
@@ -13,7 +13,7 @@ from geokit_tables.models import Record, GeoKitTable
 def create_tables():
     """Set up a schemas with CSV data for correct data type inference."""
     tables = []
-    for fake_csv in (test_data, test_dates, test_years,):
+    for fake_csv in (test_data, test_dates, test_years, test_nodate, test_drange,):
         with io.StringIO(fake_csv) as fake_csv:
             tables.append(csvtable.Table.from_csv(fake_csv, name="test"))
 
@@ -74,22 +74,39 @@ def test_date(create_tables):
         'date': datetime.date(2010, 1, 1),
         'prcp': 0.0
     }
-    assert get_daterange({'date': 'date'}, row) is not None
+    get_daterange = get_daterange_partial({'date': 'date'}, row)
+    assert get_daterange(row) is not None
+
+
+@pytest.mark.django_db
+def test_range(create_tables):
+    table = create_tables[4]
+    schema = get_schema(table)
+    data = get_data(table)
+    get_daterange = get_daterange_partial(schema, data[0])
+    for row in data:
+        r = get_daterange(row)
+        assert r is not None
 
 
 @pytest.mark.django_db
 def test_records(create_tables):
-    for table in create_tables:
+    for i, table in enumerate(create_tables):
         records = []
         t = GeoKitTable()
         schema = get_schema(table)
+        data = get_data(table)
 
-        for row in get_data(table):
-            date_range = get_daterange(schema, row)
+        get_daterange = get_daterange_partial(schema, data[0])
+        for row in data:
+            date_range = get_daterange(row)
 
             records.append(Record(
                 table=t, properties=row, date_range=date_range
             ))
 
         for r in records:
-            assert r.date_range is not None
+            if i == 3:
+                assert r.date_range is None
+            else:
+                assert r.date_range is not None

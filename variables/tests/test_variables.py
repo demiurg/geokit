@@ -1,5 +1,4 @@
 from datetime import date
-from collections import namedtuple
 from psycopg2.extras import DateRange
 
 import pytest
@@ -163,14 +162,15 @@ def test_select_join_operator(set_schema, monkeypatch):
             v.data()
 
 
+@pytest.mark.skip('not needed functionality for now')
 @pytest.mark.django_db
 def test_join_operator(set_schema, monkeypatch):
     with mock.patch('django.db.connection') as connection:
         connection.schema_name = 'test'
         connection.cursor.return_value.fetchall.return_value = [
             (1, None, None, {'tmin': 2}, DateRange(date(2010, 1, 1), date(2010, 1, 1))),
-            (1, None, None, {'tmin': 5}, DateRange(date(2010, 1, 2), date(2010, 1, 2))),
-            (2, None, None, {'tmin': 4}, DateRange(date(2010, 1, 1), date(2010, 1, 1))),
+            (2, None, None, {'tmin': 5}, DateRange(date(2010, 1, 2), date(2010, 1, 2))),
+            (1, None, None, {'tmin': 4}, DateRange(date(2010, 1, 1), date(2010, 1, 1))),
             (2, None, None, {'tmin': 8}, DateRange(date(2010, 1, 2), date(2010, 1, 2))),
         ]
 
@@ -198,7 +198,7 @@ def test_join_operator(set_schema, monkeypatch):
 
         v = Variable(tree=['join', [
             {'model': 'Table', 'id': 1, 'field': 'fid'},
-            {'model': 'Table', 'id': 2, 'field': 'fid'},
+            {'model': 'Table', 'id': 1, 'field': 'fid'},
             'test'
         ]])
         with pytest.raises(ValueError):
@@ -206,7 +206,7 @@ def test_join_operator(set_schema, monkeypatch):
 
         v = Variable(tree=['join', [
             {'model': 'Layer', 'id': 1, 'field': 'fid'},
-            {'model': 'Layer', 'id': 2, 'field': 'fid'},
+            {'model': 'Layer', 'id': 1, 'field': 'fid'},
             'test'
         ]])
         with pytest.raises(ValueError):

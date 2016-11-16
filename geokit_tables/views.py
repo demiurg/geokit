@@ -56,45 +56,63 @@ def get_data(table):
     return map(lambda row: {k: v for k, v in zip(headers, row)}, rows)
 
 
-def get_daterange(schema, row):
+def get_daterange_partial(schema, row):
     columns = [
         k for k, v in schema.items() if v.startswith('date')
     ]
     keys = schema.keys()
 
-    date_range = None
+    def date_range(row):
+
+        return None
+
     if len(columns) == 2:
-        lower, upper = sorted(
-            [row[columns[0]], row[columns[1]]]
-        )
-        date_range = DateRange(lower=lower, upper=upper)
+        if row[columns[0]] <= row[columns[1]]:
+            lower, upper = columns[0], columns[1]
+        else:
+            lower, upper = columns[1], columns[0]
+
+        def date_range(in_row):
+            return DateRange(lower=in_row[lower], upper=in_row[upper])
+
     elif len(columns) == 1:
         # date = datetime.strptime(strings[0], format).date()
-        date_range = DateRange(
-            lower=row[columns[0]],
-            upper=row[columns[0]],
-            bounds='[]'
-        )
+        def date_range(in_row):
+            return DateRange(
+                lower=in_row[columns[0]],
+                upper=in_row[columns[0]],
+                bounds='[]'
+            )
     elif len(columns) == 0:
         if 'date' in keys:
             try:
-                date = datetime.datetime.strptime(row['date'], "%Y-%j")
-                date_range = DateRange(
-                    lower=date.date(), upper=date.date(), bounds='[]'
-                )
+                datetime.datetime.strptime(row['date'], "%Y-%j")
             except Exception as e:
                 print "Exception, not julian", e
-                pass
+            else:
+                def date_range(in_row):
+                    d = datetime.datetime.strptime(in_row['date'], "%Y-%j")
+                    return DateRange(
+                        lower=d.date(), upper=d.date(), bounds='[]'
+                    )
         elif 'year' in keys:
             try:
-                l = datetime.datetime.strptime(str(row['year']), "%Y")
-                u = datetime.datetime.strptime(str(int(row['year']) + 1), "%Y")
-                date_range = DateRange(
-                    lower=l.date(), upper=u.date(), bounds='[)'
+                datetime.datetime.strptime(
+                    str(int(row['year']) + 1), "%Y"
                 )
             except Exception as e:
-                print "Exception, not year", e, row['date']
-                pass
+                print "Exception, not year", e, row['year']
+            else:
+                def date_range(in_row):
+                    l = datetime.datetime.strptime(
+                        str(in_row['year']), "%Y"
+                    )
+                    u = datetime.datetime.strptime(
+                        str(int(in_row['year']) + 1), "%Y"
+                    )
+                    return DateRange(
+                        lower=l.date(), upper=u.date(), bounds='[)'
+                    )
 
     return date_range
 
@@ -116,9 +134,11 @@ def add(request):
                 t.field_names = csv_table.headers()
                 t.save()
 
+                csv_data = get_data(csv_table)
+                get_daterange = get_daterange_partial(t.schema, csv_data[0])
                 records = []
-                for row in get_data(csv_table):
-                    date_range = get_daterange(t.schema, row)
+                for row in csv_data:
+                    date_range = get_daterange(row)
                     records.append(Record(
                         table=t, properties=row, date_range=date_range
                     ))
