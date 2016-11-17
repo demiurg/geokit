@@ -1,0 +1,41 @@
+[
+  {
+    "model": "variables.variable",
+    "pk": 1,
+    "fields": {
+      "name": "t_norm_summer",
+      "created": "2016-11-10T00:00:00.000Z",
+      "modified": "2016-11-10T00:00:00.000Z",
+      "tree": ["tmean", [
+        ["tfilter", [
+          ["mean", [
+            ["select", [
+              ["join", [
+                {"type": "Layer", "id": 1, "name": "cnty24k97", "field": "fid"},
+                {"type": "Table", "id": 1, "name": "cnty24k97_data", "field": "fid"}
+              ]],
+              "tmin"
+            ]],
+            ["select", [
+              ["join", [
+                {"type": "Layer", "id": 1, "name": "cnty24k97", "field": "fid"},
+                {"type": "Table", "id": 1, "name": "cnty24k97_data", "field": "fid"}
+              ]],
+              "tmax"
+            ]] 
+          ]],
+          {
+            "filter_type": "inclusive",
+            "date_ranges": [
+              {"start": "2010-06-01", "end": "2010-08-31"},
+              {"start": "2011-06-01", "end": "2011-08-31"},
+              {"start": "2012-06-01", "end": "2012-08-31"},
+              {"start": "2013-06-01", "end": "2013-08-31"},
+              {"start": "2014-06-01", "end": "2014-08-31"}
+            ]
+          }
+        ]
+      ]]]
+    }
+  }
+]
