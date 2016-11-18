@@ -186,6 +186,7 @@ class Variable(models.Model):
             elif filter_['filter_type'] == 'exclusive' and in_range:
                 indices_to_delete.add(i)
 
+        print indices_to_delete
         values = np.delete(val['values'], list(indices_to_delete), 1)
         temporal_key = list(np.delete(val['temporal_key'], list(indices_to_delete)))
         return {

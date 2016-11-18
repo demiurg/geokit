@@ -49,14 +49,14 @@ class DataSource(object):
             )
 
         if self.tables:
-            selects.append("record_id, date, {}".format(name))
+            selects.append("record_id, date_range, {}".format(name))
 
             r_wheres = []
             for table in self.tables:
                 r_wheres.append("table_id = '{}'".format(table['id']))
 
             froms.append(
-                "(SELECT id as record_id, date,"
+                "(SELECT id as record_id, date_range,"
                 " properties->>'{0}' as joiner, properties->>'{1}' as {1} "
                 "FROM {2!s}.geokit_tables_record "
                 "WHERE {3}) r".format(
@@ -78,7 +78,7 @@ class DataSource(object):
         self.df = read_sql(
             query,
             django.db.connection,
-            index_col='date',
+            index_col='date_range',
             params=None
         )
 

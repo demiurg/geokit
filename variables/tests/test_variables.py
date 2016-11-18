@@ -84,7 +84,11 @@ def test_spatial_mean_operator():
 
 def test_temporal_mean_operator():
     v = Variable(tree=['tmean', [
-        {'values': np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), 'spatial_key': spatial_key, 'temporal_key': temporal_key}
+        {
+            'values': np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]),
+            'spatial_key': spatial_key,
+            'temporal_key': temporal_key
+        }
     ]])
 
     np.testing.assert_array_equal(v.data()['values'], np.array([[2], [5], [8]]))
@@ -98,7 +102,7 @@ def test_select_join_operator(set_schema, monkeypatch):
         connection.cursor.return_value.description.__iter__.return_value = (
             ( 'feature_id', 23, None, 4, None, None, None),
             ( 'record_id', 23, None, 4, None, None, None),
-            ( 'date', 1082, None, 4, None, None, None),
+            ( 'date_range', 1082, None, 4, None, None, None),
             ( 'tmin', 25, None, -1, None, None, None)
         )
 
@@ -146,6 +150,7 @@ def test_select_join_operator(set_schema, monkeypatch):
                 'test'
             ]
         ])
+
         with pytest.raises(KeyError):
             v.data()
 
@@ -158,6 +163,7 @@ def test_select_join_operator(set_schema, monkeypatch):
                 'test'
             ]
         ])
+
         with pytest.raises(KeyError):
             v.data()
 
