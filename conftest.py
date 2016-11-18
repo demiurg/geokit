@@ -28,6 +28,7 @@ def pytest_configure(config):
         make_tenant()
         call_command("loaddata", "geokit_tables_fixtures.json")
         call_command("loaddata", "layers_fixtures.json")
+        call_command("loaddata", "variables_fixtures.json")
 
 
 @pytest.fixture
