@@ -1,17 +1,24 @@
-$color-primary: #70575b;
-$color-secondary: #b49b9f;
-$color-red-light: rgb(240, 236, 227);
-$color-red-light-border: rgb(192, 167, 171);
-$color-text-dark: #666666;
-$button: rgba(112, 87, 91, 1.00);
-$button-hover: rgba(90, 70, 73, 1.00);
+$color-primary: rgb(112, 87, 91);
+$color-primary-dark: rgb(90, 70, 73);
+$color-primary-light: rgb(180, 155, 159);
+$color-primary-lighter: rgb(240, 236, 227);
+$color-primary-lighter-border: rgb(192, 167, 171);
+$color-text-dark: rgb(102, 102, 102);
+$button: rgb(112, 87, 91);
+$button-hover: rgb(90, 70, 73);
+
+$color-secondary: rgb(156, 159, 156);
+$color-secondary-dark: rgb(99, 100, 95);
+$color-secondary-light: rgb(142, 159, 142);
+$color-secondary-lighter: rgb(246, 248, 246);
+$color-secondary-lighter-border: rgb(191, 196, 191);
 
 a {
     color: $color-primary;
 }
 
 a:hover, .listing .title h2 a:hover {
-    color: $color-secondary;
+    color: $color-primary-light;
 }
 
 .privacy-indicator .label-private::before, .privacy-indicator .label-public::before {
@@ -30,19 +37,21 @@ a:hover, .listing .title h2 a:hover {
   color: $color-text-dark;
 }
 
+.listing .button-secondary {
+  background-color: $color-primary-light;
+}
+
 form.status-tag:hover, a.status-tag:hover, a.status-tag.primary:hover {
-    border-color: $color-secondary;
-    color: $color-secondary;
+    border-color: $color-primary-light;
+    color: $color-primary-light;
 }
 
 input.button-secondary[type="submit"], input.button-secondary[type="reset"], input.button-secondary[type="button"], .button.button-secondary, button.button-secondary {
-    border-color: $color-primary;
-    color: $color-primary;
+    color: $color-primary-lighter;
 }
 
 input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"]:hover, input.button-secondary[type="button"]:hover, .button.button-secondary:hover, button.button-secondary:hover {
-    border-color: $color-primary;
-    background-color: $color-secondary;
+    background-color: $color-primary;
 }
 
 .nav-wrapper .inner {
@@ -73,8 +82,8 @@ input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"
 }
 
 .listing.full-width th {
-    background-color: $color-red-light;
-    border-bottom: 1px solid $color-red-light-border;
+    background-color: $color-primary-lighter;
+    border-bottom: 1px solid $color-primary-lighter-border;
 }
 
 .listing .no-children a:hover {
@@ -82,11 +91,11 @@ input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"
 }
 
 .breadcrumb {
-    background-color: #63645f;
+    background-color: $color-secondary-dark;
 }
 
 .page-explorer .listing .index {
-    background-color: #7a7d7a;
+    background-color: $color-secondary;
 }
 
 .page-explorer .listing .index a.status-tag.primary {
@@ -110,7 +119,7 @@ input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"
 }
 
 header, .tab-nav.merged {
-    background-color: #7a7d7a;
+    background-color: $color-secondary;
 }
 
 .tab-nav.merged li a {
@@ -182,8 +191,8 @@ input[type="button"], .button, button, .btn, .btn-default, header .button, .drop
     color: #EAE6E7;
 }
 
-input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .button:hover {
-    background-color: $button-hover;
+input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .button:hover, .messages .success .button:hover {
+    background-color: $color-primary-dark;
     color: #EAE6E7;
 }
 
@@ -217,15 +226,15 @@ input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .but
 }
 
 .listing td.children:hover {
-    background-color: $color-secondary;
+    background-color: $color-primary-light;
 }
 
 .nav-main a:hover, .nav-main a:focus {
-    background-color: $color-secondary;
+    background-color: $color-primary-light;
 }
 
 .nav-main .menu-active > a {
-    border-color: $color-secondary;
+    border-color: $color-primary-light;
 }
 
 .nav-main a:hover, .nav-main a:focus {
@@ -233,11 +242,11 @@ input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .but
 }
 
 .summary {
-    background-color: $color-red-light;
+    background-color: $color-primary-lighter;
 }
 
 .listing .table-headers {
-    border-bottom: 1px solid $color-red-light-border;
+    border-bottom: 1px solid $color-primary-lighter-border;
 }
 
 .t-inverted .u-btn-current:hover, .t-default .u-btn-current:hover {
@@ -251,4 +260,33 @@ input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .but
 
 #submit-id-submit {
   width: auto;
+}
+
+input:focus, textarea:focus, select:focus, .richtext:focus, .tagit:focus {
+  background-color: $color-secondary-lighter;
+  border-color: $color-secondary-lighter-border;
+}
+
+.dropdown ul {
+  background-color: $color-primary-dark;
+}
+
+.dropdown.open .dropdown-toggle, .dropdown.open .dropdown-toggle:hover {
+  background-color: $color-primary-dark;
+}
+
+.messages .success {
+  background-color: $color-secondary-light;
+}
+
+.stream-menu button {
+  outline: $color-secondary;  
+}
+
+.stream-menu button:hover, .stream-menu button:focus {
+  background-color: $color-secondary;
+}
+
+.stream-menu.stream-menu-closed .toggle:focus {
+  color: $color-secondary;
 }
