@@ -15,6 +15,9 @@ class GeoKitTable(models.Model):
     field_names = ArrayField(models.TextField(), null=True)
     # http://toblerity.org/fiona/manual.html#keeping-schemas-simple
     schema = JSONField(null=True)
+    status = models.IntegerField(
+        choices=((0, 'Good'), (1, 'Working'), (3, 'Bad')), default=1
+    )
 
     def __unicode__(self):
         return self.name
