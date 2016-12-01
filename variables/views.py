@@ -94,7 +94,8 @@ class VariableViewSet(viewsets.ModelViewSet):
 
     def graph_test_data(self):
         data = {'x': [], 'y': [], 'type': 'timeseries', 'mode': 'lines'}
-        data['x'] = list(rrule(freq=WEEKLY, count=20, dtstart=datetime(2010, 1, 1)))
+        dates = list(rrule(freq=WEEKLY, count=20, dtstart=datetime(2010, 1, 1)))
+        data['x'] = [d.strftime("%Y-%m-%d %H:%M:%S") for d in dates]
 
         random.seed()
         for _ in range(20):

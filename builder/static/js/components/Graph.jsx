@@ -31,7 +31,24 @@ export default class Graph extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         if (!this.state.error) {
-            Plotly.newPlot('graph', [this.state.data]);
+            var xaxis;
+
+            if (this.state.data.type == "timeseries") {
+                xaxis = {
+                    title: 'Date'
+                };
+            } else {
+                xaxis = {title: 'Location'};
+            }
+
+            Plotly.newPlot(
+                'graph',
+                [this.state.data],
+                {
+                    xaxis: xaxis,
+                    yaxis: {title: this.props.variable_name}
+                }
+            );
         }
     }
 
