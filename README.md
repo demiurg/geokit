@@ -60,6 +60,21 @@ or
 The `run.sh` script also creates an SSH tunnel to oka's Postgres port, so
 geokit can be run on any system that can ssh to oka.ags.io
 
+# Task queue
+
+Geokit uses a task queue to process some of it's work asynchronously, outside the normal
+request/response cycle. In order for this to work, you need at least one task queue
+worker running, as well as a Redis server running on `localhost`. To start a worker,
+run this command:
+
+```
+./manage.py rqworker
+```
+
+More workers may be started to allow for multiple async jobs to be run concurrently.
+
+# Tests
+
 Run the `py.test`-based test suite:
 
 ```

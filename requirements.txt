@@ -16,3 +16,5 @@ numpy
 scipy
 pandas
 csvkit==0.9.1
+rq==0.7.0
+django-rq==0.9.4

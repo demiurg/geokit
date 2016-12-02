@@ -59,6 +59,7 @@ SHARED_APPS = [
     'modelcluster',
     'rest_framework',
     'crispy_forms',
+    'django_rq',
 ]
 
 TENANT_APPS = [
@@ -150,6 +151,17 @@ DATABASE_ROUTERS = (
 
 ORIGINAL_BACKEND = 'django.contrib.gis.db.backends.postgis'
 POSTGIS_VERSION = (2, 1, 8)
+
+RQ_QUEUES = {
+    'default': {
+        'HOST': 'localhost',
+        'PORT': 6379,
+        'DB': 0,
+        'DEFAULT_TIMEOUT': 360,
+    }
+}
+
+RQ_EXCEPTION_HANDLERS = ['geokit.error_handlers.dispatch_error']
 
 PUBLIC_SCHEMA_URLCONF = 'account.urls'
 

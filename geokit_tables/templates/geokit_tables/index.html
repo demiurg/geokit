@@ -25,18 +25,34 @@
                 {% for table in tables %}
                 <tr>
                     <td class="name">
+                        {% if table.status == 0 %}
                         <a href="{% url 'geokit_tables:edit' table.pk %}">
                             {{ table.name }}
                         </a>
+                        {% else %}
+                        {{ table.name }}
+                        {% endif %}
                     </td>
                     <td class="description">
                         {{ table.description }}
                     </td>
                     <td class="properties">
+                        {% if table.status == 0 %}
                         {{ table.field_names|join:", " }}
+                        {% elif table.status == 1 %}
+                        processing...
+                        {% else %}
+                        processing error
+                        {% endif %}
                     </td>
                     <td>
+                        {% if table.status == 0 %}
                         {{ table.record_set.count }}
+                        {% elif table.status == 1 %}
+                        processing...
+                        {% else %}
+                        processing error
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
