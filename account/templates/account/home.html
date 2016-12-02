@@ -25,8 +25,8 @@
     </header>
     <table class="listing full-width ">
       <col width="55%" />
-      <col width="5%" />
-      <col width="40%" />
+      <col width="20%" />
+      <col width="20%" />
       <thead>
         <tr class="index">
           <td class="title">
@@ -50,12 +50,12 @@
         <tr>
           <td valign="top">
             <h2>
-              <a href="http://{{ site.schema_name}}.{{ request.META.HTTP_HOST }}" title="View this page">{{ site.name }}</a>
+              <a href="http://{{ site.schema_name}}.{{ request.domain }}" title="View this page">{{ site.name }}</a>
             </h2>
           </td>
           <td valign="top">
             <a href="{% url 'site_edit' site.schema_name %}" class="status-tag primary">
-              Edit
+              Build this site
             </a>
           </td>
           <td valign="top">
