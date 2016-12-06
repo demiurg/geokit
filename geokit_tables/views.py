@@ -135,30 +135,31 @@ def populate_table(tenant, table_id):
     table = GeoKitTable.objects.get(pk=table_id)
     csv_path = "%s/uploads/csv/%s/%s.csv" % (settings.MEDIA_ROOT, tenant, table_id)
 
-    with open(csv_path, 'r') as csv_file:
-        with transaction.atomic():
-            csv_table = csvtable.Table.from_csv(
-                csv_file,
-                name=table.name,
-            )
+    try:
+        with open(csv_path, 'r') as csv_file:
+            with transaction.atomic():
+                csv_table = csvtable.Table.from_csv(
+                    csv_file,
+                    name=table.name,
+                )
 
-            table.schema = get_schema(csv_table)
-            table.field_names = csv_table.headers()
-            table.status = 0  # Good
-            table.save()
+                table.schema = get_schema(csv_table)
+                table.field_names = csv_table.headers()
+                table.status = 0  # Good
+                table.save()
 
-            csv_data = get_data(csv_table)
-            get_daterange = get_daterange_partial(table.schema, csv_data[0])
-            records = []
-            for row in csv_data:
-                date_range = get_daterange(row)
-                records.append(Record(
-                    table=table, properties=row, date_range=date_range
-                ))
+                csv_data = get_data(csv_table)
+                get_daterange = get_daterange_partial(table.schema, csv_data[0])
+                records = []
+                for row in csv_data:
+                    date_range = get_daterange(row)
+                    records.append(Record(
+                        table=table, properties=row, date_range=date_range
+                    ))
 
-            Record.objects.bulk_create(records)
-
-    os.remove(csv_path)
+                Record.objects.bulk_create(records)
+    finally:
+        os.remove(csv_path)
 
 
 def populate_table_handler(tenant, table_id):

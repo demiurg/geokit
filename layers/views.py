@@ -1,3 +1,4 @@
+import glob
 import json
 import os
 
@@ -10,6 +11,8 @@ from django.contrib.gis.gdal import OGRGeometry
 from django.http import HttpResponse
 from django.db import connection
 
+import django_rq
+
 from rest_framework import viewsets
 from wagtail.wagtailadmin import messages
 
@@ -17,6 +20,7 @@ from models import Layer, Feature
 from forms import LayerForm, LayerEditForm
 from serializers import FeatureSerializer, LayerSerializer
 
+import fiona
 from fiona.crs import to_string
 from shapely.geometry import shape
 from . import mvt
@@ -206,7 +210,7 @@ def manual_mvt(cache_path, layer_name, z, x, y):
 
 
 def index(request):
-    layers = Layer.objects.all().filter(status=0)
+    layers = Layer.objects.all()
 
     # Ordering
     if 'ordering' in request.GET and request.GET['ordering'] in ['-name', '-created']:
@@ -220,6 +224,69 @@ def index(request):
     })
 
 
+def process_shapefile(tenant, layer_id, srs):
+    connection.close()
+    connection.set_schema(tenant)
+
+    l = Layer.objects.get(pk=layer_id)
+
+    shape_path = "%s/uploads/shapefile/%s/%s.shp" % (settings.MEDIA_ROOT, tenant, l.pk)
+    try:
+        with fiona.open(shape_path, 'r') as collection:
+            count = 0
+
+            min_bounds = OGRGeometry(
+                'POINT ({} {})'.format(collection.bounds[0], collection.bounds[1]),
+                srs=srs
+            ).transform(4326, clone=True)
+            max_bounds = OGRGeometry(
+                'POINT ({} {})'.format(collection.bounds[2], collection.bounds[3]),
+                srs=srs
+            ).transform(4326, clone=True)
+
+            l.bounds = min_bounds.coords + max_bounds.coords
+
+            features = []
+            for index, record in enumerate(collection):
+                try:
+                    geom = shape(record['geometry'])
+                    transformed_geom = OGRGeometry(geom.wkt, srs=srs).transform(3857, clone=True)
+                    properties = record['properties']
+                    properties['fid'] = index
+                    features.append(Feature(
+                        layer=l,
+                        geometry=GeometryCollection(transformed_geom.geos),
+                        properties=properties
+                    ))
+                    count += 1
+                except Exception as e:
+                    print "Feature excepton", e
+
+            if count == 0:
+                raise Exception("Layer needs to have at least one feature")
+
+            Feature.objects.bulk_create(features)
+
+            field_names = collection.schema['properties'].keys()
+            field_names.append("fid")
+            l.field_names = field_names
+            l.properties = collection.schema['properties']
+            l.status = 0
+            l.save()
+    finally:
+        for path in glob.glob("%s/uploads/shapefile/%s/%s.*" % (settings.MEDIA_ROOT, tenant, l.pk)):
+            os.remove(path)
+
+
+def process_shapefile_handler(tenant, layer_id, *args):
+    connection.close()
+    connection.set_schema(tenant)
+
+    layer = Layer.objects.get(pk=layer_id)
+    layer.status = 2
+    layer.save()
+
+
 def add(request):
     if request.method == 'POST':
         form = LayerForm(request.POST, request.FILES)
@@ -227,61 +294,20 @@ def add(request):
         if form.is_valid():
             l = form.save()
 
-            count = 0
-            try:
-                col = form.get_collection()
-                srs = to_string(form.layer_crs())
+            col = form.get_collection()
+            srs = to_string(form.layer_crs())
 
-                min_bounds = OGRGeometry(
-                    'POINT ({} {})'.format(col.bounds[0], col.bounds[1]),
-                    srs=srs
-                ).transform(4326, clone=True)
-                max_bounds = OGRGeometry(
-                    'POINT ({} {})'.format(col.bounds[2], col.bounds[3]),
-                    srs=srs
-                ).transform(4326, clone=True)
+            shape_path = "%s/uploads/shapefile/%s/%s.shp" % (settings.MEDIA_ROOT, request.tenant.schema_name, l.pk)
+            if not os.path.exists(os.path.dirname(shape_path)):
+                os.makedirs(os.path.dirname(shape_path))
+            with fiona.collection(shape_path, "w", schema=col.schema, crs=col.crs, driver="ESRI Shapefile") as out:
+                for f in col:
+                    out.write(f)
 
-                l.bounds = min_bounds.coords + max_bounds.coords
+            django_rq.enqueue(process_shapefile, request.tenant.schema_name, l.pk, srs)
 
-                features = []
-                for index, record in enumerate(col):
-                    try:
-                        geom = shape(record['geometry'])
-                        transformed_geom = OGRGeometry(geom.wkt, srs=srs).transform(3857, clone=True)
-                        properties = record['properties']
-                        properties['fid'] = index
-                        features.append(Feature(
-                            layer=l,
-                            geometry=GeometryCollection(transformed_geom.geos),
-                            properties=properties
-                        ))
-                        count += 1
-                    except Exception as e:
-                        print "Feature excepton", e
-
-                if count == 0:
-                    raise Exception("Layer needs to have at least one feature")
-
-                Feature.objects.bulk_create(features)
-
-                field_names = col.schema['properties'].keys()
-                field_names.append("fid")
-                l.field_names = field_names
-                l.properties = col.schema['properties']
-                l.status = 0
-                l.save()
-
-                messages.success(request, "Layer added.")
-                return redirect('layers:index')
-            except Exception as e:
-                print e
-                traceback.print_exc()
-                l.delete()
-                form.add_error(
-                    "vector_file",
-                    "Error on saving layer feature #{}".format(count)
-                )
-
+            messages.success(request, "Layer added.")
+            return redirect('layers:index')
         else:
             messages.error(request, "The layer could not be saved due to errors.")
     else:
