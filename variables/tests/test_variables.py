@@ -5,55 +5,91 @@ import pytest
 import mock
 import numpy as np
 import numpy.ma as ma
+import pandas
 
 from django.contrib.gis.geos import GEOSGeometry
+from django.core.exceptions import ObjectDoesNotExist
 
 from layers.models import Feature
 from variables.models import Variable
 
+
 def _scalar_val(val):
-    return {'values': val, 'spatial_key': [], 'temporal_key': []}
+    return val
+
+
+def _matrix_val(d):
+    return pandas.DataFrame(
+        data=d['values'],
+        index=d['spatial_key'],
+        columns=pandas.DatetimeIndex(d['temporal_key'], freq='D')
+    )
+
 
 spatial_key = [1, 2]
 temporal_key = [date(2010, 1, 1), date(2010, 1, 2)]
+spatial_key3 = [1, 2, 3]
+temporal_key3 = [date(2010, 1, 1), date(2010, 1, 2), date(2010, 1, 3)]
 
 
 def test_arithmetic_operators_scalar():
     v = Variable(tree=['+', [_scalar_val(1), _scalar_val(2)]])
-    assert v.data()['values'] == 3
+    assert v.data() == _scalar_val(3)
 
     v = Variable(tree=['+', [['+', [_scalar_val(1), _scalar_val(2)]], _scalar_val(3)]])
-    assert v.data()['values'] == 6
+    assert v.data() == _scalar_val(6)
 
     v = Variable(tree=['+', [_scalar_val(3), ['+', [_scalar_val(1), _scalar_val(2)]]]])
-    assert v.data()['values'] == 6
+    assert v.data() == _scalar_val(6)
 
     v = Variable(tree=['-', [['-', [_scalar_val(6), _scalar_val(2)]], _scalar_val(1)]])
-    assert v.data()['values'] == 3
+    assert v.data() == _scalar_val(3)
 
     v = Variable(tree=['*', [_scalar_val(3), ['*', [_scalar_val(1), _scalar_val(3)]]]])
-    assert v.data()['values'] == 9
+    assert v.data() == _scalar_val(9)
 
     v = Variable(tree=['/', [_scalar_val(3), _scalar_val(1)]])
-    assert v.data()['values'] == 3
+    assert v.data() == _scalar_val(3)
 
 
 def test_arithmetic_operators_matrices():
     v = Variable(tree=['+', [
-            {'values': np.array([[1, 2], [3, 4]]), 'spatial_key': spatial_key, 'temporal_key': temporal_key},
-            {'values': np.array([[2, 3], [4, 5]]), 'spatial_key': spatial_key, 'temporal_key': temporal_key}
+        _matrix_val({
+            'values': np.array([[1, 2], [3, 4]]),
+            'spatial_key': spatial_key,
+            'temporal_key': temporal_key
+        }),
+        _matrix_val({
+            'values': np.array([[2, 3], [4, 5]]),
+            'spatial_key': spatial_key,
+            'temporal_key': temporal_key
+        })
     ]])
-    np.testing.assert_array_equal(v.data()['values'], np.array([[3, 5], [7, 9]]))
+    np.testing.assert_array_equal(
+        v.data().values, np.array([[3, 5], [7, 9]])
+    )
 
     v = Variable(tree=['+', [
-            {'values': np.array([[1, 2], [3, 4]]), 'spatial_key': spatial_key, 'temporal_key': temporal_key},
-            _scalar_val(2)
+        _matrix_val({
+            'values': np.array([[1, 2], [3, 4]]),
+            'spatial_key': spatial_key,
+            'temporal_key': temporal_key
+        }),
+        _scalar_val(2)
     ]])
-    np.testing.assert_array_equal(v.data()['values'], np.array([[3, 4], [5, 6]]))
+    np.testing.assert_array_equal(v.data().values, np.array([[3, 4], [5, 6]]))
 
     v = Variable(tree=['+', [
-        {'values': np.array([[1, 2], [3, 4]]), 'spatial_key': spatial_key, 'temporal_key': temporal_key},
-        {'values': np.array([[1, 2, 3], [4, 5, 6]]), 'spatial_key': spatial_key, 'temporal_key': temporal_key.append(date(2010, 1, 3))}
+        _matrix_val({
+            'values': np.array([[1, 2], [3, 4]]),
+            'spatial_key': spatial_key,
+            'temporal_key': temporal_key
+        }),
+        _matrix_val({
+            'values': np.array([[1, 2, 3], [4, 5, 6]]),
+            'spatial_key': spatial_key,
+            'temporal_key': temporal_key3
+        })
     ]])
     with pytest.raises(ValueError):
         v.data()
@@ -61,37 +97,65 @@ def test_arithmetic_operators_matrices():
 
 def test_mean_operator():
     v = Variable(tree=['mean', [
-        {'values': np.array([[1, 2], [3, 4]]), 'spatial_key': spatial_key, 'temporal_key': temporal_key},
-        {'values': np.array([[5, 6], [7, 8]]), 'spatial_key': spatial_key, 'temporal_key': temporal_key}
+        _matrix_val({
+            'values': np.array([[1, 2], [3, 4]]),
+            'spatial_key': spatial_key,
+            'temporal_key': temporal_key
+        }),
+        _matrix_val({
+            'values': np.array([[5, 6], [7, 8]]),
+            'spatial_key': spatial_key,
+            'temporal_key': temporal_key
+        })
     ]])
-    np.testing.assert_array_equal(v.data()['values'], np.array([[3, 4], [5, 6]]))
+    np.testing.assert_array_equal(v.data().values, np.array([[3, 4], [5, 6]]))
 
-    v = Variable(tree=['mean', [
-        {'values': np.array([[1, 2], [3, 4]]), 'spatial_key': spatial_key, 'temporal_key': temporal_key},
-        {'values': np.array([[1], [2]]), 'spatial_key': [1], 'temporal_key': [date(2010, 1, 1)]},
-    ]])
     with pytest.raises(ValueError):
+        v = Variable(tree=['mean', [
+            _matrix_val({
+                'values': np.array([[1, 2], [3, 4]]),
+                'spatial_key': spatial_key,
+                'temporal_key': temporal_key
+            }),
+            _matrix_val({
+                'values': np.array([[1], [2]]),
+                'spatial_key': [1],
+                'temporal_key': [date(2010, 1, 1)]
+            }),
+        ]])
         v.data()
 
 
 def test_spatial_mean_operator():
     v = Variable(tree=['smean', [
-        {'values': np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), 'spatial_key': spatial_key, 'temporal_key': temporal_key}
+        _matrix_val({
+            'values': np.array([
+                [1, 2, 3],
+                [4, 5, 6],
+                [7, 8, 9]
+            ]),
+            'spatial_key': spatial_key3,
+            'temporal_key': temporal_key3
+        })
     ]])
 
-    np.testing.assert_array_equal(v.data()['values'], np.array([[4, 5, 6]]))
+    np.testing.assert_array_equal(v.data().values, np.array([4, 5, 6]))
 
 
 def test_temporal_mean_operator():
     v = Variable(tree=['tmean', [
-        {
-            'values': np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]),
-            'spatial_key': spatial_key,
-            'temporal_key': temporal_key
-        }
+        _matrix_val({
+            'values': np.array([
+                [1, 2, 3],
+                [4, 5, 6],
+                [7, 8, 9]
+            ]),
+            'spatial_key': spatial_key3,
+            'temporal_key': temporal_key3
+        })
     ]])
 
-    np.testing.assert_array_equal(v.data()['values'], np.array([[2], [5], [8]]))
+    np.testing.assert_array_equal(v.data().values, np.array([2, 5, 8]))
 
 
 @pytest.mark.django_db
@@ -116,55 +180,56 @@ def test_select_join_operator(set_schema, monkeypatch):
         v = Variable(tree=[
             'select', [
                 ['join', [
-                    {'model': 'Layer', 'id': 1, 'field': 'fid'},
-                    {'model': 'Table', 'id': 1, 'field': 'fid'},
+                    {'type': 'Layer', 'id': 1, 'field': 'fid'},
+                    {'type': 'Table', 'id': 1, 'field': 'fid'},
                 ]],
                 'tmin',
             ]
         ])
 
-        values = v.data()['values']
-        np.testing.assert_array_equal(values, np.array([
+        data = v.data()
+
+        np.testing.assert_array_equal(data.values, np.array([
             [2, 5], [4, 8]
         ]))
 
         v = Variable(tree=[
             'select', [
                 ['join', [
-                    {'model': 'Layer', 'id': 1, 'field': 'fid'},
-                    {'model': 'Table', 'id': 1, 'field': 'fid'},
+                    {'type': 'Layer', 'id': 1, 'field': 'fid'},
+                    {'type': 'Table', 'id': 1, 'field': 'fid'},
                 ]],
                 'tmin'
             ]
         ])
-        np.testing.assert_array_equal(v.data()['values'], np.array([
+        np.testing.assert_array_equal(v.data().values, np.array([
             [2, 5], [4, 8]
         ]))
 
         v = Variable(tree=[
             'select', [
                 ['join', [
-                    {'model': 'Table', 'id': 1, 'field': 'fid'},
-                    {'model': 'Table', 'id': 2, 'field': 'fid'},
+                    {'type': 'Table', 'id': 1, 'field': 'fid'},
+                    {'type': 'Table', 'id': -1, 'field': 'fid'},
                 ]],
                 'test'
             ]
         ])
 
-        with pytest.raises(KeyError):
+        with pytest.raises(ObjectDoesNotExist):
             v.data()
 
         v = Variable(tree=[
             'select', [
                 ['join', [
-                    {'model': 'Layer', 'id': 1, 'field': 'fid'},
-                    {'model': 'Layer', 'id': 2, 'field': 'fid'},
+                    {'type': 'Layer', 'id': 1, 'field': 'fid'},
+                    {'type': 'Layer', 'name': "", 'field': 'fid'},
                 ]],
                 'test'
             ]
         ])
 
-        with pytest.raises(KeyError):
+        with pytest.raises(ObjectDoesNotExist):
             v.data()
 
 
@@ -181,38 +246,38 @@ def test_join_operator(set_schema, monkeypatch):
         ]
 
         v = Variable(tree=['join', [
-            {'model': 'Layer', 'id': 1, 'name': 'cnty24k97', 'field': 'fid'},
-            {'model': 'Table', 'id': 1, 'name': 'cnty24k97_data', 'field': 'fid'},
+            {'type': 'Layer', 'id': 1, 'name': 'cnty24k97', 'field': 'fid'},
+            {'type': 'Table', 'id': 1, 'name': 'cnty24k97_data', 'field': 'fid'},
             'tmin'
         ]])
 
-        np.testing.assert_array_equal(v.data()['values'], np.array([
+        np.testing.assert_array_equal(v.data().values, np.array([
             [2, 5], [4, 8]
         ]))
 
         v = Variable(tree=['join', [
-            {'model': 'Table', 'id': 1, 'name': 'cnty24k97_data', 'field': 'fid'},
-            {'model': 'Layer', 'id': 1, 'name': 'cnty24k97', 'field': 'fid'},
+            {'type': 'Table', 'id': 1, 'name': 'cnty24k97_data', 'field': 'fid'},
+            {'type': 'Layer', 'id': 1, 'name': 'cnty24k97', 'field': 'fid'},
             'tmin'
         ]])
 
-        np.testing.assert_array_equal(v.data()['values'], np.array([
+        np.testing.assert_array_equal(v.data().values, np.array([
             [2, 5], [4, 8]
         ]))
 
         # THIS JOIN only works between tables and layers
 
         v = Variable(tree=['join', [
-            {'model': 'Table', 'id': 1, 'field': 'fid'},
-            {'model': 'Table', 'id': 1, 'field': 'fid'},
+            {'type': 'Table', 'id': 1, 'field': 'fid'},
+            {'type': 'Table', 'id': 1, 'field': 'fid'},
             'test'
         ]])
         with pytest.raises(ValueError):
             v.data()
 
         v = Variable(tree=['join', [
-            {'model': 'Layer', 'id': 1, 'field': 'fid'},
-            {'model': 'Layer', 'id': 1, 'field': 'fid'},
+            {'type': 'Layer', 'id': 1, 'field': 'fid'},
+            {'type': 'Layer', 'id': 1, 'field': 'fid'},
             'test'
         ]])
         with pytest.raises(ValueError):
@@ -220,44 +285,61 @@ def test_join_operator(set_schema, monkeypatch):
 
 
 def test_value_filter_operator():
-    test_matrix = {'values': np.array([[1, 2], [3, 4]]), 'spatial_key': spatial_key, 'temporal_key': temporal_key}
+    test_matrix = _matrix_val({
+        'values': np.array([[1, 2], [3, 4]]),
+        'spatial_key': spatial_key,
+        'temporal_key': temporal_key
+    })
 
     v = Variable(tree=['filter', [
         test_matrix, {'comparison': '>', 'comparator': 3}
     ]])
-    np.testing.assert_array_equal(v.data()['values'].mask, [[False, False], [False, True]])
+    np.testing.assert_array_equal(v.data().values, [
+        [float('nan'), float('nan')], [float('nan'), 4]
+    ])
 
     v = Variable(tree=['filter', [
         test_matrix, {'comparison': '>=', 'comparator': 3}
     ]])
-    np.testing.assert_array_equal(v.data()['values'].mask, [[False, False], [True, True]])
+    np.testing.assert_array_equal(v.data().values, [
+        [float('nan'), float('nan')], [3, 4]
+    ])
 
     v = Variable(tree=['filter', [
         test_matrix, {'comparison': '<', 'comparator': 3}
     ]])
-    np.testing.assert_array_equal(v.data()['values'].mask, [[True, True], [False, False]])
+    np.testing.assert_array_equal(v.data().values, [
+        [1, 2], [float('nan'), float('nan')]
+    ])
 
     v = Variable(tree=['filter', [
         test_matrix, {'comparison': '<=', 'comparator': 3}
     ]])
-    np.testing.assert_array_equal(v.data()['values'].mask, [[True, True], [True, False]])
+    np.testing.assert_array_equal(v.data().values, [
+        [1, 2], [3, float('nan')]
+    ])
 
     v = Variable(tree=['filter', [
         test_matrix, {'comparison': '==', 'comparator': 3}
     ]])
-    np.testing.assert_array_equal(v.data()['values'].mask, [[False, False], [True, False]])
+    np.testing.assert_array_equal(v.data().values, [
+        [float('nan'), float('nan')], [3, float('nan')]
+    ])
 
-    masked_matrix = {
-        'values': ma.array([[1, 2], [3, 4]], mask=[[False, False], [True, False]]),
+    masked_matrix = _matrix_val({
+        'values': ma.array([[float('nan'), float('nan')], [3, float('nan')]]),
         'spatial_key': spatial_key,
         'temporal_key': temporal_key
-    }
+    })
     v = Variable(tree=['filter', [
         masked_matrix, {'comparison': '==', 'comparator': 2}
     ]])
-    np.testing.assert_array_equal(v.data()['values'].mask, [[False, True], [True, False]])
+    np.testing.assert_array_equal(v.data().values, [
+        [float('nan'), float('nan')], [float('nan'), float('nan')]
+    ])
 
 
+@pytest.mark.skip('not needed functionality for now')
 def test_spatial_filter():
     f1 = Feature()
     f2 = Feature()
@@ -265,12 +347,19 @@ def test_spatial_filter():
     f2.geometry = GEOSGeometry('GEOMETRYCOLLECTION(POLYGON(( 1 1, 1 2, 2 2, 2 1, 1 1)))')
 
     v = Variable(tree=['sfilter', [
-        {'values': np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), 'spatial_key': [f1, f2], 'temporal_key': []},
+        {
+            'values': np.array([
+                [1, 2, 3, 4],
+                [5, 6, 7, 8]
+            ]),
+            'spatial_key': [f1, f2],
+            'temporal_key': []
+        },
         {'filter_type': 'inclusive', 'containing_geometries': [
             GEOSGeometry('GEOMETRYCOLLECTION(POLYGON(( 10 10, 10 20, 20 20, 20 15, 10 10 )))')
         ]}
     ]])
-    np.testing.assert_array_equal(v.data()['values'], [[1, 2, 3, 4]])
+    np.testing.assert_array_equal(v.data().values, [[1, 2, 3, 4]])
 
     v = Variable(tree=['sfilter', [
         {'values': np.array([[1, 2, 3, 4], [5, 6, 7, 8]]), 'spatial_key': [f1, f2], 'temporal_key': []},
@@ -278,50 +367,50 @@ def test_spatial_filter():
             GEOSGeometry('GEOMETRYCOLLECTION(POLYGON(( 10 10, 10 20, 20 20, 20 15, 10 10 )))')
         ]}
     ]])
-    np.testing.assert_array_equal(v.data()['values'], [[5, 6, 7, 8]])
+    np.testing.assert_array_equal(v.data().values, [[5, 6, 7, 8]])
 
 
 def test_temporal_filter_operator():
-    v = Variable(tree=['tfilter', [
-        {
-            'values': np.array([[1, 2, 3, 4, 5, 6, 7, 8], [1, 2, 3, 4, 5, 6, 7, 8]]),
-            'spatial_key': [],
-            'temporal_key': [
-                DateRange(date(2010, 1, 1), date(2010, 1, 1)),
-                DateRange(date(2010, 2, 1), date(2010, 2, 1)),
-                DateRange(date(2010, 3, 1), date(2010, 3, 1)),
-                DateRange(date(2010, 4, 1), date(2010, 4, 1)),
-                DateRange(date(2010, 5, 1), date(2010, 5, 1)),
-                DateRange(date(2010, 6, 1), date(2010, 6, 1)),
-                DateRange(date(2010, 7, 1), date(2010, 7, 1)),
-                DateRange(date(2010, 8, 1), date(2010, 8, 1))
-            ]
-        },
-        {'filter_type': 'inclusive', 'date_ranges': [
-            {'start': '2010-02-01', 'end': '2010-04-01'},
-            {'start': '2010-06-01', 'end': '2010-08-01'},
-        ]}
-    ]])
-    np.testing.assert_array_equal(v.data()['values'], [[2, 3, 4, 6, 7, 8], [2, 3, 4, 6, 7, 8]])
+    twobyeight = _matrix_val({
+        'values': np.array([
+            [1, 2, 3, 4, 5, 6, 7, 8],
+            [1, 2, 3, 4, 5, 6, 7, 8]
+        ]),
+        'spatial_key': [1, 2],
+        'temporal_key': [
+            date(2010, 1, 1),
+            date(2010, 2, 1),
+            date(2010, 3, 1),
+            date(2010, 4, 1),
+            date(2010, 5, 1),
+            date(2010, 6, 1),
+            date(2010, 7, 1),
+            date(2010, 8, 1),
+        ]
+    })
 
-    v = Variable(tree=['tfilter', [
-        {
-            'values': np.array([[1, 2, 3, 4, 5, 6, 7, 8], [1, 2, 3, 4, 5, 6, 7, 8]]),
-            'spatial_key': [],
-            'temporal_key': [
-                DateRange(date(2010, 1, 1), date(2010, 1, 1)),
-                DateRange(date(2010, 2, 1), date(2010, 2, 1)),
-                DateRange(date(2010, 3, 1), date(2010, 3, 1)),
-                DateRange(date(2010, 4, 1), date(2010, 4, 1)),
-                DateRange(date(2010, 5, 1), date(2010, 5, 1)),
-                DateRange(date(2010, 6, 1), date(2010, 6, 1)),
-                DateRange(date(2010, 7, 1), date(2010, 7, 1)),
-                DateRange(date(2010, 8, 1), date(2010, 8, 1))
-            ]
-        },
-        {'filter_type': 'exclusive', 'date_ranges': [
+    v = Variable(tree=['tfilter', [twobyeight, {
+        'filter_type': 'inclusive', 'date_ranges': [
             {'start': '2010-02-01', 'end': '2010-04-01'},
             {'start': '2010-06-01', 'end': '2010-08-01'},
-        ]}
-    ]])
-    np.testing.assert_array_equal(v.data()['values'], [[1, 5], [1, 5]])
+        ]
+    }]])
+
+    np.testing.assert_array_equal(
+        v.data().values,
+        [
+            [2, 3, 4, 6, 7, 8],
+            [2, 3, 4, 6, 7, 8]
+        ]
+    )
+
+    v = Variable(tree=['tfilter', [twobyeight, {
+        'filter_type': 'exclusive', 'date_ranges': [
+            {'start': '2010-02-01', 'end': '2010-04-01'},
+            {'start': '2010-06-01', 'end': '2010-08-01'},
+        ]
+    }]])
+    np.testing.assert_array_equal(v.data().values, [
+        [1, 5],
+        [1, 5]
+    ])

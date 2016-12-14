@@ -4,12 +4,14 @@ from datetime import datetime
 
 import numpy as np
 import numpy.ma as ma
+import pandas
 
 from django.db import models
 from django.contrib.postgres.fields import ArrayField, JSONField
 
 from data import DataSource
 import json
+import operator
 
 
 class Variable(models.Model):
@@ -69,7 +71,9 @@ class Variable(models.Model):
         resolved_args = []
         for arg in args:
             if type(arg) == list:
-                resolved_args.append(self.resolve_operator(arg[0])(*arg[1]))
+                resolved_args.append(
+                    self.resolve_operator(arg[0])(*arg[1])
+                )
             else:
                 resolved_args.append(arg)
 
@@ -78,56 +82,22 @@ class Variable(models.Model):
     def IterativeOperator(self, func):
         def f(left, right):
             left_val, right_val = self.resolve_arguments(left, right)
+            return func(left_val, right_val)
 
-            if (
-                type(left_val['values']) == np.ndarray and
-                type(right_val['values']) == np.ndarray and
-                left_val['values'].shape != right_val['values'].shape
-            ):
-                raise ValueError("Arguments must be of equal dimensions")
-
-            values = func(left_val['values'], right_val['values'])
-            return {
-                'values': values,
-                'spatial_key': left_val['spatial_key'],
-                'temporal_key': left_val['temporal_key']
-            }  # Left and right keys are identical
         return f
 
     def MeanOperator(self, left, right):
         left_val, right_val = self.resolve_arguments(left, right)
-
-        if left_val['values'].shape != right_val['values'].shape:
-            raise ValueError("Arguments must be of equal dimensions")
-
-        values = np.mean([left_val['values'], right_val['values']], axis=0)
-        return {
-            'values': values,
-            'spatial_key': left_val['spatial_key'],
-            'temporal_key': left_val['temporal_key']
-        }  # Left and right keys are identical
+        values = (left_val + right_val) / 2
+        return values
 
     def SpatialMeanOperator(self, val):
         (val,) = self.resolve_arguments(val)
-
-        mean_vals = np.mean(val['values'], axis=0)
-
-        return {
-            'values': mean_vals.reshape(1, len(mean_vals)),
-            'spatial_key': [],
-            'temporal_key': val['temporal_key']
-        }
+        return val.mean(axis=0)
 
     def TemporalMeanOperator(self, val):
         (val,) = self.resolve_arguments(val)
-
-        mean_vals = np.mean(val['values'], axis=1)
-
-        return {
-            'values': mean_vals.reshape(len(mean_vals), 1),
-            'spatial_key': val['spatial_key'],
-            'temporal_key': []
-        }
+        return val.mean(axis=1)
 
     def SpatialFilterOperator(self, val, filter_):
         '''
@@ -169,31 +139,24 @@ class Variable(models.Model):
         '''
         (val,) = self.resolve_arguments(val)
 
-        indices_to_delete = set()
-        for i, a_date_range in enumerate(val['temporal_key']):
-            in_range = False
-            for b_date_range in filter_['date_ranges']:
-                start = datetime.strptime(b_date_range['start'], "%Y-%m-%d").date()
-                end = datetime.strptime(b_date_range['end'], "%Y-%m-%d").date()
-                start = max(start, a_date_range.lower)
-                end = min(end, a_date_range.upper)
-                if ((end - start).days + 1) > 0:
-                    in_range = True
-                    break
+        ranges = filter_['date_ranges']
 
-            if filter_['filter_type'] == 'inclusive' and not in_range:
-                indices_to_delete.add(i)
-            elif filter_['filter_type'] == 'exclusive' and in_range:
-                indices_to_delete.add(i)
+        if filter_['filter_type'] == 'inclusive':
+            comps = map(
+                lambda r: (val.columns >= r['start']) & (val.columns <= r['end']),
+                ranges
+            )
+            cols = reduce(operator.__or__, comps)
+            return val.iloc[:,cols]
+        elif filter_['filter_type'] == 'exclusive':
+            comps = map(
+                lambda r: (val.columns < r['start']) | (val.columns > r['end']),
+                ranges
+            )
+            cols = reduce(operator.__and__, comps)
+            return val.iloc[:,cols]
 
-        print indices_to_delete
-        values = np.delete(val['values'], list(indices_to_delete), 1)
-        temporal_key = list(np.delete(val['temporal_key'], list(indices_to_delete)))
-        return {
-            'values': values,
-            'spatial_key': val['spatial_key'],
-            'temporal_key': temporal_key
-        }
+        raise ValueError('Invalid filter type {}'.format(filter_['filter_type']))
 
     def ValueFilterOperator(self, val, filter_):
         '''
@@ -204,35 +167,20 @@ class Variable(models.Model):
         }`
         '''
         (val,) = self.resolve_arguments(val)
-        if hasattr(val['values'], 'mask'):
-            data = val['values'].data
-        else:
-            data = val['values']
 
         if filter_['comparison'] == '<':
-            mask = data < filter_['comparator']
+            return val.where(val < filter_['comparator'])
         elif filter_['comparison'] == '<=':
-            mask = data <= filter_['comparator']
+            return val.where(val <= filter_['comparator'])
         elif filter_['comparison'] == '==':
-            mask = data == filter_['comparator']
+            return val.where(val == filter_['comparator'])
         elif filter_['comparison'] == '>=':
-            mask = data >= filter_['comparator']
+            return val.where(val >= filter_['comparator'])
         elif filter_['comparison'] == '>':
-            mask = data > filter_['comparator']
+            return val.where(val > filter_['comparator'])
 
-        if hasattr(val['values'], 'mask'):
-            val['values'].mask = np.bitwise_or(val['values'].mask, mask)
-            return {
-                'values': val['values'],
-                'spatial_key': val['spatial_key'],
-                'temporal_key': val['temporal_key']
-            }
-        else:
-            return {
-                'values': ma.masked_array(val['values'], mask=mask),
-                'spatial_key': val['spatial_key'],
-                'temporal_key': val['temporal_key']
-            }
+        # Should not be ere
+        raise ValueError("Invalid comparator {}".format(filter_['comparator']))
 
     def SelectOperator(self, val, name):
         '''

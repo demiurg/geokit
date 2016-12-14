@@ -1,7 +1,20 @@
 import pytest
 import numpy as np
-
+from django.core.exceptions import ObjectDoesNotExist
 from variables.models import Variable
+
+
+@pytest.mark.django_db
+def test_abscent_source(set_schema):
+    v = Variable(tree=[
+        'join', [
+            {'type': 'Layer', 'id': 1, 'name': 'cnty_24k97', 'field': 'fid'},
+            {'type': 'Table', 'id': 1, 'name': 'cnty_24k97_data', 'field': 'fid'},
+        ]
+    ])
+
+    with pytest.raises(ObjectDoesNotExist):
+        v.data()
 
 
 @pytest.mark.django_db
@@ -9,8 +22,8 @@ def test_example_0_5_select(set_schema):
     tmin = Variable(tree=[
         'select', [
             ['join', [
-                {'type': 'Layer', 'id': 1, 'name': 'cnty24k97', 'field': 'fid'},
-                {'type': 'Table', 'id': 1, 'name': 'cnty24k97_data', 'field': 'fid'},
+                {'type': 'Layer', 'id': 1, 'name': 'cnty_24k97', 'field': 'fid'},
+                {'type': 'Table', 'id': 1, 'name': 'cnty_24k97_data', 'field': 'fid'},
             ]],
             'tmin'
         ]
@@ -18,8 +31,8 @@ def test_example_0_5_select(set_schema):
     tmax = Variable(tree=[
         'select', [
             ['join', [
-                {'type': 'Layer', 'id': 1, 'name': 'cnty24k97', 'field': 'fid'},
-                {'type': 'Table', 'id': 1, 'name': 'cnty24k97_data', 'field': 'fid'},
+                {'type': 'Layer', 'id': 1, 'name': 'cnty_24k97', 'field': 'fid'},
+                {'type': 'Table', 'id': 1, 'name': 'cnty_24k97_data', 'field': 'fid'},
             ]],
             'tmax'
         ]

@@ -5,6 +5,10 @@ from sortedcontainers import SortedDict, SortedSet
 import django.db
 from pandas.io import sql
 from pandas.io.sql import read_sql
+import pandas
+
+from geokit_tables.models import GeoKitTable
+from layers.models import Layer
 
 
 class DataSource(object):
@@ -15,9 +19,27 @@ class DataSource(object):
 
         for source in sources:
             if ('type' in source and source['type'] == 'Layer'):
+                # to check if exists
+                if 'id' in source:
+                    Layer.objects.get(id=int(source['id']))
+                elif 'name' in source:
+                    Layer.objects.get(name=source['name'])
+                else:
+                    raise KeyError("Source layer needs id or name")
+
                 self.layers.append(source)
             elif ('type' in source and source['type'] == 'Table'):
+                # to check if exists
+                if 'id' in source:
+                    GeoKitTable.objects.get(id=int(source['id']))
+                elif 'name' in source:
+                    GeoKitTable.objects.get(name=source['name'])
+                else:
+                    raise KeyError("Source table needs id or name")
+
                 self.tables.append(source)
+            else:
+                raise ValueError("Invalid data source type")
 
     def select(self, field):
         if type(field) == dict:
@@ -94,7 +116,8 @@ class DataSource(object):
         values = self.df.groupby(['feature_id'])[self.name].apply(list)
         # fix to values in future
         values = np.array(values.tolist(), dtype='float64')
-        return {
-            'values': values,
-            'temporal_key': t_key, 'spatial_key': s_key
-        }
+        return pandas.DataFrame(
+            data=values,
+            columns=t_key,
+            index=s_key
+        )
