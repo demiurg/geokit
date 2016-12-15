@@ -13,6 +13,7 @@ from models import GeoKitSite
 
 @ensure_csrf_cookie
 def index(request):
+    request.domain = request.META['HTTP_HOST'].replace('www.', '')
     if request.user.is_authenticated():
         sites = GeoKitSite.objects.filter(user=request.user)
 

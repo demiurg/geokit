@@ -16,17 +16,18 @@ a:hover, .listing .title h2 a:hover {
 .listing {
   color: #666666; }
 
+.listing .button-secondary {
+  background-color: #b49b9f; }
+
 form.status-tag:hover, a.status-tag:hover, a.status-tag.primary:hover {
   border-color: #b49b9f;
   color: #b49b9f; }
 
 input.button-secondary[type="submit"], input.button-secondary[type="reset"], input.button-secondary[type="button"], .button.button-secondary, button.button-secondary {
-  border-color: #70575b;
-  color: #70575b; }
+  color: #f0ece3; }
 
 input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"]:hover, input.button-secondary[type="button"]:hover, .button.button-secondary:hover, button.button-secondary:hover {
-  border-color: #70575b;
-  background-color: #b49b9f; }
+  background-color: #70575b; }
 
 .nav-wrapper .inner {
   background-color: #70575b; }
@@ -60,7 +61,7 @@ input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"
   background-color: #63645f; }
 
 .page-explorer .listing .index {
-  background-color: #7a7d7a; }
+  background-color: #9c9f9c; }
 
 .page-explorer .listing .index a.status-tag.primary {
   color: #70575b; }
@@ -78,7 +79,7 @@ input.button-secondary[type="submit"]:hover, input.button-secondary[type="reset"
   background-color: #e8ded1; }
 
 header, .tab-nav.merged {
-  background-color: #7a7d7a; }
+  background-color: #9c9f9c; }
 
 .tab-nav.merged li a {
   border-top-left-radius: 5px;
@@ -136,7 +137,7 @@ input[type="button"], .button, button, .btn, .btn-default, header .button, .drop
   border: 0;
   color: #EAE6E7; }
 
-input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .button:hover {
+input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .button:hover, .messages .success .button:hover {
   background-color: #5a4649;
   color: #EAE6E7; }
 
@@ -190,3 +191,25 @@ input[type="button"]:hover, .button:hover, button:hover, .btn:hover, header .but
 
 #submit-id-submit {
   width: auto; }
+
+input:focus, textarea:focus, select:focus, .richtext:focus, .tagit:focus {
+  background-color: #f6f8f6;
+  border-color: #bfc4bf; }
+
+.dropdown ul {
+  background-color: #5a4649; }
+
+.dropdown.open .dropdown-toggle, .dropdown.open .dropdown-toggle:hover {
+  background-color: #5a4649; }
+
+.messages .success {
+  background-color: #8e9f8e; }
+
+.stream-menu button {
+  outline: #9c9f9c; }
+
+.stream-menu button:hover, .stream-menu button:focus {
+  background-color: #9c9f9c; }
+
+.stream-menu.stream-menu-closed .toggle:focus {
+  color: #9c9f9c; }

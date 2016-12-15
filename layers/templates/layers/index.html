@@ -27,23 +27,45 @@
                 <tr>
                     <td class="title">
                         <h2>
+                            {% if layer.status == 0 %}
                             <a href="{% url 'layers:edit' layer.pk %}">{{ layer.name }}</a>
+                            {% else %}
+                            {{ layer.name }}
+                            {% endif %}
                         </h2>
                     </td>
-                    <td>{{ layer.bounds|join:", " }}</td>
-                    <td class="properties">
-                        {{ layer.field_names|join:", " }}
-                    </td>
-                    <td>{{ layer.feature_set.all.count }}</td>
                     <td>
+                        {% if layer.status == 0 %}
+                        {{ layer.bounds|join:", " }}
+                        {% endif %}
+                    </td>
+                    <td class="properties">
+                        {% if layer.status == 0 %}
+                        {{ layer.field_names|join:", " }}
+                        {% elif layer.status == 1 %}
+                        Processing...
+                        {% else %}
+                        Processing error
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if layer.status == 0 %}
+                        {{ layer.feature_set.all.count }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if layer.status == 0 %}
                         <div class="human-readable-date" title="{{ layer.created|date:"d M Y H:i" }}">
                         {{ layer.created|timesince }} ago
                         </div>
+                        {% endif %}
                     </td>
                     <td>
+                        {% if layer.status == 0 %}
                         <div class="human-readable-date" title="{{ layer.modified|date:"d M Y H:i" }}">
                         {{ layer.modified|timesince }} ago
                         </div>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}

@@ -22,7 +22,7 @@ class Command(BaseCommand):
         layer = Layer.objects.get(name='cnty_24k97')
         features = Feature.objects.filter(
             Q(layer=layer),
-            Q(properties__fid=24) | Q(properties__fid=35)
+            Q(properties__fid=34) | Q(properties__fid=35)
         )
 
         serialized_layer = serialize('json', [layer])

@@ -1,11 +1,12 @@
-import csv
 import datetime
+import os
 import six
-import re
 
-from django.db import transaction
+from django.conf import settings
+from django.db import connection, transaction
 from django.shortcuts import get_object_or_404, render, redirect
 
+import django_rq
 from rest_framework import viewsets
 from wagtail.wagtailadmin import messages
 
@@ -117,33 +118,74 @@ def get_daterange_partial(schema, row):
     return date_range
 
 
+def populate_table(tenant, table_id):
+    '''
+    To be run in rq worker.
+
+    Note: Since this is not called in a request/response context,
+    the schema needs to be set manually.
+    '''
+
+    # This is a bit of a hack that is needed when forking processes
+    # with a database connection. See: https://github.com/ui/django-rq/issues/123
+    connection.close()
+
+    connection.set_schema(tenant)
+
+    table = GeoKitTable.objects.get(pk=table_id)
+    csv_path = "%s/uploads/csv/%s/%s.csv" % (settings.MEDIA_ROOT, tenant, table_id)
+
+    try:
+        with open(csv_path, 'r') as csv_file:
+            with transaction.atomic():
+                csv_table = csvtable.Table.from_csv(
+                    csv_file,
+                    name=table.name,
+                )
+
+                table.schema = get_schema(csv_table)
+                table.field_names = csv_table.headers()
+                table.status = 0  # Good
+                table.save()
+
+                csv_data = get_data(csv_table)
+                get_daterange = get_daterange_partial(table.schema, csv_data[0])
+                records = []
+                for row in csv_data:
+                    date_range = get_daterange(row)
+                    records.append(Record(
+                        table=table, properties=row, date_range=date_range
+                    ))
+
+                Record.objects.bulk_create(records)
+    finally:
+        os.remove(csv_path)
+
+
+def populate_table_handler(tenant, table_id):
+    connection.close()
+    connection.set_schema(tenant)
+
+    table = GeoKitTable.objects.get(pk=table_id)
+    table.status = 2  # Bad
+    table.save()
+
+
 def add(request):
     if request.method == 'POST':
         form = GeoKitTableForm(request.POST, request.FILES)
 
         if form.is_valid():
-            with transaction.atomic():  # Don't want to save an incomplete table
-                t = form.save(commit=False)
+            t = form.save()
 
-                csv_table = csvtable.Table.from_csv(
-                    form.cleaned_data['csv_file'],
-                    name=t.name,
-                )
+            csv_path = "%s/uploads/csv/%s/%s.csv" % (settings.MEDIA_ROOT, request.tenant.schema_name, t.pk)
+            if not os.path.exists(os.path.dirname(csv_path)):
+                os.makedirs(os.path.dirname(csv_path))
+            with open(csv_path, 'w') as csv_out:
+                for chunk in form.cleaned_data['csv_file'].chunks():
+                    csv_out.write(chunk)
 
-                t.schema = get_schema(csv_table)
-                t.field_names = csv_table.headers()
-                t.save()
-
-                csv_data = get_data(csv_table)
-                get_daterange = get_daterange_partial(t.schema, csv_data[0])
-                records = []
-                for row in csv_data:
-                    date_range = get_daterange(row)
-                    records.append(Record(
-                        table=t, properties=row, date_range=date_range
-                    ))
-
-                Record.objects.bulk_create(records)
+            django_rq.enqueue(populate_table, request.tenant.schema_name, t.pk)
 
             messages.success(request, "Table '{0}' added.".format(t.name))
             return redirect('geokit_tables:index')
