@@ -1,5 +1,5 @@
 body {
-  background-color: rgb(245, 245, 245);
+  background-color: rgb(235, 235, 235);
 }
 
 a {
@@ -26,17 +26,22 @@ a:hover, a:focus, a:active {
 }
 
 .navbar {
-  background-color: rgb(112, 87, 91);
+  background-color: rgb(81, 81, 81);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
   margin-bottom: 0;
 }
 
-ul.dropdown-menu, li.open a, .navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:focus, .navbar-default .navbar-nav > .open > a:hover {
-  background-color: rgb(122, 125, 122);
+li.open a, .navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:focus, .navbar-default .navbar-nav > .open > a:hover {
+  background-color: rgb(80, 119, 150);
   box-shadow: none;
   border: 0;
 }
 
-.navbar-default .navbar-nav > li > a, .navbar-default .navbar-brand, ul.dropdown-menu, li.open a, .navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:focus, .navbar-default .navbar-nav > .open > a:hover {
+.dropdown-menu {
+  background-color: rgb(101, 149, 189);
+}
+
+.navbar-default .navbar-brand, .navbar-default .navbar-nav > li > a, ul.dropdown-menu, li.open a, .navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav > .open > a:focus, .navbar-default .navbar-nav > .open > a:hover {
   color: rgb(255, 255, 255);
 }
 
@@ -45,18 +50,18 @@ ul.dropdown-menu, li.open a, .navbar-default .navbar-nav > .open > a, .navbar-de
 }
 
 .navbar-default .navbar-brand:focus, .navbar-default .navbar-brand:hover, .navbar-default .navbar-nav > li > a:focus, .navbar-default .navbar-nav > li > a:hover {
-  background-color: rgb(92, 67, 71);
+  background-color: rgb(80, 119, 150);
+  transition: background-color 0.25s;
   color: rgb(255, 255, 255);
 }
 
 .dropdown-menu > li > a:hover {
-  background-color: rgb(102, 105, 102);
+  background-color: rgb(191, 192, 201);
   color: #ffffff;
 }
 
 .navbar-default {
   border-radius: 0;
-  border: 0;
 }
 
 .panel-geokit-site-menu {
@@ -69,8 +74,9 @@ ul.dropdown-menu, li.open a, .navbar-default .navbar-nav > .open > a, .navbar-de
 }
 
 .powered-by {
-  background-color: rgb(240, 236, 227);
-  border-bottom: 1px solid rgb(192, 167, 171);
+  background-color: rgb(211, 213, 223);
+  border-bottom: 0;
+  color: rgba(0, 0, 0, 0.50);
   padding: 5px 10px 5px 0;
   position: relative;
   z-index: 50;
@@ -122,4 +128,23 @@ h1 {
   float: left;
   margin-right: 8px;
   opacity: 0.7;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  color: rgba(255, 255, 255, 0.75);
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 60px;
+  background-color: rgb(237, 239, 250);
+}
+footer .container {
+  margin-top: 20px;
+}
+footer a {
+  color: rgba(255, 255, 255, 0.75);
+}
+footer a:hover, footer a:focus, footer a:active {
+  color: rgb(255, 255, 255);
 }
