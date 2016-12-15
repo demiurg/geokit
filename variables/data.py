@@ -61,7 +61,7 @@ class DataSource(object):
                 f_wheres.append("layer_id = '{}'".format(layer['id']))
 
             froms.append(
-                "(SELECT id as feature_id,  properties->>'{0}' as joiner "
+                "(SELECT id as feature_id,  properties->'{0}' as joiner "
                 "FROM {1}.layers_feature "
                 "WHERE {2!s}) f".format(
                     layer['field'],
@@ -79,7 +79,7 @@ class DataSource(object):
 
             froms.append(
                 "(SELECT id as record_id, date_range,"
-                " properties->>'{0}' as joiner, properties->>'{1}' as {1} "
+                " properties->'{0}' as joiner, properties->'{1}' as {1} "
                 "FROM {2!s}.geokit_tables_record "
                 "WHERE {3}) r".format(
                     table['field'],
@@ -97,27 +97,11 @@ class DataSource(object):
         cursor = django.db.connection.cursor()
         cursor.execute(query)
 
-        self.df = read_sql(
-            query,
-            django.db.connection,
-            index_col='date_range',
-            params=None
-        )
+        self.df = read_sql(query, django.db.connection)
 
         return self.df
 
     def variable(self):
-
-        if self.df.empty:  # did you find any data?
-            values, t_key, s_key = [[]], [], []
-
-        s_key = self.df['feature_id'].unique()
-        t_key = self.df.index.unique()
-        values = self.df.groupby(['feature_id'])[self.name].apply(list)
-        # fix to values in future
-        values = np.array(values.tolist(), dtype='float64')
-        return pandas.DataFrame(
-            data=values,
-            columns=t_key,
-            index=s_key
+        return self.df.pivot(
+            index='feature_id', columns='date_range', values=self.name
         )

@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 from datetime import datetime
+from psycopg2.extras import DateRange
 
 import numpy as np
 import numpy.ma as ma
@@ -139,22 +140,26 @@ class Variable(models.Model):
         '''
         (val,) = self.resolve_arguments(val)
 
-        ranges = filter_['date_ranges']
+        ranges = map(
+            lambda dr: DateRange(
+                datetime.strptime(dr['start'], '%Y-%m-%d').date(),
+                datetime.strptime(dr['end'], '%Y-%m-%d').date(),
+                bounds=dr.get('bounds', '[]')
+            ),
+            filter_['date_ranges']
+        )
 
-        if filter_['filter_type'] == 'inclusive':
-            comps = map(
-                lambda r: (val.columns >= r['start']) & (val.columns <= r['end']),
-                ranges
-            )
-            cols = reduce(operator.__or__, comps)
-            return val.iloc[:,cols]
-        elif filter_['filter_type'] == 'exclusive':
-            comps = map(
-                lambda r: (val.columns < r['start']) | (val.columns > r['end']),
-                ranges
-            )
-            cols = reduce(operator.__and__, comps)
-            return val.iloc[:,cols]
+        cols = map(
+            lambda c: (
+                bool(filter_['filter_type'] == 'inclusive') ==
+                # bool() == bool(), xor exclusive inverts the result
+                bool(any(c.lower in r or r.lower in c for r in ranges))
+                # any is lazy, using lower assumes bounds always start closed
+                # TODO: Improve bounds comparison to allow half open start
+            ),
+            val.columns
+        )
+        return val.iloc[:, cols]
 
         raise ValueError('Invalid filter type {}'.format(filter_['filter_type']))
 

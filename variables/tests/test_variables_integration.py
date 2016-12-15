@@ -8,8 +8,8 @@ from variables.models import Variable
 def test_abscent_source(set_schema):
     v = Variable(tree=[
         'join', [
-            {'type': 'Layer', 'id': 1, 'name': 'cnty_24k97', 'field': 'fid'},
-            {'type': 'Table', 'id': 1, 'name': 'cnty_24k97_data', 'field': 'fid'},
+            {'type': 'Layer', 'id': -1, 'name': 'cnty_24k97', 'field': 'fid'},
+            {'type': 'Table', 'id': -1, 'name': 'cnty_24k97_data', 'field': 'fid'},
         ]
     ])
 
@@ -56,8 +56,11 @@ def test_example_0_5_select(set_schema):
             }
         ]]
     )
+
+    print t_summer.data()
+
     t_norm_summer = Variable(tree=['tmean', [t_summer.data()]])
 
     np.testing.assert_array_equal(
-        t_norm_summer.data()['values'], np.array([[7.45], [17.7]])
+        t_norm_summer.data().values, np.array([[7.45], [17.7]])
     )

@@ -22,7 +22,7 @@
                 {"type": "Table", "id": 1, "name": "cnty24k97_data", "field": "fid"}
               ]],
               "tmax"
-            ]] 
+            ]]
           ]],
           {
             "filter_type": "inclusive",

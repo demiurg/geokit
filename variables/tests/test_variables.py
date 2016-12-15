@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from psycopg2.extras import DateRange
 
 import pytest
@@ -22,14 +22,21 @@ def _matrix_val(d):
     return pandas.DataFrame(
         data=d['values'],
         index=d['spatial_key'],
-        columns=pandas.DatetimeIndex(d['temporal_key'], freq='D')
+        columns=d['temporal_key']
     )
 
 
 spatial_key = [1, 2]
-temporal_key = [date(2010, 1, 1), date(2010, 1, 2)]
+temporal_key = [
+    DateRange(date(2010, 1, 1), date(2010, 1, 2)),
+    DateRange(date(2010, 1, 2), date(2010, 1, 3))
+]
 spatial_key3 = [1, 2, 3]
-temporal_key3 = [date(2010, 1, 1), date(2010, 1, 2), date(2010, 1, 3)]
+temporal_key3 = [
+    DateRange(date(2010, 1, 1), date(2010, 1, 2)),
+    DateRange(date(2010, 1, 2), date(2010, 1, 3)),
+    DateRange(date(2010, 1, 3), date(2010, 1, 4))
+]
 
 
 def test_arithmetic_operators_scalar():
@@ -160,14 +167,13 @@ def test_temporal_mean_operator():
 
 @pytest.mark.django_db
 def test_select_join_operator(set_schema, monkeypatch):
-    mockobj = mock.Mock(side_effect=KeyError('foo'))
     with mock.patch('django.db.connection') as connection:
         connection.schema_name = 'test'
         connection.cursor.return_value.description.__iter__.return_value = (
-            ( 'feature_id', 23, None, 4, None, None, None),
-            ( 'record_id', 23, None, 4, None, None, None),
-            ( 'date_range', 1082, None, 4, None, None, None),
-            ( 'tmin', 25, None, -1, None, None, None)
+            ('feature_id', 23, None, 4, None, None, None),
+            ('record_id', 23, None, 4, None, None, None),
+            ('date_range', 1082, None, 4, None, None, None),
+            ('tmin', 25, None, -1, None, None, None)
         )
 
         connection.cursor.return_value.fetchall.return_value = [
@@ -378,36 +384,33 @@ def test_temporal_filter_operator():
         ]),
         'spatial_key': [1, 2],
         'temporal_key': [
-            date(2010, 1, 1),
-            date(2010, 2, 1),
-            date(2010, 3, 1),
-            date(2010, 4, 1),
-            date(2010, 5, 1),
-            date(2010, 6, 1),
-            date(2010, 7, 1),
-            date(2010, 8, 1),
+            DateRange(date(2010, 1, 1), date(2010, 1, 2)),
+            DateRange(date(2010, 1, 2), date(2010, 1, 3)),
+            DateRange(date(2010, 1, 3), date(2010, 1, 4)),
+            DateRange(date(2010, 1, 4), date(2010, 1, 5)),
+            DateRange(date(2010, 1, 5), date(2010, 1, 6)),
+            DateRange(date(2010, 1, 6), date(2010, 1, 7)),
+            DateRange(date(2010, 1, 7), date(2010, 1, 8)),
+            DateRange(date(2010, 1, 8), date(2010, 1, 9)),
         ]
     })
 
     v = Variable(tree=['tfilter', [twobyeight, {
         'filter_type': 'inclusive', 'date_ranges': [
-            {'start': '2010-02-01', 'end': '2010-04-01'},
-            {'start': '2010-06-01', 'end': '2010-08-01'},
+            {'start': '2010-01-02', 'end': '2010-01-04'},
+            {'start': '2010-01-06', 'end': '2010-01-08'},
         ]
     }]])
 
-    np.testing.assert_array_equal(
-        v.data().values,
-        [
-            [2, 3, 4, 6, 7, 8],
-            [2, 3, 4, 6, 7, 8]
-        ]
-    )
+    np.testing.assert_array_equal(v.data().values,[
+        [2, 3, 4, 6, 7, 8],
+        [2, 3, 4, 6, 7, 8]
+    ])
 
     v = Variable(tree=['tfilter', [twobyeight, {
         'filter_type': 'exclusive', 'date_ranges': [
-            {'start': '2010-02-01', 'end': '2010-04-01'},
-            {'start': '2010-06-01', 'end': '2010-08-01'},
+            {'start': '2010-01-02', 'end': '2010-01-04'},
+            {'start': '2010-01-06', 'end': '2010-01-08'},
         ]
     }]])
     np.testing.assert_array_equal(v.data().values, [
