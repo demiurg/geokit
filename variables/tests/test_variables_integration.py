@@ -22,7 +22,7 @@ def test_example_0_5_select(set_schema):
     tmin = Variable(tree=[
         'select', [
             ['join', [
-                {'type': 'Layer', 'id': 1, 'name': 'cnty_24k97', 'field': 'fid'},
+                {'type': 'Layer', 'id': 26, 'name': 'cnty_24k97', 'field': 'fid'},
                 {'type': 'Table', 'id': 1, 'name': 'cnty_24k97_data', 'field': 'fid'},
             ]],
             'tmin'
@@ -31,7 +31,7 @@ def test_example_0_5_select(set_schema):
     tmax = Variable(tree=[
         'select', [
             ['join', [
-                {'type': 'Layer', 'id': 1, 'name': 'cnty_24k97', 'field': 'fid'},
+                {'type': 'Layer', 'id': 26, 'name': 'cnty_24k97', 'field': 'fid'},
                 {'type': 'Table', 'id': 1, 'name': 'cnty_24k97_data', 'field': 'fid'},
             ]],
             'tmax'
@@ -57,10 +57,10 @@ def test_example_0_5_select(set_schema):
         ]]
     )
 
-    print t_summer.data()
-
     t_norm_summer = Variable(tree=['tmean', [t_summer.data()]])
 
-    np.testing.assert_array_equal(
-        t_norm_summer.data().values, np.array([[7.45], [17.7]])
+    assert np.allclose(
+        t_norm_summer.data().values, [
+            14.188587, 22.986413
+        ]
     )
