@@ -2,20 +2,25 @@
 {% get_site_root as site_root %}
 
 
-<li class="dropdown">
-  <a href="#" class="dropdown-toggle tenant-navigation" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ request.tenant.name }} Navigation<span class="caret"></span></a>
+<ul class="nav navbar-nav navbar-right">
+  <li class="dropdown {% if menuitem.active %} active{% endif %}">
+    <a href="#" class="dropdown-toggle tenant-navigation" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">{{ request.tenant.name }} Navigation<span class="caret"></span></a>
   <ul class="dropdown-menu">
-    <li class="dropdown">
-      {% for menuitem in menuitems %}
-        <li{% if menuitem.active %} class="active"{% endif %}>
-          {% if menuitem.show_dropdown %}
-            {% if menuitem.active %}<a href="{% pageurl menuitem %}"><span class="glyphicon glyphicon-hand-right"></span> {% endif %}<a href="#">{{ menuitem.title }}</a>
-            {% menu_children parent=menuitem %}
-          {% else %}
-            {% if menuitem.active %}<a href="{% pageurl menuitem %}"><span class="glyphicon glyphicon-play"></span> &nbsp;{% endif %}{{ menuitem.title }}</a>
-          {% endif %}
-        </li>       
-      {% endfor %}
+  <li class="{% if menuitem.active %}active}{% endif %}">
+    <a href="{% pageurl site_root %}">Home</a>
+  </li>
+  {% for menuitem in menuitems %}
+    {% if forloop.first %}
+      <li role="separator" class="divider"></li>
+    {% endif %}
+    <li class="{% if menuitem.active %}active{% endif %}">
+      <a href="{% pageurl menuitem %}">{{ menuitem.title }}</a>
+      {% menu_children parent=menuitem %}
+    </li>
+    {% if forloop.revcounter0 > 0 %}
+      <li role="separator" class="divider"></li>
+    {% endif %}
+  {% endfor %}
     </li>
   </ul>
-</li>
+</ul>

@@ -55,9 +55,13 @@ li.open a, .navbar-default .navbar-nav > .open > a, .navbar-default .navbar-nav 
   color: rgb(255, 255, 255);
 }
 
+li.open a {
+  background-color: rgb(101, 149, 189);
+}
+
 .dropdown-menu > li > a:hover {
-  background-color: rgb(191, 192, 201);
-  color: #ffffff;
+  background-color: rgb(92, 135, 172);
+  color: rgb(255, 255, 255);
 }
 
 .navbar-default {
