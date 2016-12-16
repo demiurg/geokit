@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 from django.conf import settings
 from django.contrib.gis.geos import GeometryCollection, GEOSGeometry
 from django.contrib.gis.gdal import OGRGeometry
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.db import connection
 
 import django_rq
@@ -271,6 +271,7 @@ def process_shapefile(tenant, layer_id, srs):
             field_names.append("fid")
             l.field_names = field_names
             l.properties = collection.schema['properties']
+            l.schema = collection.schema
             l.status = 0
             l.save()
     finally:
@@ -362,6 +363,13 @@ def delete(request, layer_name):
 
     messages.success(request, _("Layer '{0}' deleted").format(layer_name))
     return redirect('layers:index')
+
+
+def generate_download(request, layer_id):
+    layer = get_object_or_404(Layer, pk=layer_id)
+
+    django_rq.enqueue(layer.export_to_file, request.tenant.schema_name)
+    return JsonResponse({})
 
 
 def bbox2wkt(bbox, srid=3857):
