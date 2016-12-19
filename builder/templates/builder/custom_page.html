@@ -1,10 +1,9 @@
 {% extends "base.html" %}
 
-{% load wagtailcore_tags %}
+{% load menu_tags wagtailcore_tags %}
 {% load wagtailimages_tags %}
 {% load geokit_blocks_tags %}
 {% load static from staticfiles %}
-{% load menu_tags %}
 
 {% block extra_js %}
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
@@ -27,6 +26,7 @@
 
 {% block bodyclass %}template-custompage{% endblock %}
 {% block content %}
+  {% get_site_root as site_root %}
   <nav class="navbar navbar-default">
     <div class="container-fluid">
       <!-- Brand and toggle get grouped for better mobile display -->
@@ -40,17 +40,15 @@
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="#">{{ request.tenant.name }}</a>
+        <a class="navbar-brand" href="{% pageurl site_root %}">{{ request.tenant.name }}</a>
       </div>
 
       <!-- Collect the nav links, forms, and other content for toggling -->
       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-        <ul class="nav navbar-nav navbar-right">
         {% block menu %}
           {% get_site_root as site_root %}
           {% menu parent=site_root calling_page=self %}
         {% endblock %}
-        </ul>
       </div><!-- /.navbar-collapse -->
     </div><!-- /.container-fluid -->
   </nav>

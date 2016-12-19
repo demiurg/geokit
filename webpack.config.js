@@ -3,7 +3,8 @@ var webpack = require('webpack');
 
 module.exports = {
     entry: {
-        block_components: './builder/static/js/components/block_components'
+        block_components: './builder/static/js/components/block_components',
+        admin_components: './builder/static/js/components/admin_components'
     },
     output: {
         path: path.join(__dirname, "static/js"),
