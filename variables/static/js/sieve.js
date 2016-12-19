@@ -2236,10 +2236,12 @@ var SelectForm = function (_React$Component8) {
     var property = null;
     if (this.state.select_variable) {
       if (this.state.select_variable[0] == 'join') {
-        var of_variable = function of_variable(item) {
-          return _this15.state.select_variable[1][0]['id'] == item['name'] || _this15.state.select_variable[1][1]['id'] == item['name'];
+        var of_variable = function of_variable(_type) {
+          return function (item) {
+            return _this15.state.select_variable[1][0]['type'] == _type && _this15.state.select_variable[1][0]['id'] == item['id'] || _this15.state.select_variable[1][1]['type'] == _type && _this15.state.select_variable[1][1]['id'] == item['id'];
+          };
         };
-        var options = this.props.layers.items.filter(of_variable).map(i2o('Layer')).concat(this.props.tables.items.filter(of_variable).map(i2o('Table')));
+        var options = this.props.layers.items.filter(of_variable('Layer')).map(i2o('Layer')).concat(this.props.tables.items.filter(of_variable('Table')).map(i2o('Table')));
         property = React.createElement(
           FormGroup,
           { controlId: "rightSelect" },

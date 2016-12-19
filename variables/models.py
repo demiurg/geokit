@@ -12,7 +12,6 @@ from django.contrib.postgres.fields import ArrayField, JSONField
 
 from data import DataSource
 import json
-import operator
 
 
 class Variable(models.Model):
@@ -25,6 +24,9 @@ class Variable(models.Model):
     units = models.CharField(max_length=100, null=True, blank=True)
     created = models.DateTimeField(auto_now_add=True, editable=False)
     modified = models.DateTimeField(auto_now=True)
+    status = models.IntegerField(
+        choices=((0, 'Good'), (1, 'Working'), (3, 'Bad')), default=1
+    )
 
     def __init__(self, *args, **kwargs):
         super(Variable, self).__init__(*args, **kwargs)

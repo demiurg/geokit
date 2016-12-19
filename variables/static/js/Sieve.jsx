@@ -661,14 +661,24 @@ class SelectForm extends React.Component {
     var property = null;
     if (this.state.select_variable){
       if (this.state.select_variable[0] == 'join') {
-        let of_variable = (item) => {
-          return this.state.select_variable[1][0]['id'] == item['name'] ||
-            this.state.select_variable[1][1]['id'] == item['name'];
+        let of_variable = (_type) => {
+          return (item) => {
+            return (
+              (
+                this.state.select_variable[1][0]['type'] == _type &&
+                this.state.select_variable[1][0]['id'] == item['id']
+              ) ||
+              (
+                this.state.select_variable[1][1]['type'] == _type &&
+                this.state.select_variable[1][1]['id'] == item['id']
+              )
+            );
+          }
         };
-        var options = this.props.layers.items.filter(of_variable).map(
+        var options = this.props.layers.items.filter(of_variable('Layer')).map(
           i2o('Layer')
         ).concat(
-          this.props.tables.items.filter(of_variable).map(i2o('Table'))
+          this.props.tables.items.filter(of_variable('Table')).map(i2o('Table'))
         );
         property = (
           <FormGroup controlId="rightSelect">
