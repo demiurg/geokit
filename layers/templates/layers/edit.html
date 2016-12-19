@@ -141,6 +141,7 @@
         $(document).ready(function(){
             var map = Map('map');
         });
+
     </script>
 {% endblock %}
 
@@ -158,7 +159,19 @@
             {% endfor %}
             <li><input type="submit" value="Save" /></li>
             <a href="{% url 'layers:delete' layer.pk %}" class="button button-secondary no">Delete layer</a></li>
+            {% if layer.layerfile.file %}
+            <a href="{{ layer.layerfile.file }}" class="button button-secondary">Download Layer</a>
+            {% else %}
+            <span id="layer-download"></span>
+            {% endif %}
         </ul>
     </form>
 </div>
+
+{% if not layer.layerfile.file %}
+<script src="/static/js/admin_components.js"></script>
+<script>
+    bindLayerDownload({{ layer.pk }}, document.getElementById('layer-download'));
+</script>
+{% endif %}
 {% endblock %}
