@@ -113,12 +113,12 @@ class VariableViewSet(viewsets.ModelViewSet):
 
         data = {'x': [], 'y': []}
 
-        rows, cols = evaluated_variable['values'].shape
+        rows, cols = evaluated_variable.values.shape
         if rows == 1:
             # Build timeseries
             data['type'] = 'timeseries'
             data['mode'] = 'lines'
-            for i, value in enumerate(evaluated_variable['values'][0]):
+            for i, value in enumerate(evaluated_variable.values[0]):
                 date = evaluated_variable['temporal_key'][i]
                 data['x'].append(date.strftime("%Y-%m-%d %H:%M:%S"))
                 data['y'].append(value)

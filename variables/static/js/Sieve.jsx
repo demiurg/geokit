@@ -732,6 +732,7 @@ class SieveComponent extends React.Component {
         return;
       }
       self.props.onSaveVariable({
+        id: self.props.id,
         name: self.props.name,
         tree: self.props.tree,
         input_variables: self.props.input_variables,

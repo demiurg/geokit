@@ -197,7 +197,7 @@ function saveVariable(variable, created){
     dispatch(postVariable());
 
     return $.ajax({
-      url: '/api/variables/' + (created ? variable.name + '/' : ''),
+      url: '/api/variables/' + (created ? variable.id + '/' : ''),
       dataType: 'json',
       cache: 'false',
       data: JSON.stringify(variable),

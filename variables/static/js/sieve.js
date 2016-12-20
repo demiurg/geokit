@@ -200,7 +200,7 @@ function saveVariable(variable, created) {
     dispatch(postVariable());
 
     return $.ajax({
-      url: '/api/variables/' + (created ? variable.name + '/' : ''),
+      url: '/api/variables/' + (created ? variable.id + '/' : ''),
       dataType: 'json',
       cache: 'false',
       data: JSON.stringify(variable),
@@ -2333,6 +2333,7 @@ var SieveComponent = function (_React$Component9) {
         return;
       }
       self.props.onSaveVariable({
+        id: self.props.id,
         name: self.props.name,
         tree: self.props.tree,
         input_variables: self.props.input_variables,
