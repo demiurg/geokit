@@ -1,11 +1,8 @@
-import React from 'react';
-
-
 const ASCENDING = true,
       DESCENDING = false;
 
 
-export default class Table extends React.Component {
+class Table extends React.Component {
     constructor(props) {
         super(props);
         this.state = {

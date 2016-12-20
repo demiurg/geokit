@@ -1,8 +1,6 @@
-import React from 'react';
-
 var d3 = Plotly.d3
 
-export default class Map extends React.Component {
+class Map extends React.Component {
     constructor(props) {
         super(props);
         this.state = {

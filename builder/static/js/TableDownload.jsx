@@ -1,10 +1,8 @@
-import React from 'react';
-
 var NOT_STARTED = 0,
     PROCESSING =1,
     READY = 2;
 
-export default class TableDownload extends React.Component {
+class TableDownload extends React.Component {
     constructor() {
         super();
 

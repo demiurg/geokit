@@ -6,16 +6,16 @@
   </div>
 </div>
 
-<script src="/static/js/block_components.js"></script>
 <script>
   bindMap({
       name: "{{ self.variable }}",
       id: {{ self.variable.pk }}
     },
     [
-      {% for color in self.color_ramp %}
+      //{% for color in self.color_ramp %}
       [{{ color.value }}, "{{ color.color }}"]{% if not forloop.last %},{% endif %}
-      {% endfor %}
+      //{% endfor %}
     ],
-    document.getElementById("map-{{ self.id }}"));
+    document.getElementById("map-{{ self.id }}")
+  );
 </script>

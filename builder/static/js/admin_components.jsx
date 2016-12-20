@@ -1,10 +1,3 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-
-import LayerDownload from './LayerDownload';
-import TableDownload from './TableDownload';
-
-
 function bindLayerDownload(layer, dom_element) {
     ReactDOM.render(<LayerDownload layer={layer} />, dom_element);
 }
