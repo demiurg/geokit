@@ -107,7 +107,7 @@ class VariableViewSet(viewsets.ModelViewSet):
     def graph_data(self, request, pk=None):
         variable = get_object_or_404(Variable, pk=pk)
 
-        return Response(self.graph_test_data())
+        #return Response(self.graph_test_data())
 
         evaluated_variable = variable.data()
 
@@ -152,13 +152,13 @@ class VariableViewSet(viewsets.ModelViewSet):
     def table_data(self, request, pk=None):
         variable = get_object_or_404(Variable, pk=pk)
 
-        return Response(self.table_test_data())
+        #return Response(self.table_test_data())
 
         evaluated_variable = variable.data()
 
         data = {}
 
-        rows, cols = evaluated_variable['values'].shape
+        rows, cols = evaluated_variable.values.shape
         if rows == 1:
             data['dimension'] = 'time'
             data['values'] = []
