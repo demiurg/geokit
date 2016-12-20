@@ -134,7 +134,7 @@ class VariableViewSet(viewsets.ModelViewSet):
             for i, value in enumerate(df.values):
                 f = [feature for feature in features if feature.pk == df.index[i]][0]
                 data['x'].append(f.verbose_name)
-                data['y'].append(value[0])
+                data['y'].append(value)
         elif data_dimension(df) == 'time':
             # Build timeseries
             data['type'] = 'timeseries'
