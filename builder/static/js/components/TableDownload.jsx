@@ -1,10 +1,10 @@
 import React from 'react';
 
 var NOT_STARTED = 0,
-    PROCESSING = 1,
+    PROCESSING =1,
     READY = 2;
 
-export default class LayerDownload extends React.Component {
+export default class TableDownload extends React.Component {
     constructor() {
         super();
 
@@ -21,13 +21,13 @@ export default class LayerDownload extends React.Component {
     }
 
     checkStatus() {
-        $.ajax('/api/layers/'+this.props.layer, {
+        $.ajax('/api/tables/'+this.props.table, {
             dataType: 'json',
             success: (data, status, xhr) => {
-                if (data.layer_file.file) {
+                if (data.table_file.file) {
                     this.setState({
                         download: READY,
-                        download_link: data.layer_file.file
+                        download_link: data.table_file.file
                     });
                 } else {
                     this.startPoll();
@@ -40,7 +40,7 @@ export default class LayerDownload extends React.Component {
     }
 
     requestDownload = () => {
-        $.ajax('/admin/layers/download/'+this.props.layer, {
+        $.ajax('/admin/tables/download/'+this.props.table, {
             dataType: 'json',
             success: (data, status, xhr) => {
                 this.setState({
@@ -60,8 +60,7 @@ export default class LayerDownload extends React.Component {
         } else if (this.state.download == PROCESSING) {
             return <a href="#" className="button button-secondary disabled">Layer Processing...</a>;
         } else {
-            console.log(this.state.download_link);
-            return <a href={this.state.download_link} className="button button-secondary">Download Layer</a>;
+            return <a href={this.state.download_link} className="button button-secondary">Download Table</a>;
         }
     }
 }

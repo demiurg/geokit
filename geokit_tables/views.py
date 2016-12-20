@@ -4,6 +4,7 @@ import six
 
 from django.conf import settings
 from django.db import connection, transaction
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 
 import django_rq
@@ -215,6 +216,13 @@ def edit(request, table_name):
         'table': table,
         'form': form
     })
+
+
+def generate_download(request, table_id):
+    table = get_object_or_404(GeoKitTable, pk=table_id)
+
+    django_rq.enqueue(table.export_to_file, request.tenant.schema_name)
+    return JsonResponse({})
 
 
 def delete(request, table_name):
