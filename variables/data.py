@@ -71,7 +71,7 @@ class DataSource(object):
             )
 
         if self.tables:
-            selects.append("record_id, date_range, {}".format(name))
+            selects.append('record_id, date_range, "{}"'.format(name))
 
             r_wheres = []
             for table in self.tables:
@@ -79,7 +79,7 @@ class DataSource(object):
 
             froms.append(
                 "(SELECT id as record_id, date_range,"
-                " properties->'{0}' as joiner, properties->'{1}' as {1} "
+                " properties->'{0}' as joiner, properties->'{1}' as \"{1}\" "
                 "FROM {2!s}.geokit_tables_record "
                 "WHERE {3}) r".format(
                     table['field'],
