@@ -1,11 +1,5 @@
-import numpy as np
-import sympy
-from sortedcontainers import SortedDict, SortedSet
-
 import django.db
-from pandas.io import sql
 from pandas.io.sql import read_sql
-import pandas
 
 from geokit_tables.models import GeoKitTable
 from layers.models import Layer
