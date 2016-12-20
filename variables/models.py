@@ -4,8 +4,6 @@ from datetime import datetime
 from psycopg2.extras import DateRange
 
 import numpy as np
-import numpy.ma as ma
-import pandas
 
 from django.db import models
 from django.contrib.postgres.fields import ArrayField, JSONField

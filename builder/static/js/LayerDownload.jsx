@@ -1,10 +1,8 @@
-import React from 'react';
-
 var NOT_STARTED = 0,
     PROCESSING = 1,
     READY = 2;
 
-export default class LayerDownload extends React.Component {
+class LayerDownload extends React.Component {
     constructor() {
         super();
 

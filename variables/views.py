@@ -1,9 +1,6 @@
-from datetime import datetime
-from dateutil.rrule import rrule, WEEKLY
-import json
-
 from django.core.serializers import serialize
 from django.shortcuts import get_object_or_404, render
+from django.core import serializers
 
 from rest_framework import viewsets, status
 from rest_framework.decorators import detail_route
@@ -13,8 +10,12 @@ from layers.models import Feature
 from variables.models import Variable
 from variables.serializers import VariableSerializer
 
+from datetime import datetime
+from dateutil.rrule import rrule, WEEKLY
+import json
 import random
-from django.core import serializers
+import numpy
+from psycopg2.extras import DateRange
 
 
 def index(request):
@@ -31,6 +32,15 @@ def edit(request, variable_id):
     return render(request, 'variables/sieve.html', {
         'variable': variable
     })
+
+
+def data_dimension(data):
+    if type(data.index[0]) in (int, numpy.int64, numpy.int32):
+        return 'space'
+    elif type(data.index[0]) is DateRange:
+        return 'time'
+    else:
+        raise TypeError(type(data.index[0]))
 
 
 class VariableViewSet(viewsets.ModelViewSet):
@@ -107,31 +117,32 @@ class VariableViewSet(viewsets.ModelViewSet):
     def graph_data(self, request, pk=None):
         variable = get_object_or_404(Variable, pk=pk)
 
-        return Response(self.graph_test_data())
+        #return Response(self.graph_test_data())
 
-        evaluated_variable = variable.data()
+        df = variable.data()
 
         data = {'x': [], 'y': []}
 
-        rows, cols = evaluated_variable.values.shape
-        if rows == 1:
-            # Build timeseries
-            data['type'] = 'timeseries'
-            data['mode'] = 'lines'
-            for i, value in enumerate(evaluated_variable.values[0]):
-                date = evaluated_variable['temporal_key'][i]
-                data['x'].append(date.strftime("%Y-%m-%d %H:%M:%S"))
-                data['y'].append(value)
-        elif cols == 1:
+        if data_dimension(df) == 'space':
             # Build scatterplot by location
-            features = list(Feature.objects.filter(pk__in=evaluated_variable['spatial_key']))
+            features = list(
+                Feature.objects.filter(pk__in=df.index).defer('geometry')
+            )
 
             data['type'] = 'scatter'
             data['mode'] = 'markers'
-            for i, value in enumerate(evaluated_variable['values']):
-                f = [feature for feature in features if feature.pk == evaluated_variable['spatial_key'][i]][0]
+            for i, value in enumerate(df.values):
+                f = [feature for feature in features if feature.pk == df.index[i]][0]
                 data['x'].append(f.verbose_name)
-                data['y'].append(value[0])
+                data['y'].append(value)
+        elif data_dimension(df) == 'time':
+            # Build timeseries
+            data['type'] = 'timeseries'
+            data['mode'] = 'lines'
+            for i, value in enumerate(df.values):
+                date = df.index[i].lower
+                data['x'].append(date.strftime("%Y-%m-%d %H:%M:%S"))
+                data['y'].append(value)
         else:
             data['invalid'] = True
 
@@ -152,26 +163,27 @@ class VariableViewSet(viewsets.ModelViewSet):
     def table_data(self, request, pk=None):
         variable = get_object_or_404(Variable, pk=pk)
 
-        return Response(self.table_test_data())
+        #return Response(self.table_test_data())
 
-        evaluated_variable = variable.data()
-
+        df = variable.data()
         data = {}
 
-        rows, cols = evaluated_variable['values'].shape
-        if rows == 1:
+        if data_dimension(df) == 'time':
             data['dimension'] = 'time'
             data['values'] = []
-            for i, value in enumerate(evaluated_variable['values'][0]):
-                date = evaluated_variable['temporal_key'][i]
+            for i, value in enumerate(df.values):
+                date = df.index[i].lower
                 data['values'].append({'date': date.strftime("%Y-%m-%d"), 'value': value})
-        elif cols == 1:
-            features = list(Feature.objects.filter(pk__in=evaluated_variable['spatial_key']))
+
+        elif data_dimension(df) == 'space':
+            features = list(
+                Feature.objects.filter(pk__in=df.index).defer('geometry')
+            )
 
             data['dimension'] = 'space'
             data['values'] = []
-            for i, value in enumerate(evaluated_variable['values'][0]):
-                f = [feature for feature in features if feature.pk == evaluated_variable['spatial_key'][i]][0]
+            for i, value in enumerate(df.values):
+                f = [feature for feature in features if feature.pk == df.index[i]][0]
                 data['values'].append({'feature': f.verbose_name, 'value': value})
         else:
             # Can't handle this presently...
