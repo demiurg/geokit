@@ -60,7 +60,7 @@ class DataSource(object):
                 "WHERE {2!s}) f".format(
                     layer['field'],
                     django.db.connection.schema_name,
-                    "AND".join(f_wheres),
+                    " AND ".join(f_wheres),
                 )
             )
 
@@ -79,7 +79,7 @@ class DataSource(object):
                     table['field'],
                     name,
                     django.db.connection.schema_name,
-                    "AND".join(r_wheres),
+                    " AND ".join(r_wheres),
                 )
             )
 
