@@ -15,7 +15,19 @@
             {% endfor %}
             <li><input type="submit" value="Save" /></li>
             <a href="{% url 'geokit_tables:delete' table.pk %}" class="button button-secondary no">Delete table</a>
+            {% if table.geokittablefile.file %}
+            <a href="{{ table.geokittablefile.file }}" class="button button-secondary">Download Table</a>
+            {% else %}
+            <span id="table-download"></span>
+            {% endif %}
         </ul>
     </form>
 </div>
+
+{% if not table.geokittablefile.file %}
+<script src="/static/js/admin_components.js"></script>
+<script>
+    bindTableDownload({{ table.pk }}, document.getElementById('table-download'));
+</script>
+{% endif %}
 {% endblock %}

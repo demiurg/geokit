@@ -1,6 +1,10 @@
 from __future__ import unicode_literals
 
-from django.db import models
+import csv
+import os
+
+from django.db import connection, IntegrityError, models
+from django.conf import settings
 from django.contrib.postgres.fields import DateRangeField, JSONField, ArrayField
 
 
@@ -19,8 +23,46 @@ class GeoKitTable(models.Model):
         choices=((0, 'Good'), (1, 'Working'), (3, 'Bad')), default=1
     )
 
+    def export_to_file(self, tenant):
+        connection.close()
+        connection.set_schema(tenant)
+
+        try:
+            table_file = GeoKitTableFile(table=self)
+            table_file.save()
+
+            path = "%s/downloads/csv/%s/%s" % (
+                settings.MEDIA_ROOT, tenant, self.pk
+            )
+
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
+
+            with open(path + '.csv', 'w') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=self.field_names)
+
+                writer.writeheader()
+                for r in self.record_set.all():
+                    writer.writerow(r.properties)
+
+            table_file.file = "downloads/csv/%s/%s.csv" % (tenant, self.pk)
+            table_file.save()
+
+        except IntegrityError:
+            # Race condition where two requests for a GeoKitTable
+            # occur at the same time.
+            pass
+
     def __unicode__(self):
         return self.name
+
+
+class GeoKitTableFile(models.Model):
+    table = models.OneToOneField(GeoKitTable)
+    file = models.FileField(null=True, blank=True)
+
+    def __unicode__(self):
+        return unicode(self.pk)
 
 
 class Record(models.Model):
