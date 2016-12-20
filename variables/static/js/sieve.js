@@ -1420,7 +1420,7 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
 var DropdownComponent = function DropdownComponent(_ref) {
   var things = _ref.things;
   var onclick = _ref.onclick;
-  return(
+  return (
     // TODO something different when layers.isFetching
 
     React.createElement(
