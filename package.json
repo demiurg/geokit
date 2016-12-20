@@ -23,6 +23,8 @@
     "test": "mocha --compilers js:babel-core/register --recursive",
     "test:watch": "npm run test -- --watch",
     "build": "babel variables/static/js/*.jsx --out-file variables/static/js/sieve.js --source-maps",
+    "build_sieve": "babel variables/static/js/*.jsx --out-file variables/static/js/sieve.js --source-maps",
+    "build_builder": "babel builder/static/js/*.jsx --out-file variables/static/js/builder.js --source-maps",
     "webpack": "webpack"
   },
   "repository": {
