@@ -14,7 +14,9 @@ class Command(BaseCommand):
             "Assumes `cnty_24k97` layer has been loaded.")
 
     def add_arguments(self, parser):
-        parser.add_argument('schema', type=str, help='Schema to pull test data from.')
+        parser.add_argument(
+            'schema', type=str, help='Schema to pull test data from.'
+        )
 
     def handle(self, *args, **options):
         connection.set_schema(options['schema'])
@@ -33,5 +35,11 @@ class Command(BaseCommand):
 
         fixtures = layer_list + features_list
 
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../../fixtures/layers_fixtures.json'), 'w') as outfile:
-            json.dump(fixtures, outfile)
+        with open(
+            os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                '../../fixtures/layers_fixtures.json'
+            ),
+            'w'
+        ) as outfile:
+            json.dump(fixtures, outfile, sort_keys=True, indent=4)

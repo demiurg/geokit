@@ -23,7 +23,7 @@ def test_example_0_5_select(set_schema):
         'select', [
             ['join', [
                 {'type': 'Layer', 'id': 26, 'name': 'cnty_24k97', 'field': 'fid'},
-                {'type': 'Table', 'id': 1, 'name': 'cnty_24k97_data', 'field': 'fid'},
+                {'type': 'Table', 'id': 30, 'name': 'cnty_24k97_data', 'field': 'fid'},
             ]],
             'tmin'
         ]
@@ -32,7 +32,7 @@ def test_example_0_5_select(set_schema):
         'select', [
             ['join', [
                 {'type': 'Layer', 'id': 26, 'name': 'cnty_24k97', 'field': 'fid'},
-                {'type': 'Table', 'id': 1, 'name': 'cnty_24k97_data', 'field': 'fid'},
+                {'type': 'Table', 'id': 30, 'name': 'cnty_24k97_data', 'field': 'fid'},
             ]],
             'tmax'
         ]

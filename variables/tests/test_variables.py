@@ -186,8 +186,8 @@ def test_select_join_operator(set_schema, monkeypatch):
         v = Variable(tree=[
             'select', [
                 ['join', [
-                    {'type': 'Layer', 'id': 1, 'field': 'fid'},
-                    {'type': 'Table', 'id': 1, 'field': 'fid'},
+                    {'type': 'Layer', 'id': 26, 'field': 'fid'},
+                    {'type': 'Table', 'id': 30, 'field': 'fid'},
                 ]],
                 'tmin',
             ]
@@ -202,8 +202,8 @@ def test_select_join_operator(set_schema, monkeypatch):
         v = Variable(tree=[
             'select', [
                 ['join', [
-                    {'type': 'Layer', 'id': 1, 'field': 'fid'},
-                    {'type': 'Table', 'id': 1, 'field': 'fid'},
+                    {'type': 'Layer', 'id': 26, 'field': 'fid'},
+                    {'type': 'Table', 'id': 30, 'field': 'fid'},
                 ]],
                 'tmin'
             ]
@@ -215,7 +215,7 @@ def test_select_join_operator(set_schema, monkeypatch):
         v = Variable(tree=[
             'select', [
                 ['join', [
-                    {'type': 'Table', 'id': 1, 'field': 'fid'},
+                    {'type': 'Table', 'id': 26, 'field': 'fid'},
                     {'type': 'Table', 'id': -1, 'field': 'fid'},
                 ]],
                 'test'

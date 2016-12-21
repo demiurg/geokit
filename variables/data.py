@@ -46,6 +46,7 @@ class DataSource(object):
 
         selects = []
         froms = []
+        wheres = ''
 
         if self.layers:
             selects.append("feature_id")
