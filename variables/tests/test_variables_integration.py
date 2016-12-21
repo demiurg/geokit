@@ -64,3 +64,17 @@ def test_example_0_5_select(set_schema):
             14.188587, 22.986413
         ]
     )
+
+@pytest.mark.django_db
+def test_join_two_tables(set_schema):
+    tmin = Variable(tree=[
+        'select', [
+            ['join', [
+                {'type': 'Table', 'id': 30, 'name': 'cnty_24k97_data', 'field': 'fid'},
+                {'type': 'Table', 'id': 30, 'name': 'cnty_24k97_data', 'field': 'fid'},
+            ]],
+            'tmin'
+        ]
+    ])
+
+    print tmin.data()

@@ -46,7 +46,7 @@ class DataSource(object):
 
         selects = []
         froms = []
-        wheres = ''
+        joins = []
 
         if self.layers:
             selects.append("feature_id")
@@ -56,7 +56,7 @@ class DataSource(object):
                 f_wheres.append("layer_id = '{}'".format(layer['id']))
 
             froms.append(
-                "(SELECT id as feature_id,  properties->'{0}' as joiner "
+                "(SELECT id as feature_id, properties->'{0}' as joiner "
                 "FROM {1}.layers_feature "
                 "WHERE {2!s}) f".format(
                     layer['field'],
@@ -65,38 +65,53 @@ class DataSource(object):
                 )
             )
 
-        if self.tables:
-            selects.append('record_id, date_range, "{}"'.format(name))
+            joins.append('f')
 
-            r_wheres = []
+        if self.tables:
+            selects.append('date_range, "{}"'.format(name))
+
+            t_wheres = []
             for table in self.tables:
-                r_wheres.append("table_id = '{}'".format(table['id']))
+                t_wheres.append("table_id = '{}'".format(table['id']))
 
             froms.append(
-                "(SELECT id as record_id, date_range,"
+                "(SELECT date_range,"
                 " properties->'{0}' as joiner, properties->'{1}' as \"{1}\" "
                 "FROM {2!s}.geokit_tables_record "
                 "WHERE {3}) r".format(
                     table['field'],
                     name,
                     django.db.connection.schema_name,
-                    " AND ".join(r_wheres),
+                    " AND ".join(t_wheres),
                 )
             )
 
-        query = "SELECT {} FROM {} WHERE f.joiner = r.joiner".format(
+            joins.append('r')
+
+        joins = [
+            '{}.joiner = {}.joiner'.format(a, b) for a in joins for b in joins
+        ]
+
+        self.query = "SELECT {} FROM {} WHERE {}".format(
             ", ".join(selects),
             ", ".join(froms),
+            " AND ".join(joins)
         )
 
-        cursor = django.db.connection.cursor()
-        cursor.execute(query)
-
-        self.df = read_sql(query, django.db.connection)
-
-        return self.df
+        return self.query
 
     def variable(self):
-        return self.df.pivot(
-            index='feature_id', columns='date_range', values=self.name
-        )
+        cursor = django.db.connection.cursor()
+        cursor.execute(self.query)
+
+        try:
+            self.df = read_sql(self.query, django.db.connection)
+            return self.df.pivot(
+                index='feature_id', columns='date_range', values=self.name
+            )
+        except KeyError as e:
+            print e
+            self.df = read_sql(
+                self.query, django.db.connection, index_col='date_range'
+            )
+            return self.df
