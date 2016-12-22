@@ -110,7 +110,7 @@ class DataSource(object):
                 index='feature_id', columns='date_range', values=self.name
             )
         except KeyError as e:
-            print e
+            #print e
             self.df = read_sql(
                 self.query, django.db.connection, index_col='date_range'
             )

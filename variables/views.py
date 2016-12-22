@@ -34,15 +34,6 @@ def edit(request, variable_id):
     })
 
 
-def data_dimension(data):
-    if type(data.index[0]) in (int, numpy.int64, numpy.int32):
-        return 'space'
-    elif type(data.index[0]) is DateRange:
-        return 'time'
-    else:
-        raise TypeError(type(data.index[0]))
-
-
 class VariableViewSet(viewsets.ModelViewSet):
     queryset = Variable.objects.all()
     serializer_class = VariableSerializer
@@ -123,27 +114,31 @@ class VariableViewSet(viewsets.ModelViewSet):
 
         data = {'x': [], 'y': []}
 
-        if data_dimension(df) == 'space':
-            # Build scatterplot by location
-            features = list(
-                Feature.objects.filter(pk__in=df.index).defer('geometry')
-            )
+        try:
+            if Variable.data_dimensions(df) == 'space':
+                # Build scatterplot by location
+                features = list(
+                    Feature.objects.filter(pk__in=df.index).defer('geometry')
+                )
 
-            data['type'] = 'scatter'
-            data['mode'] = 'markers'
-            for i, value in enumerate(df.values):
-                f = [feature for feature in features if feature.pk == df.index[i]][0]
-                data['x'].append(f.verbose_name)
-                data['y'].append(value)
-        elif data_dimension(df) == 'time':
-            # Build timeseries
-            data['type'] = 'timeseries'
-            data['mode'] = 'lines'
-            for i, value in enumerate(df.values):
-                date = df.index[i].lower
-                data['x'].append(date.strftime("%Y-%m-%d %H:%M:%S"))
-                data['y'].append(value)
-        else:
+                data['type'] = 'scatter'
+                data['mode'] = 'markers'
+                for i, value in enumerate(df.values):
+                    f = [feature for feature in features if feature.pk == df.index[i]][0]
+                    data['x'].append(f.verbose_name)
+                    data['y'].append(value)
+            elif Variable.data_dimensions(df) == 'time':
+                # Build timeseries
+                data['type'] = 'timeseries'
+                data['mode'] = 'lines'
+                for i, value in enumerate(df.values):
+                    date = df.index[i].lower
+                    data['x'].append(date.strftime("%Y-%m-%d %H:%M:%S"))
+                    data['y'].append(value)
+            else:
+                data['invalid'] = True
+        except Exception as e:
+            print e
             data['invalid'] = True
 
         return Response(data)
@@ -168,14 +163,14 @@ class VariableViewSet(viewsets.ModelViewSet):
         df = variable.data()
         data = {}
 
-        if data_dimension(df) == 'time':
+        if Variable.data_dimensions(df) == 'time':
             data['dimension'] = 'time'
             data['values'] = []
             for i, value in enumerate(df.values):
                 date = df.index[i].lower
                 data['values'].append({'date': date.strftime("%Y-%m-%d"), 'value': value})
 
-        elif data_dimension(df) == 'space':
+        elif Variable.data_dimensions(df) == 'space':
             features = list(
                 Feature.objects.filter(pk__in=df.index).defer('geometry')
             )
