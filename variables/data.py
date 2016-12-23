@@ -10,6 +10,16 @@ from geokit_tables.models import GeoKitTable
 from layers.models import Layer
 
 
+class DataOp(object):
+    pass
+
+
+class DataOpAdd(object):
+    text = '+'
+    def method(self):
+        pass
+
+
 class DataNode(object):
     def __init__(self, tree):
         self.tree = tree
@@ -45,10 +55,10 @@ class DataNode(object):
 
     def resolve_operator(self, text):
         operator_table = {
-            '+': self.IterativeOperator(numpy.add),
-            '-': self.IterativeOperator(numpy.subtract),
-            '*': self.IterativeOperator(numpy.multiply),
-            '/': self.IterativeOperator(numpy.divide),
+            '+': self.GetattrOperator('__add__'),
+            '-': self.GetattrOperator('__sub__'),
+            '*': self.GetattrOperator('__mul__'),
+            '/': self.GetattrOperator('__div__'),
 
             'mean': self.MeanOperator,
             'smean': self.SpatialMeanOperator,
@@ -65,7 +75,6 @@ class DataNode(object):
         return operator_table[text]
 
     def resolve_arguments(self, *args):
-
         resolved_args = []
         for arg in args:
             if type(arg) == list:
@@ -77,10 +86,10 @@ class DataNode(object):
 
         return tuple(resolved_args)
 
-    def IterativeOperator(self, func):
+    def GetattrOperator(self, method):
         def f(left, right):
             left_val, right_val = self.resolve_arguments(left, right)
-            return func(left_val, right_val)
+            return getattr(left_val, method)(right_val)
 
         return f
 
@@ -91,7 +100,7 @@ class DataNode(object):
 
     def SpatialMeanOperator(self, val):
         (val,) = self.resolve_arguments(val)
-        print type(val), val
+
         if type(val) == pandas.DataFrame:
             return val.mean(axis=0)
         elif type(val) == pandas.Series:
