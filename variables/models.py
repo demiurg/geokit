@@ -61,7 +61,7 @@ class Variable(models.Model):
         return json.dumps(self.input_variables)
 
     def data(self):
-        return DataNode(self.tree).data()
+        return DataNode(*self.tree).execute()
 
     def __unicode__(self):
         return self.name

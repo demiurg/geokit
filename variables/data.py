@@ -10,19 +10,38 @@ from geokit_tables.models import GeoKitTable
 from layers.models import Layer
 
 
-class DataOp(object):
-    pass
-
-
-class DataOpAdd(object):
-    text = '+'
-    def method(self):
-        pass
-
-
 class DataNode(object):
-    def __init__(self, tree):
-        self.tree = tree
+    def __init__(self, operation, operands):
+        self.executors = {
+            '+': self.getattrOperator('__add__'),
+            '-': self.getattrOperator('__sub__'),
+            '*': self.getattrOperator('__mul__'),
+            '/': self.getattrOperator('__div__'),
+
+            'mean': self.MeanOperator,
+            'smean': self.SpatialMeanOperator,
+            'tmean': self.TemporalMeanOperator,
+
+            'filter': self.ValueFilterOperator,
+            'sfilter': self.SpatialFilterOperator,
+            'tfilter': self.TemporalFilterOperator,
+
+            'join': self.JoinOperator,
+            'select': self.SelectOperator,
+        }
+        self.operation = operation
+        self.operands = [
+            DataNode(*args)
+            if type(args) in (list, tuple) and args[0] in self.executors
+            else args for args in operands
+        ]
+
+    def __unicode__(self):
+        return self.operation
+
+    @staticmethod
+    def validate():
+        pass
 
     @staticmethod
     def data_dimensions(data):
@@ -43,64 +62,26 @@ class DataNode(object):
         else:
             raise TypeError(type(data))
 
-    def tree_json(self):
-        return json.dumps(self.tree)
+    def execute(self):
+        executor = self.executors.get(self.operation)
+        executed_args = [
+            operand.execute() if hasattr(operand, 'execute')
+            else operand
+            for operand in self.operands
+        ]
+        return executor(*executed_args)
 
-    def data(self):
-        operator = self.resolve_operator(self.tree[0])
-        return operator(*self.tree[1])
-
-    def __unicode__(self):
-        return self.name
-
-    def resolve_operator(self, text):
-        operator_table = {
-            '+': self.GetattrOperator('__add__'),
-            '-': self.GetattrOperator('__sub__'),
-            '*': self.GetattrOperator('__mul__'),
-            '/': self.GetattrOperator('__div__'),
-
-            'mean': self.MeanOperator,
-            'smean': self.SpatialMeanOperator,
-            'tmean': self.TemporalMeanOperator,
-
-            'filter': self.ValueFilterOperator,
-            'sfilter': self.SpatialFilterOperator,
-            'tfilter': self.TemporalFilterOperator,
-
-            'join': self.JoinOperator,
-            'select': self.SelectOperator,
-        }
-
-        return operator_table[text]
-
-    def resolve_arguments(self, *args):
-        resolved_args = []
-        for arg in args:
-            if type(arg) == list:
-                resolved_args.append(
-                    self.resolve_operator(arg[0])(*arg[1])
-                )
-            else:
-                resolved_args.append(arg)
-
-        return tuple(resolved_args)
-
-    def GetattrOperator(self, method):
+    def getattrOperator(self, method):
         def f(left, right):
-            left_val, right_val = self.resolve_arguments(left, right)
-            return getattr(left_val, method)(right_val)
+            return getattr(left, method)(right)
 
         return f
 
     def MeanOperator(self, left, right):
-        left_val, right_val = self.resolve_arguments(left, right)
-        values = (left_val + right_val) / 2
+        values = (left + right) / 2
         return values
 
     def SpatialMeanOperator(self, val):
-        (val,) = self.resolve_arguments(val)
-
         if type(val) == pandas.DataFrame:
             return val.mean(axis=0)
         elif type(val) == pandas.Series:
@@ -110,7 +91,6 @@ class DataNode(object):
                 raise ValueError("No space dimension to aggregate")
 
     def TemporalMeanOperator(self, val):
-        (val,) = self.resolve_arguments(val)
         if type(val) == pandas.DataFrame:
             return val.mean(axis=1)
         elif type(val) == pandas.Series:
@@ -127,8 +107,6 @@ class DataNode(object):
             'filter_type': 'inclusive'
         }`
         '''
-        (val,) = self.resolve_arguments(val)
-
         indices_to_delete = set()
         for i, feature in enumerate(val['spatial_key']):
             contains = False
@@ -157,7 +135,6 @@ class DataNode(object):
             'filter_type': 'inclusive'
         }`
         '''
-        (val,) = self.resolve_arguments(val)
 
         ranges = map(
             lambda dr: DateRange(
@@ -190,7 +167,6 @@ class DataNode(object):
             'comparator': 5
         }`
         '''
-        (val,) = self.resolve_arguments(val)
 
         if filter_['comparison'] == '<':
             return val.where(val < filter_['comparator'])
@@ -206,7 +182,7 @@ class DataNode(object):
         # Should not be ere
         raise ValueError("Invalid comparator {}".format(filter_['comparator']))
 
-    def SelectOperator(self, val, name):
+    def SelectOperator(self, source, name):
         '''
         Serialization format:
         `{
@@ -216,7 +192,6 @@ class DataNode(object):
         }`
         '''
 
-        (source,) = self.resolve_arguments(val)
         source.select(name)
         return source.variable()
 
