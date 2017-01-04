@@ -3,77 +3,52 @@
 {% block titletag %}Layers{% endblock %}
 {% block bodyclass %}menu-layers{% endblock %}
 
+{% block extra_js %}
+<script src="https://unpkg.com/react@15/dist/react.min.js"></script>
+<script src="https://unpkg.com/react-dom@15/dist/react-dom.min.js"></script>
+<script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+<script src="https://cdn.plot.ly/plotly-1.2.0.min.js"></script>
+<script src="/static/js/builder.js"></script>
+{% endblock %}
+
 {% block content %}
 {% include "wagtailadmin/shared/header.html" with title="Layers" add_link="layers:add" add_text="Add Layer" icon="site" %}
 
 <div class="nice-padding">
     <div id="layers-results" class="layers">
         {% if layers.exists %}
-        <table class="listing">
-            <col />
-            <col />
-            <thead>
-                <tr class="table-headers">
-                    <th>Name</th>
-                    <th>Bounds</th>
-                    <th>Field names</th>
-                    <th>Features</th>
-                    <th>Created</th>
-                    <th>Modified</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for layer in layers %}
-                <tr>
-                    <td class="title">
-                        <h2>
-                            {% if layer.status == 0 %}
-                            <a href="{% url 'layers:edit' layer.pk %}">{{ layer.name }}</a>
-                            {% else %}
-                            {{ layer.name }}
-                            {% endif %}
-                        </h2>
-                    </td>
-                    <td>
-                        {% if layer.status == 0 %}
-                        {{ layer.bounds|join:", " }}
-                        {% endif %}
-                    </td>
-                    <td class="properties">
-                        {% if layer.status == 0 %}
-                        {{ layer.field_names|join:", " }}
-                        {% elif layer.status == 1 %}
-                        Processing...
-                        {% else %}
-                        Processing error
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if layer.status == 0 %}
-                        {{ layer.feature_set.all.count }}
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if layer.status == 0 %}
-                        <div class="human-readable-date" title="{{ layer.created|date:"d M Y H:i" }}">
-                        {{ layer.created|timesince }} ago
-                        </div>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if layer.status == 0 %}
-                        <div class="human-readable-date" title="{{ layer.modified|date:"d M Y H:i" }}">
-                        {{ layer.modified|timesince }} ago
-                        </div>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div id="layers-list"></div>
         {% else %}
         <p>You haven't created any layers yet. Why not <a href="{% url "layers:add" %}">create one now?</a></p>
         {% endif %}
     </div>
 </div>
+
+{% if layers.exists %}
+<script>
+ReactDOM.render(
+    React.createElement(
+        LayerList,
+        {},
+        [
+            {% for layer in layers %}
+            React.createElement(LayerListItem, {
+                id: {{ layer.pk }},
+                name: "{{ layer.name }}",
+                {% if layer.status == 0 %}
+                bounds: "{{ layer.bounds|join:", " }}",
+                field_names: "{{ layer.field_names|join:", " }}",
+                feature_count: "{{ layer.feature_set.all.count }}",
+                {% endif %}
+                created: "{{ layer.created|timesince }} ago",
+                modified: "{{ layer.modified|timesince }} ago",
+                status: {{ layer.status }}
+            }, null){% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    ),
+    document.getElementById("layers-list")
+);
+</script>
+{% endif %}
 {% endblock %}
