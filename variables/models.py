@@ -30,14 +30,23 @@ class Variable(models.Model):
     def __init__(self, *args, **kwargs):
         super(Variable, self).__init__(*args, **kwargs)
 
+        try:
+            self._tree = DataNode(*self.tree)
+        except TypeError:
+            self._tree = None
+
+        self.current_data = None
         self.current_dimensions = {
             'spatial_domain': self.spatial_domain,
             'temporal_domain': self.temporal_domain
         }
 
-    @staticmethod
-    def data_dimensions(data):
-        if type(data) is pandas.Series:
+    def __unicode__(self):
+        return self.name
+
+    def data_dimensions(self):
+        data = self.data()
+        if type(data) in (pandas.Series, pandas.DataFrame):
             if type(data.index[0]) in (int, np.int64, np.int32):
                 return 'space'
             elif type(data.index[0]) is DateRange:
@@ -61,7 +70,6 @@ class Variable(models.Model):
         return json.dumps(self.input_variables)
 
     def data(self):
-        return DataNode(*self.tree).execute()
-
-    def __unicode__(self):
-        return self.name
+        if self.current_data is None:
+            self.current_data = DataNode(*self.tree).execute()
+        return self.current_data

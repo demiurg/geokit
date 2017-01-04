@@ -33,34 +33,12 @@ class DataNode(object):
         self.operands = [
             DataNode(*args)
             if type(args) in (list, tuple) and args[0] in self.executors
-            else args for args in operands
+            else args
+            for args in operands
         ]
 
     def __unicode__(self):
         return self.operation
-
-    @staticmethod
-    def validate():
-        pass
-
-    @staticmethod
-    def data_dimensions(data):
-        if type(data) is pandas.Series:
-            if type(data.index[0]) in (int, numpy.int64, numpy.int32):
-                return 'space'
-            elif type(data.index[0]) is DateRange:
-                return 'time'
-            else:
-                raise TypeError(type(data.index[0]))
-        elif (
-            type(data) is pandas.DataFrame and (
-                type(data.index[0]) in (int, numpy.int64, numpy.int32) and
-                type(data.columns[0]) is DateRange
-            )
-        ):
-            return "spacetime"
-        else:
-            raise TypeError(type(data))
 
     def execute(self):
         executor = self.executors.get(self.operation)
