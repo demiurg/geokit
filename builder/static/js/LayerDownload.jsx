@@ -58,7 +58,6 @@ class LayerDownload extends React.Component {
         } else if (this.state.download == PROCESSING) {
             return <a href="#" className="button button-secondary disabled">Layer Processing...</a>;
         } else {
-            console.log(this.state.download_link);
             return <a href={this.state.download_link} className="button button-secondary">Download Layer</a>;
         }
     }

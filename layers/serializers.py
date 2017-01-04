@@ -17,6 +17,7 @@ class LayerFileSerializer(serializers.ModelSerializer):
 
 class LayerSerializer(serializers.ModelSerializer):
     layer_file = serializers.SerializerMethodField()
+    feature_count = serializers.SerializerMethodField()
 
     def get_layer_file(self, obj):
         try:
@@ -24,6 +25,9 @@ class LayerSerializer(serializers.ModelSerializer):
         except LayerFile.DoesNotExist:
             data = None
         return data
+
+    def get_feature_count(self, obj):
+        return obj.feature_set.count()
 
     class Meta:
         model = Layer

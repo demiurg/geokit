@@ -172,7 +172,6 @@ var LayerDownload = function (_React$Component) {
                 'Layer Processing...'
             );
         } else {
-            console.log(this.state.download_link);
             return React.createElement(
                 'a',
                 { href: this.state.download_link, className: 'button button-secondary' },
@@ -182,6 +181,261 @@ var LayerDownload = function (_React$Component) {
     };
 
     return LayerDownload;
+}(React.Component);
+"use strict";
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function fromNow(time_string) {
+    var d = new Date(time_string),
+        now = new Date();
+
+    var time_delta = now - d;
+
+    var days = Math.floor(time_delta / (1000 * 60 * 60 * 24)),
+        hours = Math.floor(time_delta / (1000 * 60 * 60)),
+        minutes = Math.floor(time_delta / (1000 * 60));
+
+    if (days > 0) {
+        return days + " days ago";
+    } else if (hours > 0) {
+        return hours + " hours ago";
+    } else if (minutes > 0) {
+        return minutes + " minutes ago";
+    } else {
+        return "0 minutes ago";
+    }
+}
+
+var LayerList = function (_React$Component) {
+    _inherits(LayerList, _React$Component);
+
+    function LayerList() {
+        _classCallCheck(this, LayerList);
+
+        return _possibleConstructorReturn(this, _React$Component.apply(this, arguments));
+    }
+
+    LayerList.prototype.render = function render() {
+        return React.createElement(
+            "table",
+            { className: "listing" },
+            React.createElement(
+                "thead",
+                null,
+                React.createElement(
+                    "tr",
+                    { className: "table-headers" },
+                    React.createElement(
+                        "th",
+                        null,
+                        "Name"
+                    ),
+                    React.createElement(
+                        "th",
+                        null,
+                        "Bounds"
+                    ),
+                    React.createElement(
+                        "th",
+                        null,
+                        "Field names"
+                    ),
+                    React.createElement(
+                        "th",
+                        null,
+                        "Features"
+                    ),
+                    React.createElement(
+                        "th",
+                        null,
+                        "Created"
+                    ),
+                    React.createElement(
+                        "th",
+                        null,
+                        "Modified"
+                    )
+                )
+            ),
+            React.createElement(
+                "tbody",
+                null,
+                this.props.children
+            )
+        );
+    };
+
+    return LayerList;
+}(React.Component);
+
+var LayerListItem = function (_React$Component2) {
+    _inherits(LayerListItem, _React$Component2);
+
+    function LayerListItem() {
+        _classCallCheck(this, LayerListItem);
+
+        var _this2 = _possibleConstructorReturn(this, _React$Component2.call(this));
+
+        _this2.state = {
+            status: null,
+            layer: {}
+        };
+        return _this2;
+    }
+
+    LayerListItem.prototype.componentDidMount = function componentDidMount() {
+        var _this3 = this;
+
+        var props = this.props;
+        this.setState({
+            status: props.status,
+            layer: {
+                name: props.name,
+                bounds: props.bounds,
+                field_names: props.field_names,
+                feature_count: props.feature_count,
+                created: props.created,
+                modified: props.modified
+            }
+        }, function () {
+            if (_this3.state.status == 1) {
+                _this3.checkStatus();
+            }
+        });
+    };
+
+    LayerListItem.prototype.startPoll = function startPoll() {
+        var _this4 = this;
+
+        setTimeout(function () {
+            _this4.checkStatus();
+        }, 1000);
+    };
+
+    LayerListItem.prototype.checkStatus = function checkStatus() {
+        var _this5 = this;
+
+        $.ajax('/api/layers/' + this.props.id, {
+            dataType: 'json',
+            success: function success(data, status, xhr) {
+                if (data.status == 0) {
+                    _this5.setState({
+                        status: 0,
+                        layer: {
+                            name: data.name,
+                            bounds: data.bounds.join(", "),
+                            field_names: data.field_names.join(", "),
+                            feature_count: data.feature_count,
+                            created: fromNow(data.created),
+                            modified: fromNow(data.modified)
+                        }
+                    });
+                } else if (data.status == 2) {
+                    _this5.setState({
+                        status: 2
+                    });
+                } else {
+                    _this5.startPoll();
+                }
+            },
+            error: function error(xhr, status, _error) {
+                console.error(_error);
+                _this5.setState({
+                    status: 2
+                });
+            }
+        });
+    };
+
+    LayerListItem.prototype.render = function render() {
+        if (this.state.status == 0) {
+            return React.createElement(
+                "tr",
+                null,
+                React.createElement(
+                    "td",
+                    { className: "title" },
+                    React.createElement(
+                        "a",
+                        { href: "/builder/admin/layers/edit/" + this.props.id },
+                        this.state.layer.name
+                    )
+                ),
+                React.createElement(
+                    "td",
+                    null,
+                    this.state.layer.bounds
+                ),
+                React.createElement(
+                    "td",
+                    { className: "properties" },
+                    this.state.layer.field_names
+                ),
+                React.createElement(
+                    "td",
+                    null,
+                    this.state.layer.feature_count
+                ),
+                React.createElement(
+                    "td",
+                    null,
+                    React.createElement(
+                        "div",
+                        { className: "human-readable-date", title: this.props.created },
+                        this.state.layer.created
+                    )
+                ),
+                React.createElement(
+                    "td",
+                    null,
+                    React.createElement(
+                        "div",
+                        { className: "human-readable-date", title: this.props.modified },
+                        this.state.layer.modified
+                    )
+                )
+            );
+        } else if (this.state.status == 1) {
+            return React.createElement(
+                "tr",
+                null,
+                React.createElement(
+                    "td",
+                    { className: "title" },
+                    this.props.name
+                ),
+                React.createElement(
+                    "td",
+                    null,
+                    "Processing..."
+                )
+            );
+        } else if (this.state.status == 2) {
+            return React.createElement(
+                "tr",
+                null,
+                React.createElement(
+                    "td",
+                    { className: "title" },
+                    this.props.name
+                ),
+                React.createElement(
+                    "td",
+                    null,
+                    "An error occurred while processing this layer."
+                )
+            );
+        } else {
+            return null;
+        }
+    };
+
+    return LayerListItem;
 }(React.Component);
 'use strict';
 
