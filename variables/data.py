@@ -1,8 +1,180 @@
 import django.db
+import pandas
+import numpy
+import json
+from datetime import datetime
 from pandas.io.sql import read_sql
+from psycopg2.extras import DateRange
 
 from geokit_tables.models import GeoKitTable
 from layers.models import Layer
+
+
+class DataNode(object):
+    def __init__(self, operation, operands):
+        self.executors = {
+            '+': self.getattrOperator('__add__'),
+            '-': self.getattrOperator('__sub__'),
+            '*': self.getattrOperator('__mul__'),
+            '/': self.getattrOperator('__div__'),
+
+            'mean': self.MeanOperator,
+            'smean': self.SpatialMeanOperator,
+            'tmean': self.TemporalMeanOperator,
+
+            'filter': self.ValueFilterOperator,
+            'sfilter': self.SpatialFilterOperator,
+            'tfilter': self.TemporalFilterOperator,
+
+            'join': self.JoinOperator,
+            'select': self.SelectOperator,
+        }
+        self.operation = operation
+        self.operands = [
+            DataNode(*args)
+            if type(args) in (list, tuple) and args[0] in self.executors
+            else args
+            for args in operands
+        ]
+
+    def __unicode__(self):
+        return self.operation
+
+    def execute(self):
+        executor = self.executors.get(self.operation)
+        executed_args = [
+            operand.execute() if hasattr(operand, 'execute')
+            else operand
+            for operand in self.operands
+        ]
+        return executor(*executed_args)
+
+    def getattrOperator(self, method):
+        def f(left, right):
+            return getattr(left, method)(right)
+
+        return f
+
+    def MeanOperator(self, left, right):
+        values = (left + right) / 2
+        return values
+
+    def SpatialMeanOperator(self, val):
+        if type(val) == pandas.DataFrame:
+            return val.mean(axis=0)
+        elif type(val) == pandas.Series:
+            if self.data_dimension(val) == 'space':
+                return val.mean()
+            else:
+                raise ValueError("No space dimension to aggregate")
+
+    def TemporalMeanOperator(self, val):
+        if type(val) == pandas.DataFrame:
+            return val.mean(axis=1)
+        elif type(val) == pandas.Series:
+            if self.data_dimensions(val) == 'time':
+                return val.mean()
+            else:
+                raise ValueError("No time dimension to aggregate")
+
+    def SpatialFilterOperator(self, val, filter_):
+        '''
+        Filter format:
+        `{
+            'containing_geometries': [],
+            'filter_type': 'inclusive'
+        }`
+        '''
+        indices_to_delete = set()
+        for i, feature in enumerate(val['spatial_key']):
+            contains = False
+            for geometry in filter_['containing_geometries']:
+                if geometry.contains(feature.geometry):
+                    contains = True
+                    break
+
+            if filter_['filter_type'] == 'inclusive' and not contains:
+                indices_to_delete.add(i)
+            elif filter_['filter_type'] == 'exclusive' and contains:
+                indices_to_delete.add(i)
+        values = numpy.delete(val['values'], list(indices_to_delete), 0)
+        spatial_key = numpy.delete(val['spatial_key'], list(indices_to_delete))
+        return {
+            'values': values,
+            'spatial_key': spatial_key,
+            'temporal_key': val['spatial_key']
+        }
+
+    def TemporalFilterOperator(self, val, filter_):
+        '''
+        Filter format:
+        `{
+            'date_ranges': [{'start': '2010-01-01', 'end': '2005-05-30'}, {...}],
+            'filter_type': 'inclusive'
+        }`
+        '''
+
+        ranges = map(
+            lambda dr: DateRange(
+                datetime.strptime(dr['start'], '%Y-%m-%d').date(),
+                datetime.strptime(dr['end'], '%Y-%m-%d').date(),
+                bounds=dr.get('bounds', '[]')
+            ),
+            filter_['date_ranges']
+        )
+
+        cols = map(
+            lambda c: (
+                bool(filter_['filter_type'] == 'inclusive') ==
+                # bool() == bool(), xor exclusive inverts the result
+                bool(any(c.lower in r or r.lower in c for r in ranges))
+                # any is lazy, using lower assumes bounds always start closed
+                # TODO: Improve bounds comparison to allow half open start
+            ),
+            val.columns
+        )
+        return val.iloc[:, cols]
+
+        raise ValueError('Invalid filter type {}'.format(filter_['filter_type']))
+
+    def ValueFilterOperator(self, val, filter_):
+        '''
+        Filter format:
+        `{
+            'comparison': '<',
+            'comparator': 5
+        }`
+        '''
+
+        if filter_['comparison'] == '<':
+            return val.where(val < filter_['comparator'])
+        elif filter_['comparison'] == '<=':
+            return val.where(val <= filter_['comparator'])
+        elif filter_['comparison'] == '==':
+            return val.where(val == filter_['comparator'])
+        elif filter_['comparison'] == '>=':
+            return val.where(val >= filter_['comparator'])
+        elif filter_['comparison'] == '>':
+            return val.where(val > filter_['comparator'])
+
+        # Should not be ere
+        raise ValueError("Invalid comparator {}".format(filter_['comparator']))
+
+    def SelectOperator(self, source, name):
+        '''
+        Serialization format:
+        `{
+            'model': 'Table',
+            'id': 1,
+            'field': 'fid'
+        }`
+        '''
+
+        source.select(name)
+        return source.variable()
+
+    def JoinOperator(self, left, right):
+        return DataSource(left, right)
 
 
 class DataSource(object):

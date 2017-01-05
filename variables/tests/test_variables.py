@@ -98,8 +98,25 @@ def test_arithmetic_operators_matrices():
             'temporal_key': temporal_key3
         })
     ]])
+    np.testing.assert_array_equal(v.data().values, np.array([
+        [2., 4., float('nan')],
+        [7., 9., float('nan')],
+    ]))
+
     with pytest.raises(ValueError):
-        v.data()
+        v = Variable(tree=['+', [
+            _matrix_val({
+                'values': np.array([[1, 2], [3, 4]]),
+                'spatial_key': spatial_key,
+                'temporal_key': temporal_key
+            }),
+            _matrix_val({
+                'values': np.array([[1, 2, 3], [4, 5, 6]]),
+                'spatial_key': spatial_key3,
+                'temporal_key': temporal_key3
+            })
+        ]])
+        print v.data().values
 
 
 def test_mean_operator():
