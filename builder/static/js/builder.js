@@ -870,6 +870,208 @@ var TableDownload = function (_React$Component) {
 }(React.Component);
 "use strict";
 
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var TableList = function (_React$Component) {
+    _inherits(TableList, _React$Component);
+
+    function TableList() {
+        _classCallCheck(this, TableList);
+
+        return _possibleConstructorReturn(this, _React$Component.apply(this, arguments));
+    }
+
+    TableList.prototype.render = function render() {
+        return React.createElement(
+            "table",
+            { className: "listing" },
+            React.createElement(
+                "thead",
+                null,
+                React.createElement(
+                    "tr",
+                    { className: "table-headers" },
+                    React.createElement(
+                        "th",
+                        null,
+                        "Name"
+                    ),
+                    React.createElement(
+                        "th",
+                        null,
+                        "Description"
+                    ),
+                    React.createElement(
+                        "th",
+                        null,
+                        "Field names"
+                    ),
+                    React.createElement(
+                        "th",
+                        null,
+                        "Rows"
+                    )
+                )
+            ),
+            React.createElement(
+                "tbody",
+                null,
+                this.props.children
+            )
+        );
+    };
+
+    return TableList;
+}(React.Component);
+
+var TableListItem = function (_React$Component2) {
+    _inherits(TableListItem, _React$Component2);
+
+    function TableListItem() {
+        _classCallCheck(this, TableListItem);
+
+        var _this2 = _possibleConstructorReturn(this, _React$Component2.call(this));
+
+        _this2.state = {
+            status: null,
+            layer: {}
+        };
+        return _this2;
+    }
+
+    TableListItem.prototype.componentDidMount = function componentDidMount() {
+        var _this3 = this;
+
+        var props = this.props;
+        this.setState({
+            status: props.status,
+            table: {
+                name: props.name,
+                description: props.description,
+                field_names: props.field_names,
+                row_count: props.row_count
+            }
+        }, function () {
+            if (_this3.state.status == 1) {
+                _this3.checkStatus();
+            }
+        });
+    };
+
+    TableListItem.prototype.startPoll = function startPoll() {
+        var _this4 = this;
+
+        setTimeout(function () {
+            _this4.checkStatus();
+        }, 1000);
+    };
+
+    TableListItem.prototype.checkStatus = function checkStatus() {
+        var _this5 = this;
+
+        $.ajax('/api/tables/' + this.props.id, {
+            dataType: 'json',
+            success: function success(data, status, xhr) {
+                if (data.status == 0) {
+                    _this5.setState({
+                        status: 0,
+                        table: {
+                            name: data.name,
+                            description: data.description,
+                            field_names: data.field_names.join(", "),
+                            row_count: data.row_count
+                        }
+                    });
+                } else if (data.status == 2) {
+                    _this5.setState({
+                        status: 2
+                    });
+                } else {
+                    _this5.startPoll();
+                }
+            },
+            error: function error(xhr, status, _error) {
+                console.error(_error);
+                _this5.setState({
+                    status: 2
+                });
+            }
+        });
+    };
+
+    TableListItem.prototype.render = function render() {
+        if (this.state.status == 0) {
+            return React.createElement(
+                "tr",
+                null,
+                React.createElement(
+                    "td",
+                    { className: "title" },
+                    React.createElement(
+                        "a",
+                        { href: "/builder/admin/tables/edit/" + this.props.id },
+                        this.state.table.name
+                    )
+                ),
+                React.createElement(
+                    "td",
+                    null,
+                    this.state.table.description
+                ),
+                React.createElement(
+                    "td",
+                    null,
+                    this.state.table.field_names
+                ),
+                React.createElement(
+                    "td",
+                    null,
+                    this.state.table.row_count
+                )
+            );
+        } else if (this.state.status == 1) {
+            return React.createElement(
+                "tr",
+                null,
+                React.createElement(
+                    "td",
+                    { className: "title" },
+                    this.props.name
+                ),
+                React.createElement(
+                    "td",
+                    null,
+                    "Processing..."
+                )
+            );
+        } else if (this.state.status == 2) {
+            return React.createElement(
+                "tr",
+                null,
+                React.createElement(
+                    "td",
+                    { className: "title" },
+                    this.props.name
+                ),
+                React.createElement(
+                    "td",
+                    null,
+                    "An error occurred while processing this layer."
+                )
+            );
+        } else {
+            return null;
+        }
+    };
+
+    return TableListItem;
+}(React.Component);
+"use strict";
+
 function bindLayerDownload(layer, dom_element) {
     ReactDOM.render(React.createElement(LayerDownload, { layer: layer }), dom_element);
 }
