@@ -1,0 +1,14 @@
+[Unit]
+Description=GeoKit RQ Worker %I
+
+[Service]
+
+# Uncomment the following two lines, making sure to change the absolute paths
+# to where you have installed GeoKit on your system.
+# ExecStart=/usr/bin/python /web/geokit/worker_daemon.py %I
+# PIDFile=/web/geokit/pidfiles/%I.pid
+Type=forking
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

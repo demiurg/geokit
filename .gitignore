@@ -8,6 +8,7 @@
 ._*
 .venv/
 venv/
+pidfiles/
 /static
 /media
 public/

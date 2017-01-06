@@ -73,6 +73,23 @@ run this command:
 
 More workers may be started to allow for multiple async jobs to be run concurrently.
 
+A template is provided for running works as systemd services. In order to use systemd, first
+copy `geokit@.service.example` to `/etc/systemd/system/geokit@.service`. Then uncomment the lines
+for `ExecStart` and `PIDFile` in the unit file, making sure to replace the paths with the absolute
+path of your GeoKit installation. Create an empty `pidfiles/` directory in your GeoKit installation
+directory. Finally, you can start and stop a worker using systemd:
+
+```
+systemctl start geokit@1.service
+systemctl stop geokit@1.service
+```
+
+To start multiple workers at once, use a shell expansion:
+
+```
+systemctl start geokit@{1..5}.service
+```
+
 # Tests
 
 Run the `py.test`-based test suite:
