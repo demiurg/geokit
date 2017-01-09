@@ -25,5 +25,5 @@ fi
 let NODEPORT=$(expr $PORT + 1)
 
 node ./vector_tiles/server.js $NODEPORT &
-#ssh -o "ExitOnForwardFailure yes" -L 5432:localhost:5432 -f oka -N &
+ssh -o "ExitOnForwardFailure yes" -L 5432:localhost:5432 -f oka -N &
 python ./manage.py runserver 0.0.0.0:$PORT
