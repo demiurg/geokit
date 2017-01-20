@@ -81,7 +81,10 @@ class Layer(models.Model):
             ) as out:
                 for feature in self.feature_set.all():
                     properties = feature.properties
-                    del properties['fid']
+                    try:
+                        del properties['fid']
+                    except:
+                        pass
 
                     if self.schema['geometry'] == 'GeometryCollection':
                         geometry = json.loads(feature.geometry.json)
@@ -101,7 +104,7 @@ class Layer(models.Model):
 
             layer_file.file = "downloads/shapefile/%s/%s.zip" % (tenant, self.pk)
             layer_file.save()
-        except IntegrityError:
+        except IntegrityError as e:
             # Race condition where two requests for a LayerFile
             # occur at the same time.
             pass

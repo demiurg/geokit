@@ -495,7 +495,13 @@ class GADMView(views.APIView):
         args = request.POST.dict()
         results = gadm_data(distinct=False, **self.gadm_data_args(args))
         name = args['name_' + str(int(args['level']) - 1)]
-        layer = Layer(name=name, field_names=['id'])
+        schema = {
+            'geometry': 'Polygon',
+            'properties': {
+                'id': 'int:4'
+            }
+        }
+        layer = Layer(name=name, field_names=['id'], schema=schema)
         layer.save()
 
         django_rq.enqueue(
