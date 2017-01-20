@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from layers.views import index, add, edit, delete, generate_download, layer_json
+from layers.views import index, add, edit, delete, generate_download, layer_json, gadm_data
 
 urlpatterns = [
     url(r'^$', index, name='index'),
@@ -11,4 +11,6 @@ urlpatterns = [
     url('^download/([\w-]+)', generate_download, name='generate_download'),
 
     url(r'^layer/([\w-]+)\.json$', layer_json, name='layer_json'),
+
+    url(r'^gadm/(\d+)/(\w+)/$', gadm_data, name='gadm_data'),
 ]

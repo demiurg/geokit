@@ -142,7 +142,15 @@ DATABASES = {
         'PASSWORD': 'geokitp4ss',
         'HOST': 'localhost',
         'PORT': '5432',
-    }
+    },
+    'gadm': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'geodata',
+        'USER': 'geokit',
+        'PASSWORD': 'geokitp4ss',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    },
 }
 
 DATABASE_ROUTERS = (

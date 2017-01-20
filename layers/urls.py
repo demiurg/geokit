@@ -10,4 +10,5 @@ router.register(r'layers', views.LayerViewSet)
 
 urlpatterns = [
     url(r'(\d+)/(\d+)/(\d+)/(\d+)\.json$', views.tile_json, name='layers_tile_json'),
+    url(r'^gadm/?$', views.GADMView.as_view(), name='gadm_view'),
 ]
