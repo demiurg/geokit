@@ -21,9 +21,5 @@ if [[ $1 =~ ^(.+):([0-9]+)$ ]]; then
     export PORT=${BASH_REMATCH[2]}
 fi
 
-#Bump node port by one from runserver port
-let NODEPORT=$(expr $PORT + 1)
-
-node ./vector_tiles/server.js $NODEPORT &
-ssh -o "ExitOnForwardFailure yes" -L 5432:localhost:5432 -f oka -N &
+ssh -o "ExitOnForwardFailure yes" -L 5432:localhost:5432 -f oka.ags.io -N &
 python ./manage.py runserver 0.0.0.0:$PORT

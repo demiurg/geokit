@@ -1,6 +1,7 @@
 from django.core.serializers import serialize
 from django.shortcuts import get_object_or_404, render
 from django.core import serializers
+from django.conf import settings
 
 from rest_framework import viewsets, status
 from rest_framework.decorators import detail_route
@@ -15,8 +16,18 @@ from dateutil.rrule import rrule, WEEKLY
 import json
 import random
 import numpy
+import xmlrpclib
 from psycopg2.extras import DateRange
 
+def get_raster_catalog():
+        if not hasattr(settings, 'RPC_URL'):
+            print "Error: RPC_URL must be set in settings.py"
+            return None
+
+        conn = xmlrpclib.ServerProxy(settings.RPC_URL)
+
+        data = conn.get_datacatalog()
+        return data
 
 def index(request):
     variables = Variable.objects.all()
@@ -24,13 +35,18 @@ def index(request):
 
 
 def add(request):
-    return render(request, 'variables/sieve.html')
+    rasters = get_raster_catalog()
+    return render(request, 'variables/sieve.html', {
+        'rasters': rasters,
+    })
 
 
 def edit(request, variable_id):
     variable = get_object_or_404(Variable, pk=variable_id)
+    rasters = get_raster_catalog()
     return render(request, 'variables/sieve.html', {
-        'variable': variable
+        'variable': variable,
+        'rasters': rasters
     })
 
 
@@ -185,3 +201,5 @@ class VariableViewSet(viewsets.ModelViewSet):
             data['invalid'] = True
 
         return Response(data)
+
+
