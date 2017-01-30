@@ -35,6 +35,7 @@ GEOKIT_HOSTS = [
 ALLOWED_HOSTS = list(GEOKIT_HOSTS)
 
 if RUNSERVER:
+    # Reasonable default, overwrite in local.py for different runserver domain
     SESSION_COOKIE_DOMAIN = '.geokit.localhost'
 else:
     SESSION_COOKIE_DOMAIN = '.geokit.io'
