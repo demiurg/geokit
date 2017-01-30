@@ -9,11 +9,14 @@ from django.conf import settings
 from django.contrib.gis.geos import GeometryCollection, GEOSGeometry
 from django.contrib.gis.gdal import OGRGeometry
 from django.http import HttpResponse, JsonResponse
-from django.db import connection
+from django.db import connection, connections, transaction
 
 import django_rq
+from psycopg2.extensions import AsIs
 
-from rest_framework import viewsets
+from rest_framework import views, viewsets
+from rest_framework.exceptions import ParseError
+from rest_framework.response import Response
 from wagtail.wagtailadmin import messages
 
 from models import Layer, Feature
@@ -207,6 +210,36 @@ def manual_mvt(cache_path, layer_name, z, x, y):
     lock.release()
 
     return data
+
+
+def gadm_data(level, distinct=True, **kwargs):
+    cursor = connections['gadm'].cursor()
+
+    field_name = "name_{}".format(level)
+    distinct_clause = "DISTINCT ON (%s)" % field_name if distinct else ''
+    SELECT = cursor.mogrify("""
+        SELECT %s * FROM gadm28
+    """, (AsIs(distinct_clause),))
+
+    where_clause = ""
+    for l in range(level):
+        if l == 0:
+            where_clause = cursor.mogrify("WHERE name_0 = %s", (kwargs['name_0'],))
+        else:
+            field_name = "name_{}".format(l)
+            where_clause = \
+                where_clause + \
+                cursor.mogrify(" AND %s = %s", (AsIs(field_name), (kwargs['name_' + str(l)])))
+
+    SELECT = SELECT + where_clause + " ORDER BY name_{}".format(level)
+
+    cursor.execute(SELECT)
+
+    columns = [col[0] for col in cursor.description]
+    return [
+        dict(zip(columns, row))
+        for row in cursor.fetchall()
+    ]
 
 
 def index(request):
@@ -408,3 +441,75 @@ class FeatureViewSet(viewsets.ModelViewSet):
 class LayerViewSet(viewsets.ModelViewSet):
     queryset = Layer.objects.all()
     serializer_class = LayerSerializer
+
+
+def gadm_layer_save(tenant, layer, admin_units):
+    connection.close()
+    connection.set_schema(tenant)
+
+    with transaction.atomic():
+        union = GEOSGeometry(admin_units[0]['geometry'])
+        for u in admin_units:
+            geom = GEOSGeometry(u['geometry'])
+            union = union.union(geom)
+            geom.transform(3857)
+            feature = Feature(
+                layer=layer,
+                geometry=GeometryCollection(geom),
+                properties={'id': u['id']}
+            )
+            feature.save()
+
+        envelope = union.envelope.coords[0]
+        layer.bounds = envelope[2] + envelope[0]
+        layer.status = 0
+        layer.save()
+
+
+def gadm_layer_save_handler(tenant, layer, *args):
+    connection.close()
+    connection.set_schema(tenant)
+
+    layer = Layer.objects.get(pk=layer.id)
+    layer.status = 2
+    layer.save()
+
+
+class GADMView(views.APIView):
+    def gadm_data_args(self, data):
+        gadm_data_args = {}
+        gadm_data_args['level'] = int(data['level'])
+        for l in range(gadm_data_args['level']):
+            try:
+                gadm_data_args['name_' + str(l)] = data['name_' + str(l)]
+            except KeyError:
+                raise ParseError(detail="name-{} not specified".format(l))
+        return gadm_data_args
+
+    def get(self, request):
+        results = gadm_data(**self.gadm_data_args(request.GET))
+        level = request.GET['level']
+        return Response([r['name_' + level] for r in results])
+
+    def post(self, request):
+        args = request.POST.dict()
+        results = gadm_data(distinct=False, **self.gadm_data_args(args))
+        name = args['name_' + str(int(args['level']) - 1)]
+        schema = {
+            'geometry': 'Polygon',
+            'properties': {
+                'id': 'int:4'
+            }
+        }
+        layer = Layer(name=name, field_names=['id'], schema=schema)
+        layer.save()
+
+        django_rq.enqueue(
+            gadm_layer_save,
+            request.tenant.schema_name,
+            layer,
+            results,
+            timeout=1200  # This could take a while...
+        )
+
+        return Response({'result': 'success'})

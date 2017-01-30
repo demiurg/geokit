@@ -2,18 +2,61 @@
 
 {% block titletag %}Add Layer{% endblock %}
 
-{% block content %}
-{% include "wagtailadmin/shared/header.html" with title="Layer" add_link="layers:add" add_text="Add Layer" icon="site" %}
+{% block extra_js %}
+<script src="https://unpkg.com/react@15/dist/react.min.js"></script>
+<script src="https://unpkg.com/react-dom@15/dist/react-dom.min.js"></script>
+<script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+<script src="https://cdn.plot.ly/plotly-1.2.0.min.js"></script>
+<script src="/static/js/builder.js"></script>
+{% endblock %}
 
-<div class="nice-padding">
+{% block content %}
+{% comment %}
+{% include "wagtailadmin/shared/header.html" with title="Layer" tabbed=True add_link="layers:add" add_text="Add Layer" icon="site" %}
+{% endcomment %}
+
+<header class="merged tab-merged nice-padding">
+    <div class="row row-flush">
+        <div class="left col9">
+            <h1 class="icon icon-doc-empty-inverse">Add New Layer</h1>
+        </div>
+    </div>
+</header>
+
     <form action="{% url 'layers:add' %}" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-        <ul class="fields">
-            {% for field in form %}
-                {% include "wagtailadmin/shared/field_as_li.html" with field=field %}
-            {% endfor %}
-            <li><input type="submit" value="Save" /></li>
+        <input type="hidden" name="next" />
+        <ul class="tab-nav merged">
+            <li class="active"><a href="#shapefile" class="active">From Shapefile</a></li>
+            <li><a href="#gadm">From GADM boundries</a></li>
         </ul>
+        <div class="tab-content">
+            <section id="shapefile" class="active">
+                <div class="nice-padding">
+                    <ul class="fields">
+                        {% for field in form %}
+                            {% include "wagtailadmin/shared/field_as_li.html" with field=field %}
+                        {% endfor %}
+                        <input type="submit" value="Save" class="button" />
+                    </ul>
+                </div>
+            </section>
+            <section id="gadm">
+                <div class="nice-padding">
+                    <div class="field-content" id="gadm-field"></div>
+                </div>
+            </section>
+        </div>
     </form>
-</div>
+
+<script>
+ReactDOM.render(
+    React.createElement(
+        GADMChooser,
+        {},
+        []
+    ),
+    document.getElementById("gadm-field")
+);
+</script>
 {% endblock %}

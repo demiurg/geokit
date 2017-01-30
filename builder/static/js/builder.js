@@ -6,6 +6,205 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === name + '=') {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+var GADMChooser = function (_React$Component) {
+    _inherits(GADMChooser, _React$Component);
+
+    function GADMChooser() {
+        _classCallCheck(this, GADMChooser);
+
+        var _this = _possibleConstructorReturn(this, _React$Component.call(this));
+
+        _this.state = {
+            level: null,
+            admin_units: [],
+            parent: null,
+            path: [],
+            loading: true
+        };
+        return _this;
+    }
+
+    GADMChooser.prototype.componentDidMount = function componentDidMount() {
+        var _this2 = this;
+
+        this.getAdminUnits(0, null, function (admin_units) {
+            _this2.setState({
+                level: 0,
+                admin_units: admin_units,
+                loading: false
+            });
+        });
+    };
+
+    GADMChooser.prototype.getAdminUnits = function getAdminUnits(level, parent_name, callback) {
+        var url = '/layers/gadm';
+
+        var query_params = '?level=' + level;
+
+        if (level != 0) {
+            var i = 0;
+            this.state.path.forEach(function (unit) {
+                query_params += '&name_' + i + '=' + unit;
+                i++;
+            });
+            query_params += '&name_' + i + '=' + parent_name;
+        }
+
+        $.ajax(url + query_params, {
+            dataType: 'json',
+            success: function success(data, status, xhr) {
+                callback(data);
+            },
+            error: function error(xhr, status, _error) {}
+        });
+    };
+
+    GADMChooser.prototype.back = function back() {
+        var _this3 = this;
+
+        var level = this.state.level - 1,
+            path = this.state.path;
+
+        parent = path.pop();
+
+        this.getAdminUnits(level, parent, function (admin_units) {
+            _this3.setState({
+                level: level,
+                admin_units: admin_units,
+                parent: parent,
+                path: path
+            });
+        });
+    };
+
+    GADMChooser.prototype.forward = function forward(parent_name) {
+        var _this4 = this;
+
+        var level = this.state.level + 1,
+            path = this.state.path;
+
+        if (this.state.parent) {
+            path.push(this.state.parent);
+        }
+
+        this.getAdminUnits(level, parent_name, function (admin_units) {
+            _this4.setState({
+                level: level,
+                admin_units: admin_units,
+                parent: parent_name,
+                path: path
+            });
+        });
+    };
+
+    GADMChooser.prototype.saveLayer = function saveLayer(e) {
+        e.preventDefault();
+
+        var data = {};
+        for (var i = 0; i < this.state.path.length; i++) {
+            data['name_' + i] = this.state.path[i];
+        }
+        data['name_' + (this.state.level - 1)] = this.state.parent;
+        data.level = this.state.level;
+
+        $.ajax('/layers/gadm/', {
+            dataType: 'json',
+            type: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            data: data,
+            success: function success(data, status, xhr) {
+                window.location = '/builder/admin/layers';
+            },
+            error: function error(xhr, status, _error2) {}
+        });
+    };
+
+    GADMChooser.prototype.render = function render() {
+        var _this5 = this;
+
+        if (this.state.loading) {
+            return React.createElement(
+                'div',
+                null,
+                'Loading...'
+            );
+        } else {
+            return React.createElement(
+                'div',
+                null,
+                React.createElement(
+                    'h1',
+                    null,
+                    this.state.path.map(function (unit) {
+                        return unit + " > ";
+                    }),
+                    React.createElement(
+                        'em',
+                        null,
+                        this.state.parent
+                    )
+                ),
+                React.createElement(
+                    'ul',
+                    { className: 'listing', style: { height: 300, overflow: "scroll", marginBottom: 0 } },
+                    this.state.level != 0 ? React.createElement(
+                        'li',
+                        null,
+                        React.createElement(
+                            'a',
+                            { href: 'javascript:', onClick: this.back.bind(this) },
+                            '< Back'
+                        )
+                    ) : null,
+                    this.state.admin_units.map(function (unit) {
+                        return React.createElement(
+                            'li',
+                            null,
+                            React.createElement(
+                                'a',
+                                { href: 'javascript:', onClick: _this5.forward.bind(_this5, unit) },
+                                unit
+                            )
+                        );
+                    })
+                ),
+                React.createElement(
+                    'button',
+                    { className: 'button', onClick: this.saveLayer.bind(this), disabled: this.state.level == 0 },
+                    'Save'
+                )
+            );
+        }
+    };
+
+    return GADMChooser;
+}(React.Component);
+'use strict';
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var Graph = function (_React$Component) {
     _inherits(Graph, _React$Component);
 
