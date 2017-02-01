@@ -11,7 +11,6 @@ TEMPLATES[0]['OPTIONS']['debug'] = True
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'ipcioxdq^7+hjd1a6!0)4*a#gzckyjw9198w&(ae(x-lf@!cin'
 
-
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # Import local.py but only if it exists.  Note that if local.py itself
@@ -23,3 +22,5 @@ except ImportError as ie:
         print('No local settings file found.', file=sys.stderr)
     else:
         raise
+
+assert SESSION_COOKIE_DOMAIN in ALLOWED_HOSTS, "Will not be able to login"
