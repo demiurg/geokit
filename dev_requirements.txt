@@ -1,5 +1,5 @@
 -r requirements.txt
-pytest
 mock
-pytest-django
-pytest-cov
+pytest==2.9.2
+pytest-cov==2.3.0
+pytest-django==2.9.1
