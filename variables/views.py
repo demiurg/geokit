@@ -1,9 +1,8 @@
 from django.core.serializers import serialize
 from django.shortcuts import get_object_or_404, render
-from django.core import serializers
 from django.conf import settings
 
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 
@@ -11,13 +10,9 @@ from layers.models import Feature
 from variables.models import Variable
 from variables.serializers import VariableSerializer
 
-from datetime import datetime
-from dateutil.rrule import rrule, WEEKLY
 import json
-import random
-import numpy
 import xmlrpclib
-from psycopg2.extras import DateRange
+
 
 def get_raster_catalog():
         if not hasattr(settings, 'RPC_URL'):
@@ -28,6 +23,7 @@ def get_raster_catalog():
 
         data = conn.get_datacatalog()
         return data
+
 
 def index(request):
     variables = Variable.objects.all()
