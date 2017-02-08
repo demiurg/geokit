@@ -10,29 +10,16 @@ from geokit_tables.models import GeoKitTable
 from layers.models import Layer
 
 
+def treeToNode(tree):
+    return NODE_TYPES[tree[0]](tree[0], tree[1])
+
+
 class DataNode(object):
     def __init__(self, operation, operands):
-        self.executors = {
-            '+': self.getattrOperator('__add__'),
-            '-': self.getattrOperator('__sub__'),
-            '*': self.getattrOperator('__mul__'),
-            '/': self.getattrOperator('__div__'),
-
-            'mean': self.MeanOperator,
-            'smean': self.SpatialMeanOperator,
-            'tmean': self.TemporalMeanOperator,
-
-            'filter': self.ValueFilterOperator,
-            'sfilter': self.SpatialFilterOperator,
-            'tfilter': self.TemporalFilterOperator,
-
-            'join': self.JoinOperator,
-            'select': self.SelectOperator,
-        }
         self.operation = operation
         self.operands = [
-            DataNode(*args)
-            if type(args) in (list, tuple) and args[0] in self.executors
+            treeToNode(args)
+            if type(args) in (list, tuple) and args[0] in NODE_TYPES
             else args
             for args in operands
         ]
@@ -40,26 +27,34 @@ class DataNode(object):
     def __unicode__(self):
         return self.operation
 
-    def execute(self):
-        executor = self.executors.get(self.operation)
-        executed_args = [
-            operand.execute() if hasattr(operand, 'execute')
-            else operand
-            for operand in self.operands
+    def execute_operands(self):
+        rands = [
+            o.execute()
+            if hasattr(o, 'execute')
+            else o
+            for o in self.operands
         ]
-        return executor(*executed_args)
+        #print rands
+        return rands
 
-    def getattrOperator(self, method):
-        def f(left, right):
+
+def getattrOperator(method):
+    class O(DataNode):
+        def execute(self):
+            left, right = self.execute_operands()
             return getattr(left, method)(right)
+    return O
 
-        return f
 
-    def MeanOperator(self, left, right):
-        values = (left + right) / 2
-        return values
+class MeanOperator(DataNode):
+    def execute(self):
+        return sum(self.operands) / len(self.operands)
 
-    def SpatialMeanOperator(self, val):
+
+class SpatialMeanOperator(DataNode):
+    def execute(self):
+        val, = self.execute_operands()
+
         if type(val) == pandas.DataFrame:
             return val.mean(axis=0)
         elif type(val) == pandas.Series:
@@ -68,7 +63,11 @@ class DataNode(object):
             else:
                 raise ValueError("No space dimension to aggregate")
 
-    def TemporalMeanOperator(self, val):
+
+class TemporalMeanOperator(DataNode):
+    def execute(self):
+        val, = self.execute_operands()
+
         if type(val) == pandas.DataFrame:
             return val.mean(axis=1)
         elif type(val) == pandas.Series:
@@ -77,7 +76,10 @@ class DataNode(object):
             else:
                 raise ValueError("No time dimension to aggregate")
 
-    def SpatialFilterOperator(self, val, filter_):
+
+class SpatialFilterOperator(DataNode):
+    def execute(self):
+        val, filter_ = self.execute_operands()
         '''
         Filter format:
         `{
@@ -105,7 +107,10 @@ class DataNode(object):
             'temporal_key': val['spatial_key']
         }
 
-    def TemporalFilterOperator(self, val, filter_):
+
+class TemporalFilterOperator(DataNode):
+    def execute(self):
+        val, filter_ = self.execute_operands()
         '''
         Filter format:
         `{
@@ -137,7 +142,10 @@ class DataNode(object):
 
         raise ValueError('Invalid filter type {}'.format(filter_['filter_type']))
 
-    def ValueFilterOperator(self, val, filter_):
+
+class ValueFilterOperator(DataNode):
+    def execute(self):
+        val, filter_ = self.execute_operands()
         '''
         Filter format:
         `{
@@ -160,7 +168,10 @@ class DataNode(object):
         # Should not be ere
         raise ValueError("Invalid comparator {}".format(filter_['comparator']))
 
-    def SelectOperator(self, source, name):
+
+class SelectOperator(DataNode):
+    def execute(self):
+        source, name = self.execute_operands()
         '''
         Serialization format:
         `{
@@ -173,11 +184,19 @@ class DataNode(object):
         source.select(name)
         return source.variable()
 
-    def JoinOperator(self, left, right):
+
+class JoinOperator(DataNode):
+    def execute(self):
+        left, right = self.execute_operands()
         return DataSource(left, right)
 
 
 class DataSource(object):
+    '''
+        For now only implement table and layer joining
+        TODO: Allow joins and selects of any tables/layers combos
+    '''
+
     def __init__(self, *sources):
         self.layers = []
         self.tables = []
@@ -287,3 +306,21 @@ class DataSource(object):
                 self.query, django.db.connection, index_col='date_range'
             )
             return self.df
+
+NODE_TYPES = {
+    '+': getattrOperator('__add__'),
+    '-': getattrOperator('__sub__'),
+    '*': getattrOperator('__mul__'),
+    '/': getattrOperator('__div__'),
+
+    'mean': MeanOperator,
+    'smean': SpatialMeanOperator,
+    'tmean': TemporalMeanOperator,
+
+    'filter': ValueFilterOperator,
+    'sfilter': SpatialFilterOperator,
+    'tfilter': TemporalFilterOperator,
+
+    'join': JoinOperator,
+    'select': SelectOperator,
+}

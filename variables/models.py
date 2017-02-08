@@ -9,7 +9,7 @@ import pandas
 from django.db import models
 from django.contrib.postgres.fields import ArrayField, JSONField
 
-from data import DataNode
+from data import treeToNode
 import json
 
 
@@ -31,9 +31,9 @@ class Variable(models.Model):
         super(Variable, self).__init__(*args, **kwargs)
 
         try:
-            self._tree = DataNode(*self.tree)
+            self.root = treeToNode(self.tree)
         except TypeError:
-            self._tree = None
+            self.root = None
 
         self.current_data = None
         self.current_dimensions = {
@@ -71,5 +71,7 @@ class Variable(models.Model):
 
     def data(self):
         if self.current_data is None:
-            self.current_data = DataNode(*self.tree).execute()
+            self.root = treeToNode(self.tree)
+            self.current_data = self.root.execute()
+
         return self.current_data
