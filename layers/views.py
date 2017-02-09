@@ -481,14 +481,14 @@ def gadm_layer_save(tenant, layer, admin_units):
 
     with transaction.atomic():
         union = GEOSGeometry(admin_units[0]['geometry'])
-        for u in admin_units:
-            geom = GEOSGeometry(u['geometry'])
+        for i, u in enumerate(admin_units):
+            geom = GEOSGeometry(u['geometry'], srid=4326)
             union = union.union(geom)
             geom.transform(3857)
             feature = Feature(
                 layer=layer,
                 geometry=GeometryCollection(geom),
-                properties={'id': u['id']}
+                properties={'id': i}
             )
             feature.save()
 
@@ -511,35 +511,32 @@ class GADMView(views.APIView):
     def get(self, request):
         results = gadm_data(**gadm_data_args(request.GET))
         level = request.GET['level']
-        return Response([{'name': r['name_' + level]} for r in results])
+        return Response([{'name': r['name_' + level], 'id': r['id']} for r in results])
 
     def post(self, request):
-        args = request.POST.dict()
-        results = gadm_data(distinct=False, **gadm_data_args(args))
-        print len(results)
+        args = request.data
+        print args.keys()
+        # results = gadm_data(distinct=False, **gadm_data_args(args))
 
-        field_name = 'name_%s' % request.POST['level']
-        results = [result for result in results if result[field_name] in request.POST['selected[]']]
-        print len(results)
+        # field_name = 'name_%s' % request.POST['level']
+        # results = [result for result in results if result[field_name] in request.POST['selected[]']]
 
-        return Response([])
+        name = args['name']
+        schema = {
+            'geometry': 'Polygon',
+            'properties': {
+                'id': 'int:4'
+            }
+        }
+        layer = Layer(name=name, field_names=['id'], schema=schema)
+        layer.save()
 
-        #name = args['name_' + str(int(args['level']) - 1)]
-        #schema = {
-            #'geometry': 'Polygon',
-            #'properties': {
-                #'id': 'int:4'
-            #}
-        #}
-        #layer = Layer(name=name, field_names=['id'], schema=schema)
-        #layer.save()
+        django_rq.enqueue(
+            gadm_layer_save,
+            request.tenant.schema_name,
+            layer,
+            args['features'],
+            timeout=1200  # This could take a while...
+        )
 
-        #django_rq.enqueue(
-            #gadm_layer_save,
-            #request.tenant.schema_name,
-            #layer,
-            #results,
-            #timeout=1200  # This could take a while...
-        #)
-
-        #return Response({'result': 'success'})
+        return Response({'result': 'success'})

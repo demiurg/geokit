@@ -193,20 +193,29 @@ class GADMChooser extends React.Component {
     saveLayer(e) {
         e.preventDefault();
 
-        var data = {};
-        for (var i = 0; i < this.state.parents.length; i++) {
+        var data = {features: []};
+        /*for (var i = 0; i < this.state.parents.length; i++) {
             data['name_' + i] = this.state.parents[i];
         }
         data.selected = this.state.selected;
-        data.level = this.state.level;
+        data.level = this.state.level;*/
+        this.state.selected.forEach((unit) => {
+            data.features.push({
+                geometry: this.unit_geometries[unit],
+                name: unit
+            });
+        });
+
+        data.name = this.state.parents[this.state.parents.length - 1];
 
         $.ajax('/layers/gadm/', {
             dataType: 'json',
+            contentType: 'application/json',
             type: 'POST',
             headers: {
                 'X-CSRFToken': getCookie('csrftoken')
             },
-            data: data,
+            data: JSON.stringify(data),
             success: (data, status, xhr) => {
                 window.location = '/builder/admin/layers';
             },
