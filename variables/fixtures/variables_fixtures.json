@@ -11,15 +11,15 @@
           ["mean", [
             ["select", [
               ["join", [
-                {"type": "Layer", "id": 1, "name": "cnty24k97", "field": "fid"},
-                {"type": "Table", "id": 1, "name": "cnty24k97_data", "field": "fid"}
+                {"type": "Layer", "id": 26, "name": "cnty24k97", "field": "fid"},
+                {"type": "Table", "id": 30, "name": "cnty24k97_data", "field": "fid"}
               ]],
               "tmin"
             ]],
             ["select", [
               ["join", [
-                {"type": "Layer", "id": 1, "name": "cnty24k97", "field": "fid"},
-                {"type": "Table", "id": 1, "name": "cnty24k97_data", "field": "fid"}
+                {"type": "Layer", "id": 26, "name": "cnty24k97", "field": "fid"},
+                {"type": "Table", "id": 30, "name": "cnty24k97_data", "field": "fid"}
               ]],
               "tmax"
             ]]
