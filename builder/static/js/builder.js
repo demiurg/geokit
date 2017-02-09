@@ -1,3 +1,42 @@
+"use strict";
+
+function bindLayerDownload(layer, dom_element) {
+    ReactDOM.render(React.createElement(LayerDownload, { layer: layer }), dom_element);
+}
+
+function bindTableDownload(table, dom_element) {
+    ReactDOM.render(React.createElement(TableDownload, { table: table }), dom_element);
+}
+
+window.bindLayerDownload = bindLayerDownload;
+window.bindTableDownload = bindTableDownload;
+"use strict";
+
+function bindMap(variable, color_ramp, dom_element) {
+    ReactDOM.render(React.createElement(Map, {
+        variable_id: variable.id,
+        variable_name: variable.name,
+        color_ramp: color_ramp
+    }), dom_element);
+}
+
+function bindGraph(variable, dom_element) {
+    ReactDOM.render(React.createElement(Graph, {
+        variable_id: variable.id,
+        variable_name: variable.name
+    }), dom_element);
+}
+
+function bindTable(variable, dom_element) {
+    ReactDOM.render(React.createElement(Table, {
+        variable_id: variable.id,
+        variable_name: variable.name
+    }), dom_element);
+}
+
+window.bindMap = bindMap;
+window.bindGraph = bindGraph;
+window.bindTable = bindTable;
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -30,11 +69,13 @@ var GADMChooser = function (_React$Component) {
 
         var _this = _possibleConstructorReturn(this, _React$Component.call(this));
 
+        _this.mapRendered = false;
+
         _this.state = {
             level: null,
-            admin_units: [],
-            parent: null,
-            path: [],
+            parents: [],
+            units: [],
+            selected: [],
             loading: true
         };
         return _this;
@@ -46,10 +87,113 @@ var GADMChooser = function (_React$Component) {
         this.getAdminUnits(0, null, function (admin_units) {
             _this2.setState({
                 level: 0,
-                admin_units: admin_units,
+                units: admin_units.map(function (unit) {
+                    return unit.name;
+                }),
+                selected: admin_units.map(function (unit) {
+                    return unit.name;
+                }),
                 loading: false
             });
         });
+    };
+
+    GADMChooser.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
+        var _this3 = this;
+
+        if (!this.state.loading && !this.mapRendered) {
+            this.renderMap();
+        } else if (!this.state.loading && this.mapRendered) {
+            if (this.state.level == 0) {
+                // Don't bother rendering any admin units, just zoom out
+                // to the world.
+
+                if (this.unit_json_layer) {
+                    this.map.removeLayer(this.unit_json_layer);
+                }
+                this.map.setView([0, 0], 1);
+            } else {
+                if (this.state.level == prevState.level) {
+                    // Only the selected admin units have changed,
+                    // no need to fetch the geometries again.
+
+                    this.renderAdminUnits();
+                } else {
+                    var url = '/admin/layers/gadm.json';
+
+                    var query_params = '?level=' + this.state.level;
+
+                    var i = 0;
+
+                    this.state.parents.forEach(function (unit) {
+                        query_params += '&name_' + i + '=' + unit;
+                        i++;
+                    });
+
+                    $.ajax(url + query_params, {
+                        dataType: 'json',
+                        success: function success(data, status, xhr) {
+                            _this3.unit_geometries = data;
+                            _this3.renderAdminUnits();
+                        },
+                        error: function error(xhr, status, _error) {}
+                    });
+                }
+            }
+        }
+    };
+
+    GADMChooser.prototype.renderAdminUnits = function renderAdminUnits() {
+        var _this4 = this;
+
+        if (this.unit_json_layer) {
+            this.map.removeLayer(this.unit_json_layer);
+        }
+
+        var units = this.unit_geometries;
+        var geometries = [];
+        for (var unit in units) {
+            var geometry = JSON.parse(units[unit]);
+            geometry.properties = {};
+            geometry.properties.name = unit;
+            geometries.push(geometry);
+        }
+
+        this.unit_json_layer = L.geoJson(geometries, {
+            style: function style(feature) {
+                if (_this4.state.selected.indexOf(feature.geometry.properties.name) == -1) {
+                    return { color: 'grey' };
+                } else {
+                    return { color: 'crimson' };
+                }
+            },
+            onEachFeature: function onEachFeature(feature, layer) {
+                layer.on('click', function () {
+                    var selected = _this4.state.selected;
+                    var i = selected.indexOf(feature.properties.name);
+                    if (i == -1) {
+                        selected.push(feature.properties.name);
+                    } else {
+                        selected.splice(i, 1);
+                    }
+                    _this4.setState({ selected: selected });
+                });
+            }
+        }).addTo(this.map);
+        this.map.fitBounds(this.unit_json_layer.getBounds());
+    };
+
+    GADMChooser.prototype.renderMap = function renderMap() {
+        var map = this.map = L.map('map').setView([0, 0], 1);
+
+        self.terrain = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+            maxZoom: 18,
+            id: 'ags.n5m0p5ci',
+            accessToken: 'pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
+        }).addTo(map);
+
+        this.mapRendered = true;
     };
 
     GADMChooser.prototype.getAdminUnits = function getAdminUnits(level, parent_name, callback) {
@@ -59,11 +203,10 @@ var GADMChooser = function (_React$Component) {
 
         if (level != 0) {
             var i = 0;
-            this.state.path.forEach(function (unit) {
+            this.state.parents.forEach(function (unit) {
                 query_params += '&name_' + i + '=' + unit;
                 i++;
             });
-            query_params += '&name_' + i + '=' + parent_name;
         }
 
         $.ajax(url + query_params, {
@@ -71,74 +214,91 @@ var GADMChooser = function (_React$Component) {
             success: function success(data, status, xhr) {
                 callback(data);
             },
-            error: function error(xhr, status, _error) {}
+            error: function error(xhr, status, _error2) {}
         });
     };
 
     GADMChooser.prototype.back = function back() {
-        var _this3 = this;
+        var _this5 = this;
 
         var level = this.state.level - 1,
-            path = this.state.path;
+            parents = this.state.parents;
 
-        parent = path.pop();
+        parents.pop();
 
-        this.getAdminUnits(level, parent, function (admin_units) {
-            _this3.setState({
+        this.getAdminUnits(level, parents[parents.length - 1], function (admin_units) {
+            _this5.setState({
                 level: level,
-                admin_units: admin_units,
-                parent: parent,
-                path: path
+                units: admin_units.map(function (unit) {
+                    return unit.name;
+                }),
+                selected: admin_units.map(function (unit) {
+                    return unit.name;
+                }),
+                parents: parents
             });
         });
     };
 
     GADMChooser.prototype.forward = function forward(parent_name) {
-        var _this4 = this;
+        var _this6 = this;
 
         var level = this.state.level + 1,
-            path = this.state.path;
+            parents = this.state.parents;
 
-        if (this.state.parent) {
-            path.push(this.state.parent);
-        }
+        parents.push(parent_name);
 
         this.getAdminUnits(level, parent_name, function (admin_units) {
-            _this4.setState({
+            _this6.setState({
                 level: level,
-                admin_units: admin_units,
-                parent: parent_name,
-                path: path
+                units: admin_units.map(function (unit) {
+                    return unit.name;
+                }),
+                selected: admin_units.map(function (unit) {
+                    return unit.name;
+                }),
+                parents: parents
             });
         });
     };
 
     GADMChooser.prototype.saveLayer = function saveLayer(e) {
+        var _this7 = this;
+
         e.preventDefault();
 
-        var data = {};
-        for (var i = 0; i < this.state.path.length; i++) {
-            data['name_' + i] = this.state.path[i];
+        var data = { features: [] };
+        /*for (var i = 0; i < this.state.parents.length; i++) {
+            data['name_' + i] = this.state.parents[i];
         }
-        data['name_' + (this.state.level - 1)] = this.state.parent;
-        data.level = this.state.level;
+        data.selected = this.state.selected;
+        data.level = this.state.level;*/
+        this.state.selected.forEach(function (unit) {
+            data.features.push({
+                geometry: _this7.unit_geometries[unit],
+                name: unit
+            });
+        });
+
+        data.name = this.state.parents[this.state.parents.length - 1];
 
         $.ajax('/layers/gadm/', {
             dataType: 'json',
+            contentType: 'application/json',
             type: 'POST',
             headers: {
                 'X-CSRFToken': getCookie('csrftoken')
             },
-            data: data,
+            data: JSON.stringify(data),
             success: function success(data, status, xhr) {
                 window.location = '/builder/admin/layers';
             },
-            error: function error(xhr, status, _error2) {}
+            error: function error(xhr, status, _error3) {}
         });
     };
 
     GADMChooser.prototype.render = function render() {
-        var _this5 = this;
+        var _this8 = this;
 
         if (this.state.loading) {
             return React.createElement(
@@ -153,14 +313,9 @@ var GADMChooser = function (_React$Component) {
                 React.createElement(
                     'h1',
                     null,
-                    this.state.path.map(function (unit) {
+                    this.state.parents.map(function (unit) {
                         return unit + " > ";
-                    }),
-                    React.createElement(
-                        'em',
-                        null,
-                        this.state.parent
-                    )
+                    })
                 ),
                 React.createElement(
                     'ul',
@@ -174,18 +329,19 @@ var GADMChooser = function (_React$Component) {
                             '< Back'
                         )
                     ) : null,
-                    this.state.admin_units.map(function (unit) {
+                    this.state.units.map(function (unit) {
                         return React.createElement(
                             'li',
                             null,
                             React.createElement(
                                 'a',
-                                { href: 'javascript:', onClick: _this5.forward.bind(_this5, unit) },
+                                { href: 'javascript:', onClick: _this8.forward.bind(_this8, unit) },
                                 unit
                             )
                         );
                     })
                 ),
+                React.createElement('div', { id: 'map', style: { height: 400 } }),
                 React.createElement(
                     'button',
                     { className: 'button', onClick: this.saveLayer.bind(this), disabled: this.state.level == 0 },
@@ -786,6 +942,101 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var NOT_STARTED = 0,
+    PROCESSING = 1,
+    READY = 2;
+
+var TableDownload = function (_React$Component) {
+    _inherits(TableDownload, _React$Component);
+
+    function TableDownload() {
+        _classCallCheck(this, TableDownload);
+
+        var _this = _possibleConstructorReturn(this, _React$Component.call(this));
+
+        _this.requestDownload = function () {
+            $.ajax('/admin/tables/download/' + _this.props.table, {
+                dataType: 'json',
+                success: function success(data, status, xhr) {
+                    _this.setState({
+                        download: PROCESSING
+                    });
+                    _this.checkStatus();
+                },
+                error: function error(xhr, status, _error) {
+                    console.error(_error);
+                }
+            });
+        };
+
+        _this.state = {
+            download: NOT_STARTED,
+            download_link: null
+        };
+        return _this;
+    }
+
+    TableDownload.prototype.startPoll = function startPoll() {
+        var _this2 = this;
+
+        setTimeout(function () {
+            _this2.checkStatus();
+        }, 1000);
+    };
+
+    TableDownload.prototype.checkStatus = function checkStatus() {
+        var _this3 = this;
+
+        $.ajax('/api/tables/' + this.props.table, {
+            dataType: 'json',
+            success: function success(data, status, xhr) {
+                if (data.table_file.file) {
+                    _this3.setState({
+                        download: READY,
+                        download_link: data.table_file.file
+                    });
+                } else {
+                    _this3.startPoll();
+                }
+            },
+            error: function error(xhr, status, _error2) {
+                console.error(_error2);
+            }
+        });
+    };
+
+    TableDownload.prototype.render = function render() {
+        if (this.state.download == NOT_STARTED) {
+            return React.createElement(
+                'a',
+                { href: '#', className: 'button button-secondary', onClick: this.requestDownload },
+                'Request Download'
+            );
+        } else if (this.state.download == PROCESSING) {
+            return React.createElement(
+                'a',
+                { href: '#', className: 'button button-secondary disabled' },
+                'Layer Processing...'
+            );
+        } else {
+            return React.createElement(
+                'a',
+                { href: this.state.download_link, className: 'button button-secondary' },
+                'Download Table'
+            );
+        }
+    };
+
+    return TableDownload;
+}(React.Component);
+'use strict';
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var ASCENDING = true,
     DESCENDING = false;
 
@@ -971,101 +1222,6 @@ var Table = function (_React$Component) {
     };
 
     return Table;
-}(React.Component);
-'use strict';
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var NOT_STARTED = 0,
-    PROCESSING = 1,
-    READY = 2;
-
-var TableDownload = function (_React$Component) {
-    _inherits(TableDownload, _React$Component);
-
-    function TableDownload() {
-        _classCallCheck(this, TableDownload);
-
-        var _this = _possibleConstructorReturn(this, _React$Component.call(this));
-
-        _this.requestDownload = function () {
-            $.ajax('/admin/tables/download/' + _this.props.table, {
-                dataType: 'json',
-                success: function success(data, status, xhr) {
-                    _this.setState({
-                        download: PROCESSING
-                    });
-                    _this.checkStatus();
-                },
-                error: function error(xhr, status, _error) {
-                    console.error(_error);
-                }
-            });
-        };
-
-        _this.state = {
-            download: NOT_STARTED,
-            download_link: null
-        };
-        return _this;
-    }
-
-    TableDownload.prototype.startPoll = function startPoll() {
-        var _this2 = this;
-
-        setTimeout(function () {
-            _this2.checkStatus();
-        }, 1000);
-    };
-
-    TableDownload.prototype.checkStatus = function checkStatus() {
-        var _this3 = this;
-
-        $.ajax('/api/tables/' + this.props.table, {
-            dataType: 'json',
-            success: function success(data, status, xhr) {
-                if (data.table_file.file) {
-                    _this3.setState({
-                        download: READY,
-                        download_link: data.table_file.file
-                    });
-                } else {
-                    _this3.startPoll();
-                }
-            },
-            error: function error(xhr, status, _error2) {
-                console.error(_error2);
-            }
-        });
-    };
-
-    TableDownload.prototype.render = function render() {
-        if (this.state.download == NOT_STARTED) {
-            return React.createElement(
-                'a',
-                { href: '#', className: 'button button-secondary', onClick: this.requestDownload },
-                'Request Download'
-            );
-        } else if (this.state.download == PROCESSING) {
-            return React.createElement(
-                'a',
-                { href: '#', className: 'button button-secondary disabled' },
-                'Layer Processing...'
-            );
-        } else {
-            return React.createElement(
-                'a',
-                { href: this.state.download_link, className: 'button button-secondary' },
-                'Download Table'
-            );
-        }
-    };
-
-    return TableDownload;
 }(React.Component);
 "use strict";
 
@@ -1269,44 +1425,5 @@ var TableListItem = function (_React$Component2) {
 
     return TableListItem;
 }(React.Component);
-"use strict";
-
-function bindLayerDownload(layer, dom_element) {
-    ReactDOM.render(React.createElement(LayerDownload, { layer: layer }), dom_element);
-}
-
-function bindTableDownload(table, dom_element) {
-    ReactDOM.render(React.createElement(TableDownload, { table: table }), dom_element);
-}
-
-window.bindLayerDownload = bindLayerDownload;
-window.bindTableDownload = bindTableDownload;
-"use strict";
-
-function bindMap(variable, color_ramp, dom_element) {
-    ReactDOM.render(React.createElement(Map, {
-        variable_id: variable.id,
-        variable_name: variable.name,
-        color_ramp: color_ramp
-    }), dom_element);
-}
-
-function bindGraph(variable, dom_element) {
-    ReactDOM.render(React.createElement(Graph, {
-        variable_id: variable.id,
-        variable_name: variable.name
-    }), dom_element);
-}
-
-function bindTable(variable, dom_element) {
-    ReactDOM.render(React.createElement(Table, {
-        variable_id: variable.id,
-        variable_name: variable.name
-    }), dom_element);
-}
-
-window.bindMap = bindMap;
-window.bindGraph = bindGraph;
-window.bindTable = bindTable;
 
 //# sourceMappingURL=builder.js.map
