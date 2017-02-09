@@ -30,11 +30,13 @@ var GADMChooser = function (_React$Component) {
 
         var _this = _possibleConstructorReturn(this, _React$Component.call(this));
 
+        _this.mapRendered = false;
+
         _this.state = {
             level: null,
-            admin_units: [],
-            parent: null,
-            path: [],
+            parents: [],
+            units: [],
+            selected: [],
             loading: true
         };
         return _this;
@@ -46,10 +48,113 @@ var GADMChooser = function (_React$Component) {
         this.getAdminUnits(0, null, function (admin_units) {
             _this2.setState({
                 level: 0,
-                admin_units: admin_units,
+                units: admin_units.map(function (unit) {
+                    return unit.name;
+                }),
+                selected: admin_units.map(function (unit) {
+                    return unit.name;
+                }),
                 loading: false
             });
         });
+    };
+
+    GADMChooser.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
+        var _this3 = this;
+
+        if (!this.state.loading && !this.mapRendered) {
+            this.renderMap();
+        } else if (!this.state.loading && this.mapRendered) {
+            if (this.state.level == 0) {
+                // Don't bother rendering any admin units, just zoom out
+                // to the world.
+
+                if (this.unit_json_layer) {
+                    this.map.removeLayer(this.unit_json_layer);
+                }
+                this.map.setView([0, 0], 1);
+            } else {
+                if (this.state.level == prevState.level) {
+                    // Only the selected admin units have changed,
+                    // no need to fetch the geometries again.
+
+                    this.renderAdminUnits();
+                } else {
+                    var url = '/admin/layers/gadm.json';
+
+                    var query_params = '?level=' + this.state.level;
+
+                    var i = 0;
+
+                    this.state.parents.forEach(function (unit) {
+                        query_params += '&name_' + i + '=' + unit;
+                        i++;
+                    });
+
+                    $.ajax(url + query_params, {
+                        dataType: 'json',
+                        success: function success(data, status, xhr) {
+                            _this3.unit_geometries = data;
+                            _this3.renderAdminUnits();
+                        },
+                        error: function error(xhr, status, _error) {}
+                    });
+                }
+            }
+        }
+    };
+
+    GADMChooser.prototype.renderAdminUnits = function renderAdminUnits() {
+        var _this4 = this;
+
+        if (this.unit_json_layer) {
+            this.map.removeLayer(this.unit_json_layer);
+        }
+
+        var units = this.unit_geometries;
+        var geometries = [];
+        for (var unit in units) {
+            var geometry = JSON.parse(units[unit]);
+            geometry.properties = {};
+            geometry.properties.name = unit;
+            geometries.push(geometry);
+        }
+
+        this.unit_json_layer = L.geoJson(geometries, {
+            style: function style(feature) {
+                if (_this4.state.selected.indexOf(feature.geometry.properties.name) == -1) {
+                    return { color: 'grey' };
+                } else {
+                    return { color: 'crimson' };
+                }
+            },
+            onEachFeature: function onEachFeature(feature, layer) {
+                layer.on('click', function () {
+                    var selected = _this4.state.selected;
+                    var i = selected.indexOf(feature.properties.name);
+                    if (i == -1) {
+                        selected.push(feature.properties.name);
+                    } else {
+                        selected.splice(i, 1);
+                    }
+                    _this4.setState({ selected: selected });
+                });
+            }
+        }).addTo(this.map);
+        this.map.fitBounds(this.unit_json_layer.getBounds());
+    };
+
+    GADMChooser.prototype.renderMap = function renderMap() {
+        var map = this.map = L.map('map').setView([0, 0], 1);
+
+        self.terrain = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+            attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+            maxZoom: 18,
+            id: 'ags.n5m0p5ci',
+            accessToken: 'pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
+        }).addTo(map);
+
+        this.mapRendered = true;
     };
 
     GADMChooser.prototype.getAdminUnits = function getAdminUnits(level, parent_name, callback) {
@@ -59,11 +164,10 @@ var GADMChooser = function (_React$Component) {
 
         if (level != 0) {
             var i = 0;
-            this.state.path.forEach(function (unit) {
+            this.state.parents.forEach(function (unit) {
                 query_params += '&name_' + i + '=' + unit;
                 i++;
             });
-            query_params += '&name_' + i + '=' + parent_name;
         }
 
         $.ajax(url + query_params, {
@@ -71,44 +175,50 @@ var GADMChooser = function (_React$Component) {
             success: function success(data, status, xhr) {
                 callback(data);
             },
-            error: function error(xhr, status, _error) {}
+            error: function error(xhr, status, _error2) {}
         });
     };
 
     GADMChooser.prototype.back = function back() {
-        var _this3 = this;
+        var _this5 = this;
 
         var level = this.state.level - 1,
-            path = this.state.path;
+            parents = this.state.parents;
 
-        parent = path.pop();
+        parents.pop();
 
-        this.getAdminUnits(level, parent, function (admin_units) {
-            _this3.setState({
+        this.getAdminUnits(level, parents[parents.length - 1], function (admin_units) {
+            _this5.setState({
                 level: level,
-                admin_units: admin_units,
-                parent: parent,
-                path: path
+                units: admin_units.map(function (unit) {
+                    return unit.name;
+                }),
+                selected: admin_units.map(function (unit) {
+                    return unit.name;
+                }),
+                parents: parents
             });
         });
     };
 
     GADMChooser.prototype.forward = function forward(parent_name) {
-        var _this4 = this;
+        var _this6 = this;
 
         var level = this.state.level + 1,
-            path = this.state.path;
+            parents = this.state.parents;
 
-        if (this.state.parent) {
-            path.push(this.state.parent);
-        }
+        parents.push(parent_name);
 
         this.getAdminUnits(level, parent_name, function (admin_units) {
-            _this4.setState({
+            _this6.setState({
                 level: level,
-                admin_units: admin_units,
-                parent: parent_name,
-                path: path
+                units: admin_units.map(function (unit) {
+                    return unit.name;
+                }),
+                selected: admin_units.map(function (unit) {
+                    return unit.name;
+                }),
+                parents: parents
             });
         });
     };
@@ -117,11 +227,13 @@ var GADMChooser = function (_React$Component) {
         e.preventDefault();
 
         var data = {};
-        for (var i = 0; i < this.state.path.length; i++) {
-            data['name_' + i] = this.state.path[i];
+        for (var i = 0; i < this.state.parents.length; i++) {
+            data['name_' + i] = this.state.parents[i];
         }
-        data['name_' + (this.state.level - 1)] = this.state.parent;
+        data.selected = this.state.selected;
         data.level = this.state.level;
+
+        console.log(data);
 
         $.ajax('/layers/gadm/', {
             dataType: 'json',
@@ -133,12 +245,12 @@ var GADMChooser = function (_React$Component) {
             success: function success(data, status, xhr) {
                 window.location = '/builder/admin/layers';
             },
-            error: function error(xhr, status, _error2) {}
+            error: function error(xhr, status, _error3) {}
         });
     };
 
     GADMChooser.prototype.render = function render() {
-        var _this5 = this;
+        var _this7 = this;
 
         if (this.state.loading) {
             return React.createElement(
@@ -153,14 +265,9 @@ var GADMChooser = function (_React$Component) {
                 React.createElement(
                     'h1',
                     null,
-                    this.state.path.map(function (unit) {
+                    this.state.parents.map(function (unit) {
                         return unit + " > ";
-                    }),
-                    React.createElement(
-                        'em',
-                        null,
-                        this.state.parent
-                    )
+                    })
                 ),
                 React.createElement(
                     'ul',
@@ -174,18 +281,19 @@ var GADMChooser = function (_React$Component) {
                             '< Back'
                         )
                     ) : null,
-                    this.state.admin_units.map(function (unit) {
+                    this.state.units.map(function (unit) {
                         return React.createElement(
                             'li',
                             null,
                             React.createElement(
                                 'a',
-                                { href: 'javascript:', onClick: _this5.forward.bind(_this5, unit) },
+                                { href: 'javascript:', onClick: _this7.forward.bind(_this7, unit) },
                                 unit
                             )
                         );
                     })
                 ),
+                React.createElement('div', { id: 'map', style: { height: 400 } }),
                 React.createElement(
                     'button',
                     { className: 'button', onClick: this.saveLayer.bind(this), disabled: this.state.level == 0 },

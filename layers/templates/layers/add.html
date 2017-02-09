@@ -10,6 +10,10 @@
 <script src="/static/js/builder.js"></script>
 {% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.css" />
+{% endblock %}
+
 {% block content %}
 {% comment %}
 {% include "wagtailadmin/shared/header.html" with title="Layer" tabbed=True add_link="layers:add" add_text="Add Layer" icon="site" %}

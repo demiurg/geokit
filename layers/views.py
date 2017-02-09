@@ -15,6 +15,7 @@ import django_rq
 from psycopg2.extensions import AsIs
 
 from rest_framework import views, viewsets
+from rest_framework.decorators import api_view
 from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
 from wagtail.wagtailadmin import messages
@@ -212,6 +213,17 @@ def manual_mvt(cache_path, layer_name, z, x, y):
     return data
 
 
+def gadm_data_args(data):
+    gadm_data_args = {}
+    gadm_data_args['level'] = int(data['level'])
+    for l in range(gadm_data_args['level']):
+        try:
+            gadm_data_args['name_' + str(l)] = data['name_' + str(l)]
+        except KeyError:
+            raise ParseError(detail="name-{} not specified".format(l))
+    return gadm_data_args
+
+
 def gadm_data(level, distinct=True, **kwargs):
     cursor = connections['gadm'].cursor()
 
@@ -240,6 +252,26 @@ def gadm_data(level, distinct=True, **kwargs):
         dict(zip(columns, row))
         for row in cursor.fetchall()
     ]
+
+
+@api_view(['GET'])
+def gadm_json(request):
+    if request.GET['level'] == '0':
+        return Response([])  # Way too much data, shouldn't be needed anyway
+
+    results = gadm_data(distinct=False, **gadm_data_args(request.GET))
+
+    name_field = 'name_%s' % request.GET['level']
+    geometries = {}
+
+    for r in results:
+        name = r[name_field]
+        if name in geometries:
+            geometries[name] = geometries[name].union(GEOSGeometry(r['geometry']))
+        else:
+            geometries[name] = GEOSGeometry(r['geometry'])
+
+    return Response({k: v.json for k, v in geometries.items()})
 
 
 def index(request):
@@ -476,40 +508,38 @@ def gadm_layer_save_handler(tenant, layer, *args):
 
 
 class GADMView(views.APIView):
-    def gadm_data_args(self, data):
-        gadm_data_args = {}
-        gadm_data_args['level'] = int(data['level'])
-        for l in range(gadm_data_args['level']):
-            try:
-                gadm_data_args['name_' + str(l)] = data['name_' + str(l)]
-            except KeyError:
-                raise ParseError(detail="name-{} not specified".format(l))
-        return gadm_data_args
-
     def get(self, request):
-        results = gadm_data(**self.gadm_data_args(request.GET))
+        results = gadm_data(**gadm_data_args(request.GET))
         level = request.GET['level']
-        return Response([r['name_' + level] for r in results])
+        return Response([{'name': r['name_' + level]} for r in results])
 
     def post(self, request):
         args = request.POST.dict()
-        results = gadm_data(distinct=False, **self.gadm_data_args(args))
-        name = args['name_' + str(int(args['level']) - 1)]
-        schema = {
-            'geometry': 'Polygon',
-            'properties': {
-                'id': 'int:4'
-            }
-        }
-        layer = Layer(name=name, field_names=['id'], schema=schema)
-        layer.save()
+        results = gadm_data(distinct=False, **gadm_data_args(args))
+        print len(results)
 
-        django_rq.enqueue(
-            gadm_layer_save,
-            request.tenant.schema_name,
-            layer,
-            results,
-            timeout=1200  # This could take a while...
-        )
+        field_name = 'name_%s' % request.POST['level']
+        results = [result for result in results if result[field_name] in request.POST['selected[]']]
+        print len(results)
 
-        return Response({'result': 'success'})
+        return Response([])
+
+        #name = args['name_' + str(int(args['level']) - 1)]
+        #schema = {
+            #'geometry': 'Polygon',
+            #'properties': {
+                #'id': 'int:4'
+            #}
+        #}
+        #layer = Layer(name=name, field_names=['id'], schema=schema)
+        #layer.save()
+
+        #django_rq.enqueue(
+            #gadm_layer_save,
+            #request.tenant.schema_name,
+            #layer,
+            #results,
+            #timeout=1200  # This could take a while...
+        #)
+
+        #return Response({'result': 'success'})
