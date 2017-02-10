@@ -66,6 +66,19 @@ def test_example_0_5_select(set_schema):
     )
 
 @pytest.mark.django_db
+def test_select_one_table(set_schema):
+    tmin = Variable(tree=[
+        'select', [
+            ['source', [
+                {'type': 'Table', 'id': 30, 'name': 'cnty_24k97_data', 'field': 'fid'},
+            ]],
+            'tmin'
+        ]
+    ])
+
+    assert len(tmin.data()) == 3650
+
+@pytest.mark.django_db
 def test_join_two_tables(set_schema):
     tmin = Variable(tree=[
         'select', [
@@ -77,4 +90,20 @@ def test_join_two_tables(set_schema):
         ]
     ])
 
-    print tmin.data()
+
+@pytest.mark.django_db
+def test_join_two_sources(set_schema):
+    tmin = Variable(tree=[
+        'select', [
+            ['join', [
+                ['source', [
+                    {'type': 'Table', 'id': 30, 'name': 'cnty_24k97_data', 'field': 'fid'},
+                ]],
+                ['source', [
+                    {'type': 'Table', 'id': 30, 'name': 'cnty_24k97_data', 'field': 'fid'},
+                ]],
+            ]],
+            'tmin'
+        ]
+    ])
+    assert len(tmin.data()) == 3650

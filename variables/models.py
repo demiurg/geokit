@@ -30,10 +30,12 @@ class Variable(models.Model):
     def __init__(self, *args, **kwargs):
         super(Variable, self).__init__(*args, **kwargs)
 
+        '''
         try:
             self.root = treeToNode(self.tree)
         except TypeError:
             self.root = None
+        '''
 
         self.current_data = None
         self.current_dimensions = {

@@ -15,6 +15,11 @@ def treeToNode(tree):
 
 
 class DataNode(object):
+    ''' The DataNode object stores information about
+        * operation, which is a list defined strings
+        * operands, which are either data sources or other operations
+    '''
+
     def __init__(self, operation, operands):
         self.operation = operation
         self.operands = [
@@ -27,6 +32,10 @@ class DataNode(object):
     def __unicode__(self):
         return self.operation
 
+    def execute(self):
+        ''' Return instance of self if not implemented, sort of passthrough '''
+        return self
+
     def execute_operands(self):
         rands = [
             o.execute()
@@ -34,7 +43,7 @@ class DataNode(object):
             else o
             for o in self.operands
         ]
-        #print rands
+        # print rands
         return rands
 
 
@@ -171,79 +180,24 @@ class ValueFilterOperator(DataNode):
 
 class SelectOperator(DataNode):
     def execute(self):
-        source, name = self.execute_operands()
-        '''
-        Serialization format:
-        `{
-            'model': 'Table',
-            'id': 1,
-            'field': 'fid'
-        }`
-        '''
+        source, field = self.execute_operands()
 
-        source.select(name)
-        return source.variable()
-
-
-class JoinOperator(DataNode):
-    def execute(self):
-        left, right = self.execute_operands()
-        return DataSource(left, right)
-
-
-class DataSource(object):
-    '''
-        For now only implement table and layer joining
-        TODO: Allow joins and selects of any tables/layers combos
-    '''
-
-    def __init__(self, *sources):
-        self.layers = []
-        self.tables = []
-        self.fields = []
-
-        for source in sources:
-            if ('type' in source and source['type'] == 'Layer'):
-                # to check if exists
-                if 'id' in source:
-                    Layer.objects.get(id=int(source['id']))
-                elif 'name' in source:
-                    Layer.objects.get(name=source['name'])
-                else:
-                    raise KeyError("Source layer needs id or name")
-
-                self.layers.append(source)
-            elif ('type' in source and source['type'] == 'Table'):
-                # to check if exists
-                if 'id' in source:
-                    GeoKitTable.objects.get(id=int(source['id']))
-                elif 'name' in source:
-                    GeoKitTable.objects.get(name=source['name'])
-                else:
-                    raise KeyError("Source table needs id or name")
-
-                self.tables.append(source)
-            else:
-                raise ValueError("Invalid data source type")
-
-    def select(self, field):
         if type(field) == dict:
             name = field['field']
         elif type(field) in (str, unicode):
             name = field
         else:
             raise Exception("Wrong field type: {}".format(type(field)))
-        self.name = name
 
         selects = []
         froms = []
         joins = []
 
-        if self.layers:
+        if source.layers:
             selects.append("feature_id")
 
             f_wheres = []
-            for layer in self.layers:
+            for layer in source.layers:
                 f_wheres.append("layer_id = '{}'".format(layer['id']))
 
             froms.append(
@@ -258,11 +212,11 @@ class DataSource(object):
 
             joins.append('f')
 
-        if self.tables:
+        if source.tables:
             selects.append('date_range, "{}"'.format(name))
 
             t_wheres = []
-            for table in self.tables:
+            for table in source.tables:
                 t_wheres.append("table_id = '{}'".format(table['id']))
 
             froms.append(
@@ -283,29 +237,76 @@ class DataSource(object):
             '{}.joiner = {}.joiner'.format(a, b) for a in joins for b in joins
         ]
 
-        self.query = "SELECT {} FROM {} WHERE {}".format(
+        query = "SELECT {} FROM {} WHERE {}".format(
             ", ".join(selects),
             ", ".join(froms),
             " AND ".join(joins)
         )
 
-        return self.query
-
-    def variable(self):
         cursor = django.db.connection.cursor()
-        cursor.execute(self.query)
+        cursor.execute(query)
 
         try:
-            self.df = read_sql(self.query, django.db.connection)
-            return self.df.pivot(
-                index='feature_id', columns='date_range', values=self.name
+            df = read_sql(query, django.db.connection)
+            return df.pivot(
+                index='feature_id', columns='date_range', values=name
             )
         except KeyError as e:
             #print e
-            self.df = read_sql(
-                self.query, django.db.connection, index_col='date_range'
+            df = read_sql(
+                query, django.db.connection, index_col='date_range'
             )
-            return self.df
+            return df
+
+
+class DataSource(DataNode):
+    '''
+        For now only implement table and layer joining
+        TODO: Allow joins and selects of any tables/layers combos
+    '''
+
+    def execute(self):
+        self.layers = []
+        self.tables = []
+        self.fields = []
+        self.dimensions = {}
+
+        sources = self.execute_operands()
+
+        for source in sources:
+            if isinstance(source, DataSource):
+                if 'space' in source.dimensions:
+                    self.layers += source.layers
+                if 'time' in source.dimensions:
+                    self.tables += source.tables
+                self.dimensions.update(source.dimensions)
+            elif ('type' in source and source['type'] == 'Layer'):
+                # to check if exists
+                if 'id' in source:
+                    Layer.objects.get(id=int(source['id']))
+                elif 'name' in source:
+                    layer = Layer.objects.get(name=source['name'])
+                    source['id'] = layer.id
+                else:
+                    raise KeyError("Source layer needs id or name")
+                self.dimensions['space'] = True
+                self.layers.append(source)
+            elif ('type' in source and source['type'] == 'Table'):
+                # to check if exists
+                if 'id' in source:
+                    GeoKitTable.objects.get(id=int(source['id']))
+                elif 'name' in source:
+                    table = GeoKitTable.objects.get(name=source['name'])
+                    source['id'] = table.id
+                else:
+                    raise KeyError("Source table needs id or name")
+                self.dimensions['time'] = True
+                self.tables.append(source)
+            else:
+                raise ValueError("Invalid data source type")
+
+        return self
+
 
 NODE_TYPES = {
     '+': getattrOperator('__add__'),
@@ -321,6 +322,7 @@ NODE_TYPES = {
     'sfilter': SpatialFilterOperator,
     'tfilter': TemporalFilterOperator,
 
-    'join': JoinOperator,
+    'source': DataSource,
+    'join': DataSource,
     'select': SelectOperator,
 }
