@@ -1,9 +1,8 @@
 from django.core.serializers import serialize
 from django.shortcuts import get_object_or_404, render
-from django.core import serializers
 from django.conf import settings
 
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 
@@ -11,13 +10,9 @@ from layers.models import Feature
 from variables.models import Variable
 from variables.serializers import VariableSerializer
 
-from datetime import datetime
-from dateutil.rrule import rrule, WEEKLY
 import json
-import random
-import numpy
 import xmlrpclib
-from psycopg2.extras import DateRange
+
 
 def get_raster_catalog():
         if not hasattr(settings, 'RPC_URL'):
@@ -28,6 +23,7 @@ def get_raster_catalog():
 
         data = conn.get_datacatalog()
         return data
+
 
 def index(request):
     variables = Variable.objects.all()
@@ -75,21 +71,9 @@ class VariableViewSet(viewsets.ModelViewSet):
 
         #return Response(serializer.data, status=status.HTTP_201_CREATED, headers=self.get_success_headers(serializer.data))
 
-    def map_test_data(self, variable):
-        features = Feature.objects.all()[:10]
-        data = json.loads(serializers.serialize("geojson", features))['features']
-
-        random.seed()
-        for feature in data:
-            feature['properties'][variable.name] = random.randint(0, 100)
-
-        return data
-
     @detail_route(url_path='map')
     def map_data(self, request, pk=None):
         variable = get_object_or_404(Variable, pk=pk)
-
-        return Response(self.map_test_data(variable))  # FOR TESTING MAP DURING DEVELOPMENT ONLY; DELETE!
 
         evaluated_variable = variable.data()
 
@@ -109,22 +93,9 @@ class VariableViewSet(viewsets.ModelViewSet):
 
         return Response(data)
 
-    def graph_test_data(self):
-        data = {'x': [], 'y': [], 'type': 'timeseries', 'mode': 'lines'}
-        dates = list(rrule(freq=WEEKLY, count=20, dtstart=datetime(2010, 1, 1)))
-        data['x'] = [d.strftime("%Y-%m-%d %H:%M:%S") for d in dates]
-
-        random.seed()
-        for _ in range(20):
-            data['y'].append(random.randint(0, 100))
-
-        return data
-
     @detail_route(url_path='graph')
     def graph_data(self, request, pk=None):
         variable = get_object_or_404(Variable, pk=pk)
-
-        #return Response(self.graph_test_data())
 
         df = variable.data()
 
@@ -159,22 +130,9 @@ class VariableViewSet(viewsets.ModelViewSet):
 
         return Response(data)
 
-    def table_test_data(self):
-        data = {'dimension': 'time', 'values': []}
-
-        random.seed()
-        #for f in Feature.objects.all()[:20]:
-            #data['values'].append({'feature': f.verbose_name, 'value': random.randint(0, 100)})
-        for d in list(rrule(freq=WEEKLY, count=20, dtstart=datetime(2010, 1, 1))):
-            data['values'].append({'date': d.strftime("%Y-%m-%d"), 'value': random.randint(0,100)})
-
-        return data
-
     @detail_route(url_path='table')
     def table_data(self, request, pk=None):
         variable = get_object_or_404(Variable, pk=pk)
-
-        #return Response(self.table_test_data())
 
         df = variable.data()
         data = {}
@@ -201,5 +159,3 @@ class VariableViewSet(viewsets.ModelViewSet):
             data['invalid'] = True
 
         return Response(data)
-
-
