@@ -9,7 +9,8 @@ import pandas
 from django.db import models
 from django.contrib.postgres.fields import ArrayField, JSONField
 
-from data import treeToNode
+from layers.models import Layer
+from data import treeToNode, DataSource
 import json
 
 
@@ -38,6 +39,7 @@ class Variable(models.Model):
         '''
 
         self.current_data = None
+        self.source_layers = None
         self.current_dimensions = {
             'spatial_domain': self.spatial_domain,
             'temporal_domain': self.temporal_domain
@@ -70,6 +72,25 @@ class Variable(models.Model):
 
     def input_variables_json(self):
         return json.dumps(self.input_variables)
+
+    def get_source_layers(self):
+        def walk_nodes(node):
+            if type(node) == DataSource:
+                node.execute()
+                return set([Layer(pk=l['id']) for l in node.layers])
+            elif type(node) == str:
+                return set()
+            else:
+                source_layers = set()
+                for operand in node.operands:
+                    source_layers = source_layers.union(walk_nodes(operand))
+                return source_layers
+
+        if self.source_layers is None:
+            self.root = treeToNode(self.tree)
+            self.source_layers = walk_nodes(self.root)
+
+        return self.source_layers
 
     def data(self):
         if self.current_data is None:

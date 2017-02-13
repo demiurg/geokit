@@ -107,3 +107,18 @@ def test_join_two_sources(set_schema):
         ]
     ])
     assert len(tmin.data()) == 3650
+
+
+@pytest.mark.django_db
+def test_get_source_layers(set_schema):
+    tmin = Variable(tree=[
+        'select', [
+            ['join', [
+                {'type': 'Layer', 'id': 26, 'name': 'cnty_24k97', 'field': 'fid'},
+                {'type': 'Table', 'id': 30, 'name': 'cnty_24k97_data', 'field': 'fid'},
+            ]],
+            'tmin'
+        ]
+    ])
+
+    assert [l.pk for l in tmin.get_source_layers()] == [26]
