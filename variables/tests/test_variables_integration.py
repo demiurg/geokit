@@ -78,6 +78,7 @@ def test_select_one_table(set_schema):
 
     assert len(tmin.data()) == 3650
 
+
 @pytest.mark.django_db
 def test_join_two_tables(set_schema):
     tmin = Variable(tree=[
@@ -89,6 +90,7 @@ def test_join_two_tables(set_schema):
             'tmin'
         ]
     ])
+    assert len(tmin.data()) == 3650
 
 
 @pytest.mark.django_db

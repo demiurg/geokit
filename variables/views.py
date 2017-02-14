@@ -102,7 +102,8 @@ class VariableViewSet(viewsets.ModelViewSet):
         data = {'x': [], 'y': []}
 
         try:
-            if variable.data_dimensions() == 'space':
+            dim = variable.data_dimensions()
+            if 'space' in dim:
                 # Build scatterplot by location
                 features = list(
                     Feature.objects.filter(pk__in=df.index).defer('geometry')
@@ -114,7 +115,7 @@ class VariableViewSet(viewsets.ModelViewSet):
                     f = [feature for feature in features if feature.pk == df.index[i]][0]
                     data['x'].append(f.verbose_name)
                     data['y'].append(value)
-            elif variable.data_dimensions() == 'time':
+            elif 'time' in dim:
                 # Build timeseries
                 data['type'] = 'timeseries'
                 data['mode'] = 'lines'
@@ -136,15 +137,15 @@ class VariableViewSet(viewsets.ModelViewSet):
 
         df = variable.data()
         data = {}
-
-        if variable.data_dimensions() == 'time':
+        dim = variable.data_dimensions()
+        if 'time' in dim:
             data['dimension'] = 'time'
             data['values'] = []
             for i, value in enumerate(df.values):
                 date = df.index[i].lower
                 data['values'].append({'date': date.strftime("%Y-%m-%d"), 'value': value})
 
-        elif variable.data_dimensions() == 'space':
+        elif 'space' in dim:
             features = list(
                 Feature.objects.filter(pk__in=df.index).defer('geometry')
             )

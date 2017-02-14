@@ -30,11 +30,17 @@ class DataNode(object):
         ]
 
     def __unicode__(self):
-        return self.operation
+        return "[{}, [{}]".format(
+            self.operation, ", ".join(map(str, self.operands))
+        )
 
     def execute(self):
         ''' Return instance of self if not implemented, sort of passthrough '''
         return self
+
+    @property
+    def dimensions(self):
+        return self._dimensions
 
     def execute_operands(self):
         rands = [
@@ -269,7 +275,7 @@ class DataSource(DataNode):
         self.layers = []
         self.tables = []
         self.fields = []
-        self.dimensions = {}
+        self._dimensions = {}
 
         sources = self.execute_operands()
 
@@ -279,7 +285,7 @@ class DataSource(DataNode):
                     self.layers += source.layers
                 if 'time' in source.dimensions:
                     self.tables += source.tables
-                self.dimensions.update(source.dimensions)
+                self._dimensions.update(source.dimensions)
             elif ('type' in source and source['type'] == 'Layer'):
                 # to check if exists
                 if 'id' in source:
@@ -289,7 +295,7 @@ class DataSource(DataNode):
                     source['id'] = layer.id
                 else:
                     raise KeyError("Source layer needs id or name")
-                self.dimensions['space'] = True
+                self._dimensions['space'] = True
                 self.layers.append(source)
             elif ('type' in source and source['type'] == 'Table'):
                 # to check if exists
@@ -300,7 +306,7 @@ class DataSource(DataNode):
                     source['id'] = table.id
                 else:
                     raise KeyError("Source table needs id or name")
-                self.dimensions['time'] = True
+                self._dimensions['time'] = True
                 self.tables.append(source)
             else:
                 raise ValueError("Invalid data source type")

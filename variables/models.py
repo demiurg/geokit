@@ -30,40 +30,21 @@ class Variable(models.Model):
     def __init__(self, *args, **kwargs):
         super(Variable, self).__init__(*args, **kwargs)
 
-        '''
         try:
             self.root = treeToNode(self.tree)
         except TypeError:
             self.root = None
-        '''
 
         self.current_data = None
-        self.current_dimensions = {
-            'spatial_domain': self.spatial_domain,
-            'temporal_domain': self.temporal_domain
-        }
 
     def __unicode__(self):
         return self.name
 
     def data_dimensions(self):
-        data = self.data()
-        if type(data) in (pandas.Series, pandas.DataFrame):
-            if type(data.index[0]) in (int, np.int64, np.int32):
-                return 'space'
-            elif type(data.index[0]) is DateRange:
-                return 'time'
-            else:
-                raise TypeError(type(data.index[0]))
-        elif (
-            type(data) is pandas.DataFrame and (
-                type(data.index[0]) in (int, np.int64, np.int32) and
-                type(data.columns[0]) is DateRange
-            )
-        ):
-            return "spacetime"
+        if self.root:
+            self.root.dimensions.keys()
         else:
-            raise TypeError(type(data))
+            return None
 
     def tree_json(self):
         return json.dumps(self.tree)
@@ -73,7 +54,6 @@ class Variable(models.Model):
 
     def data(self):
         if self.current_data is None:
-            self.root = treeToNode(self.tree)
             self.current_data = self.root.execute()
 
         return self.current_data
