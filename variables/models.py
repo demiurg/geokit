@@ -36,6 +36,7 @@ class Variable(models.Model):
         except TypeError:
             self.root = None
 
+        self.source_layers = None
         self.current_data = None
 
     def __unicode__(self):
