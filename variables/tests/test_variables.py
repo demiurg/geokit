@@ -19,11 +19,17 @@ def _scalar_val(val):
 
 
 def _matrix_val(d):
-    return pandas.DataFrame(
-        data=d['values'],
-        index=d['spatial_key'],
-        columns=d['temporal_key']
-    )
+    return [
+        'dfsource',
+        [
+            pandas.DataFrame(
+                data=d['values'],
+                index=d['spatial_key'],
+                columns=d['temporal_key']
+            ),
+            'spacetime'
+        ]
+    ]
 
 
 spatial_key = [1, 2]

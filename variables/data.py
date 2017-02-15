@@ -22,6 +22,8 @@ class DataNode(object):
 
     def __init__(self, operation, operands):
         self.operation = operation
+        # Unhashable type: list is thrown here when operands are not put
+        # into another level of operands; good: [+, [1, 2]], bad: [+, 1, 2]
         self.operands = [
             treeToNode(args)
             if type(args) in (list, tuple) and args[0] in NODE_TYPES
@@ -29,6 +31,7 @@ class DataNode(object):
             for args in operands
         ]
         self._dimensions = None
+        self._dimensions_str = ''
 
     def __unicode__(self):
         return "[{}, [{}]".format(
@@ -50,11 +53,23 @@ class DataNode(object):
         '''
             Convert dict {'time': True, 'space': True} to a string 'spacetime'
         '''
+
         if not self._dimensions:
             self._dimensions = self.get_dimensions()
+        self._dimensions_str = ''.join(sorted(self._dimensions.keys()))
 
-        return ''.join(sorted(self._dimensions.keys()))
+        return self._dimensions_str
 
+    @dimensions.setter
+    def dimensions(self, value):
+        if isinstance(value, dict):
+            self._dimensions = value
+        elif isinstance(value, str):
+            self._dimensions = {}
+            if 'space' in value:
+                self._dimensions['space'] = True
+            if 'time' in value:
+                self._dimensions['time'] = True
 
     def execute(self):
         ''' Return instance of self if not implemented, sort of passthrough '''
@@ -81,33 +96,32 @@ def getattrOperator(method):
 
 class MeanOperator(DataNode):
     def execute(self):
-        return sum(self.operands) / len(self.operands)
+        vals = self.execute_operands()
+        return sum(vals) / len(vals)
 
 
 class SpatialMeanOperator(DataNode):
     def execute(self):
         val, = self.execute_operands()
 
-        if type(val) == pandas.DataFrame:
+        if self.dimensions == 'spacetime':
             return val.mean(axis=0)
-        elif type(val) == pandas.Series:
-            if self.dimensions == 'space':
-                return val.mean()
-            else:
-                raise ValueError("No space dimension to aggregate")
+        elif self.dimensions == 'space':
+            return val.mean()
+        else:
+            raise ValueError("No space dimension to aggregate")
 
 
 class TemporalMeanOperator(DataNode):
     def execute(self):
         val, = self.execute_operands()
 
-        if type(val) == pandas.DataFrame:
+        if self.dimensions == 'spacetime':
             return val.mean(axis=1)
-        elif type(val) == pandas.Series:
-            if self.dimensions == 'time':
-                return val.mean()
-            else:
-                raise ValueError("No time dimension to aggregate")
+        elif self.dimensions == 'time':
+            return val.mean()
+        else:
+            raise ValueError("No time dimension to aggregate")
 
 
 class SpatialFilterOperator(DataNode):
@@ -341,6 +355,20 @@ class DataSource(DataNode):
         return self
 
 
+class DataFrameSource(DataNode):
+    ''' Used for testing '''
+
+    def __init__(self, op, args):
+        self.operation = op
+        self.data, self.dimensions = args
+
+    def get_dimensions(self):
+        return self._dimensions
+
+    def execute(self):
+        return self.data
+
+
 NODE_TYPES = {
     '+': getattrOperator('__add__'),
     '-': getattrOperator('__sub__'),
@@ -356,6 +384,7 @@ NODE_TYPES = {
     'tfilter': TemporalFilterOperator,
 
     'source': DataSource,
+    'dfsource': DataFrameSource,
     'join': DataSource,
     'select': SelectOperator,
 }

@@ -31,10 +31,9 @@ class Variable(models.Model):
     def __init__(self, *args, **kwargs):
         super(Variable, self).__init__(*args, **kwargs)
 
-        try:
+        if self.tree:
             self.root = treeToNode(self.tree)
-        except TypeError as e:
-            print e
+        else:
             self.root = None
 
         self.source_layers = None

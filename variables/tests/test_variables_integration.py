@@ -19,7 +19,7 @@ def test_abscent_source(set_schema):
 
 @pytest.mark.django_db
 def test_example_0_5_select(set_schema):
-    tmin = Variable(tree=[
+    tmin = [
         'select', [
             ['join', [
                 {'type': 'Layer', 'id': 26, 'name': 'cnty_24k97', 'field': 'fid'},
@@ -27,8 +27,8 @@ def test_example_0_5_select(set_schema):
             ]],
             'tmin'
         ]
-    ])
-    tmax = Variable(tree=[
+    ]
+    tmax = [
         'select', [
             ['join', [
                 {'type': 'Layer', 'id': 26, 'name': 'cnty_24k97', 'field': 'fid'},
@@ -36,28 +36,26 @@ def test_example_0_5_select(set_schema):
             ]],
             'tmax'
         ]
-    ])
+    ]
 
-    t_summer = Variable(
-        tree=['tfilter', [
-            ['mean', [
-                tmin.data(),
-                tmax.data()
-            ]],
-            {
-                'filter_type': 'inclusive',
-                'date_ranges': [
-                    {'start': '2010-06-01', 'end': '2010-08-31'},
-                    {'start': '2011-06-01', 'end': '2011-08-31'},
-                    {'start': '2012-06-01', 'end': '2012-08-31'},
-                    {'start': '2013-06-01', 'end': '2013-08-31'},
-                    {'start': '2014-06-01', 'end': '2014-08-31'}
-                ]
-            }
-        ]]
-    )
+    t_summer = ['tfilter', [
+        ['mean', [
+            tmin,
+            tmax
+        ]],
+        {
+            'filter_type': 'inclusive',
+            'date_ranges': [
+                {'start': '2010-06-01', 'end': '2010-08-31'},
+                {'start': '2011-06-01', 'end': '2011-08-31'},
+                {'start': '2012-06-01', 'end': '2012-08-31'},
+                {'start': '2013-06-01', 'end': '2013-08-31'},
+                {'start': '2014-06-01', 'end': '2014-08-31'}
+            ]
+        }
+    ]]
 
-    t_norm_summer = Variable(tree=['tmean', [t_summer.data()]])
+    t_norm_summer = Variable(tree=['tmean', [t_summer]])
 
     assert np.allclose(
         t_norm_summer.data().values, [
