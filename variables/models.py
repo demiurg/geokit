@@ -44,10 +44,7 @@ class Variable(models.Model):
         return self.name
 
     def dimensions(self):
-        '''
-            Convert dict {'time': True, 'space': True} to a string 'spacetime'
-        '''
-        return ''.join(sorted(self.root.dimensions.keys()))
+        return self.root.dimensions
 
     def tree_json(self):
         return json.dumps(self.tree)

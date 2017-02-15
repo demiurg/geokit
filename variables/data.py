@@ -47,9 +47,13 @@ class DataNode(object):
 
     @property
     def dimensions(self):
+        '''
+            Convert dict {'time': True, 'space': True} to a string 'spacetime'
+        '''
         if not self._dimensions:
             self._dimensions = self.get_dimensions()
-        return self._dimensions
+
+        return ''.join(sorted(self._dimensions.keys()))
 
 
     def execute(self):
@@ -87,7 +91,7 @@ class SpatialMeanOperator(DataNode):
         if type(val) == pandas.DataFrame:
             return val.mean(axis=0)
         elif type(val) == pandas.Series:
-            if self.data_dimension(val) == 'space':
+            if self.dimensions == 'space':
                 return val.mean()
             else:
                 raise ValueError("No space dimension to aggregate")
@@ -100,7 +104,7 @@ class TemporalMeanOperator(DataNode):
         if type(val) == pandas.DataFrame:
             return val.mean(axis=1)
         elif type(val) == pandas.Series:
-            if self.data_dimensions(val) == 'time':
+            if self.dimensions == 'time':
                 return val.mean()
             else:
                 raise ValueError("No time dimension to aggregate")
