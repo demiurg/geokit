@@ -33,7 +33,8 @@ class Variable(models.Model):
 
         try:
             self.root = treeToNode(self.tree)
-        except TypeError:
+        except TypeError as e:
+            print e
             self.root = None
 
         self.source_layers = None
@@ -42,11 +43,11 @@ class Variable(models.Model):
     def __unicode__(self):
         return self.name
 
-    def data_dimensions(self):
-        if self.root:
-            self.root.dimensions.keys()
-        else:
-            return None
+    def dimensions(self):
+        '''
+            Convert dict {'time': True, 'space': True} to a string 'spacetime'
+        '''
+        return ''.join(sorted(self.root.dimensions.keys()))
 
     def tree_json(self):
         return json.dumps(self.tree)
@@ -68,7 +69,6 @@ class Variable(models.Model):
                 return source_layers
 
         if self.source_layers is None:
-            self.root = treeToNode(self.tree)
             self.source_layers = walk_nodes(self.root)
 
         return self.source_layers

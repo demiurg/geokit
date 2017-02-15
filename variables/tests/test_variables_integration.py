@@ -136,5 +136,27 @@ def test_dimensions(set_schema):
             'tmin'
         ]
     ])
+    assert tmin.dimensions() == 'time'
 
-    assert len(tmin.data()) == 3650
+    counties = Variable(tree=[
+        'select', [
+            ['source', [
+                {'type': 'Layer', 'id': 26, 'name': 'cnty_24k97', 'field': 'fid'},
+            ]],
+            'name'
+        ]
+    ])
+
+    assert counties.dimensions() == 'space'
+
+    tmin = Variable(tree=[
+        'select', [
+            ['join', [
+                {'type': 'Layer', 'id': 26, 'name': 'cnty_24k97', 'field': 'fid'},
+                {'type': 'Table', 'id': 30, 'name': 'cnty_24k97_data', 'field': 'fid'},
+            ]],
+            'tmin'
+        ]
+    ])
+
+    assert tmin.dimensions() == 'spacetime'

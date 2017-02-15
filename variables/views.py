@@ -102,7 +102,7 @@ class VariableViewSet(viewsets.ModelViewSet):
         data = {'x': [], 'y': []}
 
         try:
-            dim = variable.data_dimensions()
+            dim = variable.dimensions()
             if 'space' in dim:
                 # Build scatterplot by location
                 features = list(
@@ -137,7 +137,7 @@ class VariableViewSet(viewsets.ModelViewSet):
 
         df = variable.data()
         data = {}
-        dim = variable.data_dimensions()
+        dim = variable.dimensions()
         if 'time' in dim:
             data['dimension'] = 'time'
             data['values'] = []

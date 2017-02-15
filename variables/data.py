@@ -28,19 +28,33 @@ class DataNode(object):
             else args
             for args in operands
         ]
+        self._dimensions = None
 
     def __unicode__(self):
         return "[{}, [{}]".format(
             self.operation, ", ".join(map(str, self.operands))
         )
 
-    def execute(self):
-        ''' Return instance of self if not implemented, sort of passthrough '''
-        return self
+    def get_dimensions(self):
+        dimensions = {}
+        for o in self.operands:
+            try:
+                dimensions.update(o.get_dimensions())
+            except AttributeError:
+                pass
+        return dimensions
+
 
     @property
     def dimensions(self):
+        if not self._dimensions:
+            self._dimensions = self.get_dimensions()
         return self._dimensions
+
+
+    def execute(self):
+        ''' Return instance of self if not implemented, sort of passthrough '''
+        return self
 
     def execute_operands(self):
         rands = [
@@ -271,11 +285,23 @@ class DataSource(DataNode):
         TODO: Allow joins and selects of any tables/layers combos
     '''
 
+    def get_dimensions(self):
+        dimensions = {}
+        for source in self.operands:
+            if isinstance(source, DataSource):
+                dimensions.update(source.get_dimensions())
+            elif ('type' in source and source['type'] == 'Layer'):
+                dimensions['space'] = True
+            elif ('type' in source and source['type'] == 'Table'):
+                dimensions['time'] = True
+            else:
+                raise ValueError("Invalid data source type")
+        return dimensions
+
     def execute(self):
         self.layers = []
         self.tables = []
         self.fields = []
-        self._dimensions = {}
 
         sources = self.execute_operands()
 
@@ -285,7 +311,6 @@ class DataSource(DataNode):
                     self.layers += source.layers
                 if 'time' in source.dimensions:
                     self.tables += source.tables
-                self._dimensions.update(source.dimensions)
             elif ('type' in source and source['type'] == 'Layer'):
                 # to check if exists
                 if 'id' in source:
@@ -295,7 +320,6 @@ class DataSource(DataNode):
                     source['id'] = layer.id
                 else:
                     raise KeyError("Source layer needs id or name")
-                self._dimensions['space'] = True
                 self.layers.append(source)
             elif ('type' in source and source['type'] == 'Table'):
                 # to check if exists
@@ -306,7 +330,6 @@ class DataSource(DataNode):
                     source['id'] = table.id
                 else:
                     raise KeyError("Source table needs id or name")
-                self._dimensions['time'] = True
                 self.tables.append(source)
             else:
                 raise ValueError("Invalid data source type")
