@@ -1,7 +1,5 @@
 import django.db
-import pandas
 import numpy
-import json
 from datetime import datetime
 from pandas.io.sql import read_sql
 from psycopg2.extras import DateRange
@@ -104,24 +102,40 @@ class SpatialMeanOperator(DataNode):
     def execute(self):
         val, = self.execute_operands()
 
-        if self.dimensions == 'spacetime':
+        if self.operands[0].dimensions == 'spacetime':
             return val.mean(axis=0)
-        elif self.dimensions == 'space':
+        elif self.operands[0].dimensions == 'space':
             return val.mean()
         else:
             raise ValueError("No space dimension to aggregate")
+
+    def get_dimensions(self):
+        dimensions = super(SpatialMeanOperator, self).get_dimensions()
+
+        if 'space' in dimensions:
+            del dimensions['space']
+
+        return dimensions
 
 
 class TemporalMeanOperator(DataNode):
     def execute(self):
         val, = self.execute_operands()
 
-        if self.dimensions == 'spacetime':
+        if self.operands[0].dimensions == 'spacetime':
             return val.mean(axis=1)
-        elif self.dimensions == 'time':
+        elif self.operands[0].dimensions == 'time':
             return val.mean()
         else:
             raise ValueError("No time dimension to aggregate")
+
+    def get_dimensions(self):
+        dimensions = super(TemporalMeanOperator, self).get_dimensions()
+
+        if 'time' in dimensions:
+            del dimensions['time']
+
+        return dimensions
 
 
 class SpatialFilterOperator(DataNode):
@@ -239,7 +253,7 @@ class SelectOperator(DataNode):
                 f_wheres.append("layer_id = '{}'".format(layer['id']))
 
             froms.append(
-                "(SELECT id as feature_id, properties->'{0}' as joiner "
+                    "(SELECT id as feature_id, (properties->>'{0}')::integer as joiner "
                 "FROM {1}.layers_feature "
                 "WHERE {2!s}) f".format(
                     layer['field'],
@@ -259,7 +273,7 @@ class SelectOperator(DataNode):
 
             froms.append(
                 "(SELECT date_range,"
-                " properties->'{0}' as joiner, properties->'{1}' as \"{1}\" "
+                " (properties->>'{0}')::integer as joiner, (properties->>'{1}')::integer as \"{1}\" "
                 "FROM {2!s}.geokit_tables_record "
                 "WHERE {3}) r".format(
                     table['field'],
