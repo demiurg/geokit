@@ -273,7 +273,7 @@ class SelectOperator(DataNode):
 
             froms.append(
                 "(SELECT date_range,"
-                " (properties->>'{0}')::integer as joiner, (properties->>'{1}')::integer as \"{1}\" "
+                " (properties->>'{0}')::integer as joiner, properties->'{1}' as \"{1}\" "
                 "FROM {2!s}.geokit_tables_record "
                 "WHERE {3}) r".format(
                     table['field'],
