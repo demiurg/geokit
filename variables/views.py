@@ -15,14 +15,14 @@ import xmlrpclib
 
 
 def get_raster_catalog():
-        if not hasattr(settings, 'RPC_URL'):
-            print "Error: RPC_URL must be set in settings.py"
-            return None
+    if not hasattr(settings, 'RPC_URL'):
+        print "Error: RPC_URL must be set in settings.py"
+        return None
 
-        conn = xmlrpclib.ServerProxy(settings.RPC_URL)
+    conn = xmlrpclib.ServerProxy(settings.RPC_URL)
 
-        data = conn.get_datacatalog()
-        return data
+    data = conn.get_datacatalog()
+    return data
 
 
 def index(request):
@@ -31,18 +31,18 @@ def index(request):
 
 
 def add(request):
-    rasters = get_raster_catalog()
+    raster_catalog = get_raster_catalog()
     return render(request, 'variables/sieve.html', {
-        'rasters': rasters,
+        'raster_catalog': json.dumps(raster_catalog),
     })
 
 
 def edit(request, variable_id):
     variable = get_object_or_404(Variable, pk=variable_id)
-    rasters = get_raster_catalog()
+    raster_catalog = get_raster_catalog()
     return render(request, 'variables/sieve.html', {
         'variable': variable,
-        'rasters': rasters
+        'raster_catalog': json.dumps(raster_catalog)
     })
 
 

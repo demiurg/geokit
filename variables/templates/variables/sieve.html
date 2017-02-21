@@ -59,7 +59,7 @@ function getCookie(name) {
 
 window.redirect_after_save = "{% url 'variables:index' %}";
 var csrf_token = "{{ csrf_token }}";
-
+var raster_catalog = {{ raster_catalog|safe }};
 var sieve_props = {};
 {% if variable %}
 sieve_props = {
