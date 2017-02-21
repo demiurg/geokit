@@ -1,6 +1,6 @@
 django==1.10
-djangorestframework>=3.4
-wagtail>=1.7
+djangorestframework>=3.5
+wagtail==1.9
 sympy==0.7.6
 modestmaps
 psycopg2==2.6.2
