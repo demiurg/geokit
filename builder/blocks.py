@@ -2,7 +2,7 @@ import uuid
 
 from django.forms import CharField
 
-from wagtail.wagtailcore.blocks import CharBlock, FieldBlock, ListBlock, StructBlock
+from wagtail.wagtailcore.blocks import CharBlock, ChoiceBlock, FieldBlock, ListBlock, StructBlock
 
 from builder.widgets import ColorWidget
 from variables.blocks import VariableChooserBlock
@@ -58,3 +58,33 @@ class TableBlock(StructBlock):
         value['id'] = uuid.uuid4()
 
         return super(TableBlock, self).render(value)
+
+
+class VisualizationControlBlock(StructBlock):
+    vis_type = ChoiceBlock(choices=[
+        ('map', 'Map'),
+        ('slider', 'Date Slider'),
+    ])
+
+
+class VisualizationBlock(StructBlock):
+    vis_type = ChoiceBlock(choices=[
+        ('map', 'Map'),
+        ('graph', 'Graph'),
+        ('table', 'Table'),
+    ])
+    variable = VariableChooserBlock()
+
+
+class VisualizationGroupBlock(StructBlock):
+    control = VisualizationControlBlock()
+    visualizations = ListBlock(VisualizationBlock)
+
+    class Meta:
+        template = 'builder/blocks/visualization.html'
+
+    def render(self, value):
+        # Iterate through vis blocks and grab variable dimensions.
+        # Validate that they have a common dimension, and then pass
+        # the union of their dimensions to the VisGroup react component.
+        return super(VisualizationGroupBlock, self).render(value)

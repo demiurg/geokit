@@ -81,6 +81,10 @@ li.open a {
   font-weight: bold;
 }
 
+.panel {
+  margin: 50px 0;
+}
+
 .powered-by {
   background-color: rgb(211, 213, 223);
   border-bottom: 0;
@@ -155,4 +159,8 @@ footer a {
 }
 footer a:hover, footer a:focus, footer a:active {
   color: rgb(0, 0, 0);
+}
+
+.noUi-tooltip {
+  width: 150px;
 }

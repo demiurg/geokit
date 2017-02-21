@@ -31,18 +31,18 @@ def index(request):
 
 
 def add(request):
-    rasters = get_raster_catalog()
+    #rasters = get_raster_catalog()
     return render(request, 'variables/sieve.html', {
-        'rasters': rasters,
+        #'rasters': rasters,
     })
 
 
 def edit(request, variable_id):
     variable = get_object_or_404(Variable, pk=variable_id)
-    rasters = get_raster_catalog()
+    #rasters = get_raster_catalog()
     return render(request, 'variables/sieve.html', {
         'variable': variable,
-        'rasters': rasters
+        #'rasters': rasters
     })
 
 
@@ -77,17 +77,15 @@ class VariableViewSet(viewsets.ModelViewSet):
 
         evaluated_variable = variable.data()
 
-        values = evaluated_variable['values']
         data = []
 
-        rows, cols = values.shape
-        if cols == 1:
-            features = Feature.objects.filter(pk__in=evaluated_variable['spatial_key'])
+        if 'space' in variable.dimensions():
+            features = Feature.objects.filter(pk__in=evaluated_variable.index)
 
-            for i, value in enumerate(values):
-                geometries = [feature for feature in features if feature.pk == evaluated_variable['spatial_key'][i]]
+            for i, value in enumerate(evaluated_variable):
+                geometries = [feature for feature in features if feature.pk == evaluated_variable.index[i]]
                 geojson = json.loads(serialize('geojson', geometries, fields=('geometry')))
-                geojson['features'][0]['properties'][variable.name] = value[0]
+                geojson['features'][0]['properties'][variable.name] = value
 
                 data.append(geojson['features'][0])
 
@@ -117,7 +115,7 @@ class VariableViewSet(viewsets.ModelViewSet):
                     data['y'].append(value)
             elif 'time' in dim:
                 # Build timeseries
-                data['type'] = 'timeseries'
+                data['type'] = 'scatter'
                 data['mode'] = 'lines'
                 for i, value in enumerate(df.values):
                     date = df.index[i].lower
