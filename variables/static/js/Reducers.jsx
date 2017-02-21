@@ -46,6 +46,20 @@ function tables(state={
   }
 }
 
+function raster_catalog(state={
+  items: [],
+}, action){
+  switch (action.type){
+    case RECEIVE_RASTER_CATALOG:
+      return Object.assign({}, state, {
+        items: action.raster_catalog,
+        lastUpdate: action.receivedAt
+      });
+    default:
+      return state;
+  }
+}
+
 function variables(state={
   name: 'Variables',
   isFetching: false,

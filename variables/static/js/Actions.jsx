@@ -6,6 +6,8 @@ const RECEIVE_LAYERS = 'RECEIVE_LAYERS';
 const REQUEST_TABLES = 'REQUEST_TABLES';
 const RECEIVE_TABLES = 'RECEIVE_TABLES';
 
+const RECEIVE_RASTER_CATALOG = 'RECEIVE_RASTE_CATALOG';
+
 const RECEIVE_VARIABLES = 'RECEIVE_VARIABLES';
 const REQUEST_VARIABLES = 'REQUEST_VARIABLES';
 
@@ -35,6 +37,14 @@ function receiveLayers(json){
   return {
     type: RECEIVE_LAYERS,
     layers: json,
+    receivedAt: Date.now()
+  };
+}
+
+function receiveRasterCatalog(json){
+  return {
+    type: RECEIVE_RASTE_CATALOG,
+    raster_catalog: json,
     receivedAt: Date.now()
   };
 }

@@ -25,17 +25,21 @@ function sieveApp(state=initialState, action){
     case REQUEST_LAYERS:
     case RECEIVE_LAYERS:
       return Object.assign({}, state, {
-        layers: layers(state[action.layers], action)
+        layers: layers(state.layers, action)
       });
     case REQUEST_TABLES:
     case RECEIVE_TABLES:
       return Object.assign({}, state, {
-        tables: tables(state[action.tables], action)
+        tables: tables(state.tables, action)
       });
     case REQUEST_VARIABLES:
     case RECEIVE_VARIABLES:
       return Object.assign({}, state, {
-        variables: variables(state[action.variables], action)
+        variables: variables(state.variables, action)
+      });
+    case RECEIVE_RASTER_CATALOG:
+      return Object.assign({}, state, {
+        raster_catalog: raster_catalog(state.raster_catalog, action)
       });
     case UPDATE_NAME:
       return Object.assign({}, state, {
@@ -991,6 +995,7 @@ function sieve(el){
   store.dispatch(fetchLayers());
   store.dispatch(fetchTables());
   store.dispatch(fetchVariables());
+  store.dispatch(receiveRasterCatalog(raster_catalog));
 
   ReactDOM.render(
     React.createElement(
