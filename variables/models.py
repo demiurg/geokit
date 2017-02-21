@@ -19,6 +19,7 @@ class Variable(models.Model):
     description = models.TextField(null=True, blank=True)
     temporal_domain = ArrayField(models.DateField(), null=True, blank=True)
     spatial_domain = ArrayField(models.IntegerField(), null=True, blank=True)
+    saved_dimensions = models.CharField(max_length=15, null=True)
     tree = JSONField()
     input_variables = JSONField(null=True, default=[])
     units = models.CharField(max_length=100, null=True, blank=True)
@@ -38,6 +39,10 @@ class Variable(models.Model):
 
         self.source_layers = None
         self.current_data = None
+
+    def save(self, *args, **kwargs):
+        self.saved_dimensions = self.dimensions()
+        super(Variable, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return self.name
