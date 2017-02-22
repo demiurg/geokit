@@ -31,7 +31,9 @@ class Table extends React.Component {
                             this.state.data.values[this.state.data.values.length - 1].date
                         ]);
                     } else {
-                        this.props.setDimensions(this.state.data.map((datum) => { return datum.feature; }));
+                        this.props.setDimensions(this.state.data.values.map((datum) => {
+                            return datum.feature;
+                        }));
                     }
                 });
             },
@@ -45,7 +47,11 @@ class Table extends React.Component {
     }
 
     dimensionsChanged(old, next) {
-        if (old && (old.min != next.min || old.max != next.max)) {
+        if (this.state.data.dimension == 'time') {
+            if (old && (old.min != next.min || old.max != next.max)) {
+                return true;
+            }
+        } else if (old && old.length != next.length) {
             return true;
         }
         return false
@@ -53,28 +59,44 @@ class Table extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         if (!this.state.loading && !prevState.data) {
+            var columns = [],
+                data;
+            if (this.state.data.dimension == 'space') {
+                columns.push({data: 'feature.properties', render: 'name'});
+            } else {
+                columns.push({data: 'date'});
+            }
+            columns.push({data: 'value'});
+
             $("#data-table").DataTable({
                 data: this.state.data.values,
-                columns: [
-                    { data: 'date' },
-                    { data: 'value' }
-                ]
+                columns: columns
             });
 
-            $.fn.dataTableExt.afnFiltering.push(
-                (oSettings, aData, iDataIndex) => {
-                    var d = new Date(aData[0]);
-                    if (this.props.dimensions.min.getTime() <= d && d <= this.props.dimensions.max.getTime()) {
-                        return true;
+            if (this.state.data.dimension == 'time') {
+                $.fn.dataTableExt.afnFiltering.push(
+                    (oSettings, aData, iDataIndex) => {
+                        var d = new Date(aData[0]);
+                        if (this.props.dimensions.min.getTime() <= d && d <= this.props.dimensions.max.getTime()) {
+                            return true;
+                        }
+                        return false;
                     }
-                    return false;
-                }
-            );
+                );
+            } else {
+                $.fn.dataTableExt.afnFiltering.push(
+                    (oSettings, aData, iDataIndex) => {
+                        //console.log(aData[0], oSettings.aoData[iDataIndex]);
+                        var dims = this.props.dimensions.map((dim) => {return dim.properties.id;});
+                        var index = dims.indexOf(oSettings.aoData[iDataIndex]._aData.feature.properties.id);
+                        if (index != -1) {
+                            return true;
+                        }
+                        return false;
+                    }
+                );
+            }
         } else if (this.dimensionsChanged(prevProps.dimensions, this.props.dimensions)) {
-            //var filtered_data = $("#data-table").DataTable().column(0).data().filter((value, index) => {
-                //var inside = this.props.dimensions.min <= value <= this.props.dimensions.max;
-                //return inside;
-            //});
             $("#data-table").DataTable().draw();
         }
     }

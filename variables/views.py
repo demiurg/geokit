@@ -152,7 +152,14 @@ class VariableViewSet(viewsets.ModelViewSet):
             data['values'] = []
             for i, value in enumerate(df.values):
                 f = [feature for feature in features if feature.pk == df.index[i]][0]
-                data['values'].append({'feature': f.verbose_name, 'value': value})
+                f.geometry.transform(4326)
+                feature = {}
+                feature['geometry'] = json.loads(f.geometry.geojson)
+                feature['type'] = 'Feature'
+                feature['properties'] = {}
+                feature['properties']['name'] = f.verbose_name
+                feature['properties']['id'] = f.pk
+                data['values'].append({'feature': feature, 'value': value})
         else:
             # Can't handle this presently...
             data['invalid'] = True

@@ -952,7 +952,7 @@ var Table = function (_React$Component) {
                     if (_this2.state.data.dimension == "time") {
                         _this2.props.setDimensions([_this2.state.data.values[0].date, _this2.state.data.values[_this2.state.data.values.length - 1].date]);
                     } else {
-                        _this2.props.setDimensions(_this2.state.data.map(function (datum) {
+                        _this2.props.setDimensions(_this2.state.data.values.map(function (datum) {
                             return datum.feature;
                         }));
                     }
@@ -968,7 +968,11 @@ var Table = function (_React$Component) {
     };
 
     Table.prototype.dimensionsChanged = function dimensionsChanged(old, next) {
-        if (old && (old.min != next.min || old.max != next.max)) {
+        if (this.state.data.dimension == 'time') {
+            if (old && (old.min != next.min || old.max != next.max)) {
+                return true;
+            }
+        } else if (old && old.length != next.length) {
             return true;
         }
         return false;
@@ -978,23 +982,43 @@ var Table = function (_React$Component) {
         var _this3 = this;
 
         if (!this.state.loading && !prevState.data) {
+            var columns = [],
+                data;
+            if (this.state.data.dimension == 'space') {
+                columns.push({ data: 'feature.properties', render: 'name' });
+            } else {
+                columns.push({ data: 'date' });
+            }
+            columns.push({ data: 'value' });
+
             $("#data-table").DataTable({
                 data: this.state.data.values,
-                columns: [{ data: 'date' }, { data: 'value' }]
+                columns: columns
             });
 
-            $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
-                var d = new Date(aData[0]);
-                if (_this3.props.dimensions.min.getTime() <= d && d <= _this3.props.dimensions.max.getTime()) {
-                    return true;
-                }
-                return false;
-            });
+            if (this.state.data.dimension == 'time') {
+                $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
+                    var d = new Date(aData[0]);
+                    if (_this3.props.dimensions.min.getTime() <= d && d <= _this3.props.dimensions.max.getTime()) {
+                        return true;
+                    }
+                    return false;
+                });
+            } else {
+                $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
+                    //console.log(aData[0], oSettings.aoData[iDataIndex]);
+                    var dims = _this3.props.dimensions.map(function (dim) {
+                        return dim.properties.id;
+                    });
+                    var index = dims.indexOf(oSettings.aoData[iDataIndex]._aData.feature.properties.id);
+                    console.log(index);
+                    if (index != -1) {
+                        return true;
+                    }
+                    return false;
+                });
+            }
         } else if (this.dimensionsChanged(prevProps.dimensions, this.props.dimensions)) {
-            //var filtered_data = $("#data-table").DataTable().column(0).data().filter((value, index) => {
-            //var inside = this.props.dimensions.min <= value <= this.props.dimensions.max;
-            //return inside;
-            //});
             $("#data-table").DataTable().draw();
         }
     };
@@ -1361,9 +1385,44 @@ var MapControl = function (_React$Component) {
     }
 
     MapControl.prototype.componentDidMount = function componentDidMount() {
+        var _this2 = this;
+
         var map = L.map('map-control').setView([0, 0], 1);
 
         L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
+
+        var geoJsonLayer = L.geoJson(this.props.dims, {
+            onEachFeature: function onEachFeature(feature, layer) {
+                layer.on('click', function (e) {
+                    var dims = _this2.props.currentDims.slice();
+                    var dim_index = dims.map(function (dim) {
+                        return dim.properties.id;
+                    }).indexOf(feature.properties.id);
+                    if (dim_index != -1) {
+                        layer.setStyle({ color: 'grey' });
+                        dims.splice(dim_index, 1);
+                        _this2.props.changeDimensions(dims);
+                    } else {
+                        layer.setStyle({ color: 'maroon' });
+                        var index = _this2.props.dims.map(function (dim) {
+                            return dim.properties.id;
+                        }).indexOf(feature.properties.id);
+                        dims.push(_this2.props.dims[index]);
+                        _this2.props.changeDimensions(dims);
+                    }
+                });
+            }, style: function style(feature) {
+                var dims = _this2.props.currentDims.map(function (dim) {
+                    return dim.properties.id;
+                });
+                if (dims.indexOf(feature.properties.id) != -1) {
+                    return { color: "maroon" };
+                } else {
+                    return { color: "grey" };
+                }
+            }
+        }).addTo(map);
+        map.fitBounds(geoJsonLayer.getBounds());
     };
 
     MapControl.prototype.render = function render() {
@@ -1383,7 +1442,7 @@ var SliderControl = function (_React$Component2) {
     }
 
     SliderControl.prototype.componentDidMount = function componentDidMount() {
-        var _this3 = this;
+        var _this4 = this;
 
         var dateSlider = document.getElementById('date-slider-control');
 
@@ -1409,7 +1468,7 @@ var SliderControl = function (_React$Component2) {
         });
 
         dateSlider.noUiSlider.on('update', function (values, handle) {
-            _this3.props.changeDimensions({
+            _this4.props.changeDimensions({
                 min: new Date(values[0]),
                 max: new Date(values[1]) });
         });
@@ -1474,44 +1533,63 @@ var VisualizationGroup = function (_React$Component4) {
     function VisualizationGroup(props) {
         _classCallCheck(this, VisualizationGroup);
 
-        var _this5 = _possibleConstructorReturn(this, _React$Component4.call(this, props));
+        var _this6 = _possibleConstructorReturn(this, _React$Component4.call(this, props));
 
-        _this5.state = {
+        _this6.state = {
             dimensions: null,
             currentDimensions: null
         };
 
-        _this5.childStartingDimensions = [];
-        return _this5;
+        _this6.childStartingDimensions = [];
+        return _this6;
     }
 
     VisualizationGroup.prototype.changeDimensions = function changeDimensions(newDims) {
-        this.setState({
-            currentDimensions: { min: newDims.min, max: newDims.max }
-        });
+        console.log(newDims.length);
+        if (this.props.control == 'time') {
+            this.setState({
+                currentDimensions: { min: newDims.min, max: newDims.max }
+            });
+        } else {
+            this.setState({ currentDimensions: newDims });
+        }
     };
 
     VisualizationGroup.prototype.getChildDimensions = function getChildDimensions(dimensions) {
         this.childStartingDimensions.push(dimensions);
 
         if (this.childStartingDimensions.length == this.props.children.length) {
-            var min = Plotly.d3.min(this.childStartingDimensions.map(function (childDim) {
-                return childDim[0];
-            }));
+            if (this.props.control == "slider") {
+                var min = Plotly.d3.min(this.childStartingDimensions.map(function (childDim) {
+                    return childDim[0];
+                }));
 
-            var max = Plotly.d3.max(this.childStartingDimensions.map(function (childDim) {
-                return childDim[1];
-            }));
+                var max = Plotly.d3.max(this.childStartingDimensions.map(function (childDim) {
+                    return childDim[1];
+                }));
 
-            this.setState({
-                dimensions: { min: min, max: max },
-                currentDimensions: { min: min, max: max }
-            });
+                this.setState({
+                    dimensions: { min: min, max: max },
+                    currentDimensions: { min: min, max: max }
+                });
+            } else {
+                var merged_features = [].concat.apply([], this.childStartingDimensions);
+                this.setState({
+                    dimensions: merged_features,
+                    currentDimensions: merged_features
+                });
+            }
         }
     };
 
+    VisualizationGroup.prototype.getChildVariables = function getChildVariables() {
+        var vars = this.props.children.map(function (child) {
+            console.log(child.props);
+        });
+    };
+
     VisualizationGroup.prototype.render = function render() {
-        var _this6 = this;
+        var _this7 = this;
 
         var Control = null;
         if (this.props.control == "map") {
@@ -1523,11 +1601,11 @@ var VisualizationGroup = function (_React$Component4) {
         return React.createElement(
             'div',
             null,
-            Control && this.state.dimensions ? React.createElement(Control, { dims: this.state.dimensions, changeDimensions: this.changeDimensions.bind(this) }) : null,
+            Control && this.state.dimensions ? React.createElement(Control, { dims: this.state.dimensions, currentDims: this.state.currentDimensions, changeDimensions: this.changeDimensions.bind(this) }) : null,
             this.props.children.map(function (child) {
                 return React.cloneElement(child, {
-                    dimensions: _this6.state.currentDimensions,
-                    getChildDimensions: _this6.getChildDimensions.bind(_this6)
+                    dimensions: _this7.state.currentDimensions,
+                    getChildDimensions: _this7.getChildDimensions.bind(_this7)
                 });
             })
         );

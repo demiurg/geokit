@@ -3,6 +3,33 @@ class MapControl extends React.Component {
         var map = L.map('map-control').setView([0, 0], 1);
 
         L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
+
+        var geoJsonLayer = L.geoJson(this.props.dims, {
+            onEachFeature: (feature, layer) => {
+                layer.on('click', (e) => {
+                    var dims = this.props.currentDims.slice();
+                    var dim_index = dims.map((dim) => {return dim.properties.id;}).indexOf(feature.properties.id);
+                    if (dim_index != -1) {
+                        layer.setStyle({color: 'grey'});
+                        dims.splice(dim_index, 1);
+                        this.props.changeDimensions(dims);
+                    } else {
+                        layer.setStyle({color: 'maroon'});
+                        var index = this.props.dims.map((dim) => {return dim.properties.id;}).indexOf(feature.properties.id);
+                        dims.push(this.props.dims[index]);
+                        this.props.changeDimensions(dims);
+                    }
+                });
+            }, style: (feature) => {
+                var dims = this.props.currentDims.map((dim) => {return dim.properties.id;});
+                if (dims.indexOf(feature.properties.id) != -1) {
+                    return {color: "maroon"};
+                } else {
+                    return {color: "grey"};
+                }
+            }
+        }).addTo(map);
+        map.fitBounds(geoJsonLayer.getBounds());
     }
 
     render() {
@@ -100,28 +127,47 @@ class VisualizationGroup extends React.Component {
     }
 
     changeDimensions(newDims) {
-        this.setState({
-            currentDimensions: {min: newDims.min, max: newDims.max}
-        });
+        console.log(newDims.length);
+        if (this.props.control == 'time') {
+            this.setState({
+                currentDimensions: {min: newDims.min, max: newDims.max}
+            });
+        } else {
+            this.setState({currentDimensions: newDims});
+        }
     }
 
     getChildDimensions(dimensions) {
         this.childStartingDimensions.push(dimensions);
 
         if (this.childStartingDimensions.length == this.props.children.length) {
-            var min = Plotly.d3.min(this.childStartingDimensions.map((childDim) => {
-                return childDim[0];
-            }));
+            if (this.props.control == "slider") {
+                var min = Plotly.d3.min(this.childStartingDimensions.map((childDim) => {
+                    return childDim[0];
+                }));
 
-            var max = Plotly.d3.max(this.childStartingDimensions.map((childDim) => {
-                return childDim[1];
-            }));
+                var max = Plotly.d3.max(this.childStartingDimensions.map((childDim) => {
+                    return childDim[1];
+                }));
 
-            this.setState({
-                dimensions: {min: min, max: max},
-                currentDimensions: {min: min, max: max}
-            });
+                this.setState({
+                    dimensions: {min: min, max: max},
+                    currentDimensions: {min: min, max: max}
+                });
+            } else {
+                var merged_features = [].concat.apply([], this.childStartingDimensions);
+                this.setState({
+                    dimensions: merged_features,
+                    currentDimensions: merged_features
+                });
+            }
         }
+    }
+
+    getChildVariables() {
+        var vars = this.props.children.map((child) => {
+            console.log(child.props);
+        });
     }
 
     render() {
@@ -135,7 +181,7 @@ class VisualizationGroup extends React.Component {
         return (
             <div>
                 {(Control && this.state.dimensions) ?
-                    <Control dims={this.state.dimensions} changeDimensions={this.changeDimensions.bind(this)} /> :
+                    <Control dims={this.state.dimensions} currentDims={this.state.currentDimensions} changeDimensions={this.changeDimensions.bind(this)} /> :
                     null}
                 {this.props.children.map((child) => {
                     return React.cloneElement(child, {
