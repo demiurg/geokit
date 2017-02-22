@@ -46,7 +46,7 @@ function tables(state={
   }
 }
 
-function raster_catalog(state={
+function rasterCatalog(state={
   items: [],
 }, action){
   switch (action.type){

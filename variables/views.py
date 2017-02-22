@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from layers.models import Feature
 from variables.models import Variable
 from variables.serializers import VariableSerializer
+from variables.data import NODE_TYPES
 
 import json
 import xmlrpclib
@@ -34,6 +35,7 @@ def add(request):
     raster_catalog = get_raster_catalog()
     return render(request, 'variables/sieve.html', {
         'raster_catalog': json.dumps(raster_catalog),
+        'node_types': json.dumps(NODE_TYPES.keys())
     })
 
 
@@ -42,7 +44,8 @@ def edit(request, variable_id):
     raster_catalog = get_raster_catalog()
     return render(request, 'variables/sieve.html', {
         'variable': variable,
-        'raster_catalog': json.dumps(raster_catalog)
+        'raster_catalog': json.dumps(raster_catalog),
+        'node_types': json.dumps(NODE_TYPES.keys())
     })
 
 

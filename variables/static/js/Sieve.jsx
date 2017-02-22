@@ -39,7 +39,7 @@ function sieveApp(state=initialState, action){
       });
     case RECEIVE_RASTER_CATALOG:
       return Object.assign({}, state, {
-        raster_catalog: raster_catalog(state.raster_catalog, action)
+        raster_catalog: rasterCatalog(state.raster_catalog, action)
       });
     case UPDATE_NAME:
       return Object.assign({}, state, {
@@ -163,7 +163,7 @@ class VariableButtonGroup extends React.Component {
   }
 }
 
-
+//  layer or table item to bare dict option
 var i2o = (type, item, i) => { return (item, i) => {
   if (item.field_names){
     return item.field_names.map((field, j) => (
@@ -404,6 +404,85 @@ class AddSelectInputModal extends React.Component {
           </Modal.Body>
           <Modal.Footer>
            <Button onClick={this.use.bind(this)}>Use Variable</Button>
+           <Button onClick={this.close.bind(this)}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+      </Button>
+    );
+  }
+}
+
+
+class AddLayerInputModal extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      showModal: false,
+      node: null
+    };
+  }
+
+  close() {
+    this.setState({ showModal: false });
+  }
+
+  open() {
+    this.setState({ showModal: true });
+  }
+
+  onSelectNode = (node) => {
+    this.setState({node: node});
+  };
+
+  use() {
+    if (this.state.node){
+      this.props.onAddTreeOp(this.state.node);
+      this.setState({ showModal: false });
+    }else{
+      alert('Select a variable to use.');
+    }
+  }
+
+  use() {
+    if (this.state.node){
+      var form = $(this.form).serializeArray();
+      console.log(this.state.node);
+      var variable = {
+        node: this.state.node,
+        name: form[0]['value']
+      };
+      this.props.onAddInputVariable(variable);
+      this.setState({ showModal: false });
+    }else{
+      alert('Select a variable to use.');
+    }
+  }
+
+  render(){
+    return (
+      <Button
+        bsStyle="primary"
+        onClick={this.open.bind(this)}
+      >
+        {this.props.children ? this.props.children : "Add Input"}
+
+        <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Adding Layer Input Variable</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <SelectLayerForm onSelectNode={this.onSelectNode} {...this.props} />
+            <form ref={(ref)=>{this.form=ref}}>
+              <FormGroup controlId="name">
+                <ControlLabel>Name</ControlLabel>
+                <FormControl
+                  name="name" type="text" placeholder="enter variable name"
+                />
+              </FormGroup>
+            </form>
+          </Modal.Body>
+          <Modal.Footer>
+           <Button onClick={this.use.bind(this)}>Add</Button>
            <Button onClick={this.close.bind(this)}>Close</Button>
           </Modal.Footer>
         </Modal>
@@ -762,6 +841,33 @@ class SelectForm extends React.Component {
             </FormControl>
           </FormGroup>
         );
+      } else if (this.state.select_variable[0] == 'source') {
+        let of_variable = (_type) => {
+          return (item) => {
+            return (
+              this.state.select_variable[1][0]['type'] == _type &&
+              this.state.select_variable[1][0]['id'] == item['id']
+            );
+          }
+        };
+        var options = this.props.layers.items.filter(of_variable('Layer')).map(
+          i2o('Layer')
+        ).concat(
+          this.props.tables.items.filter(of_variable('Table')).map(i2o('Table'))
+        );
+        property = (
+          <FormGroup controlId="rightSelect">
+            <ControlLabel>Variable&nbsp;Property</ControlLabel>
+            <FormControl
+              componentClass="select"
+              placeholder="select"
+              name="right"
+              onChange={this.onPropertyChange.bind(this)}>
+              <option key={9999} value={null} >Not Selected</option>
+              {options}
+            </FormControl>
+          </FormGroup>
+        );
       }
     }
     return (
@@ -776,6 +882,49 @@ class SelectForm extends React.Component {
             <option key={9999} value={null} >Not Selected</option>
             {this.props.input_variables.map((v, i) => (
               <option key={i} value={JSON.stringify(v.node)}>
+                {v.name ? v.name : rendertree(v)}
+              </option>
+            ))}
+          </FormControl>
+        </FormGroup>
+        {property}
+      </form>
+    );
+  }
+}
+
+
+class SelectLayerForm extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      variable: null,
+    };
+  }
+
+  onVariableChange = (e) => {
+    if (e.target.value){
+      var v = JSON.parse(e.target.value);
+      this.props.onSelectNode(v);
+    }
+  };
+
+  render(){
+    var property = null;
+    return (
+      <form ref={(ref)=>{this.form=ref}}>
+        <FormGroup controlId="leftSelect">
+          <ControlLabel>Spatial&nbsp;Layer</ControlLabel>
+          <FormControl
+            componentClass="select"
+            placeholder="select"
+            name="left"
+            onChange={this.onVariableChange.bind(this)}>
+            <option key={9999} value={null} >Not Selected</option>
+            {this.props.layers.items.map((v, i) => (
+              <option key={i} value={
+                `["source", [{"type": "Layer", "name": "${v.name}", "id": ${v.id}, "field": "fid"}]]`
+              }>
                 {v.name ? v.name : rendertree(v)}
               </option>
             ))}
@@ -877,7 +1026,9 @@ class SieveComponent extends React.Component {
           <div className='pull-right'>
             <ButtonToolbar>
               <ButtonGroup>
-                <AddDataInputModal {...this.props} >Add Data Input</AddDataInputModal>
+                <AddLayerInputModal {...this.props} >Add Spacial Layer</AddLayerInputModal>
+                <AddDataInputModal {...this.props} >Add Tabular/Time Data</AddDataInputModal>
+                <AddDataInputModal {...this.props} >Combine Space/Time Data</AddDataInputModal>
                 <AddExpressionInputModal {...this.props} >Add Expression Input</AddExpressionInputModal>
                 <AddSelectInputModal {...this.props}>Select Input</AddSelectInputModal>
               </ButtonGroup>
@@ -920,6 +1071,20 @@ class SieveComponent extends React.Component {
 }
 
 
+class DataNode {
+  constructor(operation, operands){
+    this.operation = operation;
+    this.operands = [];
+    for (rand of operands){
+      // stuff
+    }
+  }
+  json(){
+    return JSON.encode(data);
+  }
+}
+
+
 var rendertree = (tree, level=0) => {
     //console.log('render: ', tree);
     var tab = Array(level * 4).join("&nbsp;");
@@ -956,6 +1121,12 @@ var rendertree = (tree, level=0) => {
           html = left;
           break;
         case 'join':
+          if (! Array.isArray(left) && left[0] == 'source'){
+            left = left[1];
+          }
+          if (! Array.isArray(right) && right[0] == 'source'){
+            right = right[1];
+          }
           let str = "Join " +
             left.type + ' ' + left.name + ' and ' +
             right.type + ' ' + right.name + ' on ' +
@@ -963,8 +1134,11 @@ var rendertree = (tree, level=0) => {
           ;
           html = str;
           break;
+        case 'source':
+          html = left.type + " '" + left.name + "'";
+          break;
         default:
-          html = rendertree(left, nl) + " " + op + " " + rendertree(right, nl);
+          html = rendertree(left, nl) + " " + op + (right ? " " + rendertree(right, nl) : "" );
       }
     } else {
       html = JSON.stringify(tree);

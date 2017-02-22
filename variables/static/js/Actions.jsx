@@ -43,7 +43,7 @@ function receiveLayers(json){
 
 function receiveRasterCatalog(json){
   return {
-    type: RECEIVE_RASTE_CATALOG,
+    type: RECEIVE_RASTER_CATALOG,
     raster_catalog: json,
     receivedAt: Date.now()
   };

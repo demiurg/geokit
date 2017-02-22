@@ -253,7 +253,7 @@ class SelectOperator(DataNode):
                 f_wheres.append("layer_id = '{}'".format(layer['id']))
 
             froms.append(
-                    "(SELECT id as feature_id, (properties->>'{0}')::integer as joiner "
+                "(SELECT id as feature_id, (properties->>'{0}')::integer as joiner "
                 "FROM {1}.layers_feature "
                 "WHERE {2!s}) f".format(
                     layer['field'],
@@ -369,6 +369,20 @@ class DataSource(DataNode):
         return self
 
 
+class RasterSource(DataNode):
+    ''' Used for testing '''
+
+    def __init__(self, op, args):
+        self.operation = op
+        self.data, self.dimensions = args
+
+    def get_dimensions(self):
+        return self._dimensions
+
+    def execute(self):
+        return self.data
+
+
 class DataFrameSource(DataNode):
     ''' Used for testing '''
 
@@ -399,6 +413,7 @@ NODE_TYPES = {
 
     'source': DataSource,
     'dfsource': DataFrameSource,
+    'rastersource': RasterSource,
     'join': DataSource,
     'select': SelectOperator,
 }

@@ -515,7 +515,7 @@ class GADMView(views.APIView):
 
     def post(self, request):
         args = request.data
-        print args.keys()
+        # print args.keys()
         # results = gadm_data(distinct=False, **gadm_data_args(args))
 
         # field_name = 'name_%s' % request.POST['level']

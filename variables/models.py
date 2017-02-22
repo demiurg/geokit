@@ -7,6 +7,7 @@ import numpy as np
 import pandas
 
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import ArrayField, JSONField
 
 from layers.models import Layer
@@ -40,9 +41,16 @@ class Variable(models.Model):
         self.source_layers = None
         self.current_data = None
 
-    def save(self, *args, **kwargs):
-        self.saved_dimensions = self.dimensions()
-        super(Variable, self).save(*args, **kwargs)
+    def clean(self):
+        if self.tree:
+            try:
+                root = treeToNode(self.tree)
+                self.saved_dimensions = root.dimensions()
+            except:
+                self.saved_dimensions = None
+                raise ValidationError(
+                    {"tree": "Tree does not appear to be valid"}
+                )
 
     def __unicode__(self):
         return self.name
@@ -79,3 +87,8 @@ class Variable(models.Model):
             self.current_data = self.root.execute()
 
         return self.current_data
+
+
+class RasterRequest(models.Model):
+    pass
+

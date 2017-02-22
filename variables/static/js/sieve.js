@@ -42,7 +42,7 @@ function receiveLayers(json) {
 
 function receiveRasterCatalog(json) {
   return {
-    type: RECEIVE_RASTE_CATALOG,
+    type: RECEIVE_RASTER_CATALOG,
     raster_catalog: json,
     receivedAt: Date.now()
   };
@@ -1229,7 +1229,7 @@ function tables() {
   }
 }
 
-function raster_catalog() {
+function rasterCatalog() {
   var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
     items: []
   };
@@ -1377,7 +1377,7 @@ function sieveApp() {
       });
     case RECEIVE_RASTER_CATALOG:
       return Object.assign({}, state, {
-        raster_catalog: raster_catalog(action)
+        raster_catalog: rasterCatalog(state.raster_catalog, action)
       });
     case UPDATE_NAME:
       return Object.assign({}, state, {
@@ -1521,6 +1521,9 @@ var VariableButtonGroup = function (_React$Component) {
 
   return VariableButtonGroup;
 }(React.Component);
+
+//  layer or table item to bare dict option
+
 
 var i2o = function i2o(type, item, i) {
   return function (item, i) {
@@ -1888,16 +1891,133 @@ var AddSelectInputModal = function (_React$Component4) {
   return AddSelectInputModal;
 }(React.Component);
 
-var AddBinOpModal = function (_React$Component5) {
-  _inherits(AddBinOpModal, _React$Component5);
+var AddLayerInputModal = function (_React$Component5) {
+  _inherits(AddLayerInputModal, _React$Component5);
+
+  function AddLayerInputModal(props) {
+    _classCallCheck(this, AddLayerInputModal);
+
+    var _this9 = _possibleConstructorReturn(this, _React$Component5.call(this, props));
+
+    _this9.onSelectNode = function (node) {
+      _this9.setState({ node: node });
+    };
+
+    _this9.state = {
+      showModal: false,
+      node: null
+    };
+    return _this9;
+  }
+
+  AddLayerInputModal.prototype.close = function close() {
+    this.setState({ showModal: false });
+  };
+
+  AddLayerInputModal.prototype.open = function open() {
+    this.setState({ showModal: true });
+  };
+
+  AddLayerInputModal.prototype.use = function use() {
+    if (this.state.node) {
+      this.props.onAddTreeOp(this.state.node);
+      this.setState({ showModal: false });
+    } else {
+      alert('Select a variable to use.');
+    }
+  };
+
+  AddLayerInputModal.prototype.use = function use() {
+    if (this.state.node) {
+      var form = $(this.form).serializeArray();
+      console.log(this.state.node);
+      var variable = {
+        node: this.state.node,
+        name: form[0]['value']
+      };
+      this.props.onAddInputVariable(variable);
+      this.setState({ showModal: false });
+    } else {
+      alert('Select a variable to use.');
+    }
+  };
+
+  AddLayerInputModal.prototype.render = function render() {
+    var _this10 = this;
+
+    return React.createElement(
+      Button,
+      {
+        bsStyle: "primary",
+        onClick: this.open.bind(this)
+      },
+      this.props.children ? this.props.children : "Add Input",
+      React.createElement(
+        Modal,
+        { show: this.state.showModal, onHide: this.close.bind(this) },
+        React.createElement(
+          Modal.Header,
+          { closeButton: true },
+          React.createElement(
+            Modal.Title,
+            null,
+            "Adding Layer Input Variable"
+          )
+        ),
+        React.createElement(
+          Modal.Body,
+          null,
+          React.createElement(SelectLayerForm, _extends({ onSelectNode: this.onSelectNode }, this.props)),
+          React.createElement(
+            "form",
+            { ref: function ref(_ref5) {
+                _this10.form = _ref5;
+              } },
+            React.createElement(
+              FormGroup,
+              { controlId: "name" },
+              React.createElement(
+                ControlLabel,
+                null,
+                "Name"
+              ),
+              React.createElement(FormControl, {
+                name: "name", type: "text", placeholder: "enter variable name"
+              })
+            )
+          )
+        ),
+        React.createElement(
+          Modal.Footer,
+          null,
+          React.createElement(
+            Button,
+            { onClick: this.use.bind(this) },
+            "Add"
+          ),
+          React.createElement(
+            Button,
+            { onClick: this.close.bind(this) },
+            "Close"
+          )
+        )
+      )
+    );
+  };
+
+  return AddLayerInputModal;
+}(React.Component);
+
+var AddBinOpModal = function (_React$Component6) {
+  _inherits(AddBinOpModal, _React$Component6);
 
   function AddBinOpModal(props) {
     _classCallCheck(this, AddBinOpModal);
 
-    var _this9 = _possibleConstructorReturn(this, _React$Component5.call(this, props));
+    var _this11 = _possibleConstructorReturn(this, _React$Component6.call(this, props));
 
-    _this9.state = { showModal: false };
-    return _this9;
+    _this11.state = { showModal: false };
+    return _this11;
   }
 
   AddBinOpModal.prototype.close = function close() {
@@ -1916,7 +2036,7 @@ var AddBinOpModal = function (_React$Component5) {
   };
 
   AddBinOpModal.prototype.render = function render() {
-    var _this10 = this;
+    var _this12 = this;
 
     return React.createElement(
       Button,
@@ -1942,8 +2062,8 @@ var AddBinOpModal = function (_React$Component5) {
           null,
           React.createElement(
             "form",
-            { ref: function ref(_ref5) {
-                _this10.form = _ref5;
+            { ref: function ref(_ref6) {
+                _this12.form = _ref6;
               } },
             React.createElement(
               FormGroup,
@@ -2022,16 +2142,16 @@ var AddBinOpModal = function (_React$Component5) {
   return AddBinOpModal;
 }(React.Component);
 
-var AddUnaryOpModal = function (_React$Component6) {
-  _inherits(AddUnaryOpModal, _React$Component6);
+var AddUnaryOpModal = function (_React$Component7) {
+  _inherits(AddUnaryOpModal, _React$Component7);
 
   function AddUnaryOpModal(props) {
     _classCallCheck(this, AddUnaryOpModal);
 
-    var _this11 = _possibleConstructorReturn(this, _React$Component6.call(this, props));
+    var _this13 = _possibleConstructorReturn(this, _React$Component7.call(this, props));
 
-    _this11.state = { showModal: false };
-    return _this11;
+    _this13.state = { showModal: false };
+    return _this13;
   }
 
   AddUnaryOpModal.prototype.close = function close() {
@@ -2050,7 +2170,7 @@ var AddUnaryOpModal = function (_React$Component6) {
   };
 
   AddUnaryOpModal.prototype.render = function render() {
-    var _this12 = this;
+    var _this14 = this;
 
     return React.createElement(
       Button,
@@ -2076,8 +2196,8 @@ var AddUnaryOpModal = function (_React$Component6) {
           null,
           React.createElement(
             "form",
-            { ref: function ref(_ref6) {
-                _this12.form = _ref6;
+            { ref: function ref(_ref7) {
+                _this14.form = _ref7;
               } },
             React.createElement(
               FormGroup,
@@ -2129,23 +2249,23 @@ var AddUnaryOpModal = function (_React$Component6) {
   return AddUnaryOpModal;
 }(React.Component);
 
-var AddSelectModal = function (_React$Component7) {
-  _inherits(AddSelectModal, _React$Component7);
+var AddSelectModal = function (_React$Component8) {
+  _inherits(AddSelectModal, _React$Component8);
 
   function AddSelectModal(props) {
     _classCallCheck(this, AddSelectModal);
 
-    var _this13 = _possibleConstructorReturn(this, _React$Component7.call(this, props));
+    var _this15 = _possibleConstructorReturn(this, _React$Component8.call(this, props));
 
-    _this13.onSelectNode = function (select_node) {
-      _this13.setState({ select_node: select_node });
+    _this15.onSelectNode = function (select_node) {
+      _this15.setState({ select_node: select_node });
     };
 
-    _this13.state = {
+    _this15.state = {
       showModal: false,
       select_node: null
     };
-    return _this13;
+    return _this15;
   }
 
   AddSelectModal.prototype.close = function close() {
@@ -2211,23 +2331,23 @@ var AddSelectModal = function (_React$Component7) {
   return AddSelectModal;
 }(React.Component);
 
-var AddMeanModal = function (_React$Component8) {
-  _inherits(AddMeanModal, _React$Component8);
+var AddMeanModal = function (_React$Component9) {
+  _inherits(AddMeanModal, _React$Component9);
 
   function AddMeanModal(props) {
     _classCallCheck(this, AddMeanModal);
 
-    var _this14 = _possibleConstructorReturn(this, _React$Component8.call(this, props));
+    var _this16 = _possibleConstructorReturn(this, _React$Component9.call(this, props));
 
-    _this14.onSelectNode = function (node) {
-      _this14.setState({ node: node });
+    _this16.onSelectNode = function (node) {
+      _this16.setState({ node: node });
     };
 
-    _this14.state = {
+    _this16.state = {
       showModal: false,
       node: null
     };
-    return _this14;
+    return _this16;
   }
 
   AddMeanModal.prototype.close = function close() {
@@ -2252,7 +2372,7 @@ var AddMeanModal = function (_React$Component8) {
   };
 
   AddMeanModal.prototype.render = function render() {
-    var _this15 = this;
+    var _this17 = this;
 
     return React.createElement(
       Button,
@@ -2278,8 +2398,8 @@ var AddMeanModal = function (_React$Component8) {
           null,
           React.createElement(
             "form",
-            { ref: function ref(_ref7) {
-                _this15.form = _ref7;
+            { ref: function ref(_ref8) {
+                _this17.form = _ref8;
               } },
             React.createElement(
               FormGroup,
@@ -2332,54 +2452,84 @@ var AddMeanModal = function (_React$Component8) {
   return AddMeanModal;
 }(React.Component);
 
-var SelectForm = function (_React$Component9) {
-  _inherits(SelectForm, _React$Component9);
+var SelectForm = function (_React$Component10) {
+  _inherits(SelectForm, _React$Component10);
 
   function SelectForm(props) {
     _classCallCheck(this, SelectForm);
 
-    var _this16 = _possibleConstructorReturn(this, _React$Component9.call(this, props));
+    var _this18 = _possibleConstructorReturn(this, _React$Component10.call(this, props));
 
-    _this16.onVariableChange = function (e) {
+    _this18.onVariableChange = function (e) {
       if (e.target.value) {
         var v = JSON.parse(e.target.value);
         if (v[0] == 'select') {
-          _this16.props.onSelectNode(v);
-          _this16.setState({ variable: v });
+          _this18.props.onSelectNode(v);
+          _this18.setState({ variable: v });
         } else {
-          _this16.setState({ select_variable: v });
+          _this18.setState({ select_variable: v });
         }
       }
     };
 
-    _this16.onPropertyChange = function (e) {
+    _this18.onPropertyChange = function (e) {
       //this.setState({select_property: JSON.parse(e.target.value)});
       if (e.target.value) {
-        var node = ['select', [_this16.state.select_variable, JSON.parse(e.target.value)]];
-        _this16.props.onSelectNode(node);
+        var node = ['select', [_this18.state.select_variable, JSON.parse(e.target.value)]];
+        _this18.props.onSelectNode(node);
       }
     };
 
-    _this16.state = {
+    _this18.state = {
       variable: null,
       select_variable: null,
       select_property: null
     };
-    return _this16;
+    return _this18;
   }
 
   SelectForm.prototype.render = function render() {
-    var _this17 = this;
+    var _this19 = this;
 
     var property = null;
     if (this.state.select_variable) {
       if (this.state.select_variable[0] == 'join') {
         var of_variable = function of_variable(_type) {
           return function (item) {
-            return _this17.state.select_variable[1][0]['type'] == _type && _this17.state.select_variable[1][0]['id'] == item['id'] || _this17.state.select_variable[1][1]['type'] == _type && _this17.state.select_variable[1][1]['id'] == item['id'];
+            return _this19.state.select_variable[1][0]['type'] == _type && _this19.state.select_variable[1][0]['id'] == item['id'] || _this19.state.select_variable[1][1]['type'] == _type && _this19.state.select_variable[1][1]['id'] == item['id'];
           };
         };
         var options = this.props.layers.items.filter(of_variable('Layer')).map(i2o('Layer')).concat(this.props.tables.items.filter(of_variable('Table')).map(i2o('Table')));
+        property = React.createElement(
+          FormGroup,
+          { controlId: "rightSelect" },
+          React.createElement(
+            ControlLabel,
+            null,
+            "Variable\xA0Property"
+          ),
+          React.createElement(
+            FormControl,
+            {
+              componentClass: "select",
+              placeholder: "select",
+              name: "right",
+              onChange: this.onPropertyChange.bind(this) },
+            React.createElement(
+              "option",
+              { key: 9999, value: null },
+              "Not Selected"
+            ),
+            options
+          )
+        );
+      } else if (this.state.select_variable[0] == 'source') {
+        var _of_variable = function _of_variable(_type) {
+          return function (item) {
+            return _this19.state.select_variable[1][0]['type'] == _type && _this19.state.select_variable[1][0]['id'] == item['id'];
+          };
+        };
+        var options = this.props.layers.items.filter(_of_variable('Layer')).map(i2o('Layer')).concat(this.props.tables.items.filter(_of_variable('Table')).map(i2o('Table')));
         property = React.createElement(
           FormGroup,
           { controlId: "rightSelect" },
@@ -2407,8 +2557,8 @@ var SelectForm = function (_React$Component9) {
     }
     return React.createElement(
       "form",
-      { ref: function ref(_ref8) {
-          _this17.form = _ref8;
+      { ref: function ref(_ref9) {
+          _this19.form = _ref9;
         } },
       React.createElement(
         FormGroup,
@@ -2446,13 +2596,79 @@ var SelectForm = function (_React$Component9) {
   return SelectForm;
 }(React.Component);
 
-var SieveComponent = function (_React$Component10) {
-  _inherits(SieveComponent, _React$Component10);
+var SelectLayerForm = function (_React$Component11) {
+  _inherits(SelectLayerForm, _React$Component11);
+
+  function SelectLayerForm(props) {
+    _classCallCheck(this, SelectLayerForm);
+
+    var _this20 = _possibleConstructorReturn(this, _React$Component11.call(this, props));
+
+    _this20.onVariableChange = function (e) {
+      if (e.target.value) {
+        var v = JSON.parse(e.target.value);
+        _this20.props.onSelectNode(v);
+      }
+    };
+
+    _this20.state = {
+      variable: null
+    };
+    return _this20;
+  }
+
+  SelectLayerForm.prototype.render = function render() {
+    var _this21 = this;
+
+    var property = null;
+    return React.createElement(
+      "form",
+      { ref: function ref(_ref10) {
+          _this21.form = _ref10;
+        } },
+      React.createElement(
+        FormGroup,
+        { controlId: "leftSelect" },
+        React.createElement(
+          ControlLabel,
+          null,
+          "Spatial\xA0Layer"
+        ),
+        React.createElement(
+          FormControl,
+          {
+            componentClass: "select",
+            placeholder: "select",
+            name: "left",
+            onChange: this.onVariableChange.bind(this) },
+          React.createElement(
+            "option",
+            { key: 9999, value: null },
+            "Not Selected"
+          ),
+          this.props.layers.items.map(function (v, i) {
+            return React.createElement(
+              "option",
+              { key: i, value: "[\"source\", [{\"type\": \"Layer\", \"name\": \"" + v.name + "\", \"id\": " + v.id + ", \"field\": \"fid\"}]]" },
+              v.name ? v.name : rendertree(v)
+            );
+          })
+        )
+      ),
+      property
+    );
+  };
+
+  return SelectLayerForm;
+}(React.Component);
+
+var SieveComponent = function (_React$Component12) {
+  _inherits(SieveComponent, _React$Component12);
 
   function SieveComponent() {
     _classCallCheck(this, SieveComponent);
 
-    return _possibleConstructorReturn(this, _React$Component10.apply(this, arguments));
+    return _possibleConstructorReturn(this, _React$Component12.apply(this, arguments));
   }
 
   SieveComponent.prototype.render = function render() {
@@ -2585,9 +2801,19 @@ var SieveComponent = function (_React$Component10) {
               ButtonGroup,
               null,
               React.createElement(
+                AddLayerInputModal,
+                this.props,
+                "Add Spacial Layer"
+              ),
+              React.createElement(
                 AddDataInputModal,
                 this.props,
-                "Add Data Input"
+                "Add Tabular/Time Data"
+              ),
+              React.createElement(
+                AddDataInputModal,
+                this.props,
+                "Combine Space/Time Data"
               ),
               React.createElement(
                 AddExpressionInputModal,
@@ -2684,6 +2910,33 @@ var SieveComponent = function (_React$Component10) {
   return SieveComponent;
 }(React.Component);
 
+var DataNode = function () {
+  function DataNode(operation, operands) {
+    _classCallCheck(this, DataNode);
+
+    this.operation = operation;
+    this.operands = [];
+    for (var _iterator = operands, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+      // stuff
+
+      if (_isArray) {
+        if (_i >= _iterator.length) break;
+        rand = _iterator[_i++];
+      } else {
+        _i = _iterator.next();
+        if (_i.done) break;
+        rand = _i.value;
+      }
+    }
+  }
+
+  DataNode.prototype.json = function json() {
+    return JSON.encode(data);
+  };
+
+  return DataNode;
+}();
+
 var rendertree = function rendertree(tree) {
   var level = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 
@@ -2713,11 +2966,20 @@ var rendertree = function rendertree(tree) {
         html = left;
         break;
       case 'join':
+        if (!Array.isArray(left) && left[0] == 'source') {
+          left = left[1];
+        }
+        if (!Array.isArray(right) && right[0] == 'source') {
+          right = right[1];
+        }
         var str = "Join " + left.type + ' ' + left.name + ' and ' + right.type + ' ' + right.name + ' on ' + left.field + ' = ' + right.field;
         html = str;
         break;
+      case 'source':
+        html = left.type + " '" + left.name + "'";
+        break;
       default:
-        html = rendertree(left, nl) + " " + op + " " + rendertree(right, nl);
+        html = rendertree(left, nl) + " " + op + (right ? " " + rendertree(right, nl) : "");
     }
   } else {
     html = JSON.stringify(tree);
@@ -2726,13 +2988,13 @@ var rendertree = function rendertree(tree) {
   return tab + html + "<br>";
 };
 
-var TreeView = function (_React$Component11) {
-  _inherits(TreeView, _React$Component11);
+var TreeView = function (_React$Component13) {
+  _inherits(TreeView, _React$Component13);
 
   function TreeView() {
     _classCallCheck(this, TreeView);
 
-    return _possibleConstructorReturn(this, _React$Component11.apply(this, arguments));
+    return _possibleConstructorReturn(this, _React$Component13.apply(this, arguments));
   }
 
   TreeView.prototype.render = function render() {
@@ -2754,6 +3016,7 @@ function sieve(el) {
   store.dispatch(fetchLayers());
   store.dispatch(fetchTables());
   store.dispatch(fetchVariables());
+  store.dispatch(receiveRasterCatalog(raster_catalog));
 
   ReactDOM.render(React.createElement(ReactRedux.Provider, {
     children: React.createElement(Sieve, sieve_props),
