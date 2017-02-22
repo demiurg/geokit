@@ -43,7 +43,7 @@ class Graph extends React.Component {
                 }
 
                 Plotly.newPlot(
-                    'graph',
+                    'graph-'+this.props.unique_id,
                     [this.state.data],
                     {
                         xaxis: xaxis,
@@ -56,7 +56,7 @@ class Graph extends React.Component {
                     var update = {
                         'xaxis.range': [this.props.dimensions.min.getTime(), this.props.dimensions.max.getTime()]
                     };
-                    Plotly.relayout('graph', update);
+                    Plotly.relayout('graph-'+this.props.unique_id, update);
                 }
             }
         }
@@ -68,7 +68,7 @@ class Graph extends React.Component {
         } else if (this.state.error) {
             return <div>An error occured: <em>{this.state.error}</em></div>
         } else {
-            return <div id="graph"></div>
+            return <div id={"graph-"+this.props.unique_id}></div>
         }
     }
 }

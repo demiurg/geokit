@@ -12,7 +12,8 @@ ReactDOM.render(
         React.createElement(Visualization, {
             'variable_id': '{{ vis.variable.id }}',
             'variable_name': '{{ vis.variable.name }}',
-            'type': '{{ vis.vis_type }}'
+            'type': '{{ vis.vis_type }}',
+            'unique_id': {{ forloop.counter }}
         }, null),
         {% endfor %}
     ]),

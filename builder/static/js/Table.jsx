@@ -68,7 +68,7 @@ class Table extends React.Component {
             }
             columns.push({data: 'value'});
 
-            $("#data-table").DataTable({
+            $("#data-table-"+this.props.unique_id).DataTable({
                 data: this.state.data.values,
                 columns: columns
             });
@@ -86,7 +86,6 @@ class Table extends React.Component {
             } else {
                 $.fn.dataTableExt.afnFiltering.push(
                     (oSettings, aData, iDataIndex) => {
-                        //console.log(aData[0], oSettings.aoData[iDataIndex]);
                         var dims = this.props.dimensions.map((dim) => {return dim.properties.id;});
                         var index = dims.indexOf(oSettings.aoData[iDataIndex]._aData.feature.properties.id);
                         if (index != -1) {
@@ -97,7 +96,7 @@ class Table extends React.Component {
                 );
             }
         } else if (this.dimensionsChanged(prevProps.dimensions, this.props.dimensions)) {
-            $("#data-table").DataTable().draw();
+            $("#data-table-"+this.props.unique_id).DataTable().draw();
         }
     }
 
@@ -108,7 +107,7 @@ class Table extends React.Component {
             return <div>An error occured: <em>{this.state.error}</em></div>
         } else {
             return (
-                <table id="data-table" className="display">
+                <table id={"data-table-"+this.props.unique_id} className="display">
                     <thead>
                         <tr>
                             <th>{this.state.data.dimension == "time" ? "Date" : "Feature" }</th>

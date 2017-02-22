@@ -374,7 +374,7 @@ var Graph = function (_React$Component) {
                     xaxis = { title: 'Location' };
                 }
 
-                Plotly.newPlot('graph', [this.state.data], {
+                Plotly.newPlot('graph-' + this.props.unique_id, [this.state.data], {
                     xaxis: xaxis,
                     yaxis: { title: this.props.variable_name }
                 });
@@ -383,7 +383,7 @@ var Graph = function (_React$Component) {
                     var update = {
                         'xaxis.range': [this.props.dimensions.min.getTime(), this.props.dimensions.max.getTime()]
                     };
-                    Plotly.relayout('graph', update);
+                    Plotly.relayout('graph-' + this.props.unique_id, update);
                 }
             }
         }
@@ -408,7 +408,7 @@ var Graph = function (_React$Component) {
                 )
             );
         } else {
-            return React.createElement('div', { id: 'graph' });
+            return React.createElement('div', { id: "graph-" + this.props.unique_id });
         }
     };
 
@@ -825,7 +825,7 @@ var Map = function (_React$Component) {
                 return feature.properties[_this3.props.variable_name];
             });
 
-            var map = L.map('map');
+            var map = L.map('map-' + this.props.unique_id);
 
             L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
 
@@ -900,7 +900,7 @@ var Map = function (_React$Component) {
                 )
             );
         } else {
-            return React.createElement('div', { id: 'map', style: { height: "100%" } });
+            return React.createElement('div', { id: "map-" + this.props.unique_id, style: { height: "100%" } });
         }
     };
 
@@ -991,7 +991,7 @@ var Table = function (_React$Component) {
             }
             columns.push({ data: 'value' });
 
-            $("#data-table").DataTable({
+            $("#data-table-" + this.props.unique_id).DataTable({
                 data: this.state.data.values,
                 columns: columns
             });
@@ -1006,7 +1006,6 @@ var Table = function (_React$Component) {
                 });
             } else {
                 $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
-                    //console.log(aData[0], oSettings.aoData[iDataIndex]);
                     var dims = _this3.props.dimensions.map(function (dim) {
                         return dim.properties.id;
                     });
@@ -1018,7 +1017,7 @@ var Table = function (_React$Component) {
                 });
             }
         } else if (this.dimensionsChanged(prevProps.dimensions, this.props.dimensions)) {
-            $("#data-table").DataTable().draw();
+            $("#data-table-" + this.props.unique_id).DataTable().draw();
         }
     };
 
@@ -1043,7 +1042,7 @@ var Table = function (_React$Component) {
         } else {
             return React.createElement(
                 'table',
-                { id: 'data-table', className: 'display' },
+                { id: "data-table-" + this.props.unique_id, className: 'display' },
                 React.createElement(
                     'thead',
                     null,
@@ -1498,7 +1497,8 @@ var Visualization = function (_React$Component3) {
                     variable_id: this.props.variable_id,
                     variable_name: this.props.variable_name,
                     color_ramp: [[0, "#000"], [50, "#aaa"]],
-                    dimensions: this.props.dimensions })
+                    dimensions: this.props.dimensions,
+                    unique_id: this.props.unique_id })
             );
         } else if (this.props.type == "graph") {
             return React.createElement(
@@ -1508,7 +1508,8 @@ var Visualization = function (_React$Component3) {
                     variable_id: this.props.variable_id,
                     variable_name: this.props.variable_name,
                     setDimensions: this.props.getChildDimensions,
-                    dimensions: this.props.dimensions })
+                    dimensions: this.props.dimensions,
+                    unique_id: this.props.unique_id })
             );
         } else if (this.props.type == "table") {
             return React.createElement(
@@ -1518,7 +1519,8 @@ var Visualization = function (_React$Component3) {
                     variable_id: this.props.variable_id,
                     variable_name: this.props.variable_name,
                     setDimensions: this.props.getChildDimensions,
-                    dimensions: this.props.dimensions })
+                    dimensions: this.props.dimensions,
+                    unique_id: this.props.unique_id })
             );
         }
     };
@@ -1544,7 +1546,6 @@ var VisualizationGroup = function (_React$Component4) {
     }
 
     VisualizationGroup.prototype.changeDimensions = function changeDimensions(newDims) {
-        console.log(newDims.length);
         if (this.props.control == 'time') {
             this.setState({
                 currentDimensions: { min: newDims.min, max: newDims.max }
@@ -1579,12 +1580,6 @@ var VisualizationGroup = function (_React$Component4) {
                 });
             }
         }
-    };
-
-    VisualizationGroup.prototype.getChildVariables = function getChildVariables() {
-        var vars = this.props.children.map(function (child) {
-            console.log(child.props);
-        });
     };
 
     VisualizationGroup.prototype.render = function render() {

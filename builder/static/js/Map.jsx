@@ -39,7 +39,7 @@ class Map extends React.Component {
                 return feature.properties[this.props.variable_name];
             });
 
-            var map = L.map('map');
+            var map = L.map('map-'+this.props.unique_id);
 
             L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
 
@@ -125,7 +125,7 @@ class Map extends React.Component {
         } else if (this.state.error) {
             return <div>An error occured: <em>{this.state.error}</em></div>
         } else {
-            return <div id="map" style={{height: "100%"}}></div>
+            return <div id={"map-"+this.props.unique_id} style={{height: "100%"}}></div>
         }
     }
 }

@@ -246,19 +246,20 @@ class SelectOperator(DataNode):
         joins = []
 
         if source.layers:
-            selects.append("feature_id")
+            selects.append("feature_id"+(', "'+name+'"' if field['type'] == 'Layer' else ""))
 
             f_wheres = []
             for layer in source.layers:
                 f_wheres.append("layer_id = '{}'".format(layer['id']))
 
             froms.append(
-                "(SELECT id as feature_id, (properties->>'{0}')::integer as joiner "
+                "(SELECT id as feature_id, (properties->>'{0}')::integer as joiner {3} "
                 "FROM {1}.layers_feature "
                 "WHERE {2!s}) f".format(
                     layer['field'],
                     django.db.connection.schema_name,
                     " AND ".join(f_wheres),
+                    ", properties->'"+name+"' as \""+name+"\"" if field['type'] == 'Layer' else "",
                 )
             )
 
@@ -305,9 +306,17 @@ class SelectOperator(DataNode):
             )
         except KeyError as e:
             #print e
-            df = read_sql(
-                query, django.db.connection, index_col='date_range'
-            )
+            try:
+                df = read_sql(
+                    query, django.db.connection, index_col='date_range'
+                )
+            except:
+                df = read_sql(
+                    query, django.db.connection
+                )
+                return df.pivot(
+                    index='feature_id', values=name, columns=name
+                )
             return df
 
 

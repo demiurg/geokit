@@ -88,7 +88,8 @@ class Visualization extends React.Component {
                         variable_id={this.props.variable_id}
                         variable_name={this.props.variable_name}
                         color_ramp={[[0, "#000"],[50, "#aaa"]]}
-                        dimensions={this.props.dimensions} />
+                        dimensions={this.props.dimensions}
+                        unique_id={this.props.unique_id} />
                 </div>
             );
         } else if (this.props.type == "graph") {
@@ -98,7 +99,8 @@ class Visualization extends React.Component {
                         variable_id={this.props.variable_id}
                         variable_name={this.props.variable_name}
                         setDimensions={this.props.getChildDimensions}
-                        dimensions={this.props.dimensions} />
+                        dimensions={this.props.dimensions}
+                        unique_id={this.props.unique_id} />
                 </div>
             );
         } else if (this.props.type == "table") {
@@ -108,7 +110,8 @@ class Visualization extends React.Component {
                         variable_id={this.props.variable_id}
                         variable_name={this.props.variable_name}
                         setDimensions={this.props.getChildDimensions}
-                        dimensions={this.props.dimensions} />
+                        dimensions={this.props.dimensions}
+                        unique_id={this.props.unique_id} />
                 </div>
             );
         }
@@ -127,7 +130,6 @@ class VisualizationGroup extends React.Component {
     }
 
     changeDimensions(newDims) {
-        console.log(newDims.length);
         if (this.props.control == 'time') {
             this.setState({
                 currentDimensions: {min: newDims.min, max: newDims.max}
@@ -162,12 +164,6 @@ class VisualizationGroup extends React.Component {
                 });
             }
         }
-    }
-
-    getChildVariables() {
-        var vars = this.props.children.map((child) => {
-            console.log(child.props);
-        });
     }
 
     render() {
