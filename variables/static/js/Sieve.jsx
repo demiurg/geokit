@@ -491,6 +491,83 @@ class AddLayerInputModal extends React.Component {
   }
 }
 
+class AddTableInputModal extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      showModal: false,
+      node: null
+    };
+  }
+
+  close() {
+    this.setState({ showModal: false });
+  }
+
+  open() {
+    this.setState({ showModal: true });
+  }
+
+  onSelectNode = (node) => {
+    this.setState({node: node});
+  };
+
+  use() {
+    if (this.state.node){
+      this.props.onAddTreeOp(this.state.node);
+      this.setState({ showModal: false });
+    }else{
+      alert('Select a variable to use.');
+    }
+  }
+
+  use() {
+    if (this.state.node){
+      var form = $(this.form).serializeArray();
+      console.log(this.state.node);
+      var variable = {
+        node: this.state.node,
+        name: form[0]['value']
+      };
+      this.props.onAddInputVariable(variable);
+      this.setState({ showModal: false });
+    }else{
+      alert('Select a variable to use.');
+    }
+  }
+
+  render(){
+    return (
+      <Button
+        bsStyle="primary"
+        onClick={this.open.bind(this)}
+      >
+        {this.props.children ? this.props.children : "Add Input"}
+
+        <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Adding Table Input Variable</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <SelectTableForm onSelectNode={this.onSelectNode} {...this.props} />
+            <form ref={(ref)=>{this.form=ref}}>
+              <FormGroup controlId="name">
+                <ControlLabel>Name</ControlLabel>
+                <FormControl
+                  name="name" type="text" placeholder="enter variable name"
+                />
+              </FormGroup>
+            </form>
+          </Modal.Body>
+          <Modal.Footer>
+           <Button onClick={this.use.bind(this)}>Add</Button>
+           <Button onClick={this.close.bind(this)}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+      </Button>
+    );
+  }
+}
 
 class AddBinOpModal extends React.Component {
   constructor(props){
@@ -937,6 +1014,49 @@ class SelectLayerForm extends React.Component {
 }
 
 
+class SelectTableForm extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = {
+      variable: null,
+    };
+  }
+
+  onVariableChange = (e) => {
+    if (e.target.value){
+      var v = JSON.parse(e.target.value);
+      this.props.onSelectNode(v);
+    }
+  };
+
+  render(){
+    var property = null;
+    return (
+      <form ref={(ref)=>{this.form=ref}}>
+        <FormGroup controlId="leftSelect">
+          <ControlLabel>Tabular&nbsp;Layer</ControlLabel>
+          <FormControl
+            componentClass="select"
+            placeholder="select"
+            name="left"
+            onChange={this.onVariableChange.bind(this)}>
+            <option key={9999} value={null} >Not Selected</option>
+            {this.props.tables.items.map((v, i) => (
+              <option key={i} value={
+                `["source", [{"type": "Table", "name": "${v.name}", "id": ${v.id}, "field": "fid"}]]`
+              }>
+                {v.name ? v.name : rendertree(v)}
+              </option>
+            ))}
+          </FormControl>
+        </FormGroup>
+        {property}
+      </form>
+    );
+  }
+}
+
+
 class SieveComponent extends React.Component {
   render() {
     var self = this;
@@ -1027,7 +1147,7 @@ class SieveComponent extends React.Component {
             <ButtonToolbar>
               <ButtonGroup>
                 <AddLayerInputModal {...this.props} >Add Spacial Layer</AddLayerInputModal>
-                <AddDataInputModal {...this.props} >Add Tabular/Time Data</AddDataInputModal>
+                <AddTableInputModal {...this.props} >Add Tabular/Time Data</AddTableInputModal>
                 <AddDataInputModal {...this.props} >Combine Space/Time Data</AddDataInputModal>
                 <AddExpressionInputModal {...this.props} >Add Expression Input</AddExpressionInputModal>
                 <AddSelectInputModal {...this.props}>Select Input</AddSelectInputModal>
