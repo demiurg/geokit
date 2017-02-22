@@ -270,6 +270,101 @@ class AddDataInputModal extends React.Component {
 }
 
 
+class AddRasterInputModal extends React.Component {
+  constructor(props){
+    super(props);
+    this.state = { showModal: false, variable: null};
+  }
+
+  close() {
+    this.setState({ showModal: false });
+  }
+
+  open() {
+    this.setState({ showModal: true });
+  }
+
+  validate = (e) => {
+    var form = $(this.form).serializeArray();
+    if (form[0]['value'] && form[1]['value'] && form[2]['value']){
+      var variable = {
+        name: form[2]['value'],
+        node: [
+          'raster',
+          [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]
+        ]
+      };
+      this.setState({
+        variable: variable
+      });
+    }
+  };
+
+  use() {
+    this.props.onAddInputVariable(this.state.variable);
+    this.setState({ showModal: false });
+  }
+
+  render(){
+    return (
+      <Button
+        bsStyle="primary"
+        onClick={this.open.bind(this)}
+      >
+        {this.props.children ? this.props.children : "Add Input"}
+        <Modal show={this.state.showModal} onHide={this.close.bind(this)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Adding Raster Input Variable</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <form ref={(ref)=>{this.form=ref}} onChange={this.validate.bind(this)}>
+              <FormGroup controlId="leftSelect">
+                <ControlLabel>Layer</ControlLabel>
+                <FormControl componentClass="select" placeholder="select" name="left">
+                {this.props.layers.items.map((v, i) => (
+                  <option key={i} value={
+                    `["source", [{"type": "Layer", "name": "${v.name}", "id": ${v.id}, "field": "fid"}]]`
+                  }>
+                    {v.name ? v.name : rendertree(v)}
+                  </option>
+                ))}
+                </FormControl>
+              </FormGroup>
+              <FormGroup controlId="rightSelect">
+                <ControlLabel>Raster</ControlLabel>
+                <FormControl componentClass="select" placeholder="select" name="right">
+                  {
+                    this.props.raster_catalog.items.map((r, i) => (
+                      <option key={i} value={
+                        `{"name": "${r.description}", "id": ${r.name}}`
+                      }>
+                        {r.description}
+                      </option>
+                    ))
+                  }
+                </FormControl>
+              </FormGroup>
+              <FormGroup controlId="name">
+                <ControlLabel>Name</ControlLabel>
+                <FormControl
+                  name="name" type="text" placeholder="enter variable name"
+                />
+              </FormGroup>
+            </form>
+          </Modal.Body>
+          <Modal.Footer>
+           { this.state.variable ?
+              <Button onClick={this.use.bind(this)}>Use Variable</Button> :
+              null }
+           <Button onClick={this.close.bind(this)}>Close</Button>
+          </Modal.Footer>
+        </Modal>
+      </Button>
+    );
+  }
+}
+
+
 class AddExpressionInputModal extends React.Component {
   constructor(props){
     super(props);
@@ -1146,9 +1241,10 @@ class SieveComponent extends React.Component {
           <div className='pull-right'>
             <ButtonToolbar>
               <ButtonGroup>
-                <AddLayerInputModal {...this.props} >Add Spacial Layer</AddLayerInputModal>
+                <AddLayerInputModal {...this.props} >Add Spatial Layer</AddLayerInputModal>
                 <AddTableInputModal {...this.props} >Add Tabular/Time Data</AddTableInputModal>
                 <AddDataInputModal {...this.props} >Combine Space/Time Data</AddDataInputModal>
+                <AddRasterInputModal {...this.props} >Add Raster Data</AddRasterInputModal>
                 <AddExpressionInputModal {...this.props} >Add Expression Input</AddExpressionInputModal>
                 <AddSelectInputModal {...this.props}>Select Input</AddSelectInputModal>
               </ButtonGroup>
@@ -1253,6 +1349,9 @@ var rendertree = (tree, level=0) => {
             left.field + ' = ' + right.field
           ;
           html = str;
+          break;
+        case 'raster':
+          html = "Raster " + left.name + " by " + right.name;
           break;
         case 'source':
           html = left.type + " '" + left.name + "'";

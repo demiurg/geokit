@@ -377,10 +377,10 @@ class RasterSource(DataNode):
         self.data, self.dimensions = args
 
     def get_dimensions(self):
-        return self._dimensions
+        return {'space': True, 'time': True}
 
     def execute(self):
-        return self.data
+        return self
 
 
 class DataFrameSource(DataNode):
@@ -388,14 +388,9 @@ class DataFrameSource(DataNode):
 
     def __init__(self, op, args):
         self.operation = op
-        self.data, self.dimensions = args
-
-    def get_dimensions(self):
-        return self._dimensions
 
     def execute(self):
-        return self.data
-
+        return self
 
 NODE_TYPES = {
     '+': getattrOperator('__add__'),
@@ -413,7 +408,7 @@ NODE_TYPES = {
 
     'source': DataSource,
     'dfsource': DataFrameSource,
-    'rastersource': RasterSource,
+    'raster': RasterSource,
     'join': DataSource,
     'select': SelectOperator,
 }

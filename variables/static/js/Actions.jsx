@@ -61,7 +61,7 @@ function fetchLayers(){
         dispatch(receiveLayers(data));
       },
       error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
+        console.error(xhr.url, status, err.toString());
       }
     });
   };
@@ -93,7 +93,7 @@ function fetchTables(){
         dispatch(receiveTables(data));
       },
       error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
+        console.error(xhr.url, status, err.toString());
       }
     });
   };
@@ -125,7 +125,7 @@ function fetchVariables(){
         dispatch(receiveVariables(data));
       },
       error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
+        console.error(xhr.url, status, err.toString());
       }
     });
   };
