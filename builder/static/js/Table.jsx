@@ -1,18 +1,10 @@
-const ASCENDING = true,
-      DESCENDING = false;
-
-
 class Table extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             loading: true,
             error: false,
-            data: [],
-            sort: {
-                field: 'key',
-                direction: ASCENDING
-            }
+            data: null,
         };
     }
 
@@ -25,12 +17,24 @@ class Table extends React.Component {
                         return {
                             date: new Date(value.date),
                             value: value.value
-                        }
-                    });
+                        };
+                    })
                 }
+
                 this.setState({
                     data: data,
                     loading: false
+                }, () => {
+                    if (this.state.data.dimension == "time") {
+                        this.props.setDimensions([
+                            this.state.data.values[0].date,
+                            this.state.data.values[this.state.data.values.length - 1].date
+                        ]);
+                    } else {
+                        this.props.setDimensions(this.state.data.values.map((datum) => {
+                            return datum.feature;
+                        }));
+                    }
                 });
             },
             error: (xhr, status, error) => {
@@ -42,56 +46,58 @@ class Table extends React.Component {
         });
     }
 
-    sortBy(field) {
-        if (this.state.sort.field == field) {
-            var direction = !this.state.sort.direction;
-        } else {
-            var direction = ASCENDING;
-        }
-        this.setState({
-            sort: {
-                field: field,
-                direction: direction
+    dimensionsChanged(old, next) {
+        if (this.state.data.dimension == 'time') {
+            if (old && (old.min != next.min || old.max != next.max)) {
+                return true;
             }
-        });
+        } else if (old && old.length != next.length) {
+            return true;
+        }
+        return false
     }
 
-    sortedValues() {
-        var field;
-        if (this.state.sort.field == "key") {
-            if (this.state.data.dimension == "time") {
-                field = "date";
-            } else if (this.state.data.dimension == "space") {
-                field = "feature";
+    componentDidUpdate(prevProps, prevState) {
+        if (!this.state.loading && !prevState.data) {
+            var columns = [],
+                data;
+            if (this.state.data.dimension == 'space') {
+                columns.push({data: 'feature.properties', render: 'name'});
+            } else {
+                columns.push({data: 'date'});
             }
-        } else if (this.state.sort.field == "value") {
-            field = "value";
-        }
+            columns.push({data: 'value'});
 
-        return this.state.data.values.sort((a, b) => {
-            if (a[field] == b[field]) {
-                return 0;
-            } else if (this.state.sort.direction == ASCENDING) {
-                if (a[field] < b[field]) {
-                    return -1;
-                }
-                return 1;
-            } else if (this.state.sort.direction == DESCENDING) {
-                if (b[field] < a[field]) {
-                    return -1;
-                }
-                return 1;
-            }
-        });
-    }
+            $("#data-table").DataTable({
+                data: this.state.data.values,
+                columns: columns
+            });
 
-    renderSortIndicator(field) {
-        if (this.state.sort.field == field) {
-            if (this.state.sort.direction == ASCENDING) {
-                return <span className="glyphicon glyphicon-chevron-down"></span>
-            } else if (this.state.sort.direction == DESCENDING) {
-                return <span className="glyphicon glyphicon-chevron-up"></span>
+            if (this.state.data.dimension == 'time') {
+                $.fn.dataTableExt.afnFiltering.push(
+                    (oSettings, aData, iDataIndex) => {
+                        var d = new Date(aData[0]);
+                        if (this.props.dimensions.min.getTime() <= d && d <= this.props.dimensions.max.getTime()) {
+                            return true;
+                        }
+                        return false;
+                    }
+                );
+            } else {
+                $.fn.dataTableExt.afnFiltering.push(
+                    (oSettings, aData, iDataIndex) => {
+                        //console.log(aData[0], oSettings.aoData[iDataIndex]);
+                        var dims = this.props.dimensions.map((dim) => {return dim.properties.id;});
+                        var index = dims.indexOf(oSettings.aoData[iDataIndex]._aData.feature.properties.id);
+                        if (index != -1) {
+                            return true;
+                        }
+                        return false;
+                    }
+                );
             }
+        } else if (this.dimensionsChanged(prevProps.dimensions, this.props.dimensions)) {
+            $("#data-table").DataTable().draw();
         }
     }
 
@@ -102,26 +108,14 @@ class Table extends React.Component {
             return <div>An error occured: <em>{this.state.error}</em></div>
         } else {
             return (
-                <table className="table">
+                <table id="data-table" className="display">
                     <thead>
                         <tr>
-                            <th><a href="#" onClick={this.sortBy.bind(this, "key")}>
-                                {this.state.data.dimension == "time" ? "Date" : "Feature"} {this.renderSortIndicator("key")}
-                            </a></th>
-                            <th><a href="#" onClick={this.sortBy.bind(this, "value")}>
-                                {this.props.variable_name} {this.renderSortIndicator("value")}
-                            </a></th>
+                            <th>{this.state.data.dimension == "time" ? "Date" : "Feature" }</th>
+                            <th>Value</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {this.sortedValues().map((value) => {
-                            return (
-                                <tr key={this.state.data.dimension == "time" ? value.date.getTime() : value.feature}>
-                                    <td>{this.state.data.dimension == "time" ? value.date.toLocaleDateString("en-US") : value.feature}</td>
-                                    <td>{value.value}</td>
-                                </tr>
-                            )
-                        })}
                     </tbody>
                 </table>
             );

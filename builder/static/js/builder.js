@@ -333,7 +333,7 @@ var Graph = function (_React$Component) {
         _this.state = {
             loading: true,
             error: false,
-            data: {}
+            data: null
         };
         return _this;
     }
@@ -348,6 +348,8 @@ var Graph = function (_React$Component) {
                 _this2.setState({
                     data: data,
                     loading: false
+                }, function () {
+                    _this2.props.setDimensions([Plotly.d3.min(data.x), Plotly.d3.max(data.x)]);
                 });
             },
             error: function error(xhr, status, _error) {
@@ -361,20 +363,29 @@ var Graph = function (_React$Component) {
 
     Graph.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
         if (!this.state.error) {
-            var xaxis;
+            if (!prevState.data) {
+                var xaxis;
 
-            if (this.state.data.type == "timeseries") {
-                xaxis = {
-                    title: 'Date'
-                };
-            } else {
-                xaxis = { title: 'Location' };
+                if (this.state.data.type == "timeseries") {
+                    xaxis = {
+                        title: 'Date'
+                    };
+                } else {
+                    xaxis = { title: 'Location' };
+                }
+
+                Plotly.newPlot('graph', [this.state.data], {
+                    xaxis: xaxis,
+                    yaxis: { title: this.props.variable_name }
+                });
+            } else if (this.props.dimensions && prevProps.dimensions) {
+                if (this.props.dimensions.min.getTime() != prevProps.dimensions.min.getTime() || this.props.dimensions.max.getTime() != prevProps.dimensions.max.getTime()) {
+                    var update = {
+                        'xaxis.range': [this.props.dimensions.min.getTime(), this.props.dimensions.max.getTime()]
+                    };
+                    Plotly.relayout('graph', update);
+                }
             }
-
-            Plotly.newPlot('graph', [this.state.data], {
-                xaxis: xaxis,
-                yaxis: { title: this.props.variable_name }
-            });
         }
     };
 
@@ -903,9 +914,6 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var ASCENDING = true,
-    DESCENDING = false;
-
 var Table = function (_React$Component) {
     _inherits(Table, _React$Component);
 
@@ -917,11 +925,7 @@ var Table = function (_React$Component) {
         _this.state = {
             loading: true,
             error: false,
-            data: [],
-            sort: {
-                field: 'key',
-                direction: ASCENDING
-            }
+            data: null
         };
         return _this;
     }
@@ -940,9 +944,18 @@ var Table = function (_React$Component) {
                         };
                     });
                 }
+
                 _this2.setState({
                     data: data,
                     loading: false
+                }, function () {
+                    if (_this2.state.data.dimension == "time") {
+                        _this2.props.setDimensions([_this2.state.data.values[0].date, _this2.state.data.values[_this2.state.data.values.length - 1].date]);
+                    } else {
+                        _this2.props.setDimensions(_this2.state.data.values.map(function (datum) {
+                            return datum.feature;
+                        }));
+                    }
                 });
             },
             error: function error(xhr, status, _error) {
@@ -954,64 +967,62 @@ var Table = function (_React$Component) {
         });
     };
 
-    Table.prototype.sortBy = function sortBy(field) {
-        if (this.state.sort.field == field) {
-            var direction = !this.state.sort.direction;
-        } else {
-            var direction = ASCENDING;
-        }
-        this.setState({
-            sort: {
-                field: field,
-                direction: direction
+    Table.prototype.dimensionsChanged = function dimensionsChanged(old, next) {
+        if (this.state.data.dimension == 'time') {
+            if (old && (old.min != next.min || old.max != next.max)) {
+                return true;
             }
-        });
+        } else if (old && old.length != next.length) {
+            return true;
+        }
+        return false;
     };
 
-    Table.prototype.sortedValues = function sortedValues() {
+    Table.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
         var _this3 = this;
 
-        var field;
-        if (this.state.sort.field == "key") {
-            if (this.state.data.dimension == "time") {
-                field = "date";
-            } else if (this.state.data.dimension == "space") {
-                field = "feature";
+        if (!this.state.loading && !prevState.data) {
+            var columns = [],
+                data;
+            if (this.state.data.dimension == 'space') {
+                columns.push({ data: 'feature.properties', render: 'name' });
+            } else {
+                columns.push({ data: 'date' });
             }
-        } else if (this.state.sort.field == "value") {
-            field = "value";
-        }
+            columns.push({ data: 'value' });
 
-        return this.state.data.values.sort(function (a, b) {
-            if (a[field] == b[field]) {
-                return 0;
-            } else if (_this3.state.sort.direction == ASCENDING) {
-                if (a[field] < b[field]) {
-                    return -1;
-                }
-                return 1;
-            } else if (_this3.state.sort.direction == DESCENDING) {
-                if (b[field] < a[field]) {
-                    return -1;
-                }
-                return 1;
-            }
-        });
-    };
+            $("#data-table").DataTable({
+                data: this.state.data.values,
+                columns: columns
+            });
 
-    Table.prototype.renderSortIndicator = function renderSortIndicator(field) {
-        if (this.state.sort.field == field) {
-            if (this.state.sort.direction == ASCENDING) {
-                return React.createElement('span', { className: 'glyphicon glyphicon-chevron-down' });
-            } else if (this.state.sort.direction == DESCENDING) {
-                return React.createElement('span', { className: 'glyphicon glyphicon-chevron-up' });
+            if (this.state.data.dimension == 'time') {
+                $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
+                    var d = new Date(aData[0]);
+                    if (_this3.props.dimensions.min.getTime() <= d && d <= _this3.props.dimensions.max.getTime()) {
+                        return true;
+                    }
+                    return false;
+                });
+            } else {
+                $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
+                    //console.log(aData[0], oSettings.aoData[iDataIndex]);
+                    var dims = _this3.props.dimensions.map(function (dim) {
+                        return dim.properties.id;
+                    });
+                    var index = dims.indexOf(oSettings.aoData[iDataIndex]._aData.feature.properties.id);
+                    if (index != -1) {
+                        return true;
+                    }
+                    return false;
+                });
             }
+        } else if (this.dimensionsChanged(prevProps.dimensions, this.props.dimensions)) {
+            $("#data-table").DataTable().draw();
         }
     };
 
     Table.prototype.render = function render() {
-        var _this4 = this;
-
         if (this.state.loading) {
             return React.createElement(
                 'div',
@@ -1032,7 +1043,7 @@ var Table = function (_React$Component) {
         } else {
             return React.createElement(
                 'table',
-                { className: 'table' },
+                { id: 'data-table', className: 'display' },
                 React.createElement(
                     'thead',
                     null,
@@ -1042,47 +1053,16 @@ var Table = function (_React$Component) {
                         React.createElement(
                             'th',
                             null,
-                            React.createElement(
-                                'a',
-                                { href: '#', onClick: this.sortBy.bind(this, "key") },
-                                this.state.data.dimension == "time" ? "Date" : "Feature",
-                                ' ',
-                                this.renderSortIndicator("key")
-                            )
+                            this.state.data.dimension == "time" ? "Date" : "Feature"
                         ),
                         React.createElement(
                             'th',
                             null,
-                            React.createElement(
-                                'a',
-                                { href: '#', onClick: this.sortBy.bind(this, "value") },
-                                this.props.variable_name,
-                                ' ',
-                                this.renderSortIndicator("value")
-                            )
+                            'Value'
                         )
                     )
                 ),
-                React.createElement(
-                    'tbody',
-                    null,
-                    this.sortedValues().map(function (value) {
-                        return React.createElement(
-                            'tr',
-                            { key: _this4.state.data.dimension == "time" ? value.date.getTime() : value.feature },
-                            React.createElement(
-                                'td',
-                                null,
-                                _this4.state.data.dimension == "time" ? value.date.toLocaleDateString("en-US") : value.feature
-                            ),
-                            React.createElement(
-                                'td',
-                                null,
-                                value.value
-                            )
-                        );
-                    })
-                )
+                React.createElement('tbody', null)
             );
         }
     };
@@ -1385,6 +1365,252 @@ var TableListItem = function (_React$Component2) {
     };
 
     return TableListItem;
+}(React.Component);
+'use strict';
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var MapControl = function (_React$Component) {
+    _inherits(MapControl, _React$Component);
+
+    function MapControl() {
+        _classCallCheck(this, MapControl);
+
+        return _possibleConstructorReturn(this, _React$Component.apply(this, arguments));
+    }
+
+    MapControl.prototype.componentDidMount = function componentDidMount() {
+        var _this2 = this;
+
+        var map = L.map('map-control').setView([0, 0], 1);
+
+        L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
+
+        var geoJsonLayer = L.geoJson(this.props.dims, {
+            onEachFeature: function onEachFeature(feature, layer) {
+                layer.on('click', function (e) {
+                    var dims = _this2.props.currentDims.slice();
+                    var dim_index = dims.map(function (dim) {
+                        return dim.properties.id;
+                    }).indexOf(feature.properties.id);
+                    if (dim_index != -1) {
+                        layer.setStyle({ color: 'grey' });
+                        dims.splice(dim_index, 1);
+                        _this2.props.changeDimensions(dims);
+                    } else {
+                        layer.setStyle({ color: 'maroon' });
+                        var index = _this2.props.dims.map(function (dim) {
+                            return dim.properties.id;
+                        }).indexOf(feature.properties.id);
+                        dims.push(_this2.props.dims[index]);
+                        _this2.props.changeDimensions(dims);
+                    }
+                });
+            }, style: function style(feature) {
+                var dims = _this2.props.currentDims.map(function (dim) {
+                    return dim.properties.id;
+                });
+                if (dims.indexOf(feature.properties.id) != -1) {
+                    return { color: "maroon" };
+                } else {
+                    return { color: "grey" };
+                }
+            }
+        }).addTo(map);
+        map.fitBounds(geoJsonLayer.getBounds());
+    };
+
+    MapControl.prototype.render = function render() {
+        return React.createElement('div', { id: 'map-control', style: { height: 400 } });
+    };
+
+    return MapControl;
+}(React.Component);
+
+var SliderControl = function (_React$Component2) {
+    _inherits(SliderControl, _React$Component2);
+
+    function SliderControl() {
+        _classCallCheck(this, SliderControl);
+
+        return _possibleConstructorReturn(this, _React$Component2.apply(this, arguments));
+    }
+
+    SliderControl.prototype.componentDidMount = function componentDidMount() {
+        var _this4 = this;
+
+        var dateSlider = document.getElementById('date-slider-control');
+
+        noUiSlider.create(dateSlider, {
+            range: {
+                min: new Date(this.props.dims.min).getTime(),
+                max: new Date(this.props.dims.max).getTime()
+            },
+            start: [new Date('2010').getTime(), new Date('2015').getTime()],
+            step: 7 * 24 * 60 * 60 * 1000,
+            connect: true,
+            behaviour: 'drag',
+            tooltips: true,
+            format: {
+                to: function to(value) {
+                    var format = Plotly.d3.time.format("%B %e, %Y");
+                    return format(new Date(value));
+                },
+                from: function from(value) {
+                    return value;
+                }
+            }
+        });
+
+        dateSlider.noUiSlider.on('update', function (values, handle) {
+            _this4.props.changeDimensions({
+                min: new Date(values[0]),
+                max: new Date(values[1]) });
+        });
+    };
+
+    SliderControl.prototype.render = function render() {
+        return React.createElement('div', { id: 'date-slider-control' });
+    };
+
+    return SliderControl;
+}(React.Component);
+
+var Visualization = function (_React$Component3) {
+    _inherits(Visualization, _React$Component3);
+
+    function Visualization() {
+        _classCallCheck(this, Visualization);
+
+        return _possibleConstructorReturn(this, _React$Component3.apply(this, arguments));
+    }
+
+    Visualization.prototype.render = function render() {
+        if (this.props.type == "map") {
+            return React.createElement(
+                'div',
+                { style: { height: 400 } },
+                React.createElement(Map, {
+                    variable_id: this.props.variable_id,
+                    variable_name: this.props.variable_name,
+                    color_ramp: [[0, "#000"], [50, "#aaa"]],
+                    dimensions: this.props.dimensions })
+            );
+        } else if (this.props.type == "graph") {
+            return React.createElement(
+                'div',
+                null,
+                React.createElement(Graph, {
+                    variable_id: this.props.variable_id,
+                    variable_name: this.props.variable_name,
+                    setDimensions: this.props.getChildDimensions,
+                    dimensions: this.props.dimensions })
+            );
+        } else if (this.props.type == "table") {
+            return React.createElement(
+                'div',
+                null,
+                React.createElement(Table, {
+                    variable_id: this.props.variable_id,
+                    variable_name: this.props.variable_name,
+                    setDimensions: this.props.getChildDimensions,
+                    dimensions: this.props.dimensions })
+            );
+        }
+    };
+
+    return Visualization;
+}(React.Component);
+
+var VisualizationGroup = function (_React$Component4) {
+    _inherits(VisualizationGroup, _React$Component4);
+
+    function VisualizationGroup(props) {
+        _classCallCheck(this, VisualizationGroup);
+
+        var _this6 = _possibleConstructorReturn(this, _React$Component4.call(this, props));
+
+        _this6.state = {
+            dimensions: null,
+            currentDimensions: null
+        };
+
+        _this6.childStartingDimensions = [];
+        return _this6;
+    }
+
+    VisualizationGroup.prototype.changeDimensions = function changeDimensions(newDims) {
+        console.log(newDims.length);
+        if (this.props.control == 'time') {
+            this.setState({
+                currentDimensions: { min: newDims.min, max: newDims.max }
+            });
+        } else {
+            this.setState({ currentDimensions: newDims });
+        }
+    };
+
+    VisualizationGroup.prototype.getChildDimensions = function getChildDimensions(dimensions) {
+        this.childStartingDimensions.push(dimensions);
+
+        if (this.childStartingDimensions.length == this.props.children.length) {
+            if (this.props.control == "slider") {
+                var min = Plotly.d3.min(this.childStartingDimensions.map(function (childDim) {
+                    return childDim[0];
+                }));
+
+                var max = Plotly.d3.max(this.childStartingDimensions.map(function (childDim) {
+                    return childDim[1];
+                }));
+
+                this.setState({
+                    dimensions: { min: min, max: max },
+                    currentDimensions: { min: min, max: max }
+                });
+            } else {
+                var merged_features = [].concat.apply([], this.childStartingDimensions);
+                this.setState({
+                    dimensions: merged_features,
+                    currentDimensions: merged_features
+                });
+            }
+        }
+    };
+
+    VisualizationGroup.prototype.getChildVariables = function getChildVariables() {
+        var vars = this.props.children.map(function (child) {
+            console.log(child.props);
+        });
+    };
+
+    VisualizationGroup.prototype.render = function render() {
+        var _this7 = this;
+
+        var Control = null;
+        if (this.props.control == "map") {
+            Control = MapControl;
+        } else if (this.props.control == "slider") {
+            Control = SliderControl;
+        }
+
+        return React.createElement(
+            'div',
+            null,
+            Control && this.state.dimensions ? React.createElement(Control, { dims: this.state.dimensions, currentDims: this.state.currentDimensions, changeDimensions: this.changeDimensions.bind(this) }) : null,
+            this.props.children.map(function (child) {
+                return React.cloneElement(child, {
+                    dimensions: _this7.state.currentDimensions,
+                    getChildDimensions: _this7.getChildDimensions.bind(_this7)
+                });
+            })
+        );
+    };
+
+    return VisualizationGroup;
 }(React.Component);
 "use strict";
 

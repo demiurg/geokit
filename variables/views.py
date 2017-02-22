@@ -41,6 +41,7 @@ def add(request):
 
 def edit(request, variable_id):
     variable = get_object_or_404(Variable, pk=variable_id)
+
     raster_catalog = get_raster_catalog()
     return render(request, 'variables/sieve.html', {
         'variable': variable,
@@ -80,17 +81,15 @@ class VariableViewSet(viewsets.ModelViewSet):
 
         evaluated_variable = variable.data()
 
-        values = evaluated_variable['values']
         data = []
 
-        rows, cols = values.shape
-        if cols == 1:
-            features = Feature.objects.filter(pk__in=evaluated_variable['spatial_key'])
+        if 'space' in variable.dimensions():
+            features = Feature.objects.filter(pk__in=evaluated_variable.index)
 
-            for i, value in enumerate(values):
-                geometries = [feature for feature in features if feature.pk == evaluated_variable['spatial_key'][i]]
+            for i, value in enumerate(evaluated_variable):
+                geometries = [feature for feature in features if feature.pk == evaluated_variable.index[i]]
                 geojson = json.loads(serialize('geojson', geometries, fields=('geometry')))
-                geojson['features'][0]['properties'][variable.name] = value[0]
+                geojson['features'][0]['properties'][variable.name] = value
 
                 data.append(geojson['features'][0])
 
@@ -120,7 +119,7 @@ class VariableViewSet(viewsets.ModelViewSet):
                     data['y'].append(value)
             elif 'time' in dim:
                 # Build timeseries
-                data['type'] = 'timeseries'
+                data['type'] = 'scatter'
                 data['mode'] = 'lines'
                 for i, value in enumerate(df.values):
                     date = df.index[i].lower
@@ -157,7 +156,14 @@ class VariableViewSet(viewsets.ModelViewSet):
             data['values'] = []
             for i, value in enumerate(df.values):
                 f = [feature for feature in features if feature.pk == df.index[i]][0]
-                data['values'].append({'feature': f.verbose_name, 'value': value})
+                f.geometry.transform(4326)
+                feature = {}
+                feature['geometry'] = json.loads(f.geometry.geojson)
+                feature['type'] = 'Feature'
+                feature['properties'] = {}
+                feature['properties']['name'] = f.verbose_name
+                feature['properties']['id'] = f.pk
+                data['values'].append({'feature': feature, 'value': value})
         else:
             # Can't handle this presently...
             data['invalid'] = True

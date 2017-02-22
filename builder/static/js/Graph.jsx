@@ -4,7 +4,7 @@ class Graph extends React.Component {
         this.state = {
             loading: true,
             error: false,
-            data: {}
+            data: null
         }
     }
 
@@ -16,6 +16,8 @@ class Graph extends React.Component {
                 this.setState({
                     data: data,
                     loading: false
+                }, () => {
+                    this.props.setDimensions([Plotly.d3.min(data.x), Plotly.d3.max(data.x)]);
                 });
             },
             error: (xhr, status, error) => {
@@ -29,24 +31,34 @@ class Graph extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         if (!this.state.error) {
-            var xaxis;
+            if (!prevState.data) {
+                var xaxis;
 
-            if (this.state.data.type == "timeseries") {
-                xaxis = {
-                    title: 'Date'
-                };
-            } else {
-                xaxis = {title: 'Location'};
-            }
-
-            Plotly.newPlot(
-                'graph',
-                [this.state.data],
-                {
-                    xaxis: xaxis,
-                    yaxis: {title: this.props.variable_name}
+                if (this.state.data.type == "timeseries") {
+                    xaxis = {
+                        title: 'Date'
+                    };
+                } else {
+                    xaxis = {title: 'Location'};
                 }
-            );
+
+                Plotly.newPlot(
+                    'graph',
+                    [this.state.data],
+                    {
+                        xaxis: xaxis,
+                        yaxis: {title: this.props.variable_name}
+                    }
+                );
+            } else if (this.props.dimensions && prevProps.dimensions) {
+                if (this.props.dimensions.min.getTime() != prevProps.dimensions.min.getTime() ||
+                        this.props.dimensions.max.getTime() != prevProps.dimensions.max.getTime()) {
+                    var update = {
+                        'xaxis.range': [this.props.dimensions.min.getTime(), this.props.dimensions.max.getTime()]
+                    };
+                    Plotly.relayout('graph', update);
+                }
+            }
         }
     }
 

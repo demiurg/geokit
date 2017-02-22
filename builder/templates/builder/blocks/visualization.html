@@ -1,0 +1,21 @@
+<div class="panel panel-default">
+    <div class="panel-body">
+        <div class="visualization-block" id="vis-block">
+        </div>
+    </div>
+</div>
+
+<script>
+ReactDOM.render(
+    React.createElement(VisualizationGroup, {control: '{{ self.control.vis_type }}'}, [
+        {% for vis in self.visualizations %}
+        React.createElement(Visualization, {
+            'variable_id': '{{ vis.variable.id }}',
+            'variable_name': '{{ vis.variable.name }}',
+            'type': '{{ vis.vis_type }}'
+        }, null),
+        {% endfor %}
+    ]),
+    document.getElementById('vis-block')
+);
+</script>
