@@ -788,11 +788,6 @@ var Map = function (_React$Component) {
             data: []
         };
 
-        _this.color_scale = d3.scale.linear().domain(_this.props.color_ramp.map(function (stop) {
-            return stop[0];
-        })).range(_this.props.color_ramp.map(function (stop) {
-            return stop[1];
-        }));
         return _this;
     }
 
@@ -803,9 +798,22 @@ var Map = function (_React$Component) {
         $.ajax('/api/variables/' + this.props.variable_id + '/map/', {
             dataType: 'json',
             success: function success(data, status, xhr) {
+                _this2.min_value = d3.min(data.map(function (feature) {
+                    return feature.properties[_this2.props.variable_name];
+                }));
+                _this2.max_value = d3.max(data.map(function (feature) {
+                    return feature.properties[_this2.props.variable_name];
+                }));
+
+                _this2.color_scale = d3.scale.linear().domain([_this2.min_value, _this2.max_value]).range(_this2.props.color_ramp.map(function (stop) {
+                    return stop[1];
+                }));
+
                 _this2.setState({
                     data: data,
                     loading: false
+                }, function () {
+                    _this2.props.setDimensions(data);
                 });
             },
             error: function error(xhr, status, _error) {
@@ -817,10 +825,19 @@ var Map = function (_React$Component) {
         });
     };
 
+    Map.prototype.shouldComponentUpdate = function shouldComponentUpdate(nextProps, nextState) {
+        if (this.state.loading || this.props.dimensions && this.props.dimensions.length != nextProps.dimensions.length) {
+            return true;
+        }
+        return false;
+    };
+
     Map.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
         var _this3 = this;
 
-        if (!this.state.error) {
+        if (this.props.dimensions && this.props.dimensions.length != prevProps.dimensions.length) {
+            console.log("update map");
+        } else if (!this.state.error) {
             var vals = this.state.data.map(function (feature) {
                 return feature.properties[_this3.props.variable_name];
             });
@@ -873,9 +890,7 @@ var Map = function (_React$Component) {
 
         key.append("rect").attr("width", 22).attr("height", 120).style("fill", "url(#gradient)").attr("transform", "translate(0,10)");
 
-        var min_value = this.props.color_ramp[0][0],
-            max_value = this.props.color_ramp[this.props.color_ramp.length - 1][0];
-        var y = d3.scale.linear().range([120, 0]).domain([min_value, max_value]);
+        var y = d3.scale.linear().range([120, 0]).domain([this.min_value, this.max_value]);
 
         var yAxis = d3.svg.axis().scale(y).orient("right");
         key.append("g").attr("class", "y axis").attr("transform", "translate(26,10)").call(yAxis).append("text").attr("transform", "rotate(-90)").attr("y", 39).attr("dy", ".71em").style("text-anchor", "end").text(this.props.variable_name);
@@ -1496,7 +1511,8 @@ var Visualization = function (_React$Component3) {
                 React.createElement(Map, {
                     variable_id: this.props.variable_id,
                     variable_name: this.props.variable_name,
-                    color_ramp: [[0, "#000"], [50, "#aaa"]],
+                    color_ramp: [[0, "#4286f4"], [50, "#f48341"]],
+                    setDimensions: this.props.getChildDimensions,
                     dimensions: this.props.dimensions,
                     unique_id: this.props.unique_id })
             );
