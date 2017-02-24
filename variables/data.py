@@ -234,10 +234,17 @@ class SelectOperator(DataNode):
     def execute(self):
         source, field = self.execute_operands()
 
+        layer_field = ""
+        table_field = ""
         if type(field) == dict:
             name = field['field']
+            if field['type'] == 'Layer':
+                layer_field = ', "{}"'.format(name)
+            elif field['type'] == 'Table':
+                table_field = ', "{}"'.format(name)
         elif type(field) in (str, unicode):
             name = field
+            table_field = ', "{}"'.format(name)
         else:
             raise Exception("Wrong field type: {}".format(type(field)))
 
@@ -246,7 +253,7 @@ class SelectOperator(DataNode):
         joins = []
 
         if source.layers:
-            selects.append("feature_id"+(', "'+name+'"' if field['type'] == 'Layer' else ""))
+            selects.append("feature_id {}".format(layer_field))
 
             f_wheres = []
             for layer in source.layers:
@@ -259,14 +266,14 @@ class SelectOperator(DataNode):
                     layer['field'],
                     django.db.connection.schema_name,
                     " AND ".join(f_wheres),
-                    ", properties->'"+name+"' as \""+name+"\"" if field['type'] == 'Layer' else "",
+                    ", properties->'"+name+"' as \""+name+"\"" if layer_field else "",
                 )
             )
 
             joins.append('f')
 
         if source.tables:
-            selects.append('date_range, "{}"'.format(name))
+            selects.append('date_range {}'.format(table_field))
 
             t_wheres = []
             for table in source.tables:
@@ -395,11 +402,15 @@ class RasterSource(DataNode):
 class DataFrameSource(DataNode):
     ''' Used for testing '''
 
-    def __init__(self, op, args):
-        self.operation = op
+    def get_dimensions(self):
+        return {
+            'space': 'space' in self.operands[1],
+            'time': 'time' in self.operands[1]
+        }
 
     def execute(self):
-        return self
+        return self.operands[0]
+
 
 NODE_TYPES = {
     '+': getattrOperator('__add__'),

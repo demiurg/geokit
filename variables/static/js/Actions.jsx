@@ -16,6 +16,8 @@ const UPDATE_DESCRIPTION = 'UPDATE_DESCRIPTION';
 const UPDATE_TREE = 'UPDATE_TREE';
 const UPDATE_ERRORS = 'UPDATE_ERRORS';
 const UPDATE_MODIFIED = 'UPDATE_MODIFIED';
+const UPDATE_CREATED = 'UPDATE_CREATED';
+
 
 const REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
 const ADD_INPUT_VARIABLE = 'ADD_INPUT_VARIABLE';
@@ -198,7 +200,14 @@ function updateErrors(errors={"name": null, "tree": null}){
 function updateModified(time=null){
   return {
     type: UPDATE_MODIFIED,
-    modified: time
+    time
+  };
+}
+
+function updateCreated(time=null){
+  return {
+    type: UPDATE_CREATED,
+    time
   };
 }
 
@@ -215,7 +224,11 @@ function saveVariable(variable, created){
       contentType: "application/json",
       processData: false,
       success: function(data) {
-        dispatch(updateModified(data.modified));
+        if(!created){
+          dispatch(updateCreated(data.created));
+        }else{
+          dispatch(updateModified(data.modified));
+        }
         dispatch(updateErrors());
       },
       error: function(xhr, status, err) {

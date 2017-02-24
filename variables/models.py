@@ -34,23 +34,26 @@ class Variable(models.Model):
         super(Variable, self).__init__(*args, **kwargs)
 
         if self.tree:
-            self.root = treeToNode(self.tree)
+            try:
+                self.root = treeToNode(self.tree)
+            except:
+                # Do not set root, let AttrError happen if used
+                pass
         else:
             self.root = None
 
         self.source_layers = None
         self.current_data = None
 
-    def clean(self):
+    def save(self, *args, **kwargs):
         if self.tree:
             try:
                 root = treeToNode(self.tree)
                 self.saved_dimensions = root.dimensions()
             except:
                 self.saved_dimensions = None
-                raise ValidationError(
-                    {"tree": "Tree does not appear to be valid"}
-                )
+
+        return super(Variable, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return self.name
