@@ -9,9 +9,6 @@ class Map extends React.Component {
             data: []
         };
 
-        this.color_scale = d3.scale.linear()
-            .domain(this.props.color_ramp.map((stop) => { return stop[0]; }))
-            .range(this.props.color_ramp.map((stop) => { return stop[1]; }));
     }
 
     componentDidMount() {
@@ -19,9 +16,18 @@ class Map extends React.Component {
         $.ajax('/api/variables/'+this.props.variable_id+'/map/', {
             dataType: 'json',
             success: (data, status, xhr) => {
+                this.min_value = d3.min(data.map((feature) => { return feature.properties[this.props.variable_name]; }));
+                this.max_value = d3.max(data.map((feature) => { return feature.properties[this.props.variable_name]; }));
+
+                this.color_scale = d3.scale.linear()
+                    .domain([this.min_value, this.max_value])
+                    .range(this.props.color_ramp.map((stop) => { return stop[1]; }));
+
                 this.setState({
                     data: data,
                     loading: false
+                }, () => {
+                    this.props.setDimensions(data);
                 });
             },
             error: (xhr, status, error) => {
@@ -33,8 +39,19 @@ class Map extends React.Component {
         });
     }
 
+    shouldComponentUpdate(nextProps, nextState) {
+        if (this.state.loading ||
+            (this.props.dimensions &&
+             this.props.dimensions.length != nextProps.dimensions.length)) {
+            return true;
+        }
+        return false;
+    }
+
     componentDidUpdate(prevProps, prevState) {
-        if (!this.state.error) {
+        if (this.props.dimensions && this.props.dimensions.length != prevProps.dimensions.length) {
+            console.log("update map");
+        } else if (!this.state.error) {
             var vals = this.state.data.map((feature) => {
                 return feature.properties[this.props.variable_name];
             });
@@ -103,9 +120,7 @@ class Map extends React.Component {
               .style("fill", "url(#gradient)")
               .attr("transform", "translate(0,10)");
 
-        var min_value = this.props.color_ramp[0][0],
-            max_value = this.props.color_ramp[this.props.color_ramp.length - 1][0];
-        var y = d3.scale.linear().range([120, 0]).domain([min_value, max_value]);
+        var y = d3.scale.linear().range([120, 0]).domain([this.min_value, this.max_value]);
 
         var yAxis = d3.svg.axis().scale(y).orient("right");
         key.append("g")

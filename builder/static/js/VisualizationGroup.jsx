@@ -87,7 +87,8 @@ class Visualization extends React.Component {
                     <Map
                         variable_id={this.props.variable_id}
                         variable_name={this.props.variable_name}
-                        color_ramp={[[0, "#000"],[50, "#aaa"]]}
+                        color_ramp={[[0, "#4286f4"],[50, "#f48341"]]}
+                        setDimensions={this.props.getChildDimensions}
                         dimensions={this.props.dimensions}
                         unique_id={this.props.unique_id} />
                 </div>
