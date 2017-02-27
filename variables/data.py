@@ -368,10 +368,14 @@ class SelectOperator(DataNode):
         results = conn.stats_request_results({'job': job_id})
 
         for r in results:
-            r['date'] = DateRange(r['date'], r['date'], '[]')
+            date = r['date'].date()
+            r['date_range'] = DateRange(date, date, '[]')
+            r['feature_id'] = r['fid']
 
         df = DataFrame(data=results)
-        df = df.pivot(index='fid', columns='date', values=field)
+        df = df.pivot(
+            index='feature_id', columns='date_range', values=field['field']
+        )
 
         return df
 
