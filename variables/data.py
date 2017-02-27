@@ -1,8 +1,11 @@
 import django.db
 import numpy
+import xmlrpclib
+
 from datetime import datetime
-from pandas.io.sql import read_sql
+from pandas.io.sql import read_sql, DataFrame
 from psycopg2.extras import DateRange
+from django.conf import settings
 
 from geokit_tables.models import GeoKitTable
 from layers.models import Layer
@@ -233,6 +236,12 @@ class ValueFilterOperator(DataNode):
 class SelectOperator(DataNode):
     def execute(self):
         source, field = self.execute_operands()
+        if type(source) is DataSource:
+            return self.execute_sql(source, field)
+        elif type(source) is RasterSource:
+            return self.execute_datahander(source, field)
+
+    def execute_sql(self, source, field):
 
         layer_field = ""
         table_field = ""
@@ -326,6 +335,46 @@ class SelectOperator(DataNode):
                 )
             return df
 
+    def execute_datahander(self, rs, field):
+        conn = xmlrpclib.ServerProxy(settings.RPC_URL, use_datetime=True)
+        '''
+        from variables.models import RasterRequest
+
+        try:
+            job_request = RasterRequest.get(
+                raster_id=rs.raster['id'],
+                dates=rs.dates,
+                vector=rs.vector['id']
+            )
+            job_id = job_request.job_id
+        except:
+            job_request = RasterRequest(
+                raster_id=rs.raster['id'],
+                dates=rs.dates,
+                vector=rs.vector['id']
+            )
+            job_id = conn.submit_job(
+                "pt",
+                rs.raster['id'],
+                {"site": "/net/oka/web/geokit/media/downloads/shapefile/pt/3.shp"},
+                {"dates": "2015-001,2015-030"}
+            )
+
+            if job_id:
+                job_request.job_id = job_id
+                job_request.save()
+        '''
+        job_id = 28
+        results = conn.stats_request_results({'job': job_id})
+
+        for r in results:
+            r['date'] = DateRange(r['date'], r['date'], '[]')
+
+        df = DataFrame(data=results)
+        df = df.pivot(index='fid', columns='date', values=field)
+
+        return df
+
 
 class DataSource(DataNode):
     '''
@@ -390,7 +439,7 @@ class RasterSource(DataNode):
 
     def __init__(self, op, args):
         self.operation = op
-        self.data, self.dimensions = args
+        self.raster, self.vector, self.dates = args
 
     def get_dimensions(self):
         return {'space': True, 'time': True}

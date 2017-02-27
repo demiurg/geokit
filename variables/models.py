@@ -9,7 +9,7 @@ import pandas
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import ArrayField, JSONField
-
+from django.utils.functional import cached_property
 from layers.models import Layer
 from data import treeToNode, DataSource
 import json
@@ -30,18 +30,12 @@ class Variable(models.Model):
         choices=((0, 'Good'), (1, 'Working'), (3, 'Bad')), default=1
     )
 
+    @cached_property
+    def root(self):
+        return treeToNode(self.tree)
+
     def __init__(self, *args, **kwargs):
         super(Variable, self).__init__(*args, **kwargs)
-
-        if self.tree:
-            try:
-                self.root = treeToNode(self.tree)
-            except:
-                # Do not set root, let AttrError happen if used
-                pass
-        else:
-            self.root = None
-
         self.source_layers = None
         self.current_data = None
 
@@ -93,5 +87,13 @@ class Variable(models.Model):
 
 
 class RasterRequest(models.Model):
-    pass
+    raster_id = models.CharField(max_length=512)
+    dates = models.CharField(max_length=512)
+    vector = models.ForeignKey(Layer)
+    job_id = models.CharField(max_length=512)
+    status = models.IntegerField(
+        choices=((0, 'Good'), (1, 'Working'), (3, 'Bad')), default=1
+    )
 
+    class Meta:
+        unique_together = ('raster_id', 'dates', 'vector',)
