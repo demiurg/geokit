@@ -87,7 +87,10 @@ class VariableViewSet(viewsets.ModelViewSet):
             features = Feature.objects.filter(pk__in=evaluated_variable.index)
 
             for i, value in enumerate(evaluated_variable):
-                geometries = [feature for feature in features if feature.pk == evaluated_variable.index[i]]
+                geometries = [
+                    feature for feature in features
+                    if feature.pk == evaluated_variable.index[i]
+                ]
                 geojson = json.loads(serialize('geojson', geometries, fields=('geometry')))
                 geojson['features'][0]['properties'][variable.name] = value
 

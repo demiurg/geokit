@@ -230,15 +230,28 @@ class GADMChooser extends React.Component {
         } else {
             return (
                 <div>
-                    <h1>{this.state.parents.map((unit) => { return unit + " > "; })}</h1>
-                    <ul className="listing" style={{height: 300, overflow: "scroll", marginBottom: 0}}>
-                        {this.state.level != 0 ? <li><a href="javascript:" onClick={this.back.bind(this)}>&lt; Back</a></li> : null}
+                    <h1>{this.state.parents.map(
+                        (unit) => { return unit + " > "; }
+                    )}</h1>
+                    <ul className="listing" style={
+                        {height: 300, overflow: "scroll", marginBottom: 0}
+                    }>
+                        {this.state.level != 0 ?
+                            <li><a href="javascript:"
+                                onClick={this.back.bind(this)}
+                            >&lt; Back</a></li>
+                        : null}
                         {this.state.units.map((unit) => {
-                            return <li><a href="javascript:" onClick={this.forward.bind(this, unit)}>{unit}</a></li>
+                            return <li><a href="javascript:"
+                                onClick={this.forward.bind(this, unit)}
+                            >{unit}</a></li>;
                         })}
                     </ul>
                     <div id="map" style={{height: 400}}></div>
-                    <button className="button" onClick={this.saveLayer.bind(this)} disabled={this.state.level == 0}>Save</button>
+                    <button className="button"
+                        onClick={this.saveLayer.bind(this)}
+                        disabled={this.state.level == 0}
+                    >Save</button>
                 </div>
             );
         }
