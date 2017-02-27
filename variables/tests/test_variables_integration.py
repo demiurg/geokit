@@ -158,3 +158,18 @@ def test_dimensions(set_schema):
     ])
 
     assert tmin.dimensions() == 'spacetime'
+
+@pytest.mark.django_db
+def test_raster(set_schema):
+    tree = ["select", [
+        ["raster", [
+            { "id": "modis_indices_ndvi", "name": "Land indices"},
+            [ "source", [
+                { "field": "fid", "type": "Layer", "id": "3", "name": "New Hampshire"}
+            ]],
+            "2015-001,2015-030"
+        ]],
+        {"field": "mean", "name": "raster"}
+    ]]
+
+    mean = Variable(tree=tree)

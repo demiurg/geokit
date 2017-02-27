@@ -16,6 +16,7 @@ var UPDATE_DESCRIPTION = 'UPDATE_DESCRIPTION';
 var UPDATE_TREE = 'UPDATE_TREE';
 var UPDATE_ERRORS = 'UPDATE_ERRORS';
 var UPDATE_MODIFIED = 'UPDATE_MODIFIED';
+var UPDATE_CREATED = 'UPDATE_CREATED';
 
 var REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
 var ADD_INPUT_VARIABLE = 'ADD_INPUT_VARIABLE';
@@ -188,7 +189,7 @@ function recieveVariable(json) {
 }
 
 function updateErrors() {
-  var errors = arguments.length <= 0 || arguments[0] === undefined ? { "name": null, "tree": null } : arguments[0];
+  var errors = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { "name": null, "tree": null };
 
   return {
     type: UPDATE_ERRORS,
@@ -197,11 +198,20 @@ function updateErrors() {
 }
 
 function updateModified() {
-  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
   return {
     type: UPDATE_MODIFIED,
-    modified: time
+    time: time
+  };
+}
+
+function updateCreated() {
+  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+
+  return {
+    type: UPDATE_CREATED,
+    time: time
   };
 }
 
@@ -218,7 +228,11 @@ function saveVariable(variable, created) {
       contentType: "application/json",
       processData: false,
       success: function success(data) {
-        dispatch(updateModified(data.modified));
+        if (!created) {
+          dispatch(updateCreated(data.created));
+        } else {
+          dispatch(updateModified(data.modified));
+        }
         dispatch(updateErrors());
       },
       error: function error(xhr, status, err) {
@@ -245,7 +259,7 @@ function saveVariable(variable, created) {
 }
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1061,7 +1075,7 @@ var FilterListItem = function (_React$Component12) {
           {
             bsSize: "xsmall",
             onClick: this.props.removeFilter.bind(null, this.props.filter.key) },
-          " x "
+          "\xA0x\xA0"
         )
       )
     );
@@ -1176,12 +1190,12 @@ var Aggregate = function (_React$Component13) {
 'use strict';
 
 function layers() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
     name: 'Layers',
     isFetching: false,
     didInvalidate: false,
     items: []
-  } : arguments[0];
+  };
   var action = arguments[1];
 
   switch (action.type) {
@@ -1203,12 +1217,12 @@ function layers() {
 }
 
 function tables() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
     name: 'Tables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  } : arguments[0];
+  };
   var action = arguments[1];
 
   switch (action.type) {
@@ -1230,9 +1244,9 @@ function tables() {
 }
 
 function rasterCatalog() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
     items: []
-  } : arguments[0];
+  };
   var action = arguments[1];
 
   switch (action.type) {
@@ -1247,12 +1261,12 @@ function rasterCatalog() {
 }
 
 function variables() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
     name: 'Variables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  } : arguments[0];
+  };
   var action = arguments[1];
 
   switch (action.type) {
@@ -1286,7 +1300,7 @@ function input_variable(state, action) {
 }
 
 function input_variables() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1302,7 +1316,7 @@ function input_variables() {
 }
 
 function tree() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
   var action = arguments[1];
 
   switch (action.type) {
@@ -1322,23 +1336,23 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var _ReactBootstrap = ReactBootstrap;
-var Panel = _ReactBootstrap.Panel;
-var ButtonGroup = _ReactBootstrap.ButtonGroup;
-var ButtonToolbar = _ReactBootstrap.ButtonToolbar;
-var ButtonInput = _ReactBootstrap.ButtonInput;
-var Button = _ReactBootstrap.Button;
-var Row = _ReactBootstrap.Row;
-var Col = _ReactBootstrap.Col;
-var Alert = _ReactBootstrap.Alert;
-var Tabs = _ReactBootstrap.Tabs;
-var DropdownButton = _ReactBootstrap.DropdownButton;
-var MenuItem = _ReactBootstrap.MenuItem;
-var Modal = _ReactBootstrap.Modal;
-var FormControl = _ReactBootstrap.FormControl;
-var ControlLabel = _ReactBootstrap.ControlLabel;
-var FormGroup = _ReactBootstrap.FormGroup;
-var HelpBlock = _ReactBootstrap.HelpBlock;
+var _ReactBootstrap = ReactBootstrap,
+    Panel = _ReactBootstrap.Panel,
+    ButtonGroup = _ReactBootstrap.ButtonGroup,
+    ButtonToolbar = _ReactBootstrap.ButtonToolbar,
+    ButtonInput = _ReactBootstrap.ButtonInput,
+    Button = _ReactBootstrap.Button,
+    Row = _ReactBootstrap.Row,
+    Col = _ReactBootstrap.Col,
+    Alert = _ReactBootstrap.Alert,
+    Tabs = _ReactBootstrap.Tabs,
+    DropdownButton = _ReactBootstrap.DropdownButton,
+    MenuItem = _ReactBootstrap.MenuItem,
+    Modal = _ReactBootstrap.Modal,
+    FormControl = _ReactBootstrap.FormControl,
+    ControlLabel = _ReactBootstrap.ControlLabel,
+    FormGroup = _ReactBootstrap.FormGroup,
+    HelpBlock = _ReactBootstrap.HelpBlock;
 
 /* app */
 
@@ -1356,7 +1370,7 @@ var initialState = Object.assign({
 }, window.sieve_props);
 
 function sieveApp() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? initialState : arguments[0];
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
   var action = arguments[1];
 
   switch (action.type) {
@@ -1413,7 +1427,11 @@ function sieveApp() {
       });
     case UPDATE_MODIFIED:
       return Object.assign({}, state, {
-        modified: action.modified
+        modified: action.time
+      });
+    case UPDATE_CREATED:
+      return Object.assign({}, state, {
+        created: action.time
       });
     default:
       return state;
@@ -1449,8 +1467,8 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
 
 /* components */
 var DropdownComponent = function DropdownComponent(_ref) {
-  var things = _ref.things;
-  var onclick = _ref.onclick;
+  var things = _ref.things,
+      onclick = _ref.onclick;
   return (
     // TODO something different when layers.isFetching
 
@@ -1680,10 +1698,10 @@ var AddRasterInputModal = function (_React$Component3) {
 
     _this5.validate = function (e) {
       var form = $(_this5.form).serializeArray();
-      if (form[0]['value'] && form[1]['value'] && form[2]['value']) {
+      if (form[0]['value'] && form[1]['value'] && form[2]['value'] && form[3]['value']) {
         var variable = {
-          name: form[2]['value'],
-          node: ['raster', [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]]
+          name: form[3]['value'],
+          node: ['raster', [JSON.parse(form[0]['value']), JSON.parse(form[1]['value']), form[2]['value']]]
         };
         _this5.setState({
           variable: variable
@@ -1740,26 +1758,6 @@ var AddRasterInputModal = function (_React$Component3) {
               }, onChange: this.validate.bind(this) },
             React.createElement(
               FormGroup,
-              { controlId: "leftSelect" },
-              React.createElement(
-                ControlLabel,
-                null,
-                "Layer"
-              ),
-              React.createElement(
-                FormControl,
-                { componentClass: "select", placeholder: "select", name: "left" },
-                this.props.layers.items.map(function (v, i) {
-                  return React.createElement(
-                    "option",
-                    { key: i, value: "[\"source\", [{\"type\": \"Layer\", \"name\": \"" + v.name + "\", \"id\": " + v.id + ", \"field\": \"fid\"}]]" },
-                    v.name ? v.name : rendertree(v)
-                  );
-                })
-              )
-            ),
-            React.createElement(
-              FormGroup,
               { controlId: "rightSelect" },
               React.createElement(
                 ControlLabel,
@@ -1772,11 +1770,43 @@ var AddRasterInputModal = function (_React$Component3) {
                 this.props.raster_catalog.items.map(function (r, i) {
                   return React.createElement(
                     "option",
-                    { key: i, value: "{\"name\": \"" + r.description + "\", \"id\": " + r.name + "}" },
-                    r.description
+                    { key: i, value: "{\"name\": \"" + r.description + "\", \"id\": \"" + r.name + "\"}" },
+                    r.description + ': ' + r.band
                   );
                 })
               )
+            ),
+            React.createElement(
+              FormGroup,
+              { controlId: "leftSelect" },
+              React.createElement(
+                ControlLabel,
+                null,
+                "Spatial\xA0Layer"
+              ),
+              React.createElement(
+                FormControl,
+                { componentClass: "select", placeholder: "select", name: "left" },
+                this.props.layers.items.map(function (v, i) {
+                  return React.createElement(
+                    "option",
+                    { key: i, value: "[\"source\", [{\"type\": \"Layer\", \"name\": \"" + v.name + "\", \"id\": \"" + v.id + "\", \"field\": \"fid\"}]]" },
+                    v.name ? v.name : rendertree(v)
+                  );
+                })
+              )
+            ),
+            React.createElement(
+              FormGroup,
+              { controlId: "name" },
+              React.createElement(
+                ControlLabel,
+                null,
+                "Temporal\xA0Range"
+              ),
+              React.createElement(FormControl, {
+                name: "dates", type: "text", placeholder: "enter like 2000-001,2000-31"
+              })
             ),
             React.createElement(
               FormGroup,
@@ -1943,15 +1973,6 @@ var AddSelectInputModal = function (_React$Component5) {
 
   AddSelectInputModal.prototype.open = function open() {
     this.setState({ showModal: true });
-  };
-
-  AddSelectInputModal.prototype.use = function use() {
-    if (this.state.select_node) {
-      this.props.onAddTreeOp(this.state.select_node);
-      this.setState({ showModal: false });
-    } else {
-      alert('Select a variable to use.');
-    }
   };
 
   AddSelectInputModal.prototype.use = function use() {
@@ -2180,17 +2201,7 @@ var AddTableInputModal = function (_React$Component7) {
 
   AddTableInputModal.prototype.use = function use() {
     if (this.state.node) {
-      this.props.onAddTreeOp(this.state.node);
-      this.setState({ showModal: false });
-    } else {
-      alert('Select a variable to use.');
-    }
-  };
-
-  AddTableInputModal.prototype.use = function use() {
-    if (this.state.node) {
       var form = $(this.form).serializeArray();
-      console.log(this.state.node);
       var variable = {
         node: this.state.node,
         name: form[0]['value']
@@ -2348,7 +2359,7 @@ var AddBinOpModal = function (_React$Component8) {
                   {
                     key: this.props.input_variables.length,
                     value: JSON.stringify(this.props.tree) },
-                  "tree"
+                  "Current tree"
                 )
               )
             ),
@@ -2368,7 +2379,7 @@ var AddBinOpModal = function (_React$Component8) {
                   {
                     key: this.props.input_variables.length,
                     value: JSON.stringify(this.props.tree) },
-                  "tree"
+                  "Current tree"
                 ),
                 this.props.input_variables.map(function (v, i) {
                   return React.createElement(
@@ -2766,7 +2777,7 @@ var SelectForm = function (_React$Component12) {
           React.createElement(
             ControlLabel,
             null,
-            "Variable Property"
+            "Variable\xA0Property"
           ),
           React.createElement(
             FormControl,
@@ -2796,7 +2807,38 @@ var SelectForm = function (_React$Component12) {
           React.createElement(
             ControlLabel,
             null,
-            "Variable Property"
+            "Variable\xA0Property"
+          ),
+          React.createElement(
+            FormControl,
+            {
+              componentClass: "select",
+              placeholder: "select",
+              name: "right",
+              onChange: this.onPropertyChange.bind(this) },
+            React.createElement(
+              "option",
+              { key: 9999, value: null },
+              "Not Selected"
+            ),
+            options
+          )
+        );
+      } else if (this.state.select_variable[0] == 'raster') {
+        var options = [['mean', 'Mean'], ['maximum', 'Maximum'], ['minimum', 'Minimum'], ['skew', 'Skew'], ['sd', 'Standard Deviation']].map(function (o, i) {
+          return React.createElement(
+            "option",
+            { key: i, value: '{"name": "raster", "field": "' + o[0] + '"}' },
+            o[1]
+          );
+        });
+        property = React.createElement(
+          FormGroup,
+          { controlId: "rightSelect" },
+          React.createElement(
+            ControlLabel,
+            null,
+            "Variable\xA0Property"
           ),
           React.createElement(
             FormControl,
@@ -2815,6 +2857,7 @@ var SelectForm = function (_React$Component12) {
         );
       }
     }
+
     return React.createElement(
       "form",
       { ref: function ref(_ref11) {
@@ -2826,7 +2869,7 @@ var SelectForm = function (_React$Component12) {
         React.createElement(
           ControlLabel,
           null,
-          "Input Variable"
+          "Input\xA0Variable"
         ),
         React.createElement(
           FormControl,
@@ -2892,7 +2935,7 @@ var SelectLayerForm = function (_React$Component13) {
         React.createElement(
           ControlLabel,
           null,
-          "Spatial Layer"
+          "Spatial\xA0Layer"
         ),
         React.createElement(
           FormControl,
@@ -2958,7 +3001,7 @@ var SelectTableForm = function (_React$Component14) {
         React.createElement(
           ControlLabel,
           null,
-          "Tabular Layer"
+          "Tabular\xA0Layer"
         ),
         React.createElement(
           FormControl,
@@ -3179,22 +3222,22 @@ var SieveComponent = function (_React$Component15) {
               React.createElement(
                 AddSelectModal,
                 _extends({ op: "select" }, this.props),
-                "Select"
+                "Select Attribute"
               ),
               React.createElement(
                 AddMeanModal,
                 _extends({ op: "mean" }, this.props),
-                "Mean"
+                "Mathematical Mean"
               ),
               React.createElement(
                 AddUnaryOpModal,
                 _extends({ op: "tmean" }, this.props),
-                "Time Mean"
+                "Temporal Mean"
               ),
               React.createElement(
                 AddUnaryOpModal,
                 _extends({ op: "smean" }, this.props),
-                "Space Mean"
+                "Spatial Mean"
               ),
               React.createElement(
                 AddBinOpModal,
@@ -3269,7 +3312,7 @@ var DataNode = function () {
 }();
 
 var rendertree = function rendertree(tree) {
-  var level = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+  var level = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
 
   //console.log('render: ', tree);
   var tab = Array(level * 4).join("&nbsp;");
@@ -3278,6 +3321,7 @@ var rendertree = function rendertree(tree) {
     var op = tree[0];
     var left = tree[1][0];
     var right = tree[1][1];
+    var third = tree[1][2];
 
     var html = '';
     switch (op) {
@@ -3307,13 +3351,13 @@ var rendertree = function rendertree(tree) {
         html = str;
         break;
       case 'raster':
-        html = "Raster " + left.name + " by " + right.name;
+        html = "Raster " + left.name + " in " + third + " by " + rendertree(right);
         break;
       case 'source':
         html = left.type + " '" + left.name + "'";
         break;
       default:
-        html = rendertree(left, nl) + " " + op + (right ? " " + rendertree(right, nl) : "");
+        html = (right ? " " + rendertree(right, nl) : "") + " " + op + rendertree(left, nl);
     }
   } else {
     html = JSON.stringify(tree);

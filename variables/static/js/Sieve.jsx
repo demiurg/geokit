@@ -75,7 +75,11 @@ function sieveApp(state=initialState, action){
       });
     case UPDATE_MODIFIED:
       return Object.assign({}, state, {
-        modified: action.modified
+        modified: action.time
+      });
+    case UPDATE_CREATED:
+      return Object.assign({}, state, {
+        created: action.time
       });
     default:
       return state;
@@ -286,12 +290,16 @@ class AddRasterInputModal extends React.Component {
 
   validate = (e) => {
     var form = $(this.form).serializeArray();
-    if (form[0]['value'] && form[1]['value'] && form[2]['value']){
+    if (form[0]['value'] && form[1]['value'] && form[2]['value'] && form[3]['value']){
       var variable = {
-        name: form[2]['value'],
+        name: form[3]['value'],
         node: [
           'raster',
-          [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]
+          [
+            JSON.parse(form[0]['value']),
+            JSON.parse(form[1]['value']),
+            form[2]['value']
+          ]
         ]
       };
       this.setState({
@@ -318,31 +326,37 @@ class AddRasterInputModal extends React.Component {
           </Modal.Header>
           <Modal.Body>
             <form ref={(ref)=>{this.form=ref}} onChange={this.validate.bind(this)}>
-              <FormGroup controlId="leftSelect">
-                <ControlLabel>Layer</ControlLabel>
-                <FormControl componentClass="select" placeholder="select" name="left">
-                {this.props.layers.items.map((v, i) => (
-                  <option key={i} value={
-                    `["source", [{"type": "Layer", "name": "${v.name}", "id": ${v.id}, "field": "fid"}]]`
-                  }>
-                    {v.name ? v.name : rendertree(v)}
-                  </option>
-                ))}
-                </FormControl>
-              </FormGroup>
               <FormGroup controlId="rightSelect">
                 <ControlLabel>Raster</ControlLabel>
                 <FormControl componentClass="select" placeholder="select" name="right">
                   {
                     this.props.raster_catalog.items.map((r, i) => (
                       <option key={i} value={
-                        `{"name": "${r.description}", "id": ${r.name}}`
+                        `{"name": "${r.description}", "id": "${r.name}"}`
                       }>
-                        {r.description}
+                        {r.description + ': ' + r.band}
                       </option>
                     ))
                   }
                 </FormControl>
+              </FormGroup>
+              <FormGroup controlId="leftSelect">
+                <ControlLabel>Spatial&nbsp;Layer</ControlLabel>
+                <FormControl componentClass="select" placeholder="select" name="left">
+                {this.props.layers.items.map((v, i) => (
+                  <option key={i} value={
+                    `["source", [{"type": "Layer", "name": "${v.name}", "id": "${v.id}", "field": "fid"}]]`
+                  }>
+                    {v.name ? v.name : rendertree(v)}
+                  </option>
+                ))}
+                </FormControl>
+              </FormGroup>
+              <FormGroup controlId="name">
+                <ControlLabel>Temporal&nbsp;Range</ControlLabel>
+                <FormControl
+                  name="dates" type="text" placeholder="enter like 2000-001,2000-31"
+                />
               </FormGroup>
               <FormGroup controlId="name">
                 <ControlLabel>Name</ControlLabel>
@@ -450,15 +464,6 @@ class AddSelectInputModal extends React.Component {
   onSelectNode = (select_node) => {
     this.setState({ select_node: select_node});
   };
-
-  use() {
-    if (this.state.select_node){
-      this.props.onAddTreeOp(this.state.select_node);
-      this.setState({ showModal: false });
-    }else{
-      alert('Select a variable to use.');
-    }
-  }
 
   use() {
     if (this.state.select_node){
@@ -609,17 +614,7 @@ class AddTableInputModal extends React.Component {
 
   use() {
     if (this.state.node){
-      this.props.onAddTreeOp(this.state.node);
-      this.setState({ showModal: false });
-    }else{
-      alert('Select a variable to use.');
-    }
-  }
-
-  use() {
-    if (this.state.node){
       var form = $(this.form).serializeArray();
-      console.log(this.state.node);
       var variable = {
         node: this.state.node,
         name: form[0]['value']
@@ -712,7 +707,7 @@ class AddBinOpModal extends React.Component {
                   <option
                     key={this.props.input_variables.length}
                     value={JSON.stringify(this.props.tree)}>
-                    tree
+                    Current tree
                   </option>
                 </FormControl>
               </FormGroup>
@@ -722,7 +717,7 @@ class AddBinOpModal extends React.Component {
                   <option
                     key={this.props.input_variables.length}
                     value={JSON.stringify(this.props.tree)}>
-                    tree
+                    Current tree
                   </option>
                   { this.props.input_variables.map((v, i) => (
                     <option key={i} value={JSON.stringify(v.node)}>
@@ -1025,8 +1020,35 @@ class SelectForm extends React.Component {
         var options = this.props.layers.items.filter(of_variable('Layer')).map(
           i2o('Layer')
         ).concat(
-          this.props.tables.items.filter(of_variable('Table')).map(i2o('Table'))
+          this.props.tables.items.filter(of_variable('Table')).map(
+            i2o('Table')
+          )
         );
+        property = (
+          <FormGroup controlId="rightSelect">
+            <ControlLabel>Variable&nbsp;Property</ControlLabel>
+            <FormControl
+              componentClass="select"
+              placeholder="select"
+              name="right"
+              onChange={this.onPropertyChange.bind(this)}>
+              <option key={9999} value={null} >Not Selected</option>
+              {options}
+            </FormControl>
+          </FormGroup>
+        );
+      } else if (this.state.select_variable[0] == 'raster') {
+        var options = [
+          ['mean', 'Mean'],
+          ['maximum', 'Maximum'],
+          ['minimum', 'Minimum'],
+          ['skew', 'Skew'],
+          ['sd', 'Standard Deviation']
+        ].map((o, i) => (
+          <option key={i} value={
+            '{"name": "raster", "field": "' + o[0] + '"}'
+          }>{o[1]}</option>
+        ));
         property = (
           <FormGroup controlId="rightSelect">
             <ControlLabel>Variable&nbsp;Property</ControlLabel>
@@ -1042,6 +1064,7 @@ class SelectForm extends React.Component {
         );
       }
     }
+
     return (
       <form ref={(ref)=>{this.form=ref}}>
         <FormGroup controlId="leftSelect">
@@ -1256,10 +1279,10 @@ class SieveComponent extends React.Component {
           <div className='pull-right'>
             <ButtonToolbar>
               <ButtonGroup>
-                <AddSelectModal op='select' {...this.props}>Select</AddSelectModal>
-                <AddMeanModal op='mean' {...this.props}>Mean</AddMeanModal>
-                <AddUnaryOpModal op='tmean' {...this.props}>Time Mean</AddUnaryOpModal>
-                <AddUnaryOpModal op='smean' {...this.props}>Space Mean</AddUnaryOpModal>
+                <AddSelectModal op='select' {...this.props}>Select Attribute</AddSelectModal>
+                <AddMeanModal op='mean' {...this.props}>Mathematical Mean</AddMeanModal>
+                <AddUnaryOpModal op='tmean' {...this.props}>Temporal Mean</AddUnaryOpModal>
+                <AddUnaryOpModal op='smean' {...this.props}>Spatial Mean</AddUnaryOpModal>
                 <AddBinOpModal op='*' {...this.props}>x</AddBinOpModal>
                 <AddBinOpModal op='/' {...this.props}>/</AddBinOpModal>
                 <AddBinOpModal op='+' {...this.props}>+</AddBinOpModal>
@@ -1309,6 +1332,7 @@ var rendertree = (tree, level=0) => {
       var op = tree[0];
       var left = tree[1][0];
       var right = tree[1][1];
+      var third = tree[1][2];
 
       var html = '';
       switch (op) {
@@ -1351,13 +1375,13 @@ var rendertree = (tree, level=0) => {
           html = str;
           break;
         case 'raster':
-          html = "Raster " + left.name + " by " + right.name;
+          html = "Raster " + left.name + " in " + third + " by " + rendertree(right) ;
           break;
         case 'source':
           html = left.type + " '" + left.name + "'";
           break;
         default:
-          html = rendertree(left, nl) + " " + op + (right ? " " + rendertree(right, nl) : "" );
+          html = (right ? " " + rendertree(right, nl) : "" ) + " " + op + rendertree(left, nl);
       }
     } else {
       html = JSON.stringify(tree);
