@@ -189,7 +189,7 @@ function recieveVariable(json) {
 }
 
 function updateErrors() {
-  var errors = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { "name": null, "tree": null };
+  var errors = arguments.length <= 0 || arguments[0] === undefined ? { "name": null, "tree": null } : arguments[0];
 
   return {
     type: UPDATE_ERRORS,
@@ -198,7 +198,7 @@ function updateErrors() {
 }
 
 function updateModified() {
-  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
   return {
     type: UPDATE_MODIFIED,
@@ -207,7 +207,7 @@ function updateModified() {
 }
 
 function updateCreated() {
-  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
   return {
     type: UPDATE_CREATED,
@@ -259,7 +259,7 @@ function saveVariable(variable, created) {
 }
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1075,7 +1075,7 @@ var FilterListItem = function (_React$Component12) {
           {
             bsSize: "xsmall",
             onClick: this.props.removeFilter.bind(null, this.props.filter.key) },
-          "\xA0x\xA0"
+          " x "
         )
       )
     );
@@ -1190,12 +1190,12 @@ var Aggregate = function (_React$Component13) {
 'use strict';
 
 function layers() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     name: 'Layers',
     isFetching: false,
     didInvalidate: false,
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1217,12 +1217,12 @@ function layers() {
 }
 
 function tables() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     name: 'Tables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1244,9 +1244,9 @@ function tables() {
 }
 
 function rasterCatalog() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1261,12 +1261,12 @@ function rasterCatalog() {
 }
 
 function variables() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     name: 'Variables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1300,7 +1300,7 @@ function input_variable(state, action) {
 }
 
 function input_variables() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  var state = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1316,7 +1316,7 @@ function input_variables() {
 }
 
 function tree() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1336,23 +1336,23 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var _ReactBootstrap = ReactBootstrap,
-    Panel = _ReactBootstrap.Panel,
-    ButtonGroup = _ReactBootstrap.ButtonGroup,
-    ButtonToolbar = _ReactBootstrap.ButtonToolbar,
-    ButtonInput = _ReactBootstrap.ButtonInput,
-    Button = _ReactBootstrap.Button,
-    Row = _ReactBootstrap.Row,
-    Col = _ReactBootstrap.Col,
-    Alert = _ReactBootstrap.Alert,
-    Tabs = _ReactBootstrap.Tabs,
-    DropdownButton = _ReactBootstrap.DropdownButton,
-    MenuItem = _ReactBootstrap.MenuItem,
-    Modal = _ReactBootstrap.Modal,
-    FormControl = _ReactBootstrap.FormControl,
-    ControlLabel = _ReactBootstrap.ControlLabel,
-    FormGroup = _ReactBootstrap.FormGroup,
-    HelpBlock = _ReactBootstrap.HelpBlock;
+var _ReactBootstrap = ReactBootstrap;
+var Panel = _ReactBootstrap.Panel;
+var ButtonGroup = _ReactBootstrap.ButtonGroup;
+var ButtonToolbar = _ReactBootstrap.ButtonToolbar;
+var ButtonInput = _ReactBootstrap.ButtonInput;
+var Button = _ReactBootstrap.Button;
+var Row = _ReactBootstrap.Row;
+var Col = _ReactBootstrap.Col;
+var Alert = _ReactBootstrap.Alert;
+var Tabs = _ReactBootstrap.Tabs;
+var DropdownButton = _ReactBootstrap.DropdownButton;
+var MenuItem = _ReactBootstrap.MenuItem;
+var Modal = _ReactBootstrap.Modal;
+var FormControl = _ReactBootstrap.FormControl;
+var ControlLabel = _ReactBootstrap.ControlLabel;
+var FormGroup = _ReactBootstrap.FormGroup;
+var HelpBlock = _ReactBootstrap.HelpBlock;
 
 /* app */
 
@@ -1370,7 +1370,7 @@ var initialState = Object.assign({
 }, window.sieve_props);
 
 function sieveApp() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
+  var state = arguments.length <= 0 || arguments[0] === undefined ? initialState : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1467,8 +1467,8 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
 
 /* components */
 var DropdownComponent = function DropdownComponent(_ref) {
-  var things = _ref.things,
-      onclick = _ref.onclick;
+  var things = _ref.things;
+  var onclick = _ref.onclick;
   return (
     // TODO something different when layers.isFetching
 
@@ -1782,7 +1782,7 @@ var AddRasterInputModal = function (_React$Component3) {
               React.createElement(
                 ControlLabel,
                 null,
-                "Spatial\xA0Layer"
+                "Spatial Layer"
               ),
               React.createElement(
                 FormControl,
@@ -1802,7 +1802,7 @@ var AddRasterInputModal = function (_React$Component3) {
               React.createElement(
                 ControlLabel,
                 null,
-                "Temporal\xA0Range"
+                "Temporal Range"
               ),
               React.createElement(FormControl, {
                 name: "dates", type: "text", placeholder: "enter like 2000-001,2000-31"
@@ -2485,7 +2485,7 @@ var AddUnaryOpModal = function (_React$Component9) {
                   return React.createElement(
                     "option",
                     { key: i, value: JSON.stringify(v.node) },
-                    v.name ? v.name : rendertree(v)
+                    v.name ? v.name : treeToNode(v).html(0)
                   );
                 }),
                 React.createElement(
@@ -2694,7 +2694,7 @@ var AddMeanModal = function (_React$Component11) {
                   return React.createElement(
                     "option",
                     { key: i, value: JSON.stringify(v.node) },
-                    v.name ? v.name : rendertree(v)
+                    v.name ? v.name : treeToNode(v).html(0)
                   );
                 })
               )
@@ -2777,7 +2777,7 @@ var SelectForm = function (_React$Component12) {
           React.createElement(
             ControlLabel,
             null,
-            "Variable\xA0Property"
+            "Variable Property"
           ),
           React.createElement(
             FormControl,
@@ -2807,7 +2807,7 @@ var SelectForm = function (_React$Component12) {
           React.createElement(
             ControlLabel,
             null,
-            "Variable\xA0Property"
+            "Variable Property"
           ),
           React.createElement(
             FormControl,
@@ -2838,7 +2838,7 @@ var SelectForm = function (_React$Component12) {
           React.createElement(
             ControlLabel,
             null,
-            "Variable\xA0Property"
+            "Variable Property"
           ),
           React.createElement(
             FormControl,
@@ -2869,7 +2869,7 @@ var SelectForm = function (_React$Component12) {
         React.createElement(
           ControlLabel,
           null,
-          "Input\xA0Variable"
+          "Input Variable"
         ),
         React.createElement(
           FormControl,
@@ -2887,7 +2887,7 @@ var SelectForm = function (_React$Component12) {
             return React.createElement(
               "option",
               { key: i, value: JSON.stringify(v.node) },
-              v.name ? v.name : rendertree(v)
+              v.name ? v.name : treeToNode(v).html(0)
             );
           })
         )
@@ -2935,7 +2935,7 @@ var SelectLayerForm = function (_React$Component13) {
         React.createElement(
           ControlLabel,
           null,
-          "Spatial\xA0Layer"
+          "Spatial Layer"
         ),
         React.createElement(
           FormControl,
@@ -2953,7 +2953,7 @@ var SelectLayerForm = function (_React$Component13) {
             return React.createElement(
               "option",
               { key: i, value: "[\"source\", [{\"type\": \"Layer\", \"name\": \"" + v.name + "\", \"id\": " + v.id + ", \"field\": \"fid\"}]]" },
-              v.name ? v.name : rendertree(v)
+              v.name ? v.name : treeToNode(v).html(0)
             );
           })
         )
@@ -3001,7 +3001,7 @@ var SelectTableForm = function (_React$Component14) {
         React.createElement(
           ControlLabel,
           null,
-          "Tabular\xA0Layer"
+          "Tabular Layer"
         ),
         React.createElement(
           FormControl,
@@ -3019,7 +3019,7 @@ var SelectTableForm = function (_React$Component14) {
             return React.createElement(
               "option",
               { key: i, value: "[\"source\", [{\"type\": \"Table\", \"name\": \"" + v.name + "\", \"id\": " + v.id + ", \"field\": \"fid\"}]]" },
-              v.name ? v.name : rendertree(v)
+              v.name ? v.name : treeToNode(v).html(0)
             );
           })
         )
@@ -3044,7 +3044,7 @@ var SieveComponent = function (_React$Component15) {
     var self = this;
 
     function createMarkup() {
-      return { __html: rendertree(self.props.tree) };
+      return { __html: treeToNode(self.props.tree).html(0) };
     };
     function returnHTML(html) {
       return { __html: html };
@@ -3157,7 +3157,7 @@ var SieveComponent = function (_React$Component15) {
                   "Remove"
                 )
               )
-            ), React.createElement("dd", { dangerouslySetInnerHTML: { __html: rendertree(variable.node) } })];
+            ), React.createElement("dd", { dangerouslySetInnerHTML: { __html: treeToNode(variable.node).html(0) } })];
           })
         ) : "Add some!",
         React.createElement(
@@ -3284,87 +3284,273 @@ var SieveComponent = function (_React$Component15) {
   return SieveComponent;
 }(React.Component);
 
+var tab = function tab(level) {
+  return Array(level * 4).join("&nbsp;");
+};
+var formatHtml = function formatHtml(html, level) {
+  return tab(level) + html + "<br>";
+};
+
 var DataNode = function () {
-  function DataNode(operation, operands) {
+  function DataNode(operands) {
     _classCallCheck(this, DataNode);
-
-    this.operation = operation;
-    this.operands = [];
-    for (var _iterator = operands, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-      // stuff
-
-      if (_isArray) {
-        if (_i >= _iterator.length) break;
-        rand = _iterator[_i++];
-      } else {
-        _i = _iterator.next();
-        if (_i.done) break;
-        rand = _i.value;
-      }
-    }
   }
 
   DataNode.prototype.json = function json() {
     return JSON.encode(data);
   };
 
+  DataNode.prototype.html = function html(level) {
+    return this.json();
+  };
+
   return DataNode;
 }();
 
-var rendertree = function rendertree(tree) {
-  var level = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+var MeanOperator = function (_DataNode) {
+  _inherits(MeanOperator, _DataNode);
 
-  //console.log('render: ', tree);
-  var tab = Array(level * 4).join("&nbsp;");
-  var nl = level + 1;
-  if (tree && tree.length && tree.length == 2) {
-    var op = tree[0];
-    var left = tree[1][0];
-    var right = tree[1][1];
-    var third = tree[1][2];
+  function MeanOperator(operands) {
+    _classCallCheck(this, MeanOperator);
 
-    var html = '';
-    switch (op) {
-      case 'mean':
-        html = 'Mean of ( <br>' + rendertree(left, nl) + rendertree(right, nl) + tab + ') ';
-        break;
-      case 'tmean':
-        html = 'Time mean of ( <br>' + rendertree(left, nl) + tab + ') ';
-        break;
-      case 'smean':
-        html = 'Space mean of ( <br>' + rendertree(left, nl) + tab + ') ';
-        break;
-      case 'select':
-        html = "Select " + right.name + "/" + right.field + " from (<br>" + tab + rendertree(left, nl) + tab + ")";
-        break;
-      case 'expression':
-        html = left;
-        break;
-      case 'join':
-        if (!Array.isArray(left) && left[0] == 'source') {
-          left = left[1];
-        }
-        if (!Array.isArray(right) && right[0] == 'source') {
-          right = right[1];
-        }
-        var str = "Join " + left.type + ' ' + left.name + ' and ' + right.type + ' ' + right.name + ' on ' + left.field + ' = ' + right.field;
-        html = str;
-        break;
-      case 'raster':
-        html = "Raster " + left.name + " in " + third + " by " + rendertree(right);
-        break;
-      case 'source':
-        html = left.type + " '" + left.name + "'";
-        break;
-      default:
-        html = (right ? " " + rendertree(right, nl) : "") + " " + op + rendertree(left, nl);
+    var _this29 = _possibleConstructorReturn(this, _DataNode.call(this, operands));
+
+    if (operands.length != 2) {
+      throw Error("MeanOperator takes exactly 2 operands");
     }
-  } else {
-    html = JSON.stringify(tree);
+
+    _this29.left = treeToNode(operands[0]);
+    _this29.right = treeToNode(operands[1]);
+    return _this29;
   }
 
-  return tab + html + "<br>";
-};
+  MeanOperator.prototype.html = function html(level) {
+    return formatHtml('Mean of ( <br>' + this.left.html(level + 1) + this.right.html(level + 1) + tab(level) + ') ', level);
+  };
+
+  return MeanOperator;
+}(DataNode);
+
+var TemporalMeanOperator = function (_DataNode2) {
+  _inherits(TemporalMeanOperator, _DataNode2);
+
+  function TemporalMeanOperator(operands) {
+    _classCallCheck(this, TemporalMeanOperator);
+
+    var _this30 = _possibleConstructorReturn(this, _DataNode2.call(this, operands));
+
+    if (operands.length != 1) {
+      throw Error("TemporalMeanOperator takes exactly 1 operand");
+    }
+
+    _this30.operand = treeToNode(operands[0]);
+    return _this30;
+  }
+
+  TemporalMeanOperator.prototype.html = function html(level) {
+    return formatHtml('Time mean of ( <br>' + this.operand.html(level + 1) + tab(level) + ') ', level);
+  };
+
+  return TemporalMeanOperator;
+}(DataNode);
+
+var SpatialMeanOperator = function (_DataNode3) {
+  _inherits(SpatialMeanOperator, _DataNode3);
+
+  function SpatialMeanOperator(operands) {
+    _classCallCheck(this, SpatialMeanOperator);
+
+    var _this31 = _possibleConstructorReturn(this, _DataNode3.call(this, operands));
+
+    if (operands.length != 1) {
+      throw Error("SpatialMeanOperator takes exactly 1 operand");
+    }
+
+    _this31.operand = treeToNode(operands[0]);
+    return _this31;
+  }
+
+  SpatialMeanOperator.prototype.html = function html(level) {
+    return formatHtml('Space mean of ( <br>' + this.operand.html(level + 1) + tab(level) + ') ', level);
+  };
+
+  return SpatialMeanOperator;
+}(DataNode);
+
+var SelectOperator = function (_DataNode4) {
+  _inherits(SelectOperator, _DataNode4);
+
+  function SelectOperator(operands) {
+    _classCallCheck(this, SelectOperator);
+
+    var _this32 = _possibleConstructorReturn(this, _DataNode4.call(this, operands));
+
+    if (operands.length != 2) {
+      throw Error("SelectOperator takes exactly 2 operands");
+    }
+
+    _this32.left = treeToNode(operands[0]);
+    _this32.child_op = operands[0][0];
+    _this32.right = operands[1];
+    return _this32;
+  }
+
+  SelectOperator.prototype.html = function html(level) {
+    return formatHtml("Select " + this.right.name + "/" + this.right.field + " from (<br>" + tab(level) + this.left.html(level + 1) + tab(level) + ")", level);
+  };
+
+  return SelectOperator;
+}(DataNode);
+
+var ExpressionOperator = function (_DataNode5) {
+  _inherits(ExpressionOperator, _DataNode5);
+
+  function ExpressionOperator(operands) {
+    _classCallCheck(this, ExpressionOperator);
+
+    var _this33 = _possibleConstructorReturn(this, _DataNode5.call(this, operands));
+
+    if (operands.length != 1) {
+      throw Error("ExpressionOperator takes exactly 1 operand");
+    }
+
+    _this33.operand = treeToNode(operands[0]);
+    return _this33;
+  }
+
+  ExpressionOperator.prototype.html = function html(level) {
+    return formatHtml(this.operand.html(level), level);
+  };
+
+  return ExpressionOperator;
+}(DataNode);
+
+var JoinOperator = function (_DataNode6) {
+  _inherits(JoinOperator, _DataNode6);
+
+  function JoinOperator(operands) {
+    _classCallCheck(this, JoinOperator);
+
+    var _this34 = _possibleConstructorReturn(this, _DataNode6.call(this, operands));
+
+    if (operands.length != 2) {
+      throw Error("JoinOperator takes exactly 2 operands");
+    }
+
+    _this34.left = operands[0];
+    _this34.right = operands[1];
+    return _this34;
+  }
+
+  JoinOperator.prototype.html = function html(level) {
+    return formatHtml("Join " + this.left.type + ' ' + this.left.name + ' and ' + this.right.type + ' ' + this.right.name + ' on ' + this.left.field + ' = ' + this.right.field, level);
+  };
+
+  return JoinOperator;
+}(DataNode);
+
+var RasterOperator = function (_DataNode7) {
+  _inherits(RasterOperator, _DataNode7);
+
+  function RasterOperator(operands) {
+    _classCallCheck(this, RasterOperator);
+
+    var _this35 = _possibleConstructorReturn(this, _DataNode7.call(this, operands));
+
+    if (operands.length != 3) {
+      throw Error("RasterOperator takes exactly 3 operands");
+    }
+
+    _this35.left = operands[0];
+    _this35.middle = operands[2];
+    _this35.right = treeToNode(operands[1]);
+    return _this35;
+  }
+
+  RasterOperator.prototype.html = function html(level) {
+    return formatHtml("Raster " + this.left.name + " in " + this.middle + " by " + this.right.html(level + 1), level);
+  };
+
+  return RasterOperator;
+}(DataNode);
+
+var SourceOperator = function (_DataNode8) {
+  _inherits(SourceOperator, _DataNode8);
+
+  function SourceOperator(operands) {
+    _classCallCheck(this, SourceOperator);
+
+    var _this36 = _possibleConstructorReturn(this, _DataNode8.call(this, operands));
+
+    if (operands.length != 1) {
+      throw Error("SourceOperator takes exactly 1 operand");
+    }
+
+    _this36.operand = operands[0];
+    return _this36;
+  }
+
+  SourceOperator.prototype.html = function html(level) {
+    return formatHtml(this.operand.type + " '" + this.operand.name + "'", level);
+  };
+
+  return SourceOperator;
+}(DataNode);
+
+var EmptyTree = function (_DataNode9) {
+  _inherits(EmptyTree, _DataNode9);
+
+  function EmptyTree() {
+    _classCallCheck(this, EmptyTree);
+
+    return _possibleConstructorReturn(this, _DataNode9.call(this, []));
+  }
+
+  EmptyTree.prototype.html = function html() {
+    return '';
+  };
+
+  return EmptyTree;
+}(DataNode);
+
+function treeToNode(tree) {
+  var node;
+
+  if (Object.keys(tree).length == 0) {
+    return new EmptyTree();
+  }
+
+  switch (tree[0]) {
+    case 'mean':
+      node = new MeanOperator(tree[1]);
+      break;
+    case 'tmean':
+      node = new TemporalMeanOperator(tree[1]);
+      break;
+    case 'smean':
+      node = new SpatialMeanOperator(tree[1]);
+      break;
+    case 'select':
+      node = new SelectOperator(tree[1]);
+      break;
+    case 'expression':
+      node = new ExpressionOperator(tree[1]);
+      break;
+    case 'join':
+      node = new JoinOperator(tree[1]);
+      break;
+    case 'raster':
+      node = new RasterOperator(tree[1]);
+      break;
+    case 'source':
+      node = new SourceOperator(tree[1]);
+      break;
+    default:
+      throw Error("'" + tree[0] + "' is not a valid operator");
+  }
+
+  return node;
+}
 
 var TreeView = function (_React$Component16) {
   _inherits(TreeView, _React$Component16);
