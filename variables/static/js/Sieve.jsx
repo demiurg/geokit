@@ -780,7 +780,7 @@ class AddUnaryOpModal extends React.Component {
                 <FormControl componentClass="select" placeholder="select" name="left">
                   { this.props.input_variables.map((v, i) => (
                     <option key={i} value={JSON.stringify(v.node)}>
-                      {v.name ? v.name : rendertree(v)}
+                      {v.name ? v.name : treeToNode(v).html(0)}
                     </option>
                   )) }
                   <option
@@ -919,7 +919,7 @@ class AddMeanModal extends React.Component {
                   </option>
                   { this.props.input_variables.map((v, i) => (
                     <option key={i} value={JSON.stringify(v.node)}>
-                      {v.name ? v.name : rendertree(v)}
+                      {v.name ? v.name : treeToNode(v).html(0)}
                     </option>)) }
                 </FormControl>
               </FormGroup>
@@ -1077,7 +1077,7 @@ class SelectForm extends React.Component {
             <option key={9999} value={null} >Not Selected</option>
             {this.props.input_variables.map((v, i) => (
               <option key={i} value={JSON.stringify(v.node)}>
-                {v.name ? v.name : rendertree(v)}
+                {v.name ? v.name : treeToNode(v).html(0)}
               </option>
             ))}
           </FormControl>
@@ -1120,7 +1120,7 @@ class SelectLayerForm extends React.Component {
               <option key={i} value={
                 `["source", [{"type": "Layer", "name": "${v.name}", "id": ${v.id}, "field": "fid"}]]`
               }>
-                {v.name ? v.name : rendertree(v)}
+                {v.name ? v.name : treeToNode(v).html(0)}
               </option>
             ))}
           </FormControl>
@@ -1163,7 +1163,7 @@ class SelectTableForm extends React.Component {
               <option key={i} value={
                 `["source", [{"type": "Table", "name": "${v.name}", "id": ${v.id}, "field": "fid"}]]`
               }>
-                {v.name ? v.name : rendertree(v)}
+                {v.name ? v.name : treeToNode(v).html(0)}
               </option>
             ))}
           </FormControl>
@@ -1179,7 +1179,7 @@ class SieveComponent extends React.Component {
   render() {
     var self = this;
 
-    function createMarkup() { return {__html: rendertree(self.props.tree)}; };
+    function createMarkup() { return {__html: treeToNode(self.props.tree).html(0)}; };
     function returnHTML(html) { return {__html: html}};
 
     var onSave = (e) => {
@@ -1255,7 +1255,7 @@ class SieveComponent extends React.Component {
                     <a className='btn btn-sm' onClick={() => self.props.onRemoveInputVariable(idx)}>Remove</a>
                   </div>
                 </dt>,
-                <dd dangerouslySetInnerHTML={{__html: rendertree(variable.node)}}></dd>
+                <dd dangerouslySetInnerHTML={{__html: treeToNode(variable.node).html(0)}}></dd>
               ];
             })
             }</dl>
@@ -1309,87 +1309,217 @@ class SieveComponent extends React.Component {
   }
 }
 
+var tab = (level) => {return Array(level * 4).join("&nbsp;")};
+var formatHtml = (html, level) => {return tab(level) + html + "<br>";};
 
 class DataNode {
-  constructor(operation, operands){
-    this.operation = operation;
-    this.operands = [];
-    for (rand of operands){
-      // stuff
-    }
+  constructor(operands) {
+    
   }
-  json(){
+
+  json() {
     return JSON.encode(data);
+  }
+
+  html(level) {
+    return this.json()
   }
 }
 
+class MeanOperator extends DataNode {
+  constructor(operands) {
+    super(operands);
 
-var rendertree = (tree, level=0) => {
-    //console.log('render: ', tree);
-    var tab = Array(level * 4).join("&nbsp;");
-    var nl = level + 1;
-    if (tree && tree.length && tree.length == 2){
-      var op = tree[0];
-      var left = tree[1][0];
-      var right = tree[1][1];
-      var third = tree[1][2];
-
-      var html = '';
-      switch (op) {
-        case 'mean':
-          html = 'Mean of ( <br>' +
-            rendertree(left, nl) +
-            rendertree(right, nl) +
-            tab + ') ';
-          break;
-        case 'tmean':
-          html = 'Time mean of ( <br>' +
-            rendertree(left, nl) +
-            tab + ') ';
-          break;
-        case 'smean':
-          html = 'Space mean of ( <br>' +
-            rendertree(left, nl) +
-            tab + ') ';
-          break;
-        case 'select':
-          html = "Select " + right.name + "/" + right.field + " from (<br>" +
-            tab + rendertree(left, nl) +
-            tab + ")";
-          break;
-        case 'expression':
-          html = left;
-          break;
-        case 'join':
-          if (! Array.isArray(left) && left[0] == 'source'){
-            left = left[1];
-          }
-          if (! Array.isArray(right) && right[0] == 'source'){
-            right = right[1];
-          }
-          let str = "Join " +
-            left.type + ' ' + left.name + ' and ' +
-            right.type + ' ' + right.name + ' on ' +
-            left.field + ' = ' + right.field
-          ;
-          html = str;
-          break;
-        case 'raster':
-          html = "Raster " + left.name + " in " + third + " by " + rendertree(right) ;
-          break;
-        case 'source':
-          html = left.type + " '" + left.name + "'";
-          break;
-        default:
-          html = (right ? " " + rendertree(right, nl) : "" ) + " " + op + rendertree(left, nl);
-      }
-    } else {
-      html = JSON.stringify(tree);
+    if (operands.length != 2) {
+        throw Error("MeanOperator takes exactly 2 operands");
     }
 
-    return tab + html + "<br>";
-};
+    this.left = treeToNode(operands[0]);
+    this.right = treeToNode(operands[1]);
+  }
 
+  html(level) {
+    return formatHtml('Mean of ( <br>' +
+      this.left.html(level + 1) +
+      this.right.html(level + 1) +
+      tab(level) + ') ', level);
+  }
+}
+
+class TemporalMeanOperator extends DataNode {
+  constructor(operands) {
+    super(operands);
+
+    if (operands.length != 1) {
+      throw Error("TemporalMeanOperator takes exactly 1 operand");
+    }
+
+    this.operand = treeToNode(operands[0]);
+  }
+
+  html(level) {
+    return formatHtml('Time mean of ( <br>' +
+      this.operand.html(level + 1) +
+      tab(level) + ') ', level);
+  }
+}
+
+class SpatialMeanOperator extends DataNode {
+  constructor(operands) {
+    super(operands);
+
+    if (operands.length != 1) {
+      throw Error("SpatialMeanOperator takes exactly 1 operand");
+    }
+
+    this.operand = treeToNode(operands[0]);
+  }
+
+  html(level) {
+    return formatHtml('Space mean of ( <br>' +
+      this.operand.html(level + 1) +
+      tab(level) + ') ', level);
+  }
+}
+
+class SelectOperator extends DataNode {
+  constructor(operands) {
+    super(operands);
+
+    if (operands.length != 2) {
+      throw Error("SelectOperator takes exactly 2 operands");
+    }
+
+    this.left = treeToNode(operands[0]);
+    this.child_op = operands[0][0];
+    this.right = operands[1];
+  }
+
+  html(level) {
+    return formatHtml("Select " + this.right.name + "/" + this.right.field + " from (<br>" +
+      tab(level) + this.left.html(level + 1) +
+      tab(level) + ")", level);
+  }
+}
+
+class ExpressionOperator extends DataNode {
+  constructor(operands) {
+    super(operands);
+
+    if (operands.length != 1) {
+      throw Error("ExpressionOperator takes exactly 1 operand");
+    }
+
+    this.operand = treeToNode(operands[0]);
+  }
+
+  html(level) {
+    return formatHtml(this.operand.html(level), level);
+  }
+}
+
+class JoinOperator extends DataNode {
+  constructor(operands) {
+    super(operands);
+
+    if (operands.length != 2) {
+      throw Error("JoinOperator takes exactly 2 operands");
+    }
+
+    this.left = operands[0];
+    this.right = operands[1];
+  }
+
+  html(level) {
+    return formatHtml("Join " +
+      this.left.type + ' ' + this.left.name + ' and ' +
+      this.right.type + ' ' + this.right.name + ' on ' +
+      this.left.field + ' = ' + this.right.field, level);
+  }
+}
+
+class RasterOperator extends DataNode {
+  constructor(operands) {
+    super(operands);
+
+    if (operands.length != 3) {
+      throw Error("RasterOperator takes exactly 3 operands");
+    }
+
+    this.left = operands[0];
+    this.middle = operands[2];
+    this.right = treeToNode(operands[1]);
+  }
+
+  html(level) {
+    return formatHtml("Raster " + this.left.name + " in " + this.middle + " by " + this.right.html(level + 1), level);
+  }
+}
+
+class SourceOperator extends DataNode {
+  constructor(operands) {
+    super(operands);
+
+    if (operands.length != 1) {
+      throw Error("SourceOperator takes exactly 1 operand");
+    }
+
+    this.operand = operands[0];
+  }
+
+  html(level) {
+    return formatHtml(this.operand.type + " '" + this.operand.name + "'", level);
+  }
+}
+
+class EmptyTree extends DataNode {
+  constructor() {
+    super([]);
+  }
+
+  html() {
+    return '';
+  }
+}
+
+function treeToNode(tree) {
+  var node;
+
+  if (Object.keys(tree).length == 0) {
+    return new EmptyTree();
+  }
+
+  switch (tree[0]) {
+    case 'mean':
+      node = new MeanOperator(tree[1]);
+      break;
+    case 'tmean':
+      node = new TemporalMeanOperator(tree[1]);
+      break;
+    case 'smean':
+      node = new SpatialMeanOperator(tree[1]);
+      break;
+    case 'select':
+      node = new SelectOperator(tree[1]);
+      break;
+    case 'expression':
+      node = new ExpressionOperator(tree[1]);
+      break;
+    case 'join':
+      node = new JoinOperator(tree[1]);
+      break;
+    case 'raster':
+      node = new RasterOperator(tree[1]);
+      break;
+    case 'source':
+      node = new SourceOperator(tree[1]);
+      break;
+    default:
+      throw Error("'" + tree[0] + "' is not a valid operator");
+  }
+
+  return node;
+}
 
 class TreeView extends React.Component {
   render(){
