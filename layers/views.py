@@ -1,4 +1,5 @@
 import glob
+import hashlib
 import json
 import os
 
@@ -485,10 +486,13 @@ def gadm_layer_save(tenant, layer, admin_units):
             geom = GEOSGeometry(u['geometry'], srid=4326)
             union = union.union(geom)
             geom.transform(3857)
+
+            s = hashlib.sha1()
+            s.update(GeometryCollection(geom).ewkb)
             feature = Feature(
                 layer=layer,
                 geometry=GeometryCollection(geom),
-                properties={'id': i}
+                properties={'shaid': s.hexdigest()}
             )
             feature.save()
 
