@@ -317,11 +317,17 @@ def process_shapefile(tenant, layer_id, srs):
                 try:
                     geom = shape(record['geometry'])
                     transformed_geom = OGRGeometry(geom.wkt, srs=srs).transform(3857, clone=True)
+                    transformed_geom_collection = GeometryCollection(transformed_geom.geos)
+
+                    s = hashlib.sha1()
+                    s.update(transformed_geom_collection.ewkb)
+
                     properties = record['properties']
                     properties['fid'] = index
+                    properties['shaid'] = s.hexdigest()
                     features.append(Feature(
                         layer=l,
-                        geometry=GeometryCollection(transformed_geom.geos),
+                        geometry=transformed_geom_collection,
                         properties=properties
                     ))
                     count += 1
