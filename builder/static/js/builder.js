@@ -94,7 +94,6 @@ var GADMChooser = function (_React$Component) {
                     $.ajax(url + query_params, {
                         dataType: 'json',
                         success: function success(data, status, xhr) {
-                            _this3.unit_geometries = data;
                             _this3.renderAdminUnits();
                         },
                         error: function error(xhr, status, _error) {}
@@ -147,19 +146,31 @@ var GADMChooser = function (_React$Component) {
     GADMChooser.prototype.renderMap = function renderMap() {
         var map = this.map = L.map('map').setView([0, 0], 1);
 
-        self.terrain = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+        this.terrain = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
             attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
             maxZoom: 18,
             id: 'ags.n5m0p5ci',
             accessToken: 'pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
         }).addTo(map);
 
-        this.mapRendered = true;
+        this.setGadmLayer(0);
+    };
+
+    GADMChooser.prototype.setGadmLayer = function setGadmLayer(level) {
+        if (this.geojsonTileLayer) {
+            this.map.removeLayer(this.geojsonTileLayer);
+        }
+        this.geojsonURL = '/layers/gadm/1/{z}/{x}/{y}.json';
+        this.geojsonTileLayer = new L.TileLayer.GeoJSON(this.geojsonURL, {
+            clipTiles: true,
+            unique: function unique(feature) {
+                return feature.properties.id;
+            }
+        }).addTo(this.map);
     };
 
     GADMChooser.prototype.getAdminUnits = function getAdminUnits(level, parent_name, callback) {
         var url = '/layers/gadm';
-
         var query_params = '?level=' + level;
 
         if (level != 0) {
@@ -286,7 +297,9 @@ var GADMChooser = function (_React$Component) {
                         null,
                         React.createElement(
                             'a',
-                            { href: 'javascript:', onClick: this.back.bind(this) },
+                            { href: 'javascript:',
+                                onClick: this.back.bind(this)
+                            },
                             '< Back'
                         )
                     ) : null,
@@ -296,7 +309,9 @@ var GADMChooser = function (_React$Component) {
                             null,
                             React.createElement(
                                 'a',
-                                { href: 'javascript:', onClick: _this8.forward.bind(_this8, unit) },
+                                { href: 'javascript:',
+                                    onClick: _this8.forward.bind(_this8, unit)
+                                },
                                 unit
                             )
                         );
@@ -305,7 +320,10 @@ var GADMChooser = function (_React$Component) {
                 React.createElement('div', { id: 'map', style: { height: 400 } }),
                 React.createElement(
                     'button',
-                    { className: 'button', onClick: this.saveLayer.bind(this), disabled: this.state.level == 0 },
+                    { className: 'button',
+                        onClick: this.saveLayer.bind(this),
+                        disabled: this.state.level == 0
+                    },
                     'Save'
                 )
             );

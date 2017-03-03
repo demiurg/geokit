@@ -1290,6 +1290,7 @@ class SieveComponent extends React.Component {
               </ButtonGroup>
             </ButtonToolbar>
           </div>
+          <br/>
           {this.props.errors.tree ?
             <Alert bsStyle="danger">
             <p>{this.props.errors.tree}</p>

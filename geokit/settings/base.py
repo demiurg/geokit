@@ -144,8 +144,8 @@ DATABASES = {
         'HOST': 'localhost',
         'PORT': '5432',
     },
-    'gadm': {
-        'ENGINE': 'django.db.backends.postgresql',
+    'geodata': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'geodata',
         'USER': 'geokit',
         'PASSWORD': 'geokitp4ss',

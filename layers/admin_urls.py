@@ -1,6 +1,8 @@
 from django.conf.urls import url
 
-from layers.views import index, add, edit, delete, generate_download, layer_json, gadm_json
+from layers.views import (
+    index, add, edit, delete, generate_download, layer_json, gadm_json
+)
 
 urlpatterns = [
     url(r'^$', index, name='index'),

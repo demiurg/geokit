@@ -86,6 +86,42 @@ def tile_json(request, layer_name, z, x, y):
     return HttpResponse(response, content_type="application/json")
 
 
+def gadm_tile_json(request, level, z, x, y):
+    level, x, y, z = int(level), int(x), int(y), int(z)
+    # mimetype, data = stache(request, layer_name, z, x, y, "mvt")
+    # mvt_features = mvt.decode(StringIO(data))
+
+    names = ", ".join(
+        ['name_{}'.format(r) for r in range(min(level, 5) + 1)]
+    )
+    hascs = ", ".join(
+        ['hasc_{}'.format(r) for r in range(min(level, 3) + 1)]
+    )
+
+    cache_path = os.path.join(
+        settings.STATIC_ROOT, "tiles", "common", "gadm"
+    )
+
+    mvt_features = gadm_mvt(cache_path, names, hascs, level, z, x, y)
+    features = []
+    for wkb, props in mvt_features:
+        geom = GEOSGeometry(buffer(wkb))
+
+        try:
+            props['id'] = props['__id__']
+        except Exception as e:
+            print(e)
+
+        feature = '{ "type": "Feature", "geometry": ' + geom.json + ","
+        feature += ' "properties": {}'.format(json.dumps(props))
+        feature += '}'
+        features.append(feature)
+
+    features = ",\n".join(features)
+    response = '{"type": "FeatureCollection", "features": [' + features + ']}'
+    return HttpResponse(response, content_type="application/json")
+
+
 def manual_mvt(cache_path, layer_name, z, x, y):
     x, y, z = int(x), int(y), int(z)
 
@@ -213,6 +249,100 @@ def manual_mvt(cache_path, layer_name, z, x, y):
     return data
 
 
+def gadm_mvt(cache_path, names, hascs, level, z, x, y):
+    x, y, z = int(x), int(y), int(z)
+
+    level = min(level, 5)
+
+    file_path = "{}/{}/{}/{}/{}.mvt".format(cache_path, level, z, x, y)
+    lock_path = "{}/{}/{}/{}/{}.mvt.lock".format(cache_path, level, z, x, y)
+
+    while not os.path.exists(os.path.dirname(file_path)):
+        try:
+            os.makedirs(os.path.dirname(file_path), 0777)
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                pass
+
+    lock = Lock(lock_path)
+    lock.acquire()
+
+    try:
+        mvt_file = open(file_path, "rb")
+        mvt_data = mvt.decode(mvt_file)
+        mvt_file.close()
+        return mvt_data
+    except IOError as e:
+        if e.errno == errno.ENOENT:
+            mvt_file = open(file_path, "wb")
+
+    try:
+        gb = GlobalMercator()
+        x, y = gb.GoogleTile(x, y, z)
+        bbox_m = gb.TileBounds(x, y, z)
+        bbox = bbox2wkt(bbox_m)
+
+        SELECT = """
+            WITH box AS (SELECT ST_Transform(ST_GeomFromText('{0}'), 4326) AS b),
+                px_area AS (SELECT st_area(box.b) / 65536.0 AS a FROM box),
+                px_length AS (SELECT sqrt(px_area.a) AS l FROM px_area),
+                bufbox AS (SELECT st_buffer(box.b, px_length.l*8, 'quad_segs=1') AS buf FROM box, px_area, px_length),
+                selection AS (
+                    SELECT
+                        st_unaryunion(st_collect(geometry)) AS __geometry__,
+                        name_{1} AS __id__,
+                        {2}, {3}
+                    FROM gadm28, px_area, box
+                    WHERE geometry && box.b
+                    GROUP BY {2}, {3}
+                )
+            SELECT
+                __geometry__, __id__, {2}, {3}
+            FROM (
+                (SELECT
+                    ST_AsEWKB(st_intersection(
+                        ST_MakeValid(ST_Simplify(__geometry__, px_length.l * 2.0)),
+                        bufbox.buf
+                    )) AS __geometry__,
+                    __id__,
+                    {2}, {3}
+                FROM selection, bufbox, px_length)
+            ) as Q
+            WHERE __geometry__ IS NOT NULL AND NOT ST_isEmpty(__geometry__)
+            """.format(
+                bbox, level, names, hascs
+            )
+
+        # print SELECT
+        # cursor = connection.cursor()
+        cursor = connections['geodata'].cursor()
+        cursor.execute(SELECT)
+
+        columns = [col[0] for col in cursor.description]
+
+        data = [
+            (bytes(row[0]), dict(zip(columns[1:], row[1:])),)
+            for row in cursor.fetchall()
+        ]
+
+        try:
+            mvt.encode(mvt_file, data)
+        except Exception as e:
+            mvt_file.close()
+            os.unlink(file_path)
+        finally:
+            mvt_file.close()
+    except Exception as e:
+        lock.release()
+        os.unlink(file_path)
+        traceback.print_exc()
+        raise e
+
+    lock.release()
+
+    return data
+
+
 def gadm_data_args(data):
     gadm_data_args = {}
     gadm_data_args['level'] = int(data['level'])
@@ -225,7 +355,7 @@ def gadm_data_args(data):
 
 
 def gadm_data(level, distinct=True, **kwargs):
-    cursor = connections['gadm'].cursor()
+    cursor = connections['geodata'].cursor()
 
     field_name = "name_{}".format(level)
     distinct_clause = "DISTINCT ON (%s)" % field_name if distinct else ''
@@ -246,7 +376,7 @@ def gadm_data(level, distinct=True, **kwargs):
     SELECT = SELECT + where_clause + " ORDER BY name_{}".format(level)
 
     cursor.execute(SELECT)
-
+    print SELECT
     columns = [col[0] for col in cursor.description]
     return [
         dict(zip(columns, row))

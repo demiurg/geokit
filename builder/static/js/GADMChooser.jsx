@@ -63,17 +63,16 @@ class GADMChooser extends React.Component {
 
                     var query_params = '?level=' + this.state.level;
 
-                        var i = 0;
+                    var i = 0;
 
-                        this.state.parents.forEach((unit) => {
-                            query_params += '&name_' + i + '=' + unit;
-                            i++;
-                        });
+                    this.state.parents.forEach((unit) => {
+                        query_params += '&name_' + i + '=' + unit;
+                        i++;
+                    });
 
                     $.ajax(url + query_params, {
                         dataType: 'json',
                         success: (data, status, xhr) => {
-                            this.unit_geometries = data;
                             this.renderAdminUnits();
                         },
                         error: (xhr, status, error) => {
@@ -125,19 +124,31 @@ class GADMChooser extends React.Component {
     renderMap() {
         var map = this.map = L.map('map').setView([0, 0], 1);
 
-        self.terrain = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+        this.terrain = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
             attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
             maxZoom: 18,
             id: 'ags.n5m0p5ci',
             accessToken: 'pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
         }).addTo(map);
 
-        this.mapRendered = true;
+        this.setGadmLayer(0);
+    }
+
+    setGadmLayer(level){
+        if (this.geojsonTileLayer){
+            this.map.removeLayer(this.geojsonTileLayer);
+        }
+        this.geojsonURL = '/layers/gadm/1/{z}/{x}/{y}.json';
+        this.geojsonTileLayer = new L.TileLayer.GeoJSON(this.geojsonURL, {
+            clipTiles: true,
+            unique: function(feature) {
+                return feature.properties.id;
+            }
+        }).addTo(this.map);
     }
 
     getAdminUnits(level, parent_name, callback) {
         var url = '/layers/gadm';
-        
         var query_params = '?level=' + level;
 
         if (level != 0) {
