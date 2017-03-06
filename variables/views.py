@@ -2,13 +2,13 @@ from django.core.serializers import serialize
 from django.shortcuts import get_object_or_404, render
 from django.conf import settings
 
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 
 from layers.models import Feature
-from variables.models import Variable
-from variables.serializers import VariableSerializer
+from variables.models import Variable, RasterRequest
+from variables.serializers import VariableSerializer, RasterRequestSerializer
 from variables.data import NODE_TYPES
 
 import json
@@ -48,6 +48,19 @@ def edit(request, variable_id):
         'raster_catalog': json.dumps(raster_catalog),
         'node_types': json.dumps(NODE_TYPES.keys())
     })
+
+
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.variable.owner == request.user
+
+
+class RasterRequestViewSet(viewsets.ModelViewSet):
+    queryset = RasterRequest.objects.all()
+    serializer_class = RasterRequestSerializer
+    permission_classes = (IsOwnerOrReadOnly,)
 
 
 class VariableViewSet(viewsets.ModelViewSet):

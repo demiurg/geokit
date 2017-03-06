@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from variables.models import Variable
+from variables.models import Variable, RasterRequest
 
 
 class VariableSerializer(serializers.HyperlinkedModelSerializer):
@@ -21,3 +21,9 @@ class VariableSerializer(serializers.HyperlinkedModelSerializer):
             },
             'partial': True
         }
+
+
+class RasterRequestSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = RasterRequest
+        fields = '__all__'

@@ -1,18 +1,12 @@
 from __future__ import unicode_literals
 
-from datetime import datetime
-from psycopg2.extras import DateRange
-
-import numpy as np
-import pandas
-
 from django.db import models
-from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.utils.functional import cached_property
 from layers.models import Layer
 from data import treeToNode, DataSource
 import json
+import django_rq
 
 
 class Variable(models.Model):
@@ -27,7 +21,7 @@ class Variable(models.Model):
     created = models.DateTimeField(auto_now_add=True, editable=False)
     modified = models.DateTimeField(auto_now=True)
     status = models.IntegerField(
-        choices=((0, 'Good'), (1, 'Working'), (3, 'Bad')), default=1
+        choices=((0, 'Good'), (1, 'Working'), (3, 'Bad')), default=0
     )
 
     @cached_property
@@ -44,6 +38,7 @@ class Variable(models.Model):
             try:
                 root = treeToNode(self.tree)
                 self.saved_dimensions = root.dimensions()
+                django_rq.enqueue()
             except:
                 self.saved_dimensions = None
 
