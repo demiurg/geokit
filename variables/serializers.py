@@ -28,7 +28,8 @@ class VariableSerializer(serializers.HyperlinkedModelSerializer):
     def update(self, request):
         result = super(VariableSerializer, self).create(request)
         django_rq.enqueue(
-            process_rasters, self.instance,
+            process_rasters,
+            self.instance.pk,
             self.request.tenant.schema_name
         )
         return result
@@ -45,9 +46,11 @@ class RasterRequestSerializer(serializers.HyperlinkedModelSerializer):
         fields = '__all__'
 
 
-def process_rasters(variable, schema_name):
+def process_rasters(variable_pk, schema_name):
     connection.close()
     connection.set_schema(schema_name)
+
+    variable = Variable.objects.get(pk=variable_pk)
 
     rasters = variable.get_rasters()
     for r in rasters:

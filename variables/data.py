@@ -104,13 +104,13 @@ class DataNode(object):
             if type(node) == DataSource:
                 node.execute()
                 return set([Layer(pk=l['id']) for l in node.layers])
-            elif type(node) == str:
-                return set()
-            else:
+            elif hasattr(node, 'operands'):
                 source_layers = set()
                 for operand in node.operands:
                     source_layers = source_layers.union(walk_nodes(operand))
                 return source_layers
+            else:
+                return set()
 
         if self.source_layers is None:
             self.source_layers = walk_nodes(self)
@@ -121,11 +121,13 @@ class DataNode(object):
         def walk_nodes(node):
             if type(node) == RasterSource:
                 return node
-            else:
+            elif hasattr(node, 'operands'):
                 rasters = set()
                 for operand in node.operands:
                     rasters = rasters.union(walk_nodes(operand))
                 return rasters
+            else:
+                return set()
 
         if self.source_rasters is None:
             self.source_rasters = walk_nodes(self)
