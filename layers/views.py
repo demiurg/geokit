@@ -370,14 +370,14 @@ def gadm_data(level, distinct=True, **kwargs):
             where_clause = cursor.mogrify("WHERE name_0 = %s", (kwargs['name_0'],))
         else:
             field_name = "name_{}".format(l)
-            where_clause = \
-                where_clause + \
-                cursor.mogrify(" AND %s = %s", (AsIs(field_name), (kwargs['name_' + str(l)])))
+            if kwargs[field_name]:
+                where_clause = \
+                    where_clause + \
+                    cursor.mogrify(" AND %s = %s", (AsIs(field_name), (kwargs[field_name])))
 
     SELECT = SELECT + where_clause + " ORDER BY name_{}".format(level)
 
     cursor.execute(SELECT)
-    print SELECT
     columns = [col[0] for col in cursor.description]
     return [
         dict(zip(columns, row))
@@ -617,9 +617,21 @@ def gadm_layer_save(tenant, layer, admin_units):
     connection.set_schema(tenant)
 
     with transaction.atomic():
-        union = GEOSGeometry(admin_units[0]['geometry'])
-        for i, u in enumerate(admin_units):
-            geom = GEOSGeometry(u['geometry'], srid=4326)
+        union = GEOSGeometry('POINT EMPTY')
+        for u in admin_units:
+            levels = u.split('.')
+            gadm_data_args = {}
+            for i, l in enumerate(levels):
+                if l == 'null':
+                    gadm_data_args['name_' + str(i)] = None
+                else:
+                    gadm_data_args['name_' + str(i)] = l
+
+            unit_features = gadm_data(len(levels), False, **gadm_data_args)
+            geom = GEOSGeometry(unit_features[0]['geometry'], srid=4326)
+            for f in unit_features:
+                geom.union(GEOSGeometry(f['geometry'], srid=4326))
+
             union = union.union(geom)
             geom.transform(3857)
 
@@ -655,17 +667,12 @@ class GADMView(views.APIView):
 
     def post(self, request):
         args = request.data
-        # print args.keys()
-        # results = gadm_data(distinct=False, **gadm_data_args(args))
-
-        # field_name = 'name_%s' % request.POST['level']
-        # results = [result for result in results if result[field_name] in request.POST['selected[]']]
 
         name = args['name']
         schema = {
             'geometry': 'Polygon',
             'properties': {
-                'id': 'int:4'
+                'shaid': 'str'
             }
         }
         layer = Layer(name=name, field_names=['id'], schema=schema)

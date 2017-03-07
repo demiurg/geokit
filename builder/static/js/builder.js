@@ -36,7 +36,7 @@ var GADMChooser = function (_React$Component) {
             level: null,
             parents: [],
             units: [],
-            selected: [],
+            selected: {},
             loading: true
         };
         return _this;
@@ -60,87 +60,13 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
-        var _this3 = this;
-
         if (!this.state.loading && !this.mapRendered) {
             this.renderMap();
         } else if (!this.state.loading && this.mapRendered) {
-            if (this.state.level == 0) {
-                // Don't bother rendering any admin units, just zoom out
-                // to the world.
-
-                if (this.unit_json_layer) {
-                    this.map.removeLayer(this.unit_json_layer);
-                }
-                this.map.setView([0, 0], 1);
-            } else {
-                if (this.state.level == prevState.level) {
-                    // Only the selected admin units have changed,
-                    // no need to fetch the geometries again.
-
-                    this.renderAdminUnits();
-                } else {
-                    var url = '/admin/layers/gadm.json';
-
-                    var query_params = '?level=' + this.state.level;
-
-                    var i = 0;
-
-                    this.state.parents.forEach(function (unit) {
-                        query_params += '&name_' + i + '=' + unit;
-                        i++;
-                    });
-
-                    $.ajax(url + query_params, {
-                        dataType: 'json',
-                        success: function success(data, status, xhr) {
-                            _this3.renderAdminUnits();
-                        },
-                        error: function error(xhr, status, _error) {}
-                    });
-                }
+            if (prevState.level != this.state.level) {
+                this.setGadmLayer(this.state.level);
             }
         }
-    };
-
-    GADMChooser.prototype.renderAdminUnits = function renderAdminUnits() {
-        var _this4 = this;
-
-        if (this.unit_json_layer) {
-            this.map.removeLayer(this.unit_json_layer);
-        }
-
-        var units = this.unit_geometries;
-        var geometries = [];
-        for (var unit in units) {
-            var geometry = JSON.parse(units[unit]);
-            geometry.properties = {};
-            geometry.properties.name = unit;
-            geometries.push(geometry);
-        }
-
-        this.unit_json_layer = L.geoJson(geometries, {
-            style: function style(feature) {
-                if (_this4.state.selected.indexOf(feature.geometry.properties.name) == -1) {
-                    return { color: 'grey' };
-                } else {
-                    return { color: 'crimson' };
-                }
-            },
-            onEachFeature: function onEachFeature(feature, layer) {
-                layer.on('click', function () {
-                    var selected = _this4.state.selected;
-                    var i = selected.indexOf(feature.properties.name);
-                    if (i == -1) {
-                        selected.push(feature.properties.name);
-                    } else {
-                        selected.splice(i, 1);
-                    }
-                    _this4.setState({ selected: selected });
-                });
-            }
-        }).addTo(this.map);
-        this.map.fitBounds(this.unit_json_layer.getBounds());
     };
 
     GADMChooser.prototype.renderMap = function renderMap() {
@@ -154,17 +80,100 @@ var GADMChooser = function (_React$Component) {
         }).addTo(map);
 
         this.setGadmLayer(0);
+        this.mapRendered = true;
+    };
+
+    GADMChooser.prototype.getIdString = function getIdString(feature, level) {
+        var parent_string = '';
+
+        for (var i = 0; i < level; i++) {
+            var level_name = feature.properties['name_' + i];
+
+            if (level_name) {
+                parent_string += level_name + ".";
+            }
+        }
+
+        parent_string += feature.properties['name_' + level];
+        return parent_string;
+    };
+
+    GADMChooser.prototype.isSelected = function isSelected(feature) {
+        var parent_string = '';
+
+        for (var i = 0; i < this.state.level; i++) {
+            var level_name = feature.properties['name_' + i];
+
+            if (level_name) {
+                parent_string += level_name + ".";
+            }
+        }
+
+        parent_string += feature.properties['name_' + this.state.level];
+
+        if (this.state.selected.indexOf(parent_string) == -1) {
+            return false;
+        }
+
+        return true;
     };
 
     GADMChooser.prototype.setGadmLayer = function setGadmLayer(level) {
+        var _this3 = this;
+
         if (this.geojsonTileLayer) {
             this.map.removeLayer(this.geojsonTileLayer);
         }
-        this.geojsonURL = '/layers/gadm/1/{z}/{x}/{y}.json';
+        this.geojsonURL = '/layers/gadm/' + level + '/{z}/{x}/{y}.json';
         this.geojsonTileLayer = new L.TileLayer.GeoJSON(this.geojsonURL, {
             clipTiles: true,
             unique: function unique(feature) {
-                return feature.properties.id;
+                var hasc_id = '';
+                for (var i = 0; i <= Number.parseInt(level); i++) {
+                    hasc_id += feature.properties['name_' + i];
+                }
+                return hasc_id;
+            }
+        }, {
+            onEachFeature: function onEachFeature(feature, layer) {
+                layer.on('click', function (e) {
+                    var featureIdString = _this3.getIdString(feature, _this3.state.level);
+                    var featureIdx = _this3.state.selected.indexOf(featureIdString);
+                    if (featureIdx != -1) {
+                        layer.setStyle({
+                            fillColor: "grey"
+                        });
+
+                        var selected = _this3.state.selected.slice();
+                        selected.splice(featureIdx, 1);
+                        _this3.setState({
+                            selected: selected
+                        });
+                    } else {
+                        layer.setStyle({
+                            fillColor: "blue"
+                        });
+
+                        var selected = _this3.state.selected.slice();
+                        selected.push(featureIdString);
+                        _this3.setState({
+                            selected: selected
+                        });
+                    }
+                });
+            },
+            style: function style(feature) {
+                if (_this3.isSelected(feature)) {
+                    return {
+                        fillColor: "blue",
+                        weight: 1
+                    };
+                } else {
+                    return {
+                        fillColor: "grey",
+                        weight: 1
+                    };
+                }
             }
         }).addTo(this.map);
     };
@@ -186,12 +195,12 @@ var GADMChooser = function (_React$Component) {
             success: function success(data, status, xhr) {
                 callback(data);
             },
-            error: function error(xhr, status, _error2) {}
+            error: function error(xhr, status, _error) {}
         });
     };
 
     GADMChooser.prototype.back = function back() {
-        var _this5 = this;
+        var _this4 = this;
 
         var level = this.state.level - 1,
             parents = this.state.parents;
@@ -199,13 +208,14 @@ var GADMChooser = function (_React$Component) {
         parents.pop();
 
         this.getAdminUnits(level, parents[parents.length - 1], function (admin_units) {
-            _this5.setState({
+            _this4.setState({
                 level: level,
                 units: admin_units.map(function (unit) {
                     return unit.name;
                 }),
                 selected: admin_units.map(function (unit) {
-                    return unit.name;
+                    var parent_string = parents.join(".");
+                    return parent_string + "." + unit.name;
                 }),
                 parents: parents
             });
@@ -213,7 +223,7 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.forward = function forward(parent_name) {
-        var _this6 = this;
+        var _this5 = this;
 
         var level = this.state.level + 1,
             parents = this.state.parents;
@@ -221,13 +231,15 @@ var GADMChooser = function (_React$Component) {
         parents.push(parent_name);
 
         this.getAdminUnits(level, parent_name, function (admin_units) {
-            _this6.setState({
+
+            _this5.setState({
                 level: level,
                 units: admin_units.map(function (unit) {
                     return unit.name;
                 }),
                 selected: admin_units.map(function (unit) {
-                    return unit.name;
+                    var parent_string = parents.join(".");
+                    return parent_string + "." + unit.name;
                 }),
                 parents: parents
             });
@@ -235,22 +247,9 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.saveLayer = function saveLayer(e) {
-        var _this7 = this;
-
         e.preventDefault();
 
-        var data = { features: [] };
-        /*for (var i = 0; i < this.state.parents.length; i++) {
-            data['name_' + i] = this.state.parents[i];
-        }
-        data.selected = this.state.selected;
-        data.level = this.state.level;*/
-        this.state.selected.forEach(function (unit) {
-            data.features.push({
-                geometry: _this7.unit_geometries[unit],
-                name: unit
-            });
-        });
+        var data = { features: this.state.selected };
 
         data.name = this.state.parents[this.state.parents.length - 1];
 
@@ -265,12 +264,12 @@ var GADMChooser = function (_React$Component) {
             success: function success(data, status, xhr) {
                 window.location = '/builder/admin/layers';
             },
-            error: function error(xhr, status, _error3) {}
+            error: function error(xhr, status, _error2) {}
         });
     };
 
     GADMChooser.prototype.render = function render() {
-        var _this8 = this;
+        var _this6 = this;
 
         if (this.state.loading) {
             return React.createElement(
@@ -310,7 +309,7 @@ var GADMChooser = function (_React$Component) {
                             React.createElement(
                                 'a',
                                 { href: 'javascript:',
-                                    onClick: _this8.forward.bind(_this8, unit)
+                                    onClick: _this6.forward.bind(_this6, unit)
                                 },
                                 unit
                             )
