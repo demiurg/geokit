@@ -8,6 +8,7 @@ from variables import views as variable_views
 
 router.register(r'tables', tables_views.GeoKitTableViewSet)
 router.register(r'variables', variable_views.VariableViewSet)
+router.register(r'rasterrequests', variable_views.RasterRequestViewSet)
 
 
 urlpatterns = [

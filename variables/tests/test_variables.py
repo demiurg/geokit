@@ -32,12 +32,12 @@ def _matrix_val(d):
     ]
 
 
-spatial_key = [1, 2]
+spatial_key = ['a', 'b']
 temporal_key = [
     DateRange(date(2010, 1, 1), date(2010, 1, 2)),
     DateRange(date(2010, 1, 2), date(2010, 1, 3))
 ]
-spatial_key3 = [1, 2, 3]
+spatial_key3 = ['a', 'b', 'c']
 temporal_key3 = [
     DateRange(date(2010, 1, 1), date(2010, 1, 2)),
     DateRange(date(2010, 1, 2), date(2010, 1, 3)),

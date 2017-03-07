@@ -19,7 +19,7 @@
                     <th>Name</th>
                     <th>Description</th>
                     <th>Dimensions</th>
-                    <th>Units</th>
+                    <th>Last Modified</th>
                 </tr>
             </thead>
             <tbody>
@@ -34,10 +34,10 @@
                         {{ variable.description }}
                     </td>
                     <td class="spatial_domain">
-                        {{ variable.spatial_domain.width }} x {{ variable.spatial_domain.height }}
+                        {{ variable.saved_dimensions }}
                     </td>
                     <td>
-                        {{ variable.units }}
+                        {{ variable.modified }}
                     </td>
                 </tr>
                 {% endfor %}

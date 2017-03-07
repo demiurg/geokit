@@ -2,13 +2,13 @@ from django.core.serializers import serialize
 from django.shortcuts import get_object_or_404, render
 from django.conf import settings
 
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 
 from layers.models import Feature
-from variables.models import Variable
-from variables.serializers import VariableSerializer
+from variables.models import Variable, RasterRequest
+from variables.serializers import VariableSerializer, RasterRequestSerializer
 from variables.data import NODE_TYPES
 
 import json
@@ -27,7 +27,7 @@ def get_raster_catalog():
 
 
 def index(request):
-    variables = Variable.objects.all()
+    variables = Variable.objects.all().order_by('-modified')
     return render(request, 'variables/index.html', {"variables": variables})
 
 
@@ -50,30 +50,22 @@ def edit(request, variable_id):
     })
 
 
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.variable.owner == request.user
+
+
+class RasterRequestViewSet(viewsets.ModelViewSet):
+    queryset = RasterRequest.objects.all()
+    serializer_class = RasterRequestSerializer
+    permission_classes = (IsOwnerOrReadOnly,)
+
+
 class VariableViewSet(viewsets.ModelViewSet):
     queryset = Variable.objects.all()
     serializer_class = VariableSerializer
-
-    #def create(self, request):
-        #expression_serializer = ExpressionSerializer(data=request.data)
-        #expression_serializer.is_valid(raise_exception=True)
-        #expression = expression_serializer.save()
-
-        #ds = ExpressionDataSource(expression=expression)
-        #ds.save()
-
-        #d = request.data
-        #variable = Variable(
-            #name=d['name'],
-            #temporal_domain=d['temporal_domain'],
-            #spatial_domain=[],   # temporarily unimplemented
-            #units='',            # temporarily unimplemented
-            #data_source=ds
-        #)
-        #variable.save()
-        #serializer = VariableSerializer(variable, context={'request': request})
-
-        #return Response(serializer.data, status=status.HTTP_201_CREATED, headers=self.get_success_headers(serializer.data))
 
     @detail_route(url_path='map')
     def map_data(self, request, pk=None):

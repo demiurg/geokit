@@ -165,7 +165,7 @@ def test_raster(set_schema):
         ["raster", [
             { "id": "modis_indices_ndvi", "name": "Land indices"},
             [ "source", [
-                { "field": "fid", "type": "Layer", "id": "3", "name": "New Hampshire"}
+                { "field": "fid", "type": "Layer", "id": "26", "name": "cnty_24k97"}
             ]],
             "2015-001,2015-030"
         ]],
@@ -173,3 +173,5 @@ def test_raster(set_schema):
     ]]
 
     mean = Variable(tree=tree)
+    len(mean.get_source_layers()) == 1
+    len(mean.get_rasters()) == 1

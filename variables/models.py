@@ -1,17 +1,10 @@
 from __future__ import unicode_literals
 
-from datetime import datetime
-from psycopg2.extras import DateRange
-
-import numpy as np
-import pandas
-
 from django.db import models
-from django.core.exceptions import ValidationError
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.utils.functional import cached_property
 from layers.models import Layer
-from data import treeToNode, DataSource
+from data import treeToNode
 import json
 
 
@@ -27,7 +20,7 @@ class Variable(models.Model):
     created = models.DateTimeField(auto_now_add=True, editable=False)
     modified = models.DateTimeField(auto_now=True)
     status = models.IntegerField(
-        choices=((0, 'Good'), (1, 'Working'), (3, 'Bad')), default=1
+        choices=((0, 'Good'), (1, 'Working'), (3, 'Bad')), default=0
     )
 
     @cached_property
@@ -42,9 +35,9 @@ class Variable(models.Model):
     def save(self, *args, **kwargs):
         if self.tree:
             try:
-                root = treeToNode(self.tree)
-                self.saved_dimensions = root.dimensions()
-            except:
+                self.saved_dimensions = self.root.dimensions
+            except Exception as e:
+                print "Variable save, can't get dimension: {}".format(e)
                 self.saved_dimensions = None
 
         return super(Variable, self).save(*args, **kwargs)
@@ -62,22 +55,10 @@ class Variable(models.Model):
         return json.dumps(self.input_variables)
 
     def get_source_layers(self):
-        def walk_nodes(node):
-            if type(node) == DataSource:
-                node.execute()
-                return set([Layer(pk=l['id']) for l in node.layers])
-            elif type(node) == str:
-                return set()
-            else:
-                source_layers = set()
-                for operand in node.operands:
-                    source_layers = source_layers.union(walk_nodes(operand))
-                return source_layers
+        return self.root.get_layers()
 
-        if self.source_layers is None:
-            self.source_layers = walk_nodes(self.root)
-
-        return self.source_layers
+    def get_rasters(self):
+        return self.root.get_rasters()
 
     def data(self):
         if self.current_data is None:

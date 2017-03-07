@@ -10,6 +10,17 @@ from django.conf import settings
 from geokit_tables.models import GeoKitTable
 from layers.models import Layer
 
+RPC_CONNECTION = None
+
+
+def rpc_con():
+    global RPC_CONNECTION
+    if RPC_CONNECTION is None:
+        RPC_CONNECTION = xmlrpclib.ServerProxy(
+            settings.RPC_URL, use_datetime=True
+        )
+    return RPC_CONNECTION
+
 
 def treeToNode(tree):
     return NODE_TYPES[tree[0]](tree[0], tree[1])
@@ -33,10 +44,12 @@ class DataNode(object):
         ]
         self._dimensions = None
         self._dimensions_str = ''
+        self.source_layers = None
+        self.source_rasters = None
 
     def __unicode__(self):
         return "[{}, [{}]".format(
-            self.operation, ", ".join(map(str, self.operands))
+            self.operation, ", ".join(map(unicode, self.operands))
         )
 
     def get_dimensions(self):
@@ -85,6 +98,41 @@ class DataNode(object):
         ]
         # print rands
         return rands
+
+    def get_layers(self):
+        def walk_nodes(node):
+            if type(node) == DataSource:
+                node.execute()
+                return set([Layer(pk=l['id']) for l in node.layers])
+            elif hasattr(node, 'operands'):
+                source_layers = set()
+                for operand in node.operands:
+                    source_layers = source_layers.union(walk_nodes(operand))
+                return source_layers
+            else:
+                return set()
+
+        if self.source_layers is None:
+            self.source_layers = walk_nodes(self)
+
+        return self.source_layers
+
+    def get_rasters(self):
+        def walk_nodes(node):
+            if type(node) == RasterSource:
+                return set([node])
+            elif hasattr(node, 'operands'):
+                rasters = set()
+                for operand in node.operands:
+                    rasters = rasters.union(walk_nodes(operand))
+                return rasters
+            else:
+                return set()
+
+        if self.source_rasters is None:
+            self.source_rasters = walk_nodes(self)
+
+        return self.source_rasters
 
 
 def getattrOperator(method):
@@ -335,38 +383,7 @@ class SelectOperator(DataNode):
                 )
             return df
 
-    def execute_datahander(self, rs, field):
-        conn = xmlrpclib.ServerProxy(settings.RPC_URL, use_datetime=True)
-        '''
-        from variables.models import RasterRequest
-
-        try:
-            job_request = RasterRequest.get(
-                raster_id=rs.raster['id'],
-                dates=rs.dates,
-                vector=rs.vector['id']
-            )
-            job_id = job_request.job_id
-        except:
-            job_request = RasterRequest(
-                raster_id=rs.raster['id'],
-                dates=rs.dates,
-                vector=rs.vector['id']
-            )
-            job_id = conn.submit_job(
-                "pt",
-                rs.raster['id'],
-                {"site": "/net/oka/web/geokit/media/downloads/shapefile/pt/3.shp"},
-                {"dates": "2015-001,2015-030"}
-            )
-
-            if job_id:
-                job_request.job_id = job_id
-                job_request.save()
-        '''
-        job_id = 28
-        results = conn.stats_request_results({'job': job_id})
-
+    def execute_datahander(self, results, field):
         for r in results:
             date = r['date'].date()
             r['date_range'] = DateRange(date, date, '[]')
@@ -441,15 +458,31 @@ class DataSource(DataNode):
 class RasterSource(DataNode):
     ''' Used for testing '''
 
-    def __init__(self, op, args):
-        self.operation = op
-        self.raster, self.vector, self.dates = args
+    def __init__(self, *args, **kwargs):
+        super(RasterSource, self).__init__(*args, **kwargs)
+        self.raster, self.vector, self.dates = self.operands
 
     def get_dimensions(self):
         return {'space': True, 'time': True}
 
     def execute(self):
-        return self
+        conn = rpc_con()
+        from variables.models import RasterRequest
+
+        job_request = RasterRequest.get(
+            raster_id=self.raster['id'],
+            dates=self.dates,
+            vector=self.vector['id']
+        )
+        job_id = job_request.job_id
+
+        results = conn.stats_request_results({'job': job_id})
+        return results
+
+    def __unicode__(self):
+        return "[raster, [{}]".format(
+            self.operation, ", ".join(map(str, self.operands))
+        )
 
 
 class DataFrameSource(DataNode):
