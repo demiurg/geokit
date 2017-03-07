@@ -83,8 +83,8 @@ def process_rasters(variable_pk, schema_name):
             job_id = rpc_con().submit_job(
                 schema_name,
                 r.raster['id'],
-                {"site": "{}/{}".format(
-                    settings.MEDIA_ROOT, layer_file.file
+                {"site": "{}/{}.shp".format(
+                    settings.MEDIA_ROOT, layer_file.file[:-4]
                 )},
                 {"dates": r.dates}
             )
