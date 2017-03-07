@@ -84,7 +84,7 @@ def process_rasters(variable_pk, schema_name):
                 schema_name,
                 r.raster['id'],
                 {"site": "{}/{}.shp".format(
-                    settings.MEDIA_ROOT, layer_file.file[:-4]
+                    settings.MEDIA_ROOT, str(layer_file.file)[:-4]
                 )},
                 {"dates": r.dates}
             )
