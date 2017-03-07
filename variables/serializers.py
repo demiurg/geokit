@@ -2,6 +2,8 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from variables.models import Variable, RasterRequest
+from variables.data import rpc_con
+from layers.models import Layer, LayerFile
 
 import django_rq
 from django.db import connection, connections, transaction
@@ -25,18 +27,22 @@ class VariableSerializer(serializers.HyperlinkedModelSerializer):
             'partial': True
         }
 
-    def update(self, request):
-        result = super(VariableSerializer, self).create(request)
+    def update(self, *args, **kwargs):
+        result = super(VariableSerializer, self).update(*args, **kwargs)
         django_rq.enqueue(
             process_rasters,
             self.instance.pk,
-            self.request.tenant.schema_name
+            self.context['request'].tenant.schema_name
         )
         return result
 
-    def create(self, request):
-        result = super(VariableSerializer, self).create(request)
-        django_rq.enqueue(process_rasters, self.instance)
+    def create(self, *args, **kwargs):
+        result = super(VariableSerializer, self).create(*args, **kwargs)
+        django_rq.enqueue(
+            process_rasters,
+            self.instance.pk,
+            self.context['request'].tenant.schema_name
+        )
         return result
 
 
@@ -54,4 +60,31 @@ def process_rasters(variable_pk, schema_name):
 
     rasters = variable.get_rasters()
     for r in rasters:
-        print r
+        try:
+            job_request = RasterRequest.objects.get(
+                raster_id=r.raster['id'],
+                dates=r.dates,
+                vector=r.vector['id']
+            )
+        except RasterRequest.DoesNotExist:
+            job_request = RasterRequest(
+                raster_id=r.raster['id'],
+                dates=r.dates,
+                vector=r.vector['id']
+            )
+
+            try:
+                layer_file = LayerFile.get(layer=r.vector['id'])
+            except LayerFile.DoesNotExist:
+                layer = Layer.objects.get(pk=r.vector['id'])
+                layer_file = layer.export_to_file(schema_name)
+
+            job_id = rpc_con().submit_job(
+                schema_name,
+                r.raster['id'],
+                {"site": str(layer_file.file)},
+                {"dates": r.dates}
+            )
+
+            job_request.job_id = job_id
+            job_request.save()

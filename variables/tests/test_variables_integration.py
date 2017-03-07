@@ -173,6 +173,5 @@ def test_raster(set_schema):
     ]]
 
     mean = Variable(tree=tree)
-    print mean.get_source_layers()
-    print mean.get_rasters()
-
+    len(mean.get_source_layers()) == 1
+    len(mean.get_rasters()) == 1

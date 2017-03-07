@@ -49,7 +49,7 @@ class DataNode(object):
 
     def __unicode__(self):
         return "[{}, [{}]".format(
-            self.operation, ", ".join(map(str, self.operands))
+            self.operation, ", ".join(map(unicode, self.operands))
         )
 
     def get_dimensions(self):
@@ -120,7 +120,7 @@ class DataNode(object):
     def get_rasters(self):
         def walk_nodes(node):
             if type(node) == RasterSource:
-                return node
+                return set([node])
             elif hasattr(node, 'operands'):
                 rasters = set()
                 for operand in node.operands:
@@ -467,36 +467,22 @@ class RasterSource(DataNode):
 
     def execute(self):
         conn = rpc_con()
-        '''
         from variables.models import RasterRequest
 
-        try:
-            job_request = RasterRequest.get(
-                raster_id=rs.raster['id'],
-                dates=rs.dates,
-                vector=rs.vector['id']
-            )
-            job_id = job_request.job_id
-        except:
-            job_request = RasterRequest(
-                raster_id=rs.raster['id'],
-                dates=rs.dates,
-                vector=rs.vector['id']
-            )
-            job_id = conn.submit_job(
-                "pt",
-                rs.raster['id'],
-                {"site": "/net/oka/web/geokit/media/downloads/shapefile/pt/3.shp"},
-                {"dates": "2015-001,2015-030"}
-            )
+        job_request = RasterRequest.get(
+            raster_id=self.raster['id'],
+            dates=self.dates,
+            vector=self.vector['id']
+        )
+        job_id = job_request.job_id
 
-            if job_id:
-                job_request.job_id = job_id
-                job_request.save()
-        '''
-        job_id = 28
         results = conn.stats_request_results({'job': job_id})
         return results
+
+    def __unicode__(self):
+        return "[raster, [{}]".format(
+            self.operation, ", ".join(map(str, self.operands))
+        )
 
 
 class DataFrameSource(DataNode):

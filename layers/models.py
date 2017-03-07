@@ -104,6 +104,7 @@ class Layer(models.Model):
 
             layer_file.file = "downloads/shapefile/%s/%s.zip" % (tenant, self.pk)
             layer_file.save()
+            return layer_file
         except IntegrityError as e:
             # Race condition where two requests for a LayerFile
             # occur at the same time.

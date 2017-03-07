@@ -35,9 +35,9 @@ class Variable(models.Model):
     def save(self, *args, **kwargs):
         if self.tree:
             try:
-                root = treeToNode(self.tree)
-                self.saved_dimensions = root.dimensions()
-            except:
+                self.saved_dimensions = self.root.dimensions
+            except Exception as e:
+                print "Variable save, can't get dimension: {}".format(e)
                 self.saved_dimensions = None
 
         return super(Variable, self).save(*args, **kwargs)

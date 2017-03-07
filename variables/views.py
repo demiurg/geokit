@@ -27,7 +27,7 @@ def get_raster_catalog():
 
 
 def index(request):
-    variables = Variable.objects.all()
+    variables = Variable.objects.all().order_by('-modified')
     return render(request, 'variables/index.html', {"variables": variables})
 
 
