@@ -12,6 +12,7 @@ from django.conf import settings
 from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import connection, IntegrityError
+from django.utils.text import slugify
 
 
 class Layer(models.Model):
@@ -66,7 +67,7 @@ class Layer(models.Model):
             layer_file = LayerFile(layer=self)
             layer_file.save()
 
-            filename = self.name + str(datetime.now())
+            filename = slugify(self.name + str(datetime.now()))
             path = "%s/downloads/shapefile/%s/%s" % (
                 settings.MEDIA_ROOT, tenant, filename
             )
