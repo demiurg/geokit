@@ -6,7 +6,8 @@ from variables.data import rpc_con
 from layers.models import Layer, LayerFile
 
 import django_rq
-from django.db import connection, connections, transaction
+from django.db import connection
+from django.conf import settings
 
 
 class VariableSerializer(serializers.HyperlinkedModelSerializer):
@@ -82,7 +83,9 @@ def process_rasters(variable_pk, schema_name):
             job_id = rpc_con().submit_job(
                 schema_name,
                 r.raster['id'],
-                {"site": str(layer_file.file)},
+                {"site": "{}/{}".format(
+                    settings.MEDIA_ROOT, layer_file.file
+                )},
                 {"dates": r.dates}
             )
 
