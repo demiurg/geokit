@@ -9,6 +9,7 @@ from django.conf import settings
 
 from geokit_tables.models import GeoKitTable
 from layers.models import Layer
+from variables.models import RasterRequest
 
 RPC_CONNECTION = None
 
@@ -467,8 +468,6 @@ class RasterSource(DataNode):
 
     def execute(self):
         conn = rpc_con()
-        from variables.models import RasterRequest
-
         job_request = RasterRequest.get(
             raster_id=self.raster['id'],
             dates=self.dates,

@@ -60,24 +60,24 @@ def process_rasters(variable_pk, schema_name):
 
     rasters = variable.get_rasters()
     for r in rasters:
+        vector = r.get_layers().pop()
         try:
             job_request = RasterRequest.objects.get(
                 raster_id=r.raster['id'],
                 dates=r.dates,
-                vector=r.vector['id']
+                vector=vector
             )
         except RasterRequest.DoesNotExist:
             job_request = RasterRequest(
                 raster_id=r.raster['id'],
                 dates=r.dates,
-                vector=r.vector['id']
+                vector=vector
             )
 
             try:
-                layer_file = LayerFile.get(layer=r.vector['id'])
+                layer_file = LayerFile.objects.get(layer=vector)
             except LayerFile.DoesNotExist:
-                layer = Layer.objects.get(pk=r.vector['id'])
-                layer_file = layer.export_to_file(schema_name)
+                layer_file = vector.export_to_file(schema_name)
 
             job_id = rpc_con().submit_job(
                 schema_name,
