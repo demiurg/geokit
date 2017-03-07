@@ -1,3 +1,4 @@
+from datetime import datetime
 from glob import glob
 import json
 import md5
@@ -65,8 +66,9 @@ class Layer(models.Model):
             layer_file = LayerFile(layer=self)
             layer_file.save()
 
+            filename = self.name + str(datetime.now())
             path = "%s/downloads/shapefile/%s/%s" % (
-                settings.MEDIA_ROOT, tenant, self.pk
+                settings.MEDIA_ROOT, tenant, filename
             )
             crs = from_string(self.feature_set.first().geometry.crs.proj4)
 
@@ -98,11 +100,11 @@ class Layer(models.Model):
 
             os.chdir(os.path.dirname(path))
             with ZipFile(path + '.zip', 'w') as shape_zip:
-                for f in glob('%s.*' % self.pk):
+                for f in glob('%s.*' % filename):
                     if not os.path.basename(f).endswith('zip'):
                         shape_zip.write(f)
 
-            layer_file.file = "downloads/shapefile/%s/%s.zip" % (tenant, self.pk)
+            layer_file.file = "downloads/shapefile/%s/%s.zip" % (tenant, filename)
             layer_file.save()
             return layer_file
         except IntegrityError as e:
