@@ -24,7 +24,7 @@ class GADMChooser extends React.Component {
             level: null,
             parents: [],
             units: [],
-            selected: [],
+            selected: {},
             loading: true
         };
     }
@@ -44,81 +44,10 @@ class GADMChooser extends React.Component {
         if (!this.state.loading && !this.mapRendered) {
             this.renderMap();
         } else if (!this.state.loading && this.mapRendered) {
-            if (this.state.level == 0) {
-                // Don't bother rendering any admin units, just zoom out
-                // to the world.
-
-                if (this.unit_json_layer) {
-                    this.map.removeLayer(this.unit_json_layer);
-                }
-                this.map.setView([0,0], 1);
-            } else {
-                if (this.state.level == prevState.level) {
-                    // Only the selected admin units have changed,
-                    // no need to fetch the geometries again.
-
-                    this.renderAdminUnits();
-                } else {
-                    var url = '/admin/layers/gadm.json';
-
-                    var query_params = '?level=' + this.state.level;
-
-                    var i = 0;
-
-                    this.state.parents.forEach((unit) => {
-                        query_params += '&name_' + i + '=' + unit;
-                        i++;
-                    });
-
-                    $.ajax(url + query_params, {
-                        dataType: 'json',
-                        success: (data, status, xhr) => {
-                            this.renderAdminUnits();
-                        },
-                        error: (xhr, status, error) => {
-                        }
-                    });
-                }
+            if (prevState.level != this.state.level) {
+                this.setGadmLayer(this.state.level);
             }
         }
-    }
-
-    renderAdminUnits() {
-        if (this.unit_json_layer) {
-            this.map.removeLayer(this.unit_json_layer);
-        }
-
-        var units = this.unit_geometries;
-        var geometries = [];
-        for (var unit in units) {
-            var geometry = JSON.parse(units[unit]);
-            geometry.properties = {};
-            geometry.properties.name = unit;
-            geometries.push(geometry);
-        }
-
-        this.unit_json_layer = L.geoJson(geometries, {
-            style: (feature) => {
-                if (this.state.selected.indexOf(feature.geometry.properties.name) == -1) {
-                    return {color: 'grey'};
-                } else {
-                    return {color: 'crimson'};
-                }
-            },
-            onEachFeature: (feature, layer) => {
-                layer.on('click', () => {
-                    var selected = this.state.selected;
-                    var i = selected.indexOf(feature.properties.name);
-                    if (i == -1) {
-                        selected.push(feature.properties.name);
-                    } else {
-                        selected.splice(i, 1);
-                    }
-                    this.setState({selected: selected});
-                });
-            }
-        }).addTo(this.map);
-        this.map.fitBounds(this.unit_json_layer.getBounds());
     }
 
     renderMap() {
@@ -132,17 +61,98 @@ class GADMChooser extends React.Component {
         }).addTo(map);
 
         this.setGadmLayer(0);
+        this.mapRendered = true;
+    }
+
+    getIdString(feature, level) {
+        var parent_string = '';
+
+        for (var i = 0; i < level; i++) {
+            var level_name = feature.properties['name_'+i];
+
+            if (level_name) {
+                parent_string += level_name + ".";
+            }
+        }
+
+        parent_string += feature.properties['name_'+level];
+        return parent_string;
+    }
+
+    isSelected(feature) {
+        var parent_string = '';
+
+        for (var i = 0; i < this.state.level; i++) {
+            var level_name = feature.properties['name_'+i];
+
+            if (level_name) {
+                parent_string += level_name + ".";
+            }
+        }
+
+        parent_string += feature.properties['name_'+this.state.level];
+
+        if (this.state.selected.indexOf(parent_string) == -1) {
+            return false;
+        }
+
+        return true;
     }
 
     setGadmLayer(level){
         if (this.geojsonTileLayer){
             this.map.removeLayer(this.geojsonTileLayer);
         }
-        this.geojsonURL = '/layers/gadm/1/{z}/{x}/{y}.json';
+        this.geojsonURL = '/layers/gadm/' + level + '/{z}/{x}/{y}.json';
         this.geojsonTileLayer = new L.TileLayer.GeoJSON(this.geojsonURL, {
             clipTiles: true,
             unique: function(feature) {
-                return feature.properties.id;
+                var hasc_id = '';
+                for (var i = 0; i <= Number.parseInt(level); i++) {
+                    hasc_id += feature.properties['name_'+i];
+                }
+                return hasc_id;
+            }
+        }, {
+            onEachFeature: (feature, layer) => {
+                layer.on('click', (e) => {
+                    var featureIdString = this.getIdString(feature, this.state.level);
+                    var featureIdx = this.state.selected.indexOf(featureIdString);
+                    if (featureIdx != -1) {
+                        layer.setStyle({
+                            fillColor: "grey"
+                        });
+                   
+                        var selected = this.state.selected.slice();
+                        selected.splice(featureIdx, 1);
+                        this.setState({
+                            selected: selected
+                        });
+                    } else {
+                        layer.setStyle({
+                            fillColor: "blue"
+                        });
+                        
+                        var selected = this.state.selected.slice();
+                        selected.push(featureIdString);
+                        this.setState({
+                            selected: selected
+                        });
+                    }
+                });
+            },
+            style: (feature) => {
+                if (this.isSelected(feature)) {
+                    return {
+                        fillColor: "blue",
+                        weight: 1
+                    };
+                } else {
+                    return {
+                        fillColor: "grey",
+                        weight: 1
+                    };
+                }
             }
         }).addTo(this.map);
     }
@@ -179,7 +189,10 @@ class GADMChooser extends React.Component {
             this.setState({
                 level: level,
                 units: admin_units.map((unit) => {return unit.name}),
-                selected: admin_units.map((unit) => {return unit.name}),
+                selected: admin_units.map((unit) => {
+                    var parent_string = parents.join(".");
+                    return parent_string + "." + unit.name;
+                }),
                 parents: parents
             });
         });
@@ -192,10 +205,15 @@ class GADMChooser extends React.Component {
         parents.push(parent_name);
 
         this.getAdminUnits(level, parent_name, (admin_units) => {
+
+
             this.setState({
                 level: level,
                 units: admin_units.map((unit) => {return unit.name}),
-                selected: admin_units.map((unit) => {return unit.name}),
+                selected: admin_units.map((unit) => {
+                    var parent_string = parents.join(".");
+                    return parent_string + "." + unit.name;
+                }),
                 parents: parents
             });
         });
@@ -204,18 +222,7 @@ class GADMChooser extends React.Component {
     saveLayer(e) {
         e.preventDefault();
 
-        var data = {features: []};
-        /*for (var i = 0; i < this.state.parents.length; i++) {
-            data['name_' + i] = this.state.parents[i];
-        }
-        data.selected = this.state.selected;
-        data.level = this.state.level;*/
-        this.state.selected.forEach((unit) => {
-            data.features.push({
-                geometry: this.unit_geometries[unit],
-                name: unit
-            });
-        });
+        var data = {features: this.state.selected};
 
         data.name = this.state.parents[this.state.parents.length - 1];
 
