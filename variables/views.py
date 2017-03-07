@@ -67,27 +67,6 @@ class VariableViewSet(viewsets.ModelViewSet):
     queryset = Variable.objects.all()
     serializer_class = VariableSerializer
 
-    #def create(self, request):
-        #expression_serializer = ExpressionSerializer(data=request.data)
-        #expression_serializer.is_valid(raise_exception=True)
-        #expression = expression_serializer.save()
-
-        #ds = ExpressionDataSource(expression=expression)
-        #ds.save()
-
-        #d = request.data
-        #variable = Variable(
-            #name=d['name'],
-            #temporal_domain=d['temporal_domain'],
-            #spatial_domain=[],   # temporarily unimplemented
-            #units='',            # temporarily unimplemented
-            #data_source=ds
-        #)
-        #variable.save()
-        #serializer = VariableSerializer(variable, context={'request': request})
-
-        #return Response(serializer.data, status=status.HTTP_201_CREATED, headers=self.get_success_headers(serializer.data))
-
     @detail_route(url_path='map')
     def map_data(self, request, pk=None):
         variable = get_object_or_404(Variable, pk=pk)
