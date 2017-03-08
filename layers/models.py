@@ -63,8 +63,8 @@ class Layer(models.Model):
         connection.close()
         connection.set_schema(tenant)
 
-        layer_file = LayerFile(layer=self)
         try:
+            layer_file = LayerFile(layer=self)
             layer_file.save()
 
             filename = slugify(self.name + str(datetime.now()))
@@ -107,12 +107,11 @@ class Layer(models.Model):
 
             layer_file.file = "downloads/shapefile/%s/%s.zip" % (tenant, filename)
             layer_file.save()
+            return layer_file
         except IntegrityError as e:
             # Race condition where two requests for a LayerFile
             # occur at the same time.
-            pass
-
-        return layer_file
+            return LayerFile.objects.get(layer=self)
 
     def __str__(self):
         return self.name
