@@ -386,23 +386,18 @@ def gadm_data(level, distinct=True, **kwargs):
 
 
 @api_view(['GET'])
-def gadm_json(request):
+def gadm_feature_bounds_json(request):
     if request.GET['level'] == '0':
         return Response([])  # Way too much data, shouldn't be needed anyway
 
-    results = gadm_data(distinct=False, **gadm_data_args(request.GET))
+    results = gadm_data(distinct=True, **gadm_data_args(request.GET))
 
-    name_field = 'name_%s' % request.GET['level']
-    geometries = {}
+    geometry = GEOSGeometry(results[0]['geometry'], srid=4326)
 
     for r in results:
-        name = r[name_field]
-        if name in geometries:
-            geometries[name] = geometries[name].union(GEOSGeometry(r['geometry']))
-        else:
-            geometries[name] = GEOSGeometry(r['geometry'])
+        geometry = geometry.union(GEOSGeometry(r['geometry'], srid=4326))
 
-    return Response({k: v.json for k, v in geometries.items()})
+    return Response(json.loads(geometry.envelope.json))
 
 
 def index(request):

@@ -70,7 +70,7 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.renderMap = function renderMap() {
-        var map = this.map = L.map('map').setView([0, 0], 1);
+        var map = this.map = L.map('map').setView([0, 0], 2);
 
         this.terrain = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
             attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
@@ -176,6 +176,34 @@ var GADMChooser = function (_React$Component) {
                 }
             }
         }).addTo(this.map);
+
+        this.zoomMap();
+    };
+
+    GADMChooser.prototype.zoomMap = function zoomMap() {
+        var _this4 = this;
+
+        if (this.state.level == 0) {
+            this.map.setView([0, 0], 2);
+            return;
+        }
+
+        var url = '/admin/layers/gadm-bounds.json';
+        var query_params = '?level=' + this.state.level;
+
+        var i = 0;
+        this.state.parents.forEach(function (unit) {
+            query_params += '&name_' + i + '=' + unit;
+            i++;
+        });
+
+        $.ajax(url + query_params, {
+            dataType: 'json',
+            success: function success(data, status, xhr) {
+                _this4.map.fitBounds(L.geoJson(data).getBounds());
+            },
+            error: function error(xhr, status, _error) {}
+        });
     };
 
     GADMChooser.prototype.getAdminUnits = function getAdminUnits(level, parent_name, callback) {
@@ -195,12 +223,12 @@ var GADMChooser = function (_React$Component) {
             success: function success(data, status, xhr) {
                 callback(data);
             },
-            error: function error(xhr, status, _error) {}
+            error: function error(xhr, status, _error2) {}
         });
     };
 
     GADMChooser.prototype.back = function back() {
-        var _this4 = this;
+        var _this5 = this;
 
         var level = this.state.level - 1,
             parents = this.state.parents;
@@ -208,7 +236,7 @@ var GADMChooser = function (_React$Component) {
         parents.pop();
 
         this.getAdminUnits(level, parents[parents.length - 1], function (admin_units) {
-            _this4.setState({
+            _this5.setState({
                 level: level,
                 units: admin_units.map(function (unit) {
                     return unit.name;
@@ -223,7 +251,7 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.forward = function forward(parent_name) {
-        var _this5 = this;
+        var _this6 = this;
 
         var level = this.state.level + 1,
             parents = this.state.parents;
@@ -232,7 +260,7 @@ var GADMChooser = function (_React$Component) {
 
         this.getAdminUnits(level, parent_name, function (admin_units) {
 
-            _this5.setState({
+            _this6.setState({
                 level: level,
                 units: admin_units.map(function (unit) {
                     return unit.name;
@@ -264,12 +292,12 @@ var GADMChooser = function (_React$Component) {
             success: function success(data, status, xhr) {
                 window.location = '/builder/admin/layers';
             },
-            error: function error(xhr, status, _error2) {}
+            error: function error(xhr, status, _error3) {}
         });
     };
 
     GADMChooser.prototype.render = function render() {
-        var _this6 = this;
+        var _this7 = this;
 
         if (this.state.loading) {
             return React.createElement(
@@ -309,7 +337,7 @@ var GADMChooser = function (_React$Component) {
                             React.createElement(
                                 'a',
                                 { href: 'javascript:',
-                                    onClick: _this6.forward.bind(_this6, unit)
+                                    onClick: _this7.forward.bind(_this7, unit)
                                 },
                                 unit
                             )
