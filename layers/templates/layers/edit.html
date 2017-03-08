@@ -150,7 +150,6 @@
 {% include "wagtailadmin/shared/header.html" with title="Layers" add_link="layers:add" add_text="Add Layer" icon="site" %}
 
 <div class="nice-padding">
-test {{ layer.layerfile_set.all.length }}
     <form action="{% url 'layers:edit' layer.pk %}" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <ul class="fields">
