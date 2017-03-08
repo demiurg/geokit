@@ -6,6 +6,7 @@ from variables.data import rpc_con
 from layers.models import Layer, LayerFile
 
 import django_rq
+import os
 from django.db import connection
 from django.conf import settings
 
@@ -75,19 +76,24 @@ def process_rasters(variable_pk, schema_name):
                 vector=vector
             )
 
-            try:
-                layer_file = LayerFile.objects.get(layer=vector)
-            except LayerFile.DoesNotExist:
-                layer_file = vector.export_to_file(schema_name)
+            layer_file = vector.export_to_file(schema_name)
 
-            job_id = rpc_con().submit_job(
-                schema_name,
-                r.raster['id'],
-                {"site": "{}/{}.shp".format(
-                    settings.MEDIA_ROOT, str(layer_file.file)[:-4]
-                )},
-                {"dates": r.dates}
+            shp_file = "{}/{}.shp".format(
+                settings.MEDIA_ROOT, str(layer_file.file)[:-4]
             )
+            if (
+                layer_file.status in ('finished', None) 
+                and os.path.isfile(shp_file)
+            ):
+                job_id = rpc_con().submit_job(
+                    schema_name,
+                    r.raster['id'],
+                    {"site": shp_file},
+                    {"dates": r.dates}
+                )
 
-            job_request.job_id = job_id
-            job_request.save()
+                job_request.job_id = job_id
+                job_request.save()
+            else:
+                # how to handle?
+                print 'Problem getting layer shapefile'

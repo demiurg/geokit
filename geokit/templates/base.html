@@ -13,13 +13,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     {# Global javascript #}
-    <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.4.js"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+    <script src="/static/js/TileLayer.GeoJSON.js"></script>
+    <script src="https://cdn.plot.ly/plotly-1.2.0.min.js"></script>
 
     {% block extra_js %}
       {# Override this in templates to add extra javascript #}
     {% endblock %}
 
     {# Global stylesheets #}
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.css" />
     <link rel="stylesheet" type="text/css" href="{% static 'css/geokit.css' %}">
 
     {% block extra_css %}

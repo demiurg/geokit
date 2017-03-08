@@ -21,7 +21,7 @@ class LayerSerializer(serializers.ModelSerializer):
 
     def get_layer_file(self, obj):
         try:
-            data = LayerFileSerializer(obj.layerfile).data
+            data = LayerFileSerializer(obj.layerfile_set.all().last()).data
         except LayerFile.DoesNotExist:
             data = None
         return data

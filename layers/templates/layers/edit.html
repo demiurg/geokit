@@ -12,8 +12,8 @@
 {% block extra_js %}
     <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
     <script src="/static/js/TileLayer.GeoJSON.js"></script>
+    <script src="https://cdn.plot.ly/plotly-1.2.0.min.js"></script>
     <script>
-
         function info(data){
             var html = '<dl class="dl-horizontal">';
             for (key in data){
@@ -150,6 +150,7 @@
 {% include "wagtailadmin/shared/header.html" with title="Layers" add_link="layers:add" add_text="Add Layer" icon="site" %}
 
 <div class="nice-padding">
+test {{ layer.layerfile_set.all.length }}
     <form action="{% url 'layers:edit' layer.pk %}" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <ul class="fields">
@@ -159,8 +160,8 @@
             {% endfor %}
             <li><input type="submit" value="Save" /></li>
             <a href="{% url 'layers:delete' layer.pk %}" class="button button-secondary no">Delete layer</a></li>
-            {% if layer.layerfile.file %}
-            <a href="{{ layer.layerfile.file }}" class="button button-secondary">Download Layer</a>
+            {% if layer.layerfile_set.all.length %}
+            <a href="{{ layer.layerfile_set.all.last.file}}" class="button button-secondary">Download Layer</a>
             {% else %}
             <span id="layer-download"></span>
             {% endif %}

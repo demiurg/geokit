@@ -13,6 +13,7 @@ from django.contrib.gis.db import models
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import connection, IntegrityError
 from django.utils.text import slugify
+from django.db.models import Q
 
 
 class Layer(models.Model):
@@ -63,63 +64,80 @@ class Layer(models.Model):
         connection.close()
         connection.set_schema(tenant)
 
-        try:
-            layer_file = LayerFile(layer=self)
+        layer_file = LayerFile.objects.filter(
+            layer=self, status='finished'
+        ).order_by('modified').last()
+
+        if layer_file is None:
+            layer_file = LayerFile(layer=self, status='working')
             layer_file.save()
 
-            filename = slugify(self.name + str(datetime.now()))
-            path = "%s/downloads/shapefile/%s/%s" % (
-                settings.MEDIA_ROOT, tenant, filename
-            )
-            crs = from_string(self.feature_set.first().geometry.crs.proj4)
+            try:
+                filename = slugify(self.name + str(datetime.now()))
+                path = "%s/downloads/shapefile/%s/%s" % (
+                    settings.MEDIA_ROOT, tenant, filename
+                )
+                crs = from_string(self.feature_set.first().geometry.crs.proj4)
+                self.refresh_from_db()
+                if not os.path.exists(os.path.dirname(path)):
+                    os.makedirs(os.path.dirname(path))
+                with fiona.open(
+                    path + '.shp',
+                    'w',
+                    driver='ESRI Shapefile',
+                    schema=self.schema,
+                    crs=crs
+                ) as out:
+                    for feature in self.feature_set.all():
+                        properties = feature.properties
+                        try:
+                            del properties['fid']
+                        except:
+                            pass
 
-            if not os.path.exists(os.path.dirname(path)):
-                os.makedirs(os.path.dirname(path))
-            with fiona.open(
-                path + '.shp',
-                'w',
-                driver='ESRI Shapefile',
-                schema=self.schema,
-                crs=crs
-            ) as out:
-                for feature in self.feature_set.all():
-                    properties = feature.properties
-                    try:
-                        del properties['fid']
-                    except:
-                        pass
+                        if self.schema['geometry'] == 'GeometryCollection':
+                            geometry = json.loads(feature.geometry.json)
+                        else:
+                            geometry = json.loads(feature.geometry.json)['geometries'][0]
 
-                    if self.schema['geometry'] == 'GeometryCollection':
-                        geometry = json.loads(feature.geometry.json)
-                    else:
-                        geometry = json.loads(feature.geometry.json)['geometries'][0]
+                        out.write({
+                            'geometry': geometry,
+                            'properties': feature.properties,
+                        })
 
-                    out.write({
-                        'geometry': geometry,
-                        'properties': feature.properties,
-                    })
+                os.chdir(os.path.dirname(path))
+                with ZipFile(path + '.zip', 'w') as shape_zip:
+                    for f in glob('%s.*' % filename):
+                        if not os.path.basename(f).endswith('zip'):
+                            shape_zip.write(f)
 
-            os.chdir(os.path.dirname(path))
-            with ZipFile(path + '.zip', 'w') as shape_zip:
-                for f in glob('%s.*' % filename):
-                    if not os.path.basename(f).endswith('zip'):
-                        shape_zip.write(f)
+                layer_file.file = "downloads/shapefile/%s/%s.zip" % (tenant, filename)
+                layer_file.status = 'finished'
+            except Exception as e:
+                raise
+                layer_file.status = 'failed'
+            finally:
+                layer_file.save()
 
-            layer_file.file = "downloads/shapefile/%s/%s.zip" % (tenant, filename)
-            layer_file.save()
-            return layer_file
-        except IntegrityError as e:
-            # Race condition where two requests for a LayerFile
-            # occur at the same time.
-            return LayerFile.objects.get(layer=self)
+        return layer_file
 
     def __str__(self):
         return self.name
 
 
 class LayerFile(models.Model):
-    layer = models.OneToOneField(Layer)
+    layer = models.ForeignKey(Layer)
     file = models.FileField(null=True, blank=True)
+    status = models.CharField(
+        null=True, blank=True, max_length=10,
+        choices=(
+            ('working', 'Working'),
+            ('finished', 'Finished'),
+            ('failed', 'Failed')
+        ),
+    )
+    created = models.DateTimeField(auto_now_add=True, editable=False)
+    modified = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         return unicode(self.pk)
