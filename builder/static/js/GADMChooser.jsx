@@ -51,7 +51,7 @@ class GADMChooser extends React.Component {
     }
 
     renderMap() {
-        var map = this.map = L.map('map').setView([0, 0], 1);
+        var map = this.map = L.map('map').setView([0, 0], 2);
 
         this.terrain = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
             attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
@@ -155,6 +155,33 @@ class GADMChooser extends React.Component {
                 }
             }
         }).addTo(this.map);
+
+        this.zoomMap();
+    }
+
+    zoomMap() {
+        if (this.state.level == 0) {
+            this.map.setView([0,0], 2);
+            return;
+        }
+
+        var url = '/admin/layers/gadm-bounds.json'
+        var query_params = '?level=' + this.state.level;
+
+        var i = 0;
+        this.state.parents.forEach((unit) => {
+            query_params += '&name_' + i + '=' + unit;
+            i++;
+        });
+
+        $.ajax(url + query_params, {
+            dataType: 'json',
+            success: (data, status, xhr) => {
+                this.map.fitBounds(L.geoJson(data).getBounds());
+            },
+            error: (xhr, status, error) => {
+            }
+        });
     }
 
     getAdminUnits(level, parent_name, callback) {

@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
 from layers.views import (
-    index, add, edit, delete, generate_download, layer_json, gadm_json
+    index, add, edit, delete, generate_download, layer_json, gadm_feature_bounds_json
 )
 
 urlpatterns = [
@@ -14,7 +14,7 @@ urlpatterns = [
 
     url(r'^layer/([\w-]+)\.json$', layer_json, name='layer_json'),
 
-    url(r'^gadm.json$', gadm_json, name='gadm_json'),
+    url(r'^gadm-bounds.json$', gadm_feature_bounds_json, name='gadm_feature_bounds_json'),
 
     #url(r'^gadm/(\d+)/(\w+)/$', gadm_data, name='gadm_data'),
 ]
