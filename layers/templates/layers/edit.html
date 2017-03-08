@@ -23,7 +23,7 @@
             return html;
         }
 
-        var Map = function(id){
+        var LayerMap = function(id){
             var self = this;
 
             var map = self.map = L.map(id);
@@ -139,7 +139,7 @@
         }
 
         $(document).ready(function(){
-            var map = Map('map');
+            var map = LayerMap('map');
         });
 
     </script>
