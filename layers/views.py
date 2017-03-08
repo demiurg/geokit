@@ -387,17 +387,27 @@ def gadm_data(level, distinct=True, **kwargs):
 
 @api_view(['GET'])
 def gadm_feature_bounds_json(request):
-    if request.GET['level'] == '0':
-        return Response([])  # Way too much data, shouldn't be needed anyway
+    cursor = connections['geodata'].cursor()
 
-    results = gadm_data(distinct=True, **gadm_data_args(request.GET))
+    SELECT = cursor.mogrify("SELECT ST_Envelope(geometry) AS geom FROM gadm28 ")
+    where_clause = ""
+    for l in range(int(request.GET['level'])):
+        if l == 0:
+            where_clause = cursor.mogrify("WHERE name_0 = %s", (request.GET['name_0'],))
+        else:
+            field_name = "name_{}".format(l)
+            if request.GET[field_name]:
+                where_clause = \
+                    where_clause + \
+                    cursor.mogrify(" AND %s = %s", (AsIs(field_name), (request.GET[field_name])))
 
-    geometry = GEOSGeometry(results[0]['geometry'], srid=4326)
+    SELECT = "WITH geoms AS (" + SELECT + where_clause + ") SELECT ST_AsBinary(ST_Extent(geom)) FROM geoms"
 
-    for r in results:
-        geometry = geometry.union(GEOSGeometry(r['geometry'], srid=4326))
+    cursor.execute(SELECT)
+    bbox = GEOSGeometry(cursor.fetchall()[0][0])
+    print bbox.wkt
 
-    return Response(json.loads(geometry.envelope.json))
+    return Response(json.loads(bbox.json))
 
 
 def index(request):
