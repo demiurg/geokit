@@ -13,20 +13,21 @@ class Map extends React.Component {
 
     componentDidMount() {
         // make AJAX call
+        var self = this;
         $.ajax('/variables/map_'+this.props.variable_id+'.json', {
             dataType: 'json',
             success: (data, status, xhr) => {
                 this.min_value = d3.min(
                     Object.keys(data.data).map((key) => {
-                        return data.data[key][this.variable_name];
+                        return data.data[key][self.props.variable_name];
                     })
                 );
                 this.max_value = d3.max(
                     Object.keys(data.data).map((key) => {
-                        return data.data[key][this.variable_name];
+                        return data.data[key][self.props.variable_name];
                     })
                 );
-
+                console.log(this.min_value, this.max_value);
                 this.color_scale = d3.scale.linear()
                     .domain([this.min_value, this.max_value])
                     .range(this.props.color_ramp.map((stop) => { return stop[1]; }));

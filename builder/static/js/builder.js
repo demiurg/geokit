@@ -840,16 +840,17 @@ var Map = function (_React$Component) {
         var _this2 = this;
 
         // make AJAX call
+        var self = this;
         $.ajax('/variables/map_' + this.props.variable_id + '.json', {
             dataType: 'json',
             success: function success(data, status, xhr) {
                 _this2.min_value = d3.min(Object.keys(data.data).map(function (key) {
-                    return data.data[key][_this2.variable_name];
+                    return data.data[key][self.props.variable_name];
                 }));
                 _this2.max_value = d3.max(Object.keys(data.data).map(function (key) {
-                    return data.data[key][_this2.variable_name];
+                    return data.data[key][self.props.variable_name];
                 }));
-
+                console.log(_this2.min_value, _this2.max_value);
                 _this2.color_scale = d3.scale.linear().domain([_this2.min_value, _this2.max_value]).range(_this2.props.color_ramp.map(function (stop) {
                     return stop[1];
                 }));
