@@ -876,28 +876,27 @@ var Map = function (_React$Component) {
     };
 
     Map.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
-        var _this3 = this;
-
-        if (this.props.dimensions && this.props.dimensions.length != prevProps.dimensions.length) {
+        var self = this;
+        if (self.props.dimensions && self.props.dimensions.length != prevProps.dimensions.length) {
             console.log("update map");
-        } else if (!this.state.error) {
-            var map = L.map('map-' + this.props.unique_id);
+        } else if (!self.state.error) {
+            var map = L.map('map-' + self.props.unique_id);
 
             L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
 
-            this.state.layers.map(function (id, idx) {
+            self.state.layers.map(function (id, idx) {
                 var geojsonURL = '/layers/' + id + '/{z}/{x}/{y}.json';
                 var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
                     clipTiles: true,
                     unique: function unique(feature) {
-                        return feature.properties.id;
+                        return feature.properties.shaid;
                     }
                 }, {
                     style: function style(feature) {
                         return {
                             color: "#000",
                             weight: 1,
-                            fillColor: _this3.color_scale(_this3.state.data[feature.properties.id][_this3.props.variable_name]),
+                            fillColor: self.color_scale(self.state.data[feature.properties.shaid][self.props.variable_name]),
                             fillOpacity: 0.7
                         };
                     },
@@ -914,14 +913,14 @@ var Map = function (_React$Component) {
                     }
                 });
                 map.addLayer(geojsonTileLayer);
-                map.fitBounds([[_this3.state.bounds[1], _this3.state.bounds[0]], [_this3.state.bounds[3], _this3.state.bounds[2]]]);
+                map.fitBounds([[self.state.bounds[idx][1], self.state.bounds[idx][0]], [self.state.bounds[idx][3], self.state.bounds[idx][2]]]);
             });
 
             var legend = L.control({ position: 'bottomright' });
 
             legend.onAdd = function (map) {
                 var div = L.DomUtil.create('div', 'info legend');
-                _this3.addColorRamp(div);
+                self.addColorRamp(div);
                 return div;
             };
 
@@ -1490,7 +1489,7 @@ var MapControl = function (_React$Component) {
                 }
             }
         }).addTo(map);
-        map.fitBounds(geoJsonLayer.getBounds());
+        // map.fitBounds(geoJsonLayer.getBounds());
     };
 
     MapControl.prototype.render = function render() {

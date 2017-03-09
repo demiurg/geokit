@@ -56,27 +56,28 @@ class Map extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        if (this.props.dimensions && this.props.dimensions.length != prevProps.dimensions.length) {
+        var self = this;
+        if (self.props.dimensions && self.props.dimensions.length != prevProps.dimensions.length) {
             console.log("update map");
-        } else if (!this.state.error) {
-            var map = L.map('map-'+this.props.unique_id);
+        } else if (!self.state.error) {
+            var map = L.map('map-'+self.props.unique_id);
 
             L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
 
-            this.state.layers.map((id, idx) => {
+            self.state.layers.map((id, idx) => {
                 var geojsonURL = '/layers/'+id+'/{z}/{x}/{y}.json';
                 var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
                     clipTiles: true,
                     unique: function(feature) {
-                        return feature.properties.id;
+                        return feature.properties.shaid;
                     }
                 }, {
                     style: (feature) => {
                         return {
                             color: "#000",
                             weight: 1,
-                            fillColor: this.color_scale(
-                                this.state.data[feature.properties.id][this.props.variable_name]
+                            fillColor: self.color_scale(
+                                self.state.data[feature.properties.shaid][self.props.variable_name]
                             ),
                             fillOpacity: 0.7
                         };
@@ -95,8 +96,8 @@ class Map extends React.Component {
                 });
                 map.addLayer(geojsonTileLayer);
                 map.fitBounds([
-                    [this.state.bounds[1], this.state.bounds[0]],
-                    [this.state.bounds[3], this.state.bounds[2]]
+                    [self.state.bounds[idx][1], self.state.bounds[idx][0]],
+                    [self.state.bounds[idx][3], self.state.bounds[idx][2]]
                 ]);
             })
 
@@ -104,7 +105,7 @@ class Map extends React.Component {
 
             legend.onAdd = (map) => {
                 var div = L.DomUtil.create('div', 'info legend');
-                this.addColorRamp(div);
+                self.addColorRamp(div);
                 return div;
             };
 
