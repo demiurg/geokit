@@ -55,9 +55,6 @@ class Variable(models.Model):
     def input_variables_json(self):
         return json.dumps(self.input_variables)
 
-    def get_source_layers(self):
-        return self.root.get_layers()
-
     def get_layers(self):
         return self.root.get_layers()
 

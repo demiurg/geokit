@@ -3,7 +3,7 @@ import numpy
 import xmlrpclib
 
 from datetime import datetime
-from pandas.io.sql import read_sql, DataFrame
+from pandas.io.sql import read_sql_query, DataFrame
 from psycopg2.extras import DateRange
 from django.conf import settings
 
@@ -103,7 +103,7 @@ class DataNode(object):
         def walk_nodes(node):
             if type(node) == DataSource:
                 node.execute()
-                return set([Layer(pk=l['id']) for l in node.layers])
+                return set([l['id'] for l in node.layers])
             elif hasattr(node, 'operands'):
                 source_layers = set()
                 for operand in node.operands:
@@ -320,7 +320,7 @@ class SelectOperator(DataNode):
                 f_wheres.append("layer_id = '{}'".format(layer['id']))
 
             froms.append(
-                "(SELECT properties->'shaid' as shaid, properties->>'{0}' as joiner {3} "
+                "(SELECT properties->'shaid' as shaid, properties->'{0}' as joiner {3} "
                 "FROM {1}.layers_feature "
                 "WHERE {2!s}) f".format(
                     layer['field'],
@@ -341,7 +341,7 @@ class SelectOperator(DataNode):
 
             froms.append(
                 "(SELECT date_range,"
-                " properties->>'{0}' as joiner, properties->'{1}' as \"{1}\" "
+                " properties->'{0}' as joiner, properties->'{1}' as \"{1}\" "
                 "FROM {2!s}.geokit_tables_record "
                 "WHERE {3}) r".format(
                     table['field'],
@@ -354,31 +354,30 @@ class SelectOperator(DataNode):
             joins.append('r')
 
         joins = [
-            '{}.joiner = {}.joiner'.format(a, b) for a in joins for b in joins
+            '{}.joiner = {}.joiner'.format(a, b) for a in joins for b in joins if a != b
         ]
 
         query = "SELECT {} FROM {} WHERE {}".format(
             ", ".join(selects),
             ", ".join(froms),
-            " AND ".join(joins)
+            " AND ".join(joins) if any(joins) else '1=1'
         )
 
         cursor = django.db.connection.cursor()
         cursor.execute(query)
 
         try:
-            df = read_sql(query, django.db.connection)
+            df = read_sql_query(query, django.db.connection)
             return df.pivot(
                 index='shaid', columns='date_range', values=name
             )
         except KeyError as e:
-            # print e
             try:
-                df = read_sql(
+                df = read_sql_query(
                     query, django.db.connection, index_col='date_range'
                 )
             except Exception as e:
-                df = read_sql(
+                df = read_sql_query(
                     query, django.db.connection
                 )
                 return df.set_index('shaid')

@@ -7,14 +7,13 @@ from rest_framework import viewsets, permissions
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 
-from layers.models import Feature
+from layers.models import Feature, Layer
 from variables.models import Variable, RasterRequest
 from variables.serializers import VariableSerializer, RasterRequestSerializer
 from variables.data import NODE_TYPES
 
 import json
 import xmlrpclib
-import pandas
 from psycopg2.extras import DateRange
 
 
@@ -62,20 +61,26 @@ def map_json(request, variable_id):
 
     if "space" in variable.dimensions:
         layers = variable.get_layers()
-        map(lambda l: l.refresh_from_db(), layers)
+        layers = Layer.objects.filter(pk__in=layers)
         text += '"layers": [' + ','.join(map(lambda l: str(l.pk), layers)) + '], '
         text += '"bounds": [' + ','.join(map(lambda l: str(l.bounds), layers)) + '], '
         text += '"data": {'
-        for shaid, row in data_frame.iterrows():
-            text += '"' + shaid + '": {'
-            for column, value in row.iteritems():
-                if "time" in variable.dimensions and type(column) == DateRange:
-                    column = str(column.lower)
-                else:
-                    column = variable.name
-                text += '"{}": {},'.format(column, value)
-            text = text[:-1]
-            text += '},'
+        if hasattr(data_frame, 'iterrows'):
+            for shaid, row in data_frame.iterrows():
+                text += '"' + shaid + '": {'
+                for column, value in row.iteritems():
+                    if "time" in variable.dimensions and type(column) == DateRange:
+                        column = str(column.lower)
+                    else:
+                        column = variable.name
+                    text += '"{}": {},'.format(column, value)
+                text = text[:-1]
+                text += '},'
+        else:
+            for shaid, item in data_frame.iteritems():
+                text += '"' + shaid + '": {'
+                text += '"{}": {}'.format(variable.name, item)
+                text += '},'
         text = text[:-1]
         text += "}"
     text += "}"
