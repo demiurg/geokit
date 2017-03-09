@@ -45,6 +45,7 @@ class Variable(models.Model):
     def __unicode__(self):
         return self.name
 
+    @cached_property
     def dimensions(self):
         return self.root.dimensions
 
@@ -54,7 +55,7 @@ class Variable(models.Model):
     def input_variables_json(self):
         return json.dumps(self.input_variables)
 
-    def get_source_layers(self):
+    def get_layers(self):
         return self.root.get_layers()
 
     def get_rasters(self):

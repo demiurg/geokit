@@ -46,6 +46,13 @@ class GADMChooser extends React.Component {
         } else if (!this.state.loading && this.mapRendered) {
             if (prevState.level != this.state.level) {
                 this.setGadmLayer(this.state.level);
+            } else {
+                prevState.selected.map((selection) => {
+                    if (this.state.selected.indexOf(selection) == -1) {
+                        var e = new Event(selection + "-deselect");
+                        window.dispatchEvent(e);
+                    }
+                });
             }
         }
     }
@@ -115,8 +122,9 @@ class GADMChooser extends React.Component {
             }
         }, {
             onEachFeature: (feature, layer) => {
+                var featureIdString = this.getIdString(feature, this.state.level);
+
                 layer.on('click', (e) => {
-                    var featureIdString = this.getIdString(feature, this.state.level);
                     var featureIdx = this.state.selected.indexOf(featureIdString);
                     if (featureIdx != -1) {
                         layer.setStyle({
@@ -140,6 +148,12 @@ class GADMChooser extends React.Component {
                         });
                     }
                 });
+
+                window.addEventListener(featureIdString + "-deselect", () => {
+                    layer.setStyle({
+                        fillColor: "grey"
+                    });
+                });
             },
             style: (feature) => {
                 if (this.isSelected(feature)) {
@@ -155,6 +169,7 @@ class GADMChooser extends React.Component {
                 }
             }
         }).addTo(this.map);
+        window.jlayer = this.geojsonTileLayer;
 
         this.zoomMap();
     }
@@ -206,11 +221,11 @@ class GADMChooser extends React.Component {
         });
     }
 
-    back() {
-        var level = this.state.level - 1,
-            parents = this.state.parents;
+    back(parent_index) {
+        var level = parent_index,
+            parents = this.state.parents.slice();
 
-        parents.pop();
+        parents.splice(parent_index);
 
         this.getAdminUnits(level, parents[parents.length - 1], (admin_units) => {
             this.setState({
@@ -225,9 +240,10 @@ class GADMChooser extends React.Component {
         });
     }
 
-    forward(parent_name) {
+    forward(parent) {
         var level = this.state.level + 1,
-            parents = this.state.parents;
+            parents = this.state.parents,
+            parent_name = parent.value;
 
         parents.push(parent_name);
 
@@ -243,6 +259,12 @@ class GADMChooser extends React.Component {
                 }),
                 parents: parents
             });
+        });
+    }
+
+    changeSelection(newSelection) {
+        this.setState({
+            selected: newSelection.map((unit) => {return unit.value;})
         });
     }
 
@@ -275,23 +297,29 @@ class GADMChooser extends React.Component {
         } else {
             return (
                 <div>
-                    <h1>{this.state.parents.map(
-                        (unit) => { return unit + " > "; }
-                    )}</h1>
-                    <ul className="listing" style={
-                        {height: 300, overflow: "scroll", marginBottom: 0}
-                    }>
-                        {this.state.level != 0 ?
-                            <li><a href="javascript:"
-                                onClick={this.back.bind(this)}
-                            >&lt; Back</a></li>
-                        : null}
-                        {this.state.units.map((unit) => {
-                            return <li><a href="javascript:"
-                                onClick={this.forward.bind(this, unit)}
-                            >{unit}</a></li>;
+                    <h1>
+                        <a href="javascript:void(0)"
+                           onClick={this.back.bind(this, 0)}>World ></a>
+                        {this.state.parents.map((unit, i) => {
+                            return <a href="javascript:void(0)"
+                                onClick={this.back.bind(this, i + 1)}>{unit + " > "}</a>;
                         })}
-                    </ul>
+                        <div style={{display: "inline-block", width: 400}}>
+                            <Select name="parent-selector"
+                                    options={this.state.units.map((unit) => {
+                                        return {value: unit, label: unit};})
+                                    }
+                                onChange={this.forward.bind(this)} />
+                        </div>
+                    </h1>
+                    <Select multi={true}
+                            value={this.state.selected.map((selection) => {
+                                return {value: selection, label: selection.split(".").slice(-1)[0]};
+                            })}
+                            options={this.state.selected.map((selection) => {
+                                return {value: selection, label: selection.split(".").slice(-1)[0]};})
+                            }
+                            onChange={this.changeSelection.bind(this)} />
                     <div id="map" style={{height: 400}}></div>
                     <button className="button"
                         onClick={this.saveLayer.bind(this)}

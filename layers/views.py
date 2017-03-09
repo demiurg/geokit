@@ -61,7 +61,9 @@ def tile_json(request, layer_name, z, x, y):
     # mvt_features = mvt.decode(StringIO(data))
 
     if request.tenant is not None:
-        cache_path = os.path.join(settings.STATIC_ROOT, "tiles", str(request.tenant.pk))
+        cache_path = os.path.join(
+            settings.STATIC_ROOT, "tiles", "tenant-" + str(request.tenant.pk)
+        )
     else:
         cache_path = os.path.join(settings.STATIC_ROOT, "tiles")
 

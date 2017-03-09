@@ -60,11 +60,20 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
+        var _this3 = this;
+
         if (!this.state.loading && !this.mapRendered) {
             this.renderMap();
         } else if (!this.state.loading && this.mapRendered) {
             if (prevState.level != this.state.level) {
                 this.setGadmLayer(this.state.level);
+            } else {
+                prevState.selected.map(function (selection) {
+                    if (_this3.state.selected.indexOf(selection) == -1) {
+                        var e = new Event(selection + "-deselect");
+                        window.dispatchEvent(e);
+                    }
+                });
             }
         }
     };
@@ -119,7 +128,7 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.setGadmLayer = function setGadmLayer(level) {
-        var _this3 = this;
+        var _this4 = this;
 
         if (this.geojsonTileLayer) {
             this.map.removeLayer(this.geojsonTileLayer);
@@ -136,17 +145,18 @@ var GADMChooser = function (_React$Component) {
             }
         }, {
             onEachFeature: function onEachFeature(feature, layer) {
+                var featureIdString = _this4.getIdString(feature, _this4.state.level);
+
                 layer.on('click', function (e) {
-                    var featureIdString = _this3.getIdString(feature, _this3.state.level);
-                    var featureIdx = _this3.state.selected.indexOf(featureIdString);
+                    var featureIdx = _this4.state.selected.indexOf(featureIdString);
                     if (featureIdx != -1) {
                         layer.setStyle({
                             fillColor: "grey"
                         });
 
-                        var selected = _this3.state.selected.slice();
+                        var selected = _this4.state.selected.slice();
                         selected.splice(featureIdx, 1);
-                        _this3.setState({
+                        _this4.setState({
                             selected: selected
                         });
                     } else {
@@ -154,16 +164,22 @@ var GADMChooser = function (_React$Component) {
                             fillColor: "blue"
                         });
 
-                        var selected = _this3.state.selected.slice();
+                        var selected = _this4.state.selected.slice();
                         selected.push(featureIdString);
-                        _this3.setState({
+                        _this4.setState({
                             selected: selected
                         });
                     }
                 });
+
+                window.addEventListener(featureIdString + "-deselect", function () {
+                    layer.setStyle({
+                        fillColor: "grey"
+                    });
+                });
             },
             style: function style(feature) {
-                if (_this3.isSelected(feature)) {
+                if (_this4.isSelected(feature)) {
                     return {
                         fillColor: "blue",
                         weight: 1
@@ -176,12 +192,13 @@ var GADMChooser = function (_React$Component) {
                 }
             }
         }).addTo(this.map);
+        window.jlayer = this.geojsonTileLayer;
 
         this.zoomMap();
     };
 
     GADMChooser.prototype.zoomMap = function zoomMap() {
-        var _this4 = this;
+        var _this5 = this;
 
         if (this.state.level == 0) {
             this.map.setView([0, 0], 2);
@@ -200,7 +217,7 @@ var GADMChooser = function (_React$Component) {
         $.ajax(url + query_params, {
             dataType: 'json',
             success: function success(data, status, xhr) {
-                _this4.map.fitBounds(L.geoJson(data).getBounds());
+                _this5.map.fitBounds(L.geoJson(data).getBounds());
             },
             error: function error(xhr, status, _error) {}
         });
@@ -227,16 +244,16 @@ var GADMChooser = function (_React$Component) {
         });
     };
 
-    GADMChooser.prototype.back = function back() {
-        var _this5 = this;
+    GADMChooser.prototype.back = function back(parent_index) {
+        var _this6 = this;
 
-        var level = this.state.level - 1,
-            parents = this.state.parents;
+        var level = parent_index,
+            parents = this.state.parents.slice();
 
-        parents.pop();
+        parents.splice(parent_index);
 
         this.getAdminUnits(level, parents[parents.length - 1], function (admin_units) {
-            _this5.setState({
+            _this6.setState({
                 level: level,
                 units: admin_units.map(function (unit) {
                     return unit.name;
@@ -250,17 +267,18 @@ var GADMChooser = function (_React$Component) {
         });
     };
 
-    GADMChooser.prototype.forward = function forward(parent_name) {
-        var _this6 = this;
+    GADMChooser.prototype.forward = function forward(parent) {
+        var _this7 = this;
 
         var level = this.state.level + 1,
-            parents = this.state.parents;
+            parents = this.state.parents,
+            parent_name = parent.value;
 
         parents.push(parent_name);
 
         this.getAdminUnits(level, parent_name, function (admin_units) {
 
-            _this6.setState({
+            _this7.setState({
                 level: level,
                 units: admin_units.map(function (unit) {
                     return unit.name;
@@ -271,6 +289,14 @@ var GADMChooser = function (_React$Component) {
                 }),
                 parents: parents
             });
+        });
+    };
+
+    GADMChooser.prototype.changeSelection = function changeSelection(newSelection) {
+        this.setState({
+            selected: newSelection.map(function (unit) {
+                return unit.value;
+            })
         });
     };
 
@@ -297,7 +323,7 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.render = function render() {
-        var _this7 = this;
+        var _this8 = this;
 
         if (this.state.loading) {
             return React.createElement(
@@ -312,38 +338,38 @@ var GADMChooser = function (_React$Component) {
                 React.createElement(
                     'h1',
                     null,
-                    this.state.parents.map(function (unit) {
-                        return unit + " > ";
-                    })
-                ),
-                React.createElement(
-                    'ul',
-                    { className: 'listing', style: { height: 300, overflow: "scroll", marginBottom: 0 } },
-                    this.state.level != 0 ? React.createElement(
-                        'li',
-                        null,
-                        React.createElement(
-                            'a',
-                            { href: 'javascript:',
-                                onClick: this.back.bind(this)
-                            },
-                            '< Back'
-                        )
-                    ) : null,
-                    this.state.units.map(function (unit) {
+                    React.createElement(
+                        'a',
+                        { href: 'javascript:void(0)',
+                            onClick: this.back.bind(this, 0) },
+                        'World >'
+                    ),
+                    this.state.parents.map(function (unit, i) {
                         return React.createElement(
-                            'li',
-                            null,
-                            React.createElement(
-                                'a',
-                                { href: 'javascript:',
-                                    onClick: _this7.forward.bind(_this7, unit)
-                                },
-                                unit
-                            )
+                            'a',
+                            { href: 'javascript:void(0)',
+                                onClick: _this8.back.bind(_this8, i + 1) },
+                            unit + " > "
                         );
-                    })
+                    }),
+                    React.createElement(
+                        'div',
+                        { style: { display: "inline-block", width: 400 } },
+                        React.createElement(Select, { name: 'parent-selector',
+                            options: this.state.units.map(function (unit) {
+                                return { value: unit, label: unit };
+                            }),
+                            onChange: this.forward.bind(this) })
+                    )
                 ),
+                React.createElement(Select, { multi: true,
+                    value: this.state.selected.map(function (selection) {
+                        return { value: selection, label: selection.split(".").slice(-1)[0] };
+                    }),
+                    options: this.state.selected.map(function (selection) {
+                        return { value: selection, label: selection.split(".").slice(-1)[0] };
+                    }),
+                    onChange: this.changeSelection.bind(this) }),
                 React.createElement('div', { id: 'map', style: { height: 400 } }),
                 React.createElement(
                     'button',
@@ -840,31 +866,30 @@ var Map = function (_React$Component) {
         var _this2 = this;
 
         // make AJAX call
-        $.ajax('/api/variables/' + this.props.variable_id + '/map/', {
+        var self = this;
+        $.ajax('/variables/map_' + this.props.variable_id + '.json', {
             dataType: 'json',
             success: function success(data, status, xhr) {
-                _this2.min_value = d3.min(data.map(function (feature) {
-                    return feature.properties[_this2.props.variable_name];
+                _this2.min_value = d3.min(Object.keys(data.data).map(function (key) {
+                    return data.data[key][self.props.variable_name];
                 }));
-                _this2.max_value = d3.max(data.map(function (feature) {
-                    return feature.properties[_this2.props.variable_name];
+                _this2.max_value = d3.max(Object.keys(data.data).map(function (key) {
+                    return data.data[key][self.props.variable_name];
                 }));
-
+                console.log(_this2.min_value, _this2.max_value);
                 _this2.color_scale = d3.scale.linear().domain([_this2.min_value, _this2.max_value]).range(_this2.props.color_ramp.map(function (stop) {
                     return stop[1];
                 }));
 
-                _this2.setState({
-                    data: data,
-                    loading: false
-                }, function () {
-                    _this2.props.setDimensions(data);
+                _this2.setState(Object.assign(data, { loading: false }), function () {
+                    return _this2.props.setDimensions(Object.values(data.data));
                 });
             },
             error: function error(xhr, status, _error) {
+                console.log(_error);
                 _this2.setState({
                     loading: false,
-                    error: _error
+                    error: status
                 });
             }
         });
@@ -878,40 +903,51 @@ var Map = function (_React$Component) {
     };
 
     Map.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
-        var _this3 = this;
-
-        if (this.props.dimensions && this.props.dimensions.length != prevProps.dimensions.length) {
+        var self = this;
+        if (self.props.dimensions && self.props.dimensions.length != prevProps.dimensions.length) {
             console.log("update map");
-        } else if (!this.state.error) {
-            var vals = this.state.data.map(function (feature) {
-                return feature.properties[_this3.props.variable_name];
-            });
-
-            var map = L.map('map-' + this.props.unique_id);
+        } else if (!self.state.error) {
+            var map = L.map('map-' + self.props.unique_id);
 
             L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
 
-            var geojson_layer = L.geoJson(this.state.data, {
-                style: function style(feature) {
-                    return {
-                        color: "#000",
-                        weight: 1,
-                        fillColor: _this3.color_scale(feature.properties[_this3.props.variable_name]),
-                        fillOpacity: 0.7
-                    };
-                },
-                onEachFeature: function onEachFeature(feature, layer) {
-                    layer.bindPopup(String(feature.properties[_this3.props.variable_name]));
-                }
-            }).addTo(map);
-
-            map.fitBounds(geojson_layer.getBounds());
+            self.state.layers.map(function (id, idx) {
+                var geojsonURL = '/layers/' + id + '/{z}/{x}/{y}.json';
+                var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
+                    clipTiles: true,
+                    unique: function unique(feature) {
+                        return feature.properties.shaid;
+                    }
+                }, {
+                    style: function style(feature) {
+                        return {
+                            color: "#000",
+                            weight: 1,
+                            fillColor: self.color_scale(self.state.data[feature.properties.shaid][self.props.variable_name]),
+                            fillOpacity: 0.7
+                        };
+                    },
+                    onEachFeature: self.featureHandler,
+                    pointToLayer: function pointToLayer(feature, latlng) {
+                        return new L.CircleMarker(latlng, {
+                            radius: 4,
+                            fillColor: "#A3C990",
+                            color: "#000",
+                            weight: 1,
+                            opacity: 0.7,
+                            fillOpacity: 0.3
+                        });
+                    }
+                });
+                map.addLayer(geojsonTileLayer);
+                map.fitBounds([[self.state.bounds[idx][1], self.state.bounds[idx][0]], [self.state.bounds[idx][3], self.state.bounds[idx][2]]]);
+            });
 
             var legend = L.control({ position: 'bottomright' });
 
             legend.onAdd = function (map) {
                 var div = L.DomUtil.create('div', 'info legend');
-                _this3.addColorRamp(div);
+                self.addColorRamp(div);
                 return div;
             };
 
@@ -1480,7 +1516,7 @@ var MapControl = function (_React$Component) {
                 }
             }
         }).addTo(map);
-        map.fitBounds(geoJsonLayer.getBounds());
+        // map.fitBounds(geoJsonLayer.getBounds());
     };
 
     MapControl.prototype.render = function render() {

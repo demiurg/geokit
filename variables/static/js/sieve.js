@@ -1790,7 +1790,7 @@ var AddRasterInputModal = function (_React$Component3) {
                 this.props.layers.items.map(function (v, i) {
                   return React.createElement(
                     "option",
-                    { key: i, value: "[\"source\", [{\"type\": \"Layer\", \"name\": \"" + v.name + "\", \"id\": \"" + v.id + "\", \"field\": \"fid\"}]]" },
+                    { key: i, value: "[\"source\", [{\"type\": \"Layer\", \"name\": \"" + v.name + "\", \"id\": \"" + v.id + "\", \"field\": \"shaid\"}]]" },
                     v.name ? v.name : rendertree(v)
                   );
                 })
@@ -2952,7 +2952,7 @@ var SelectLayerForm = function (_React$Component13) {
           this.props.layers.items.map(function (v, i) {
             return React.createElement(
               "option",
-              { key: i, value: "[\"source\", [{\"type\": \"Layer\", \"name\": \"" + v.name + "\", \"id\": " + v.id + ", \"field\": \"fid\"}]]" },
+              { key: i, value: "[\"source\", [{\"type\": \"Layer\", \"name\": \"" + v.name + "\", \"id\": " + v.id + ", \"field\": \"shaid\"}]]" },
               v.name ? v.name : treeToNode(v).html(0)
             );
           })
@@ -3018,7 +3018,7 @@ var SelectTableForm = function (_React$Component14) {
           this.props.tables.items.map(function (v, i) {
             return React.createElement(
               "option",
-              { key: i, value: "[\"source\", [{\"type\": \"Table\", \"name\": \"" + v.name + "\", \"id\": " + v.id + ", \"field\": \"fid\"}]]" },
+              { key: i, value: "[\"source\", [{\"type\": \"Table\", \"name\": \"" + v.name + "\", \"id\": " + v.id + "}]]" },
               v.name ? v.name : treeToNode(v).html(0)
             );
           })

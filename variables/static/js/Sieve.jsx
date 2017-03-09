@@ -345,7 +345,7 @@ class AddRasterInputModal extends React.Component {
                 <FormControl componentClass="select" placeholder="select" name="left">
                 {this.props.layers.items.map((v, i) => (
                   <option key={i} value={
-                    `["source", [{"type": "Layer", "name": "${v.name}", "id": "${v.id}", "field": "fid"}]]`
+                    `["source", [{"type": "Layer", "name": "${v.name}", "id": "${v.id}", "field": "shaid"}]]`
                   }>
                     {v.name ? v.name : rendertree(v)}
                   </option>
@@ -1118,7 +1118,7 @@ class SelectLayerForm extends React.Component {
             <option key={9999} value={null} >Not Selected</option>
             {this.props.layers.items.map((v, i) => (
               <option key={i} value={
-                `["source", [{"type": "Layer", "name": "${v.name}", "id": ${v.id}, "field": "fid"}]]`
+                `["source", [{"type": "Layer", "name": "${v.name}", "id": ${v.id}, "field": "shaid"}]]`
               }>
                 {v.name ? v.name : treeToNode(v).html(0)}
               </option>
@@ -1161,7 +1161,7 @@ class SelectTableForm extends React.Component {
             <option key={9999} value={null} >Not Selected</option>
             {this.props.tables.items.map((v, i) => (
               <option key={i} value={
-                `["source", [{"type": "Table", "name": "${v.name}", "id": ${v.id}, "field": "fid"}]]`
+                `["source", [{"type": "Table", "name": "${v.name}", "id": ${v.id}}]]`
               }>
                 {v.name ? v.name : treeToNode(v).html(0)}
               </option>

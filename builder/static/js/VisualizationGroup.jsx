@@ -29,7 +29,7 @@ class MapControl extends React.Component {
                 }
             }
         }).addTo(map);
-        map.fitBounds(geoJsonLayer.getBounds());
+        // map.fitBounds(geoJsonLayer.getBounds());
     }
 
     render() {

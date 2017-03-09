@@ -1,18 +1,20 @@
 from django.core.serializers import serialize
 from django.shortcuts import get_object_or_404, render
 from django.conf import settings
+from django.http import HttpResponse
 
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 
-from layers.models import Feature
+from layers.models import Feature, Layer
 from variables.models import Variable, RasterRequest
 from variables.serializers import VariableSerializer, RasterRequestSerializer
 from variables.data import NODE_TYPES
 
 import json
 import xmlrpclib
+from psycopg2.extras import DateRange
 
 
 def get_raster_catalog():
@@ -50,6 +52,41 @@ def edit(request, variable_id):
     })
 
 
+def map_json(request, variable_id):
+    variable = get_object_or_404(Variable, pk=variable_id)
+
+    data_frame = variable.data()
+
+    text = '{"dimensions": "' + variable.dimensions + '", '
+
+    if "space" in variable.dimensions:
+        layers = variable.get_layers()
+        layers = Layer.objects.filter(pk__in=layers)
+        text += '"layers": [' + ','.join(map(lambda l: str(l.pk), layers)) + '], '
+        text += '"bounds": [' + ','.join(map(lambda l: str(l.bounds), layers)) + '], '
+        text += '"data": {'
+        if hasattr(data_frame, 'iterrows'):
+            for shaid, row in data_frame.iterrows():
+                text += '"' + shaid + '": {'
+                for column, value in row.iteritems():
+                    if "time" in variable.dimensions and type(column) == DateRange:
+                        column = str(column.lower)
+                    else:
+                        column = variable.name
+                    text += '"{}": {},'.format(column, value)
+                text = text[:-1]
+                text += '},'
+        else:
+            for shaid, item in data_frame.iteritems():
+                text += '"' + shaid + '": {'
+                text += '"{}": {}'.format(variable.name, item)
+                text += '},'
+        text = text[:-1]
+        text += "}"
+    text += "}"
+    return HttpResponse(text)
+
+
 class IsOwnerOrReadOnly(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
@@ -67,29 +104,6 @@ class VariableViewSet(viewsets.ModelViewSet):
     queryset = Variable.objects.all()
     serializer_class = VariableSerializer
 
-    @detail_route(url_path='map')
-    def map_data(self, request, pk=None):
-        variable = get_object_or_404(Variable, pk=pk)
-
-        evaluated_variable = variable.data()
-
-        data = []
-
-        if 'space' in variable.dimensions():
-            features = Feature.objects.filter(pk__in=evaluated_variable.index)
-
-            for i, value in enumerate(evaluated_variable):
-                geometries = [
-                    feature for feature in features
-                    if feature.pk == evaluated_variable.index[i]
-                ]
-                geojson = json.loads(serialize('geojson', geometries, fields=('geometry')))
-                geojson['features'][0]['properties'][variable.name] = value
-
-                data.append(geojson['features'][0])
-
-        return Response(data)
-
     @detail_route(url_path='graph')
     def graph_data(self, request, pk=None):
         variable = get_object_or_404(Variable, pk=pk)
@@ -99,7 +113,7 @@ class VariableViewSet(viewsets.ModelViewSet):
         data = {'x': [], 'y': []}
 
         try:
-            dim = variable.dimensions()
+            dim = variable.dimensions
             if 'space' in dim:
                 # Build scatterplot by location
                 features = list(
@@ -134,7 +148,7 @@ class VariableViewSet(viewsets.ModelViewSet):
 
         df = variable.data()
         data = {}
-        dim = variable.dimensions()
+        dim = variable.dimensions
         if 'time' in dim:
             data['dimension'] = 'time'
             data['values'] = []

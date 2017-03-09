@@ -42,7 +42,7 @@ class VariableSerializer(serializers.HyperlinkedModelSerializer):
         result = super(VariableSerializer, self).create(*args, **kwargs)
         django_rq.enqueue(
             process_rasters,
-            self.instance.pk,
+            result.pk,
             self.context['request'].tenant.schema_name
         )
         return result

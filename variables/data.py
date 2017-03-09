@@ -3,7 +3,7 @@ import numpy
 import xmlrpclib
 
 from datetime import datetime
-from pandas.io.sql import read_sql, DataFrame
+from pandas.io.sql import read_sql_query, DataFrame
 from psycopg2.extras import DateRange
 from django.conf import settings
 
@@ -103,7 +103,7 @@ class DataNode(object):
         def walk_nodes(node):
             if type(node) == DataSource:
                 node.execute()
-                return set([Layer(pk=l['id']) for l in node.layers])
+                return set([l['id'] for l in node.layers])
             elif hasattr(node, 'operands'):
                 source_layers = set()
                 for operand in node.operands:
@@ -284,10 +284,13 @@ class ValueFilterOperator(DataNode):
 class SelectOperator(DataNode):
     def execute(self):
         source, field = self.execute_operands()
-        if type(source) is DataSource:
+        stype = type(source)
+        if stype is DataSource:
             return self.execute_sql(source, field)
-        elif type(source) is RasterSource:
-            return self.execute_datahander(source, field)
+        elif stype is DataFrame:
+            return self.execute_dataframe(source, field)
+        else:
+            raise Exception("SelectOperator invalid operand: {}".format(stype))
 
     def execute_sql(self, source, field):
 
@@ -310,14 +313,14 @@ class SelectOperator(DataNode):
         joins = []
 
         if source.layers:
-            selects.append("feature_id {}".format(layer_field))
+            selects.append("shaid {}".format(layer_field))
 
             f_wheres = []
             for layer in source.layers:
                 f_wheres.append("layer_id = '{}'".format(layer['id']))
 
             froms.append(
-                "(SELECT id as feature_id, (properties->>'{0}')::integer as joiner {3} "
+                "(SELECT properties->'shaid' as shaid, properties->'{0}' as joiner {3} "
                 "FROM {1}.layers_feature "
                 "WHERE {2!s}) f".format(
                     layer['field'],
@@ -338,7 +341,7 @@ class SelectOperator(DataNode):
 
             froms.append(
                 "(SELECT date_range,"
-                " (properties->>'{0}')::integer as joiner, properties->'{1}' as \"{1}\" "
+                " properties->'{0}' as joiner, properties->'{1}' as \"{1}\" "
                 "FROM {2!s}.geokit_tables_record "
                 "WHERE {3}) r".format(
                     table['field'],
@@ -351,47 +354,38 @@ class SelectOperator(DataNode):
             joins.append('r')
 
         joins = [
-            '{}.joiner = {}.joiner'.format(a, b) for a in joins for b in joins
+            '{}.joiner = {}.joiner'.format(a, b) for a in joins for b in joins if a != b
         ]
 
         query = "SELECT {} FROM {} WHERE {}".format(
             ", ".join(selects),
             ", ".join(froms),
-            " AND ".join(joins)
+            " AND ".join(joins) if any(joins) else '1=1'
         )
 
         cursor = django.db.connection.cursor()
         cursor.execute(query)
 
         try:
-            df = read_sql(query, django.db.connection)
+            df = read_sql_query(query, django.db.connection)
             return df.pivot(
-                index='feature_id', columns='date_range', values=name
+                index='shaid', columns='date_range', values=name
             )
         except KeyError as e:
-            #print e
             try:
-                df = read_sql(
+                df = read_sql_query(
                     query, django.db.connection, index_col='date_range'
                 )
-            except:
-                df = read_sql(
+            except Exception as e:
+                df = read_sql_query(
                     query, django.db.connection
                 )
-                return df.pivot(
-                    index='feature_id', values=name, columns=name
-                )
+                return df.set_index('shaid')
             return df
 
-    def execute_datahander(self, results, field):
-        for r in results:
-            date = r['date'].date()
-            r['date_range'] = DateRange(date, date, '[]')
-            r['feature_id'] = r['fid']
-
-        df = DataFrame(data=results)
-        df = df.pivot(
-            index='feature_id', columns='date_range', values=field['field']
+    def execute_dataframe(self, results, field):
+        df = results.pivot(
+            index='shaid', columns='date_range', values=field['field']
         )
 
         return df
@@ -469,15 +463,24 @@ class RasterSource(DataNode):
         conn = rpc_con()
         from variables.models import RasterRequest
 
-        job_request = RasterRequest.get(
+        layer = self.vector.get_layers().pop()
+
+        job_request = RasterRequest.objects.get(
             raster_id=self.raster['id'],
             dates=self.dates,
-            vector=self.vector['id']
+            vector=layer
         )
         job_id = job_request.job_id
 
         results = conn.stats_request_results({'job': job_id})
-        return results
+        for r in results:
+            date = r['date'].date()
+            r['date_range'] = DateRange(date, date, '[]')
+            #r['shaid'] = r['shaid']
+
+        df = DataFrame(data=results)
+        # df = df.set_index('shaid')
+        return df
 
     def __unicode__(self):
         return "[raster, [{}]".format(
