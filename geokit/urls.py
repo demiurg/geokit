@@ -15,6 +15,7 @@ urlpatterns = [
     url(r'^account/', include('account.urls')),
     url(r'^builder/', include('builder.urls')),
     url(r'^layers/', include('layers.urls')),
+    url(r'^variables/', include('variables.urls')),
 
     url(r'^api/', include(router.urls)),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),

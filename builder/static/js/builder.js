@@ -840,31 +840,29 @@ var Map = function (_React$Component) {
         var _this2 = this;
 
         // make AJAX call
-        $.ajax('/api/variables/' + this.props.variable_id + '/map/', {
+        $.ajax('/variables/map_' + this.props.variable_id + '.json', {
             dataType: 'json',
             success: function success(data, status, xhr) {
-                _this2.min_value = d3.min(data.map(function (feature) {
-                    return feature.properties[_this2.props.variable_name];
+                _this2.min_value = d3.min(Object.keys(data.data).map(function (key) {
+                    return data.data[key][_this2.variable_name];
                 }));
-                _this2.max_value = d3.max(data.map(function (feature) {
-                    return feature.properties[_this2.props.variable_name];
+                _this2.max_value = d3.max(Object.keys(data.data).map(function (key) {
+                    return data.data[key][_this2.variable_name];
                 }));
 
                 _this2.color_scale = d3.scale.linear().domain([_this2.min_value, _this2.max_value]).range(_this2.props.color_ramp.map(function (stop) {
                     return stop[1];
                 }));
 
-                _this2.setState({
-                    data: data,
-                    loading: false
-                }, function () {
-                    _this2.props.setDimensions(data);
+                _this2.setState(Object.assign(data, { loading: false }), function () {
+                    return _this2.props.setDimensions(Object.values(data.data));
                 });
             },
             error: function error(xhr, status, _error) {
+                console.log(_error);
                 _this2.setState({
                     loading: false,
-                    error: _error
+                    error: status
                 });
             }
         });
@@ -883,29 +881,41 @@ var Map = function (_React$Component) {
         if (this.props.dimensions && this.props.dimensions.length != prevProps.dimensions.length) {
             console.log("update map");
         } else if (!this.state.error) {
-            var vals = this.state.data.map(function (feature) {
-                return feature.properties[_this3.props.variable_name];
-            });
-
             var map = L.map('map-' + this.props.unique_id);
 
             L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
 
-            var geojson_layer = L.geoJson(this.state.data, {
-                style: function style(feature) {
-                    return {
-                        color: "#000",
-                        weight: 1,
-                        fillColor: _this3.color_scale(feature.properties[_this3.props.variable_name]),
-                        fillOpacity: 0.7
-                    };
-                },
-                onEachFeature: function onEachFeature(feature, layer) {
-                    layer.bindPopup(String(feature.properties[_this3.props.variable_name]));
-                }
-            }).addTo(map);
-
-            map.fitBounds(geojson_layer.getBounds());
+            this.state.layers.map(function (id, idx) {
+                var geojsonURL = '/layers/' + id + '/{z}/{x}/{y}.json';
+                var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
+                    clipTiles: true,
+                    unique: function unique(feature) {
+                        return feature.properties.id;
+                    }
+                }, {
+                    style: function style(feature) {
+                        return {
+                            color: "#000",
+                            weight: 1,
+                            fillColor: _this3.color_scale(_this3.state.data[feature.properties.id][_this3.props.variable_name]),
+                            fillOpacity: 0.7
+                        };
+                    },
+                    onEachFeature: self.featureHandler,
+                    pointToLayer: function pointToLayer(feature, latlng) {
+                        return new L.CircleMarker(latlng, {
+                            radius: 4,
+                            fillColor: "#A3C990",
+                            color: "#000",
+                            weight: 1,
+                            opacity: 0.7,
+                            fillOpacity: 0.3
+                        });
+                    }
+                });
+                map.addLayer(geojsonTileLayer);
+                map.fitBounds([[_this3.state.bounds[1], _this3.state.bounds[0]], [_this3.state.bounds[3], _this3.state.bounds[2]]]);
+            });
 
             var legend = L.control({ position: 'bottomright' });
 
