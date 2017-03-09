@@ -250,11 +250,12 @@ var GADMChooser = function (_React$Component) {
         });
     };
 
-    GADMChooser.prototype.forward = function forward(parent_name) {
+    GADMChooser.prototype.forward = function forward(parent) {
         var _this6 = this;
 
         var level = this.state.level + 1,
-            parents = this.state.parents;
+            parents = this.state.parents,
+            parent_name = parent.value;
 
         parents.push(parent_name);
 
@@ -297,8 +298,6 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.render = function render() {
-        var _this7 = this;
-
         if (this.state.loading) {
             return React.createElement(
                 'div',
@@ -316,34 +315,11 @@ var GADMChooser = function (_React$Component) {
                         return unit + " > ";
                     })
                 ),
-                React.createElement(
-                    'ul',
-                    { className: 'listing', style: { height: 300, overflow: "scroll", marginBottom: 0 } },
-                    this.state.level != 0 ? React.createElement(
-                        'li',
-                        null,
-                        React.createElement(
-                            'a',
-                            { href: 'javascript:',
-                                onClick: this.back.bind(this)
-                            },
-                            '< Back'
-                        )
-                    ) : null,
-                    this.state.units.map(function (unit) {
-                        return React.createElement(
-                            'li',
-                            null,
-                            React.createElement(
-                                'a',
-                                { href: 'javascript:',
-                                    onClick: _this7.forward.bind(_this7, unit)
-                                },
-                                unit
-                            )
-                        );
-                    })
-                ),
+                React.createElement(Select, { name: 'units',
+                    options: this.state.units.map(function (unit) {
+                        return { value: unit, label: unit };
+                    }),
+                    onChange: this.forward.bind(this) }),
                 React.createElement('div', { id: 'map', style: { height: 400 } }),
                 React.createElement(
                     'button',

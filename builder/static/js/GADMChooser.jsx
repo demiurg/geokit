@@ -225,9 +225,10 @@ class GADMChooser extends React.Component {
         });
     }
 
-    forward(parent_name) {
+    forward(parent) {
         var level = this.state.level + 1,
-            parents = this.state.parents;
+            parents = this.state.parents,
+            parent_name = parent.value;
 
         parents.push(parent_name);
 
@@ -278,20 +279,11 @@ class GADMChooser extends React.Component {
                     <h1>{this.state.parents.map(
                         (unit) => { return unit + " > "; }
                     )}</h1>
-                    <ul className="listing" style={
-                        {height: 300, overflow: "scroll", marginBottom: 0}
-                    }>
-                        {this.state.level != 0 ?
-                            <li><a href="javascript:"
-                                onClick={this.back.bind(this)}
-                            >&lt; Back</a></li>
-                        : null}
-                        {this.state.units.map((unit) => {
-                            return <li><a href="javascript:"
-                                onClick={this.forward.bind(this, unit)}
-                            >{unit}</a></li>;
-                        })}
-                    </ul>
+                    <Select name="units"
+                            options={this.state.units.map((unit) => {
+                                return {value: unit, label: unit};})
+                            }
+                            onChange={this.forward.bind(this)} />
                     <div id="map" style={{height: 400}}></div>
                     <button className="button"
                         onClick={this.saveLayer.bind(this)}
