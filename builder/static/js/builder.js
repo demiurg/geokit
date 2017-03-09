@@ -60,11 +60,20 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
+        var _this3 = this;
+
         if (!this.state.loading && !this.mapRendered) {
             this.renderMap();
         } else if (!this.state.loading && this.mapRendered) {
             if (prevState.level != this.state.level) {
                 this.setGadmLayer(this.state.level);
+            } else {
+                prevState.selected.map(function (selection) {
+                    if (_this3.state.selected.indexOf(selection) == -1) {
+                        var e = new Event(selection + "-deselect");
+                        window.dispatchEvent(e);
+                    }
+                });
             }
         }
     };
@@ -119,7 +128,7 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.setGadmLayer = function setGadmLayer(level) {
-        var _this3 = this;
+        var _this4 = this;
 
         if (this.geojsonTileLayer) {
             this.map.removeLayer(this.geojsonTileLayer);
@@ -136,17 +145,18 @@ var GADMChooser = function (_React$Component) {
             }
         }, {
             onEachFeature: function onEachFeature(feature, layer) {
+                var featureIdString = _this4.getIdString(feature, _this4.state.level);
+
                 layer.on('click', function (e) {
-                    var featureIdString = _this3.getIdString(feature, _this3.state.level);
-                    var featureIdx = _this3.state.selected.indexOf(featureIdString);
+                    var featureIdx = _this4.state.selected.indexOf(featureIdString);
                     if (featureIdx != -1) {
                         layer.setStyle({
                             fillColor: "grey"
                         });
 
-                        var selected = _this3.state.selected.slice();
+                        var selected = _this4.state.selected.slice();
                         selected.splice(featureIdx, 1);
-                        _this3.setState({
+                        _this4.setState({
                             selected: selected
                         });
                     } else {
@@ -154,16 +164,22 @@ var GADMChooser = function (_React$Component) {
                             fillColor: "blue"
                         });
 
-                        var selected = _this3.state.selected.slice();
+                        var selected = _this4.state.selected.slice();
                         selected.push(featureIdString);
-                        _this3.setState({
+                        _this4.setState({
                             selected: selected
                         });
                     }
                 });
+
+                window.addEventListener(featureIdString + "-deselect", function () {
+                    layer.setStyle({
+                        fillColor: "grey"
+                    });
+                });
             },
             style: function style(feature) {
-                if (_this3.isSelected(feature)) {
+                if (_this4.isSelected(feature)) {
                     return {
                         fillColor: "blue",
                         weight: 1
@@ -176,12 +192,13 @@ var GADMChooser = function (_React$Component) {
                 }
             }
         }).addTo(this.map);
+        window.jlayer = this.geojsonTileLayer;
 
         this.zoomMap();
     };
 
     GADMChooser.prototype.zoomMap = function zoomMap() {
-        var _this4 = this;
+        var _this5 = this;
 
         if (this.state.level == 0) {
             this.map.setView([0, 0], 2);
@@ -200,7 +217,7 @@ var GADMChooser = function (_React$Component) {
         $.ajax(url + query_params, {
             dataType: 'json',
             success: function success(data, status, xhr) {
-                _this4.map.fitBounds(L.geoJson(data).getBounds());
+                _this5.map.fitBounds(L.geoJson(data).getBounds());
             },
             error: function error(xhr, status, _error) {}
         });
@@ -227,16 +244,16 @@ var GADMChooser = function (_React$Component) {
         });
     };
 
-    GADMChooser.prototype.back = function back() {
-        var _this5 = this;
+    GADMChooser.prototype.back = function back(parent_index) {
+        var _this6 = this;
 
-        var level = this.state.level - 1,
-            parents = this.state.parents;
+        var level = parent_index,
+            parents = this.state.parents.slice();
 
-        parents.pop();
+        parents.splice(parent_index);
 
         this.getAdminUnits(level, parents[parents.length - 1], function (admin_units) {
-            _this5.setState({
+            _this6.setState({
                 level: level,
                 units: admin_units.map(function (unit) {
                     return unit.name;
@@ -251,7 +268,7 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.forward = function forward(parent) {
-        var _this6 = this;
+        var _this7 = this;
 
         var level = this.state.level + 1,
             parents = this.state.parents,
@@ -261,7 +278,7 @@ var GADMChooser = function (_React$Component) {
 
         this.getAdminUnits(level, parent_name, function (admin_units) {
 
-            _this6.setState({
+            _this7.setState({
                 level: level,
                 units: admin_units.map(function (unit) {
                     return unit.name;
@@ -272,6 +289,14 @@ var GADMChooser = function (_React$Component) {
                 }),
                 parents: parents
             });
+        });
+    };
+
+    GADMChooser.prototype.changeSelection = function changeSelection(newSelection) {
+        this.setState({
+            selected: newSelection.map(function (unit) {
+                return unit.value;
+            })
         });
     };
 
@@ -298,6 +323,8 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.render = function render() {
+        var _this8 = this;
+
         if (this.state.loading) {
             return React.createElement(
                 'div',
@@ -311,15 +338,38 @@ var GADMChooser = function (_React$Component) {
                 React.createElement(
                     'h1',
                     null,
-                    this.state.parents.map(function (unit) {
-                        return unit + " > ";
-                    })
-                ),
-                React.createElement(Select, { name: 'units',
-                    options: this.state.units.map(function (unit) {
-                        return { value: unit, label: unit };
+                    React.createElement(
+                        'a',
+                        { href: 'javascript:void(0)',
+                            onClick: this.back.bind(this, 0) },
+                        'World >'
+                    ),
+                    this.state.parents.map(function (unit, i) {
+                        return React.createElement(
+                            'a',
+                            { href: 'javascript:void(0)',
+                                onClick: _this8.back.bind(_this8, i + 1) },
+                            unit + " > "
+                        );
                     }),
-                    onChange: this.forward.bind(this) }),
+                    React.createElement(
+                        'div',
+                        { style: { display: "inline-block", width: 400 } },
+                        React.createElement(Select, { name: 'parent-selector',
+                            options: this.state.units.map(function (unit) {
+                                return { value: unit, label: unit };
+                            }),
+                            onChange: this.forward.bind(this) })
+                    )
+                ),
+                React.createElement(Select, { multi: true,
+                    value: this.state.selected.map(function (selection) {
+                        return { value: selection, label: selection.split(".").slice(-1)[0] };
+                    }),
+                    options: this.state.selected.map(function (selection) {
+                        return { value: selection, label: selection.split(".").slice(-1)[0] };
+                    }),
+                    onChange: this.changeSelection.bind(this) }),
                 React.createElement('div', { id: 'map', style: { height: 400 } }),
                 React.createElement(
                     'button',
