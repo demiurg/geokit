@@ -21,9 +21,10 @@ class Graph extends React.Component {
                 });
             },
             error: (xhr, status, error) => {
+                console.log(error);
                 this.setState({
                     loading: false,
-                    error: error
+                    error: status
                 });
             }
         });

@@ -117,14 +117,16 @@ class VariableViewSet(viewsets.ModelViewSet):
             if 'space' in dim:
                 # Build scatterplot by location
                 features = list(
-                    Feature.objects.filter(pk__in=df.index).defer('geometry')
+                    Feature.objects.filter(
+                        properties__shaid__in=df.index
+                    ).defer('geometry')
                 )
+                names = {f.properties['shaid']: f.verbose_name for f in features}
 
                 data['type'] = 'scatter'
                 data['mode'] = 'markers'
                 for i, value in enumerate(df.values):
-                    f = [feature for feature in features if feature.pk == df.index[i]][0]
-                    data['x'].append(f.verbose_name)
+                    data['x'].append(names[df.index[i]])
                     data['y'].append(value)
             elif 'time' in dim:
                 # Build timeseries
@@ -158,13 +160,18 @@ class VariableViewSet(viewsets.ModelViewSet):
 
         elif 'space' in dim:
             features = list(
-                Feature.objects.filter(pk__in=df.index).defer('geometry')
+                Feature.objects.filter(
+                    properties__shaid__in=df.index
+                )
             )
+            names = {
+                f.properties['shaid']: f for f in features
+            }
 
             data['dimension'] = 'space'
             data['values'] = []
             for i, value in enumerate(df.values):
-                f = [feature for feature in features if feature.pk == df.index[i]][0]
+                f = names[df.index[i]]
                 f.geometry.transform(4326)
                 feature = {}
                 feature['geometry'] = json.loads(f.geometry.geojson)
