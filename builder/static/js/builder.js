@@ -424,9 +424,10 @@ var Graph = function (_React$Component) {
                 });
             },
             error: function error(xhr, status, _error) {
+                console.log(_error);
                 _this2.setState({
                     loading: false,
-                    error: _error
+                    error: status
                 });
             }
         });
@@ -1055,9 +1056,10 @@ var Table = function (_React$Component) {
                 });
             },
             error: function error(xhr, status, _error) {
+                console.log(_error);
                 _this2.setState({
                     loading: false,
-                    error: _error
+                    error: status
                 });
             }
         });
