@@ -149,26 +149,42 @@ var GADMChooser = function (_React$Component) {
 
                 layer.on('click', function (e) {
                     var featureIdx = _this4.state.selected.indexOf(featureIdString);
-                    if (featureIdx != -1) {
-                        layer.setStyle({
-                            fillColor: "grey"
-                        });
 
-                        var selected = _this4.state.selected.slice();
-                        selected.splice(featureIdx, 1);
-                        _this4.setState({
-                            selected: selected
-                        });
+                    var double_click = true;
+                    if (_this4.click_ll != e.latlng) {
+                        double_click = false;
+                        _this4.click_ll = e.latlng;
+                        _this4.last_featureIdx = featureIdx;
+                    }
+
+                    if (!double_click) {
+                        if (featureIdx != -1) {
+                            layer.setStyle({
+                                fillColor: "grey"
+                            });
+
+                            var selected = _this4.state.selected.slice();
+                            selected.splice(featureIdx, 1);
+                            _this4.setState({
+                                selected: selected
+                            });
+                        } else {
+                            layer.setStyle({
+                                fillColor: "blue"
+                            });
+
+                            var selected = _this4.state.selected.slice();
+                            selected.push(featureIdString);
+                            _this4.setState({
+                                selected: selected
+                            });
+                        }
                     } else {
-                        layer.setStyle({
-                            fillColor: "blue"
-                        });
-
-                        var selected = _this4.state.selected.slice();
-                        selected.push(featureIdString);
-                        _this4.setState({
-                            selected: selected
-                        });
+                        if (_this4.last_featureIdx != -1) {
+                            layer.setStyle({ fillColor: "grey" });
+                        } else {
+                            layer.setStyle({ fillColor: "blue" });
+                        }
                     }
                 });
 
@@ -339,17 +355,27 @@ var GADMChooser = function (_React$Component) {
                     'h1',
                     null,
                     React.createElement(
-                        'a',
-                        { href: 'javascript:void(0)',
-                            onClick: this.back.bind(this, 0) },
-                        'World >'
+                        'span',
+                        null,
+                        React.createElement(
+                            'a',
+                            { href: 'javascript:void(0)',
+                                onClick: this.back.bind(this, 0) },
+                            'World'
+                        ),
+                        ' >'
                     ),
                     this.state.parents.map(function (unit, i) {
                         return React.createElement(
-                            'a',
-                            { href: 'javascript:void(0)',
-                                onClick: _this8.back.bind(_this8, i + 1) },
-                            unit + " > "
+                            'span',
+                            null,
+                            React.createElement(
+                                'a',
+                                { href: 'javascript:void(0)',
+                                    onClick: _this8.back.bind(_this8, i + 1) },
+                                unit
+                            ),
+                            ' >'
                         );
                     }),
                     React.createElement(
