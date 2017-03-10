@@ -126,26 +126,42 @@ class GADMChooser extends React.Component {
 
                 layer.on('click', (e) => {
                     var featureIdx = this.state.selected.indexOf(featureIdString);
-                    if (featureIdx != -1) {
-                        layer.setStyle({
-                            fillColor: "grey"
-                        });
-                   
-                        var selected = this.state.selected.slice();
-                        selected.splice(featureIdx, 1);
-                        this.setState({
-                            selected: selected
-                        });
-                    } else {
-                        layer.setStyle({
-                            fillColor: "blue"
-                        });
+
+                    var double_click = true;
+                    if (this.click_ll != e.latlng) {
+                        double_click = false;
+                        this.click_ll = e.latlng;
+                        this.last_featureIdx = featureIdx;
+                    }
+
+                    if (!double_click) {
+                        if (featureIdx != -1) {
+                                layer.setStyle({
+                                    fillColor: "grey"
+                                });
+                    
+                                var selected = this.state.selected.slice();
+                                selected.splice(featureIdx, 1);
+                                this.setState({
+                                    selected: selected
+                                });
+                        } else {
+                                layer.setStyle({
+                                    fillColor: "blue"
+                                });
                         
-                        var selected = this.state.selected.slice();
-                        selected.push(featureIdString);
-                        this.setState({
-                            selected: selected
-                        });
+                                var selected = this.state.selected.slice();
+                                selected.push(featureIdString);
+                                this.setState({
+                                    selected: selected
+                                });
+                        }
+                    } else {
+                        if (this.last_featureIdx != -1) {
+                            layer.setStyle({fillColor: "grey"});
+                        } else {
+                            layer.setStyle({fillColor: "blue"});
+                        }
                     }
                 });
 
@@ -298,11 +314,15 @@ class GADMChooser extends React.Component {
             return (
                 <div>
                     <h1>
-                        <a href="javascript:void(0)"
-                           onClick={this.back.bind(this, 0)}>World ></a>
+                        <span>
+                            <a href="javascript:void(0)"
+                                onClick={this.back.bind(this, 0)}>World</a> > 
+                        </span>
                         {this.state.parents.map((unit, i) => {
-                            return <a href="javascript:void(0)"
-                                onClick={this.back.bind(this, i + 1)}>{unit + " > "}</a>;
+                            return <span>
+                                <a href="javascript:void(0)"
+                                    onClick={this.back.bind(this, i + 1)}>{unit}</a> > 
+                            </span>;
                         })}
                         <div style={{display: "inline-block", width: 400}}>
                             <Select name="parent-selector"
