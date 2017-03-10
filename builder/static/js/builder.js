@@ -947,14 +947,23 @@ var Map = function (_React$Component) {
                     }
                 }, {
                     style: function style(feature) {
+                        var s = self;
                         var fdata = self.state.data[feature.properties.shaid];
-                        var value = fdata[self.props.variable_name];
+                        var color = "#000";
+                        var opacity = 0.1;
 
+                        if (fdata) {
+                            var value = fdata[self.props.variable_name];
+                            color = self.color_scale(value);
+                            opacity = 0.7;
+                        } else {
+                            console.log('no ' + feature.properties.shaid);
+                        }
                         return {
                             color: "#000",
                             weight: 1,
-                            fillColor: self.color_scale(value),
-                            fillOpacity: 0.7
+                            fillColor: color,
+                            fillOpacity: opacity
                         };
                     },
                     onEachFeature: self.featureHandler,
