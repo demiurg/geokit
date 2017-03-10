@@ -61,6 +61,12 @@ class Variable(models.Model):
     def get_rasters(self):
         return self.root.get_rasters()
 
+    def bounds(self):
+        layer_ids = self.root.get_layers()
+        boxes = Layer.objects.filter(pk__in=layer_ids).values_list('bounds')
+
+        return boxes
+
     def data(self):
         if self.current_data is None:
             self.current_data = self.root.execute()

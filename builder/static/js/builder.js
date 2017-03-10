@@ -921,10 +921,13 @@ var Map = function (_React$Component) {
                     }
                 }, {
                     style: function style(feature) {
+                        var fdata = self.state.data[feature.properties.shaid];
+                        var value = fdata[self.props.variable_name];
+
                         return {
                             color: "#000",
                             weight: 1,
-                            fillColor: self.color_scale(self.state.data[feature.properties.shaid][self.props.variable_name]),
+                            fillColor: self.color_scale(value),
                             fillOpacity: 0.7
                         };
                     },
