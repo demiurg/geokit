@@ -27,14 +27,13 @@ class Map extends React.Component {
                         return data.data[key][self.props.variable_name];
                     })
                 );
-                console.log(this.min_value, this.max_value);
+
                 this.color_scale = d3.scale.linear()
                     .domain([this.min_value, this.max_value])
                     .range(this.props.color_ramp.map((stop) => { return stop[1]; }));
 
                 this.setState(
-                    Object.assign(data, {loading: false}),
-                    () => this.props.setDimensions(Object.values(data.data))
+                    Object.assign(data, {loading: false})
                 );
             },
             error: (xhr, status, error) => {

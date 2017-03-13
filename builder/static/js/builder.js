@@ -903,14 +903,12 @@ var Map = function (_React$Component) {
                 _this2.max_value = d3.max(Object.keys(data.data).map(function (key) {
                     return data.data[key][self.props.variable_name];
                 }));
-                console.log(_this2.min_value, _this2.max_value);
+
                 _this2.color_scale = d3.scale.linear().domain([_this2.min_value, _this2.max_value]).range(_this2.props.color_ramp.map(function (stop) {
                     return stop[1];
                 }));
 
-                _this2.setState(Object.assign(data, { loading: false }), function () {
-                    return _this2.props.setDimensions(Object.values(data.data));
-                });
+                _this2.setState(Object.assign(data, { loading: false }));
             },
             error: function error(xhr, status, _error) {
                 console.log(_error);
@@ -1503,6 +1501,8 @@ var TableListItem = function (_React$Component2) {
 }(React.Component);
 'use strict';
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -1625,40 +1625,27 @@ var Visualization = function (_React$Component3) {
     }
 
     Visualization.prototype.render = function render() {
-        if (this.props.type == "map") {
-            return React.createElement(
-                'div',
-                { style: { height: 400 } },
-                React.createElement(Map, {
-                    variable_id: this.props.variable_id,
-                    variable_name: this.props.variable_name,
-                    color_ramp: [[0, "#4286f4"], [50, "#f48341"]],
-                    setDimensions: this.props.getChildDimensions,
-                    dimensions: this.props.dimensions,
-                    unique_id: this.props.unique_id })
-            );
-        } else if (this.props.type == "graph") {
-            return React.createElement(
-                'div',
-                null,
-                React.createElement(Graph, {
-                    variable_id: this.props.variable_id,
-                    variable_name: this.props.variable_name,
-                    setDimensions: this.props.getChildDimensions,
-                    dimensions: this.props.dimensions,
-                    unique_id: this.props.unique_id })
-            );
-        } else if (this.props.type == "table") {
-            return React.createElement(
-                'div',
-                null,
-                React.createElement(Table, {
-                    variable_id: this.props.variable_id,
-                    variable_name: this.props.variable_name,
-                    setDimensions: this.props.getChildDimensions,
-                    dimensions: this.props.dimensions,
-                    unique_id: this.props.unique_id })
-            );
+        switch (this.props.type) {
+            case "map":
+                return React.createElement(
+                    'div',
+                    { style: { height: 400 } },
+                    React.createElement(Map, _extends({
+                        color_ramp: [[0, "#4286f4"], [50, "#f48341"]]
+                    }, this.props))
+                );
+            case "graph":
+                return React.createElement(
+                    'div',
+                    null,
+                    React.createElement(Graph, this.props)
+                );
+            case "table":
+                return React.createElement(
+                    'div',
+                    null,
+                    React.createElement(Table, this.props)
+                );
         }
     };
 
@@ -1673,47 +1660,73 @@ var VisualizationGroup = function (_React$Component4) {
 
         var _this6 = _possibleConstructorReturn(this, _React$Component4.call(this, props));
 
+        var dimensions = {};
+        for (var _iterator = _this6.props.visualizations, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+            var _ref;
+
+            if (_isArray) {
+                if (_i >= _iterator.length) break;
+                _ref = _iterator[_i++];
+            } else {
+                _i = _iterator.next();
+                if (_i.done) break;
+                _ref = _i.value;
+            }
+
+            var v = _ref;
+
+            if (v.dimensions == 'space') {
+                dimensions['space'] = true;
+            } else if (v.dimensions == 'time') {
+                dimensions['time'] = true;
+            } else if (v.dimensions == 'spacetime') {
+                dimensions['space'] = dimensions['time'] = true;
+            }
+        }
+
+        dimensions = (dimensions['space'] ? 'space' : '') + (dimensions['time'] ? 'time' : '');
+
         _this6.state = {
-            dimensions: null,
-            currentDimensions: null
+            dimensions: dimensions,
+            space_index: null,
+            time_index: null,
+            current_space_bounds: null,
+            current_time_range: null
         };
 
-        _this6.childStartingDimensions = [];
+        _this6.child_indexes = [];
         return _this6;
     }
 
-    VisualizationGroup.prototype.changeDimensions = function changeDimensions(newDims) {
-        if (this.props.control == 'time') {
-            this.setState({
-                currentDimensions: { min: newDims.min, max: newDims.max }
-            });
-        } else {
-            this.setState({ currentDimensions: newDims });
-        }
+    VisualizationGroup.prototype.changeDateRange = function changeDateRange(range) {
+        this.setState({
+            currentDimensions: { min: range.min, max: range.max }
+        });
     };
 
-    VisualizationGroup.prototype.getChildDimensions = function getChildDimensions(dimensions) {
-        this.childStartingDimensions.push(dimensions);
+    VisualizationGroup.prototype.changeSpaceBounds = function changeSpaceBounds(bounds) {};
 
-        if (this.childStartingDimensions.length == this.props.children.length) {
-            if (this.props.control == "slider") {
-                var min = Plotly.d3.min(this.childStartingDimensions.map(function (childDim) {
+    VisualizationGroup.prototype.updateIndexes = function updateIndexes(index) {
+        this.child_indexes.push(index);
+
+        if (this.child_indexes.length == this.props.visualizations.length) {
+            if (this.state.dimensions.indexOf('time') != -1) {
+                var min = Plotly.d3.min(this.child_indexes.map(function (childDim) {
                     return childDim[0];
                 }));
 
-                var max = Plotly.d3.max(this.childStartingDimensions.map(function (childDim) {
+                var max = Plotly.d3.max(this.child_indexes.map(function (childDim) {
                     return childDim[1];
                 }));
 
                 this.setState({
-                    dimensions: { min: min, max: max },
-                    currentDimensions: { min: min, max: max }
+                    current_time_range: { min: min, max: max }
                 });
             } else {
-                var merged_features = [].concat.apply([], this.childStartingDimensions);
+                var merged_features = [].concat.apply([], this.child_indexes);
                 this.setState({
                     dimensions: merged_features,
-                    currentDimensions: merged_features
+                    current_features: merged_features
                 });
             }
         }
@@ -1722,22 +1735,20 @@ var VisualizationGroup = function (_React$Component4) {
     VisualizationGroup.prototype.render = function render() {
         var _this7 = this;
 
-        var Control = null;
-        if (this.props.control == "map") {
-            Control = MapControl;
-        } else if (this.props.control == "slider") {
-            Control = SliderControl;
-        }
-
         return React.createElement(
             'div',
             null,
-            Control && this.state.dimensions ? React.createElement(Control, { dims: this.state.dimensions, currentDims: this.state.currentDimensions, changeDimensions: this.changeDimensions.bind(this) }) : null,
-            this.props.children.map(function (child) {
-                return React.cloneElement(child, {
-                    dimensions: _this7.state.currentDimensions,
-                    getChildDimensions: _this7.getChildDimensions.bind(_this7)
-                });
+            this.state.dimensions.indexOf('time') != -1 ? React.createElement(SliderControl, {
+                date_range: this.state.date_range,
+                current_date_range: this.state.current_date_range,
+                changeDateRange: this.changeDateRange.bind(this)
+            }) : null,
+            this.props.visualizations.map(function (v) {
+                return React.createElement(Visualization, _extends({
+                    updateIndexes: _this7.updateIndexes.bind(_this7),
+                    changeDateRange: _this7.changeDateRange.bind(_this7),
+                    changeSpaceBounds: _this7.changeSpaceBounds.bind(_this7)
+                }, v));
             })
         );
     };
