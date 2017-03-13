@@ -472,7 +472,7 @@ class RasterSource(DataNode):
         )
         job_id = job_request.job_id
 
-        print job_id
+        # print job_id
 
         results = conn.stats_request_results({'job': job_id})
         for r in results:

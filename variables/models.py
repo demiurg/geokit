@@ -43,7 +43,11 @@ class Variable(models.Model):
         return super(Variable, self).save(*args, **kwargs)
 
     def __unicode__(self):
-        return self.name
+        return "{} {}{}".format(
+            self.name,
+            'S' if 's' in self.saved_dimensions else '',
+            'T' if 't' in self.saved_dimensions else ''
+        )
 
     @cached_property
     def dimensions(self):
@@ -61,11 +65,24 @@ class Variable(models.Model):
     def get_rasters(self):
         return self.root.get_rasters()
 
+    @cached_property
     def bounds(self):
         layer_ids = self.root.get_layers()
-        boxes = Layer.objects.filter(pk__in=layer_ids).values_list('bounds')
+        boxes = list(Layer.objects.filter(pk__in=layer_ids).values('bounds'))
 
-        return boxes
+        if any(boxes):
+            lon_min = min([b['bounds'][0] for b in boxes])
+            lat_max = max([b['bounds'][1] for b in boxes])
+            lon_max = max([b['bounds'][2] for b in boxes])
+            lat_min = min([b['bounds'][3] for b in boxes])
+        else:
+            return None
+
+        class blist(list):
+            def __unicode__(self):
+                return ", ".join(map(lambda x: "{:.4f}".format(x), self))
+
+        return blist([lon_min, lat_max, lon_max, lat_min])
 
     def data(self):
         if self.current_data is None:

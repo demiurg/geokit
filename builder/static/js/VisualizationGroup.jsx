@@ -175,12 +175,21 @@ class VisualizationGroup extends React.Component {
             Control = SliderControl;
         }
 
+        var dimensions = {};
+        for (let v of this.props.items){
+
+        }
         return (
             <div>
                 {(Control && this.state.dimensions) ?
-                    <Control dims={this.state.dimensions} currentDims={this.state.currentDimensions} changeDimensions={this.changeDimensions.bind(this)} /> :
-                    null}
-                {this.props.children.map((child) => {
+                    <Control dims={this.state.dimensions}
+                        currentDims={this.state.currentDimensions}
+                        changeDimensions={this.changeDimensions.bind(this)}
+                    />
+                :
+                    null
+                }
+                {this.props.items.map((v) => {
                     return React.cloneElement(child, {
                         dimensions: this.state.currentDimensions,
                         getChildDimensions: this.getChildDimensions.bind(this)
