@@ -130,6 +130,23 @@ class GADMChooser extends React.Component {
         if (this.geojsonTileLayer){
             this.map.removeLayer(this.geojsonTileLayer);
         }
+        if (this.sub_layer) {
+            this.map.removeLayer(this.sub_layer);
+        }
+
+        if (this.state.level < 4) {
+            var geojson_sub_URL = '/layers/gadm/' + (level + 1) + '/{z}/{x}/{y}.json';
+            this.sub_layer = new L.TileLayer.GeoJSON(geojson_sub_URL, {
+                clipTiles: true
+            }, {
+                style: {
+                    weight: 1,
+                    color: "green",
+                    fillColor: "grey"
+                }
+            }).addTo(this.map);
+        }
+
         this.geojsonURL = '/layers/gadm/' + level + '/{z}/{x}/{y}.json';
         this.geojsonTileLayer = new L.TileLayer.GeoJSON(this.geojsonURL, {
             clipTiles: true,
