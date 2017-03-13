@@ -81,12 +81,20 @@ var GADMChooser = function (_React$Component) {
         }
     };
 
-    GADMChooser.prototype.featureWasDrawSelected = function featureWasDrawSelected(selected, featureIdString) {
+    GADMChooser.prototype.featureWasDrawSelected = function featureWasDrawSelected(selected, layer, featureIdString) {
         var _this4 = this;
 
         this.featuresChecked++;
         if (selected) {
+            layer.setStyle({ fillColor: "blue" });
             this.drawSelection.push(featureIdString);
+        } else {
+            if (this.drawSelection.indexOf(featureIdString) != -1) {
+                layer.setStyle({ fillColor: "blue" });
+            } else {
+                console.log(featureIdString);
+                layer.setStyle({ fillColor: "grey" });
+            }
         }
 
         if (this.featuresChecked == this.displayedFeatures.size) {
@@ -107,7 +115,12 @@ var GADMChooser = function (_React$Component) {
             accessToken: 'pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
         }).addTo(map);
 
-        var drawControl = new L.Control.Draw();
+        var drawControl = new L.Control.Draw({
+            draw: {
+                marker: false,
+                polyline: false
+            }
+        });
         map.addControl(drawControl);
 
         this.setGadmLayer(0);
@@ -155,17 +168,17 @@ var GADMChooser = function (_React$Component) {
         if (this.geojsonTileLayer) {
             this.map.removeLayer(this.geojsonTileLayer);
         }
-        if (this.sub_layer) {
-            this.map.removeLayer(this.sub_layer);
+        if (this.super_layer) {
+            this.map.removeLayer(this.super_layer);
         }
 
-        if (this.state.level < 4) {
-            var geojson_sub_URL = '/layers/gadm/' + (level + 1) + '/{z}/{x}/{y}.json';
-            this.sub_layer = new L.TileLayer.GeoJSON(geojson_sub_URL, {
+        if (this.state.level > 0) {
+            var geojson_super_URL = '/layers/gadm/' + (level - 1) + '/{z}/{x}/{y}.json';
+            this.sub_layer = new L.TileLayer.GeoJSON(geojson_super_URL, {
                 clipTiles: true
             }, {
                 style: {
-                    weight: 1,
+                    weight: 4,
                     color: "green",
                     fillColor: "grey"
                 }
@@ -242,12 +255,10 @@ var GADMChooser = function (_React$Component) {
                 });
 
                 _this5.map.on(L.Draw.Event.CREATED, function (e) {
-                    if (e.layer.getBounds().contains(layer.getBounds())) {
-                        layer.setStyle({ fillColor: "blue" });
-                        _this5.featureWasDrawSelected(true, featureIdString);
+                    if (e.layer.getBounds().intersects(layer.getBounds())) {
+                        _this5.featureWasDrawSelected(true, layer, featureIdString);
                     } else {
-                        layer.setStyle({ fillColor: "grey" });
-                        _this5.featureWasDrawSelected(false);
+                        _this5.featureWasDrawSelected(false, layer, featureIdString);
                     }
                 });
             },
