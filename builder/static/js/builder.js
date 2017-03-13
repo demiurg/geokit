@@ -31,6 +31,9 @@ var GADMChooser = function (_React$Component) {
         var _this = _possibleConstructorReturn(this, _React$Component.call(this));
 
         _this.mapRendered = false;
+        _this.displayedFeatures = new Set();
+        _this.featuresChecked = 0;
+        _this.drawSelection = [];
 
         _this.state = {
             level: null,
@@ -78,6 +81,22 @@ var GADMChooser = function (_React$Component) {
         }
     };
 
+    GADMChooser.prototype.featureWasDrawSelected = function featureWasDrawSelected(selected, featureIdString) {
+        var _this4 = this;
+
+        this.featuresChecked++;
+        if (selected) {
+            this.drawSelection.push(featureIdString);
+        }
+
+        if (this.featuresChecked == this.displayedFeatures.size) {
+            this.setState({ selected: this.drawSelection }, function () {
+                _this4.featuresChecked = 0;
+                _this4.drawSelection = [];
+            });
+        }
+    };
+
     GADMChooser.prototype.renderMap = function renderMap() {
         var map = this.map = L.map('map').setView([0, 0], 2);
 
@@ -87,6 +106,9 @@ var GADMChooser = function (_React$Component) {
             id: 'ags.n5m0p5ci',
             accessToken: 'pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
         }).addTo(map);
+
+        var drawControl = new L.Control.Draw();
+        map.addControl(drawControl);
 
         this.setGadmLayer(0);
         this.mapRendered = true;
@@ -128,7 +150,7 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.setGadmLayer = function setGadmLayer(level) {
-        var _this4 = this;
+        var _this5 = this;
 
         if (this.geojsonTileLayer) {
             this.map.removeLayer(this.geojsonTileLayer);
@@ -145,16 +167,16 @@ var GADMChooser = function (_React$Component) {
             }
         }, {
             onEachFeature: function onEachFeature(feature, layer) {
-                var featureIdString = _this4.getIdString(feature, _this4.state.level);
+                var featureIdString = _this5.getIdString(feature, _this5.state.level);
 
                 layer.on('click', function (e) {
-                    var featureIdx = _this4.state.selected.indexOf(featureIdString);
+                    var featureIdx = _this5.state.selected.indexOf(featureIdString);
 
                     var double_click = true;
-                    if (_this4.click_ll != e.latlng) {
+                    if (_this5.click_ll != e.latlng) {
                         double_click = false;
-                        _this4.click_ll = e.latlng;
-                        _this4.last_featureIdx = featureIdx;
+                        _this5.click_ll = e.latlng;
+                        _this5.last_featureIdx = featureIdx;
                     }
 
                     if (!double_click) {
@@ -163,9 +185,9 @@ var GADMChooser = function (_React$Component) {
                                 fillColor: "grey"
                             });
 
-                            var selected = _this4.state.selected.slice();
+                            var selected = _this5.state.selected.slice();
                             selected.splice(featureIdx, 1);
-                            _this4.setState({
+                            _this5.setState({
                                 selected: selected
                             });
                         } else {
@@ -173,14 +195,14 @@ var GADMChooser = function (_React$Component) {
                                 fillColor: "blue"
                             });
 
-                            var selected = _this4.state.selected.slice();
+                            var selected = _this5.state.selected.slice();
                             selected.push(featureIdString);
-                            _this4.setState({
+                            _this5.setState({
                                 selected: selected
                             });
                         }
                     } else {
-                        if (_this4.last_featureIdx != -1) {
+                        if (_this5.last_featureIdx != -1) {
                             layer.setStyle({ fillColor: "grey" });
                         } else {
                             layer.setStyle({ fillColor: "blue" });
@@ -188,14 +210,32 @@ var GADMChooser = function (_React$Component) {
                     }
                 });
 
+                layer.on('layeradd', function () {
+                    _this5.displayedFeatures.add(featureIdString);
+                });
+
+                layer.on('layerremove', function () {
+                    _this5.displayedFeatures.delete(featureIdString);
+                });
+
                 window.addEventListener(featureIdString + "-deselect", function () {
                     layer.setStyle({
                         fillColor: "grey"
                     });
                 });
+
+                _this5.map.on(L.Draw.Event.CREATED, function (e) {
+                    if (e.layer.getBounds().contains(layer.getBounds())) {
+                        layer.setStyle({ fillColor: "blue" });
+                        _this5.featureWasDrawSelected(true, featureIdString);
+                    } else {
+                        layer.setStyle({ fillColor: "grey" });
+                        _this5.featureWasDrawSelected(false);
+                    }
+                });
             },
             style: function style(feature) {
-                if (_this4.isSelected(feature)) {
+                if (_this5.isSelected(feature)) {
                     return {
                         fillColor: "blue",
                         weight: 1
@@ -208,13 +248,12 @@ var GADMChooser = function (_React$Component) {
                 }
             }
         }).addTo(this.map);
-        window.jlayer = this.geojsonTileLayer;
 
         this.zoomMap();
     };
 
     GADMChooser.prototype.zoomMap = function zoomMap() {
-        var _this5 = this;
+        var _this6 = this;
 
         if (this.state.level == 0) {
             this.map.setView([0, 0], 2);
@@ -233,7 +272,7 @@ var GADMChooser = function (_React$Component) {
         $.ajax(url + query_params, {
             dataType: 'json',
             success: function success(data, status, xhr) {
-                _this5.map.fitBounds(L.geoJson(data).getBounds());
+                _this6.map.fitBounds(L.geoJson(data).getBounds());
             },
             error: function error(xhr, status, _error) {}
         });
@@ -261,7 +300,7 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.back = function back(parent_index) {
-        var _this6 = this;
+        var _this7 = this;
 
         var level = parent_index,
             parents = this.state.parents.slice();
@@ -269,7 +308,7 @@ var GADMChooser = function (_React$Component) {
         parents.splice(parent_index);
 
         this.getAdminUnits(level, parents[parents.length - 1], function (admin_units) {
-            _this6.setState({
+            _this7.setState({
                 level: level,
                 units: admin_units.map(function (unit) {
                     return unit.name;
@@ -284,7 +323,7 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.forward = function forward(parent) {
-        var _this7 = this;
+        var _this8 = this;
 
         var level = this.state.level + 1,
             parents = this.state.parents,
@@ -294,7 +333,7 @@ var GADMChooser = function (_React$Component) {
 
         this.getAdminUnits(level, parent_name, function (admin_units) {
 
-            _this7.setState({
+            _this8.setState({
                 level: level,
                 units: admin_units.map(function (unit) {
                     return unit.name;
@@ -339,7 +378,7 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.render = function render() {
-        var _this8 = this;
+        var _this9 = this;
 
         if (this.state.loading) {
             return React.createElement(
@@ -372,7 +411,7 @@ var GADMChooser = function (_React$Component) {
                             React.createElement(
                                 'a',
                                 { href: 'javascript:void(0)',
-                                    onClick: _this8.back.bind(_this8, i + 1) },
+                                    onClick: _this9.back.bind(_this9, i + 1) },
                                 unit
                             ),
                             ' >'

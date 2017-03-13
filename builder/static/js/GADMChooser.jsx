@@ -19,6 +19,9 @@ class GADMChooser extends React.Component {
         super();
 
         this.mapRendered = false;
+        this.displayedFeatures = new Set();
+        this.featuresChecked = 0;
+        this.drawSelection = [];
 
         this.state = {
             level: null,
@@ -57,6 +60,20 @@ class GADMChooser extends React.Component {
         }
     }
 
+    featureWasDrawSelected(selected, featureIdString) {
+        this.featuresChecked++;
+        if (selected) {
+            this.drawSelection.push(featureIdString);
+        }
+
+        if (this.featuresChecked == this.displayedFeatures.size) {
+            this.setState({selected: this.drawSelection}, () => {
+                this.featuresChecked = 0;
+                this.drawSelection = [];
+            });
+        }
+    }
+
     renderMap() {
         var map = this.map = L.map('map').setView([0, 0], 2);
 
@@ -66,6 +83,9 @@ class GADMChooser extends React.Component {
             id: 'ags.n5m0p5ci',
             accessToken: 'pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
         }).addTo(map);
+
+        var drawControl = new L.Control.Draw();
+        map.addControl(drawControl);
 
         this.setGadmLayer(0);
         this.mapRendered = true;
@@ -165,10 +185,28 @@ class GADMChooser extends React.Component {
                     }
                 });
 
+                layer.on('layeradd', () => {
+                    this.displayedFeatures.add(featureIdString);
+                });
+
+                layer.on('layerremove', () => {
+                    this.displayedFeatures.delete(featureIdString);
+                });
+
                 window.addEventListener(featureIdString + "-deselect", () => {
                     layer.setStyle({
                         fillColor: "grey"
                     });
+                });
+
+                this.map.on(L.Draw.Event.CREATED, (e) => {
+                    if (e.layer.getBounds().contains(layer.getBounds())) {
+                        layer.setStyle({fillColor: "blue"});
+                        this.featureWasDrawSelected(true, featureIdString);
+                    } else {
+                        layer.setStyle({fillColor: "grey"});
+                        this.featureWasDrawSelected(false);
+                    }
                 });
             },
             style: (feature) => {
@@ -185,7 +223,6 @@ class GADMChooser extends React.Component {
                 }
             }
         }).addTo(this.map);
-        window.jlayer = this.geojsonTileLayer;
 
         this.zoomMap();
     }
