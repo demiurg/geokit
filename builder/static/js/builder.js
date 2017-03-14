@@ -880,6 +880,30 @@ var Map = function (_React$Component) {
 
         var _this = _possibleConstructorReturn(this, _React$Component.call(this, props));
 
+        _this.featureHandler = function (feature, layer) {
+            self = _this;
+            layer.on({
+                mouseover: function mouseover() {
+                    layer.setStyle(self.activeStyle);
+                },
+                mouseout: function mouseout() {
+                    layer.setStyle(self.defaultStyle);
+                },
+                click: function click(e) {
+                    var feature = e.target.feature;
+                    if (feature.properties) {
+                        var popupString = '<div class="popup">';
+                        for (var k in feature.properties) {
+                            var v = feature.properties[k];
+                            popupString += k + ': ' + v + '<br />';
+                        }
+                        popupString += '</div>';
+                        layer.bindPopup(popupString).openPopup();
+                    }
+                }
+            });
+        };
+
         _this.state = {
             loading: true,
             error: false,
@@ -977,9 +1001,10 @@ var Map = function (_React$Component) {
                     }
                 });
                 map.addLayer(geojsonTileLayer);
-                map.fitBounds([[self.state.bounds[idx][1], self.state.bounds[idx][0]], [self.state.bounds[idx][3], self.state.bounds[idx][2]]]);
             });
-
+            if (self.props.bounds) {
+                map.fitBounds([[self.props.bounds[1], self.props.bounds[0]], [self.props.bounds[3], self.props.bounds[2]]]);
+            }
             var legend = L.control({ position: 'bottomright' });
 
             legend.onAdd = function (map) {
@@ -1734,6 +1759,8 @@ var VisualizationGroup = function (_React$Component4) {
 
     VisualizationGroup.prototype.render = function render() {
         var _this7 = this;
+
+        console.log(this.state.dimensions);
 
         return React.createElement(
             'div',

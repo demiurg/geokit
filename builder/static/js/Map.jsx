@@ -105,12 +105,13 @@ class Map extends React.Component {
                     },
                 });
                 map.addLayer(geojsonTileLayer);
-                map.fitBounds([
-                    [self.state.bounds[idx][1], self.state.bounds[idx][0]],
-                    [self.state.bounds[idx][3], self.state.bounds[idx][2]]
-                ]);
             })
-
+            if(self.props.bounds){
+                map.fitBounds([
+                    [self.props.bounds[1], self.props.bounds[0]],
+                    [self.props.bounds[3], self.props.bounds[2]]
+                ]);
+            }
             var legend = L.control({position: 'bottomright'});
 
             legend.onAdd = (map) => {
@@ -122,6 +123,31 @@ class Map extends React.Component {
             legend.addTo(map);
         }
     }
+
+    featureHandler = (feature, layer) => {
+        self = this;
+        layer.on({
+            mouseover: function() {
+                layer.setStyle(self.activeStyle);
+            },
+            mouseout: function() {
+                layer.setStyle(self.defaultStyle);
+            },
+            click: function(e) {
+                var feature = e.target.feature;
+                if (feature.properties) {
+                    var popupString = '<div class="popup">';
+                    for (var k in feature.properties) {
+                        var v = feature.properties[k];
+                        popupString += k + ': ' + v + '<br />';
+                    }
+                    popupString += '</div>';
+                    layer.bindPopup(popupString).openPopup();
+                }
+            }
+        });
+    }
+
 
     addColorRamp(dom_el) {
         var key = d3.select(dom_el).append("svg")

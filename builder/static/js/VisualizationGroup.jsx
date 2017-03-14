@@ -175,8 +175,9 @@ class VisualizationGroup extends React.Component {
             }
         }
     }
-
     render() {
+    console.log((this.state.dimensions));
+
         return (
             <div>
                 {(this.state.dimensions.indexOf('time') != -1) ?
