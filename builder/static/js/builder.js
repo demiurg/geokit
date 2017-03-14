@@ -1,3 +1,42 @@
+"use strict";
+
+function bindLayerDownload(layer, dom_element) {
+    ReactDOM.render(React.createElement(LayerDownload, { layer: layer }), dom_element);
+}
+
+function bindTableDownload(table, dom_element) {
+    ReactDOM.render(React.createElement(TableDownload, { table: table }), dom_element);
+}
+
+window.bindLayerDownload = bindLayerDownload;
+window.bindTableDownload = bindTableDownload;
+"use strict";
+
+function bindMap(variable, color_ramp, dom_element) {
+    ReactDOM.render(React.createElement(Map, {
+        variable_id: variable.id,
+        variable_name: variable.name,
+        color_ramp: color_ramp
+    }), dom_element);
+}
+
+function bindGraph(variable, dom_element) {
+    ReactDOM.render(React.createElement(Graph, {
+        variable_id: variable.id,
+        variable_name: variable.name
+    }), dom_element);
+}
+
+function bindTable(variable, dom_element) {
+    ReactDOM.render(React.createElement(Table, {
+        variable_id: variable.id,
+        variable_name: variable.name
+    }), dom_element);
+}
+
+window.bindMap = bindMap;
+window.bindGraph = bindGraph;
+window.bindTable = bindTable;
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -31,9 +70,6 @@ var GADMChooser = function (_React$Component) {
         var _this = _possibleConstructorReturn(this, _React$Component.call(this));
 
         _this.mapRendered = false;
-        _this.displayedFeatures = new Set();
-        _this.featuresChecked = 0;
-        _this.drawSelection = [];
 
         _this.state = {
             level: null,
@@ -78,30 +114,6 @@ var GADMChooser = function (_React$Component) {
                     }
                 });
             }
-        }
-    };
-
-    GADMChooser.prototype.featureWasDrawSelected = function featureWasDrawSelected(selected, layer, featureIdString) {
-        var _this4 = this;
-
-        this.featuresChecked++;
-        if (selected) {
-            layer.setStyle({ fillColor: "blue" });
-            this.drawSelection.push(featureIdString);
-        } else {
-            if (this.drawSelection.indexOf(featureIdString) != -1) {
-                layer.setStyle({ fillColor: "blue" });
-            } else {
-                console.log(featureIdString);
-                layer.setStyle({ fillColor: "grey" });
-            }
-        }
-
-        if (this.featuresChecked == this.displayedFeatures.size) {
-            this.setState({ selected: this.drawSelection }, function () {
-                _this4.featuresChecked = 0;
-                _this4.drawSelection = [];
-            });
         }
     };
 
@@ -163,7 +175,7 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.setGadmLayer = function setGadmLayer(level) {
-        var _this5 = this;
+        var _this4 = this;
 
         if (this.geojsonTileLayer) {
             this.map.removeLayer(this.geojsonTileLayer);
@@ -197,16 +209,16 @@ var GADMChooser = function (_React$Component) {
             }
         }, {
             onEachFeature: function onEachFeature(feature, layer) {
-                var featureIdString = _this5.getIdString(feature, _this5.state.level);
+                var featureIdString = _this4.getIdString(feature, _this4.state.level);
 
                 layer.on('click', function (e) {
-                    var featureIdx = _this5.state.selected.indexOf(featureIdString);
+                    var featureIdx = _this4.state.selected.indexOf(featureIdString);
 
                     var double_click = true;
-                    if (_this5.click_ll != e.latlng) {
+                    if (_this4.click_ll != e.latlng) {
                         double_click = false;
-                        _this5.click_ll = e.latlng;
-                        _this5.last_featureIdx = featureIdx;
+                        _this4.click_ll = e.latlng;
+                        _this4.last_featureIdx = featureIdx;
                     }
 
                     if (!double_click) {
@@ -215,9 +227,9 @@ var GADMChooser = function (_React$Component) {
                                 fillColor: "grey"
                             });
 
-                            var selected = _this5.state.selected.slice();
+                            var selected = _this4.state.selected.slice();
                             selected.splice(featureIdx, 1);
-                            _this5.setState({
+                            _this4.setState({
                                 selected: selected
                             });
                         } else {
@@ -225,27 +237,19 @@ var GADMChooser = function (_React$Component) {
                                 fillColor: "blue"
                             });
 
-                            var selected = _this5.state.selected.slice();
+                            var selected = _this4.state.selected.slice();
                             selected.push(featureIdString);
-                            _this5.setState({
+                            _this4.setState({
                                 selected: selected
                             });
                         }
                     } else {
-                        if (_this5.last_featureIdx != -1) {
+                        if (_this4.last_featureIdx != -1) {
                             layer.setStyle({ fillColor: "grey" });
                         } else {
                             layer.setStyle({ fillColor: "blue" });
                         }
                     }
-                });
-
-                layer.on('layeradd', function () {
-                    _this5.displayedFeatures.add(featureIdString);
-                });
-
-                layer.on('layerremove', function () {
-                    _this5.displayedFeatures.delete(featureIdString);
                 });
 
                 window.addEventListener(featureIdString + "-deselect", function () {
@@ -254,16 +258,16 @@ var GADMChooser = function (_React$Component) {
                     });
                 });
 
-                _this5.map.on(L.Draw.Event.CREATED, function (e) {
-                    if (e.layer.getBounds().intersects(layer.getBounds())) {
-                        _this5.featureWasDrawSelected(true, layer, featureIdString);
-                    } else {
-                        _this5.featureWasDrawSelected(false, layer, featureIdString);
-                    }
-                });
+                //this.map.on(L.Draw.Event.CREATED, (e) => {
+                //if (e.layer.getBounds().intersects(layer.getBounds())) {
+                //this.featureWasDrawSelected(true, layer, featureIdString);
+                //} else {
+                //this.featureWasDrawSelected(false, layer, featureIdString);
+                //}
+                //});
             },
             style: function style(feature) {
-                if (_this5.isSelected(feature)) {
+                if (_this4.isSelected(feature)) {
                     return {
                         fillColor: "blue",
                         weight: 1
@@ -277,11 +281,26 @@ var GADMChooser = function (_React$Component) {
             }
         }).addTo(this.map);
 
+        this.map.on(L.Draw.Event.CREATED, function (e) {
+            var new_selection = [];
+            _this4.geojsonTileLayer.geojsonLayer.eachLayer(function (layer) {
+                if (e.layer.getBounds().contains(layer.getBounds())) {
+                    layer.setStyle({ fillColor: "blue" });
+                    new_selection.push(_this4.getIdString(layer.feature, _this4.state.level));
+                } else {
+                    layer.setStyle({ fillColor: "grey" });
+                }
+            });
+
+            console.log(new_selection);
+            _this4.setState({ selected: new_selection });
+        });
+
         this.zoomMap();
     };
 
     GADMChooser.prototype.zoomMap = function zoomMap() {
-        var _this6 = this;
+        var _this5 = this;
 
         if (this.state.level == 0) {
             this.map.setView([0, 0], 2);
@@ -300,7 +319,7 @@ var GADMChooser = function (_React$Component) {
         $.ajax(url + query_params, {
             dataType: 'json',
             success: function success(data, status, xhr) {
-                _this6.map.fitBounds(L.geoJson(data).getBounds());
+                _this5.map.fitBounds(L.geoJson(data).getBounds());
             },
             error: function error(xhr, status, _error) {}
         });
@@ -328,7 +347,7 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.back = function back(parent_index) {
-        var _this7 = this;
+        var _this6 = this;
 
         var level = parent_index,
             parents = this.state.parents.slice();
@@ -336,7 +355,7 @@ var GADMChooser = function (_React$Component) {
         parents.splice(parent_index);
 
         this.getAdminUnits(level, parents[parents.length - 1], function (admin_units) {
-            _this7.setState({
+            _this6.setState({
                 level: level,
                 units: admin_units.map(function (unit) {
                     return unit.name;
@@ -351,7 +370,7 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.forward = function forward(parent) {
-        var _this8 = this;
+        var _this7 = this;
 
         var level = this.state.level + 1,
             parents = this.state.parents,
@@ -361,7 +380,7 @@ var GADMChooser = function (_React$Component) {
 
         this.getAdminUnits(level, parent_name, function (admin_units) {
 
-            _this8.setState({
+            _this7.setState({
                 level: level,
                 units: admin_units.map(function (unit) {
                     return unit.name;
@@ -406,7 +425,7 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.render = function render() {
-        var _this9 = this;
+        var _this8 = this;
 
         if (this.state.loading) {
             return React.createElement(
@@ -439,7 +458,7 @@ var GADMChooser = function (_React$Component) {
                             React.createElement(
                                 'a',
                                 { href: 'javascript:void(0)',
-                                    onClick: _this9.back.bind(_this9, i + 1) },
+                                    onClick: _this8.back.bind(_this8, i + 1) },
                                 unit
                             ),
                             ' >'
@@ -1104,6 +1123,101 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+var NOT_STARTED = 0,
+    PROCESSING = 1,
+    READY = 2;
+
+var TableDownload = function (_React$Component) {
+    _inherits(TableDownload, _React$Component);
+
+    function TableDownload() {
+        _classCallCheck(this, TableDownload);
+
+        var _this = _possibleConstructorReturn(this, _React$Component.call(this));
+
+        _this.requestDownload = function () {
+            $.ajax('/admin/tables/download/' + _this.props.table, {
+                dataType: 'json',
+                success: function success(data, status, xhr) {
+                    _this.setState({
+                        download: PROCESSING
+                    });
+                    _this.checkStatus();
+                },
+                error: function error(xhr, status, _error) {
+                    console.error(_error);
+                }
+            });
+        };
+
+        _this.state = {
+            download: NOT_STARTED,
+            download_link: null
+        };
+        return _this;
+    }
+
+    TableDownload.prototype.startPoll = function startPoll() {
+        var _this2 = this;
+
+        setTimeout(function () {
+            _this2.checkStatus();
+        }, 1000);
+    };
+
+    TableDownload.prototype.checkStatus = function checkStatus() {
+        var _this3 = this;
+
+        $.ajax('/api/tables/' + this.props.table, {
+            dataType: 'json',
+            success: function success(data, status, xhr) {
+                if (data.table_file.file) {
+                    _this3.setState({
+                        download: READY,
+                        download_link: data.table_file.file
+                    });
+                } else {
+                    _this3.startPoll();
+                }
+            },
+            error: function error(xhr, status, _error2) {
+                console.error(_error2);
+            }
+        });
+    };
+
+    TableDownload.prototype.render = function render() {
+        if (this.state.download == NOT_STARTED) {
+            return React.createElement(
+                'a',
+                { href: '#', className: 'button button-secondary', onClick: this.requestDownload },
+                'Request Download'
+            );
+        } else if (this.state.download == PROCESSING) {
+            return React.createElement(
+                'a',
+                { href: '#', className: 'button button-secondary disabled' },
+                'Layer Processing...'
+            );
+        } else {
+            return React.createElement(
+                'a',
+                { href: this.state.download_link, className: 'button button-secondary' },
+                'Download Table'
+            );
+        }
+    };
+
+    return TableDownload;
+}(React.Component);
+'use strict';
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
 var Table = function (_React$Component) {
     _inherits(Table, _React$Component);
 
@@ -1258,101 +1372,6 @@ var Table = function (_React$Component) {
     };
 
     return Table;
-}(React.Component);
-'use strict';
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var NOT_STARTED = 0,
-    PROCESSING = 1,
-    READY = 2;
-
-var TableDownload = function (_React$Component) {
-    _inherits(TableDownload, _React$Component);
-
-    function TableDownload() {
-        _classCallCheck(this, TableDownload);
-
-        var _this = _possibleConstructorReturn(this, _React$Component.call(this));
-
-        _this.requestDownload = function () {
-            $.ajax('/admin/tables/download/' + _this.props.table, {
-                dataType: 'json',
-                success: function success(data, status, xhr) {
-                    _this.setState({
-                        download: PROCESSING
-                    });
-                    _this.checkStatus();
-                },
-                error: function error(xhr, status, _error) {
-                    console.error(_error);
-                }
-            });
-        };
-
-        _this.state = {
-            download: NOT_STARTED,
-            download_link: null
-        };
-        return _this;
-    }
-
-    TableDownload.prototype.startPoll = function startPoll() {
-        var _this2 = this;
-
-        setTimeout(function () {
-            _this2.checkStatus();
-        }, 1000);
-    };
-
-    TableDownload.prototype.checkStatus = function checkStatus() {
-        var _this3 = this;
-
-        $.ajax('/api/tables/' + this.props.table, {
-            dataType: 'json',
-            success: function success(data, status, xhr) {
-                if (data.table_file.file) {
-                    _this3.setState({
-                        download: READY,
-                        download_link: data.table_file.file
-                    });
-                } else {
-                    _this3.startPoll();
-                }
-            },
-            error: function error(xhr, status, _error2) {
-                console.error(_error2);
-            }
-        });
-    };
-
-    TableDownload.prototype.render = function render() {
-        if (this.state.download == NOT_STARTED) {
-            return React.createElement(
-                'a',
-                { href: '#', className: 'button button-secondary', onClick: this.requestDownload },
-                'Request Download'
-            );
-        } else if (this.state.download == PROCESSING) {
-            return React.createElement(
-                'a',
-                { href: '#', className: 'button button-secondary disabled' },
-                'Layer Processing...'
-            );
-        } else {
-            return React.createElement(
-                'a',
-                { href: this.state.download_link, className: 'button button-secondary' },
-                'Download Table'
-            );
-        }
-    };
-
-    return TableDownload;
 }(React.Component);
 "use strict";
 
@@ -1799,44 +1818,5 @@ var VisualizationGroup = function (_React$Component4) {
 
     return VisualizationGroup;
 }(React.Component);
-"use strict";
-
-function bindLayerDownload(layer, dom_element) {
-    ReactDOM.render(React.createElement(LayerDownload, { layer: layer }), dom_element);
-}
-
-function bindTableDownload(table, dom_element) {
-    ReactDOM.render(React.createElement(TableDownload, { table: table }), dom_element);
-}
-
-window.bindLayerDownload = bindLayerDownload;
-window.bindTableDownload = bindTableDownload;
-"use strict";
-
-function bindMap(variable, color_ramp, dom_element) {
-    ReactDOM.render(React.createElement(Map, {
-        variable_id: variable.id,
-        variable_name: variable.name,
-        color_ramp: color_ramp
-    }), dom_element);
-}
-
-function bindGraph(variable, dom_element) {
-    ReactDOM.render(React.createElement(Graph, {
-        variable_id: variable.id,
-        variable_name: variable.name
-    }), dom_element);
-}
-
-function bindTable(variable, dom_element) {
-    ReactDOM.render(React.createElement(Table, {
-        variable_id: variable.id,
-        variable_name: variable.name
-    }), dom_element);
-}
-
-window.bindMap = bindMap;
-window.bindGraph = bindGraph;
-window.bindTable = bindTable;
 
 //# sourceMappingURL=builder.js.map

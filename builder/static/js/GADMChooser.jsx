@@ -19,9 +19,6 @@ class GADMChooser extends React.Component {
         super();
 
         this.mapRendered = false;
-        this.displayedFeatures = new Set();
-        this.featuresChecked = 0;
-        this.drawSelection = [];
 
         this.state = {
             level: null,
@@ -57,27 +54,6 @@ class GADMChooser extends React.Component {
                     }
                 });
             }
-        }
-    }
-
-    featureWasDrawSelected(selected, layer, featureIdString) {
-        this.featuresChecked++;
-        if (selected) {
-            layer.setStyle({fillColor: "blue"});
-            this.drawSelection.push(featureIdString);
-        } else {
-            if (this.drawSelection.indexOf(featureIdString) != -1) {
-                layer.setStyle({fillColor: "blue"});
-            } else {
-                layer.setStyle({fillColor: "grey"});
-            }
-        }
-
-        if (this.featuresChecked == this.displayedFeatures.size) {
-            this.setState({selected: this.drawSelection}, () => {
-                this.featuresChecked = 0;
-                this.drawSelection = [];
-            });
         }
     }
 
@@ -214,27 +190,19 @@ class GADMChooser extends React.Component {
                     }
                 });
 
-                layer.on('layeradd', () => {
-                    this.displayedFeatures.add(featureIdString);
-                });
-
-                layer.on('layerremove', () => {
-                    this.displayedFeatures.delete(featureIdString);
-                });
-
                 window.addEventListener(featureIdString + "-deselect", () => {
                     layer.setStyle({
                         fillColor: "grey"
                     });
                 });
 
-                this.map.on(L.Draw.Event.CREATED, (e) => {
-                    if (e.layer.getBounds().intersects(layer.getBounds())) {
-                        this.featureWasDrawSelected(true, layer, featureIdString);
-                    } else {
-                        this.featureWasDrawSelected(false, layer, featureIdString);
-                    }
-                });
+                //this.map.on(L.Draw.Event.CREATED, (e) => {
+                    //if (e.layer.getBounds().intersects(layer.getBounds())) {
+                        //this.featureWasDrawSelected(true, layer, featureIdString);
+                    //} else {
+                        //this.featureWasDrawSelected(false, layer, featureIdString);
+                    //}
+                //});
             },
             style: (feature) => {
                 if (this.isSelected(feature)) {
@@ -250,6 +218,21 @@ class GADMChooser extends React.Component {
                 }
             }
         }).addTo(this.map);
+
+        this.map.on(L.Draw.Event.CREATED, (e) => {
+            var new_selection = [];
+            this.geojsonTileLayer.geojsonLayer.eachLayer((layer) => {
+                if (e.layer.getBounds().contains(layer.getBounds())) {
+                    layer.setStyle({fillColor: "blue"});
+                    new_selection.push(this.getIdString(layer.feature, this.state.level));
+                } else {
+                    layer.setStyle({fillColor: "grey"});
+                }
+            });
+
+            console.log(new_selection);
+            this.setState({selected: new_selection});
+        });
 
         this.zoomMap();
     }
