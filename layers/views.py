@@ -682,7 +682,7 @@ class GADMView(views.APIView):
                 'shaid': 'str'
             }
         }
-        layer = Layer(name=name, field_names=['id'], schema=schema)
+        layer = Layer(name=name, field_names=['shaid'], schema=schema)
         layer.save()
 
         django_rq.enqueue(
