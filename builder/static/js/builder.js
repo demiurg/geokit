@@ -437,60 +437,66 @@ var GADMChooser = function (_React$Component) {
                         )
                     ),
                     React.createElement(
-                        'h1',
+                        'li',
                         null,
                         React.createElement(
-                            'span',
+                            'h1',
                             null,
                             React.createElement(
-                                'a',
-                                { href: 'javascript:void(0)',
-                                    onClick: this.back.bind(this, 0) },
-                                'World'
-                            ),
-                            ' >'
-                        ),
-                        this.state.parents.map(function (unit, i) {
-                            return React.createElement(
                                 'span',
                                 null,
                                 React.createElement(
                                     'a',
                                     { href: 'javascript:void(0)',
-                                        onClick: _this8.back.bind(_this8, i + 1) },
-                                    unit
+                                        onClick: this.back.bind(this, 0) },
+                                    'World'
                                 ),
                                 ' >'
-                            );
-                        }),
-                        React.createElement(
-                            'div',
-                            { style: { display: "inline-block", width: 400 } },
-                            React.createElement(Select, { name: 'parent-selector',
-                                options: this.state.units.map(function (unit) {
-                                    return { value: unit, label: unit };
-                                }),
-                                onChange: this.forward.bind(this) })
-                        )
+                            ),
+                            this.state.parents.map(function (unit, i) {
+                                return React.createElement(
+                                    'span',
+                                    null,
+                                    React.createElement(
+                                        'a',
+                                        { href: 'javascript:void(0)',
+                                            onClick: _this8.back.bind(_this8, i + 1) },
+                                        unit
+                                    ),
+                                    ' >'
+                                );
+                            }),
+                            React.createElement(
+                                'div',
+                                { style: { display: "inline-block", width: 400 } },
+                                React.createElement(Select, { name: 'parent-selector',
+                                    options: this.state.units.map(function (unit) {
+                                        return { value: unit, label: unit };
+                                    }),
+                                    onChange: this.forward.bind(this) })
+                            )
+                        ),
+                        React.createElement(Select, { multi: true,
+                            value: this.state.selected.map(function (selection) {
+                                var name = _this8.extractNameFromIdString(selection);
+                                return { value: selection, label: name };
+                            }),
+                            options: this.state.selected.map(function (selection) {
+                                var name = _this8.extractNameFromIdString(selection);
+                                return { value: selection, label: name };
+                            }),
+                            onChange: this.changeSelection.bind(this) }),
+                        React.createElement('div', { id: 'map', style: { height: 400 } })
                     ),
-                    React.createElement(Select, { multi: true,
-                        value: this.state.selected.map(function (selection) {
-                            var name = _this8.extractNameFromIdString(selection);
-                            return { value: selection, label: name };
-                        }),
-                        options: this.state.selected.map(function (selection) {
-                            var name = _this8.extractNameFromIdString(selection);
-                            return { value: selection, label: name };
-                        }),
-                        onChange: this.changeSelection.bind(this) }),
-                    React.createElement('div', { id: 'map', style: { height: 400 } }),
                     React.createElement(
-                        'button',
-                        { className: 'button',
-                            onClick: this.saveLayer.bind(this),
-                            disabled: this.state.level == 0
-                        },
-                        'Save'
+                        'li',
+                        null,
+                        React.createElement(
+                            'button',
+                            { className: 'button',
+                                onClick: this.saveLayer.bind(this) },
+                            'Save'
+                        )
                     )
                 )
             );

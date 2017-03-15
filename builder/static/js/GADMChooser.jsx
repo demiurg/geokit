@@ -382,40 +382,44 @@ class GADMChooser extends React.Component {
                                 </div>
                             </div>
                         </li>
-                        <h1>
-                            <span>
-                                <a href="javascript:void(0)"
-                                    onClick={this.back.bind(this, 0)}>World</a> > 
-                            </span>
-                            {this.state.parents.map((unit, i) => {
-                                return <span>
+                        <li>
+                            <h1>
+                                <span>
                                     <a href="javascript:void(0)"
-                                        onClick={this.back.bind(this, i + 1)}>{unit}</a> > 
-                                </span>;
-                            })}
-                            <div style={{display: "inline-block", width: 400}}>
-                                <Select name="parent-selector"
-                                        options={this.state.units.map((unit) => {
-                                            return {value: unit, label: unit};})
-                                        }
-                                    onChange={this.forward.bind(this)} />
-                            </div>
-                        </h1>
-                        <Select multi={true}
-                                value={this.state.selected.map((selection) => {
-                                    var name = this.extractNameFromIdString(selection);
-                                    return {value: selection, label: name};
+                                        onClick={this.back.bind(this, 0)}>World</a> > 
+                                </span>
+                                {this.state.parents.map((unit, i) => {
+                                    return <span>
+                                        <a href="javascript:void(0)"
+                                            onClick={this.back.bind(this, i + 1)}>{unit}</a> > 
+                                    </span>;
                                 })}
-                                options={this.state.selected.map((selection) => {
-                                    var name = this.extractNameFromIdString(selection);
-                                    return {value: selection, label: name};
-                                })}
-                                onChange={this.changeSelection.bind(this)} />
-                        <div id="map" style={{height: 400}}></div>
-                        <button className="button"
-                            onClick={this.saveLayer.bind(this)}
-                            disabled={this.state.level == 0}
-                        >Save</button>
+                                <div style={{display: "inline-block", width: 400}}>
+                                    <Select name="parent-selector"
+                                            options={this.state.units.map((unit) => {
+                                                return {value: unit, label: unit};})
+                                            }
+                                        onChange={this.forward.bind(this)} />
+                                </div>
+                            </h1>
+                            <Select multi={true}
+                                    value={this.state.selected.map((selection) => {
+                                        var name = this.extractNameFromIdString(selection);
+                                        return {value: selection, label: name};
+                                    })}
+                                    options={this.state.selected.map((selection) => {
+                                        var name = this.extractNameFromIdString(selection);
+                                        return {value: selection, label: name};
+                                    })}
+                                    onChange={this.changeSelection.bind(this)} />
+                            <div id="map" style={{height: 400}}></div>
+                        </li>
+                        <li>
+                            <button className="button"
+                                onClick={this.saveLayer.bind(this)}>
+                                Save
+                            </button>
+                        </li>
                     </ul>
                 </div>
             );
