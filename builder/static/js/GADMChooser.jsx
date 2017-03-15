@@ -95,6 +95,18 @@ class GADMChooser extends React.Component {
         return parent_string;
     }
 
+    extractNameFromIdString(id_string) {
+        var names_split = id_string.split('.');
+
+        var name = names_split.slice(-1)[0];
+
+        if (name == "null") {
+            return names_split.slice(-2)[0];
+        } else {
+            return name;
+        }
+    }
+
     isSelected(feature) {
         var parent_string = '';
 
@@ -391,11 +403,13 @@ class GADMChooser extends React.Component {
                         </h1>
                         <Select multi={true}
                                 value={this.state.selected.map((selection) => {
-                                    return {value: selection, label: selection.split(".").slice(-1)[0]};
+                                    var name = this.extractNameFromIdString(selection);
+                                    return {value: selection, label: name};
                                 })}
                                 options={this.state.selected.map((selection) => {
-                                    return {value: selection, label: selection.split(".").slice(-1)[0]};})
-                                }
+                                    var name = this.extractNameFromIdString(selection);
+                                    return {value: selection, label: name};
+                                })}
                                 onChange={this.changeSelection.bind(this)} />
                         <div id="map" style={{height: 400}}></div>
                         <button className="button"

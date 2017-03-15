@@ -1,42 +1,3 @@
-"use strict";
-
-function bindLayerDownload(layer, dom_element) {
-    ReactDOM.render(React.createElement(LayerDownload, { layer: layer }), dom_element);
-}
-
-function bindTableDownload(table, dom_element) {
-    ReactDOM.render(React.createElement(TableDownload, { table: table }), dom_element);
-}
-
-window.bindLayerDownload = bindLayerDownload;
-window.bindTableDownload = bindTableDownload;
-"use strict";
-
-function bindMap(variable, color_ramp, dom_element) {
-    ReactDOM.render(React.createElement(Map, {
-        variable_id: variable.id,
-        variable_name: variable.name,
-        color_ramp: color_ramp
-    }), dom_element);
-}
-
-function bindGraph(variable, dom_element) {
-    ReactDOM.render(React.createElement(Graph, {
-        variable_id: variable.id,
-        variable_name: variable.name
-    }), dom_element);
-}
-
-function bindTable(variable, dom_element) {
-    ReactDOM.render(React.createElement(Table, {
-        variable_id: variable.id,
-        variable_name: variable.name
-    }), dom_element);
-}
-
-window.bindMap = bindMap;
-window.bindGraph = bindGraph;
-window.bindTable = bindTable;
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -153,6 +114,18 @@ var GADMChooser = function (_React$Component) {
 
         parent_string += feature.properties['name_' + level];
         return parent_string;
+    };
+
+    GADMChooser.prototype.extractNameFromIdString = function extractNameFromIdString(id_string) {
+        var names_split = id_string.split('.');
+
+        var name = names_split.slice(-1)[0];
+
+        if (name == "null") {
+            return names_split.slice(-2)[0];
+        } else {
+            return name;
+        }
     };
 
     GADMChooser.prototype.isSelected = function isSelected(feature) {
@@ -285,7 +258,6 @@ var GADMChooser = function (_React$Component) {
                 }
             });
 
-            console.log(new_selection);
             _this4.setState({ selected: new_selection });
         });
 
@@ -503,10 +475,12 @@ var GADMChooser = function (_React$Component) {
                     ),
                     React.createElement(Select, { multi: true,
                         value: this.state.selected.map(function (selection) {
-                            return { value: selection, label: selection.split(".").slice(-1)[0] };
+                            var name = _this8.extractNameFromIdString(selection);
+                            return { value: selection, label: name };
                         }),
                         options: this.state.selected.map(function (selection) {
-                            return { value: selection, label: selection.split(".").slice(-1)[0] };
+                            var name = _this8.extractNameFromIdString(selection);
+                            return { value: selection, label: name };
                         }),
                         onChange: this.changeSelection.bind(this) }),
                     React.createElement('div', { id: 'map', style: { height: 400 } }),
@@ -1151,101 +1125,6 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var NOT_STARTED = 0,
-    PROCESSING = 1,
-    READY = 2;
-
-var TableDownload = function (_React$Component) {
-    _inherits(TableDownload, _React$Component);
-
-    function TableDownload() {
-        _classCallCheck(this, TableDownload);
-
-        var _this = _possibleConstructorReturn(this, _React$Component.call(this));
-
-        _this.requestDownload = function () {
-            $.ajax('/admin/tables/download/' + _this.props.table, {
-                dataType: 'json',
-                success: function success(data, status, xhr) {
-                    _this.setState({
-                        download: PROCESSING
-                    });
-                    _this.checkStatus();
-                },
-                error: function error(xhr, status, _error) {
-                    console.error(_error);
-                }
-            });
-        };
-
-        _this.state = {
-            download: NOT_STARTED,
-            download_link: null
-        };
-        return _this;
-    }
-
-    TableDownload.prototype.startPoll = function startPoll() {
-        var _this2 = this;
-
-        setTimeout(function () {
-            _this2.checkStatus();
-        }, 1000);
-    };
-
-    TableDownload.prototype.checkStatus = function checkStatus() {
-        var _this3 = this;
-
-        $.ajax('/api/tables/' + this.props.table, {
-            dataType: 'json',
-            success: function success(data, status, xhr) {
-                if (data.table_file.file) {
-                    _this3.setState({
-                        download: READY,
-                        download_link: data.table_file.file
-                    });
-                } else {
-                    _this3.startPoll();
-                }
-            },
-            error: function error(xhr, status, _error2) {
-                console.error(_error2);
-            }
-        });
-    };
-
-    TableDownload.prototype.render = function render() {
-        if (this.state.download == NOT_STARTED) {
-            return React.createElement(
-                'a',
-                { href: '#', className: 'button button-secondary', onClick: this.requestDownload },
-                'Request Download'
-            );
-        } else if (this.state.download == PROCESSING) {
-            return React.createElement(
-                'a',
-                { href: '#', className: 'button button-secondary disabled' },
-                'Layer Processing...'
-            );
-        } else {
-            return React.createElement(
-                'a',
-                { href: this.state.download_link, className: 'button button-secondary' },
-                'Download Table'
-            );
-        }
-    };
-
-    return TableDownload;
-}(React.Component);
-'use strict';
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
 var Table = function (_React$Component) {
     _inherits(Table, _React$Component);
 
@@ -1400,6 +1279,101 @@ var Table = function (_React$Component) {
     };
 
     return Table;
+}(React.Component);
+'use strict';
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var NOT_STARTED = 0,
+    PROCESSING = 1,
+    READY = 2;
+
+var TableDownload = function (_React$Component) {
+    _inherits(TableDownload, _React$Component);
+
+    function TableDownload() {
+        _classCallCheck(this, TableDownload);
+
+        var _this = _possibleConstructorReturn(this, _React$Component.call(this));
+
+        _this.requestDownload = function () {
+            $.ajax('/admin/tables/download/' + _this.props.table, {
+                dataType: 'json',
+                success: function success(data, status, xhr) {
+                    _this.setState({
+                        download: PROCESSING
+                    });
+                    _this.checkStatus();
+                },
+                error: function error(xhr, status, _error) {
+                    console.error(_error);
+                }
+            });
+        };
+
+        _this.state = {
+            download: NOT_STARTED,
+            download_link: null
+        };
+        return _this;
+    }
+
+    TableDownload.prototype.startPoll = function startPoll() {
+        var _this2 = this;
+
+        setTimeout(function () {
+            _this2.checkStatus();
+        }, 1000);
+    };
+
+    TableDownload.prototype.checkStatus = function checkStatus() {
+        var _this3 = this;
+
+        $.ajax('/api/tables/' + this.props.table, {
+            dataType: 'json',
+            success: function success(data, status, xhr) {
+                if (data.table_file.file) {
+                    _this3.setState({
+                        download: READY,
+                        download_link: data.table_file.file
+                    });
+                } else {
+                    _this3.startPoll();
+                }
+            },
+            error: function error(xhr, status, _error2) {
+                console.error(_error2);
+            }
+        });
+    };
+
+    TableDownload.prototype.render = function render() {
+        if (this.state.download == NOT_STARTED) {
+            return React.createElement(
+                'a',
+                { href: '#', className: 'button button-secondary', onClick: this.requestDownload },
+                'Request Download'
+            );
+        } else if (this.state.download == PROCESSING) {
+            return React.createElement(
+                'a',
+                { href: '#', className: 'button button-secondary disabled' },
+                'Layer Processing...'
+            );
+        } else {
+            return React.createElement(
+                'a',
+                { href: this.state.download_link, className: 'button button-secondary' },
+                'Download Table'
+            );
+        }
+    };
+
+    return TableDownload;
 }(React.Component);
 "use strict";
 
@@ -1846,5 +1820,44 @@ var VisualizationGroup = function (_React$Component4) {
 
     return VisualizationGroup;
 }(React.Component);
+"use strict";
+
+function bindLayerDownload(layer, dom_element) {
+    ReactDOM.render(React.createElement(LayerDownload, { layer: layer }), dom_element);
+}
+
+function bindTableDownload(table, dom_element) {
+    ReactDOM.render(React.createElement(TableDownload, { table: table }), dom_element);
+}
+
+window.bindLayerDownload = bindLayerDownload;
+window.bindTableDownload = bindTableDownload;
+"use strict";
+
+function bindMap(variable, color_ramp, dom_element) {
+    ReactDOM.render(React.createElement(Map, {
+        variable_id: variable.id,
+        variable_name: variable.name,
+        color_ramp: color_ramp
+    }), dom_element);
+}
+
+function bindGraph(variable, dom_element) {
+    ReactDOM.render(React.createElement(Graph, {
+        variable_id: variable.id,
+        variable_name: variable.name
+    }), dom_element);
+}
+
+function bindTable(variable, dom_element) {
+    ReactDOM.render(React.createElement(Table, {
+        variable_id: variable.id,
+        variable_name: variable.name
+    }), dom_element);
+}
+
+window.bindMap = bindMap;
+window.bindGraph = bindGraph;
+window.bindTable = bindTable;
 
 //# sourceMappingURL=builder.js.map
