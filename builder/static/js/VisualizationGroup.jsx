@@ -45,10 +45,13 @@ class SliderControl extends React.Component {
 
         noUiSlider.create(dateSlider, {
             range: {
-                min: new Date(this.props.dims.min).getTime(),
-                max: new Date(this.props.dims.max).getTime()
+                min: new Date(this.props.time_range.min).getTime(),
+                max: new Date(this.props.time_range.max).getTime()
             },
-            start: [new Date('2010').getTime(), new Date('2015').getTime()],
+            start: [
+                new Date(this.props.time_range.min).getTime(),
+                new Date(this.props.time_range.max).getTime()
+            ],
             step: 7 * 24 * 60 * 60 * 1000,
             connect: true,
             behaviour: 'drag',
@@ -58,14 +61,14 @@ class SliderControl extends React.Component {
                     var format = Plotly.d3.time.format("%B %e, %Y");
                     return format(new Date(value));
                 },
-                from: (value) => { 
+                from: (value) => {
                     return value;
                 }
             }
         });
 
         dateSlider.noUiSlider.on('update', (values, handle) => {
-            this.props.changeDimensions({
+            this.props.changeTimeRange({
                 min: new Date(values[0]),
                 max: new Date(values[1])}
             );
@@ -133,6 +136,7 @@ class VisualizationGroup extends React.Component {
             dimensions: dimensions,
             space_index: null,
             time_index: null,
+            time_range: null,
             current_space_bounds: null,
             current_time_range: null
         };
@@ -140,9 +144,9 @@ class VisualizationGroup extends React.Component {
         this.child_indexes = [];
     }
 
-    changeDateRange(range) {
+    changeTimeRange(range) {
         this.setState({
-            currentDimensions: {min: range.min, max: range.max}
+            current_time_range: {min: range.min, max: range.max}
         });
     }
 
@@ -150,41 +154,47 @@ class VisualizationGroup extends React.Component {
 
     }
 
-    updateIndexes(index) {
-        this.child_indexes.push(index);
+    updateIndexes(indexes) {
+        this.child_indexes.push(indexes);
 
         if (this.child_indexes.length == this.props.visualizations.length) {
+            let state = {};
             if (this.state.dimensions.indexOf('time') != -1) {
-                var min = Plotly.d3.min(this.child_indexes.map((childDim) => {
-                    return childDim[0];
-                }));
+                var time_index = this.child_indexes.map((both) => both['time']);
+                time_index = [].concat.apply([], time_index);
 
-                var max = Plotly.d3.max(this.child_indexes.map((childDim) => {
-                    return childDim[1];
-                }));
+                time_index = time_index.map((str) => new Date(str));
+                time_index.sort((a, b) => a - b);
 
-                this.setState({
+                var min = Plotly.d3.min(time_index);
+                var max = Plotly.d3.max(time_index);
+
+                state = {
+                    time_index: time_index,
+                    time_range: {min: min, max: max},
                     current_time_range: {min: min, max: max}
-                });
-            } else {
-                var merged_features = [].concat.apply([], this.child_indexes);
-                this.setState({
-                    dimensions: merged_features,
-                    current_features: merged_features
+                };
+            }
+            if (this.state.dimensions.indexOf('space') != -1) {
+                var space_index = this.child_indexes.map((both)=>both['space']);
+                space_index = [].concat.apply([], space_index);
+
+                //var merged_features = [].concat.apply([], this.child_indexes);
+                state = Object.assign(state, {
+                    space_index: space_index
                 });
             }
+            this.setState(state);
         }
     }
     render() {
-    console.log((this.state.dimensions));
-
         return (
             <div>
-                {(this.state.dimensions.indexOf('time') != -1) ?
+                {((this.state.dimensions.indexOf('time') != -1)
+                  && this.state.time_range) ?
                     <SliderControl
-                        date_range={this.state.date_range}
-                        current_date_range={this.state.current_date_range}
-                        changeDateRange={this.changeDateRange.bind(this)}
+                        time_range={this.state.time_range}
+                        changeTimeRange={this.changeTimeRange.bind(this)}
                     />
                 :
                     null
@@ -192,7 +202,7 @@ class VisualizationGroup extends React.Component {
                 {this.props.visualizations.map((v) => (
                     <Visualization
                         updateIndexes={this.updateIndexes.bind(this)}
-                        changeDateRange={this.changeDateRange.bind(this)}
+                        changeTimeRange={this.changeTimeRange.bind(this)}
                         changeSpaceBounds={this.changeSpaceBounds.bind(this)}
                         {...v}
                     />

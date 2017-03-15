@@ -907,7 +907,9 @@ var Map = function (_React$Component) {
         _this.state = {
             loading: true,
             error: false,
-            data: []
+            data: [],
+            space_index: [],
+            time_index: []
         };
 
         return _this;
@@ -921,18 +923,33 @@ var Map = function (_React$Component) {
         $.ajax('/variables/map_' + this.props.variable_id + '.json', {
             dataType: 'json',
             success: function success(data, status, xhr) {
-                _this2.min_value = d3.min(Object.keys(data.data).map(function (key) {
-                    return data.data[key][self.props.variable_name];
-                }));
-                _this2.max_value = d3.max(Object.keys(data.data).map(function (key) {
-                    return data.data[key][self.props.variable_name];
-                }));
+                var shas = Object.keys(data.data);
+                var dates = [];
+                if (self.props.dimensions == 'space') {
+                    var values = shas.map(function (key) {
+                        return data.data[key][self.props.variable_name];
+                    });
+                    _this2.min_value = d3.min(values);
+                    _this2.max_value = d3.max(values);
+                } else if (self.props.dimensions == 'spacetime') {
+                    var rows = shas.map(function (key) {
+                        if (dates.length == 0) {
+                            dates = Object.keys(data.data[key]);
+                        }
+                        return Object.values(data.data[key]);
+                    });
+                    var _values = [].concat(rows);
+                    _this2.min_value = d3.min(_values);
+                    _this2.max_value = d3.max(_values);
+                }
 
                 _this2.color_scale = d3.scale.linear().domain([_this2.min_value, _this2.max_value]).range(_this2.props.color_ramp.map(function (stop) {
                     return stop[1];
                 }));
 
-                _this2.setState(Object.assign(data, { loading: false }));
+                _this2.setState(Object.assign(data, { loading: false }), function () {
+                    return self.props.updateIndexes({ 'space': shas, 'time': dates });
+                });
             },
             error: function error(xhr, status, _error) {
                 console.log(_error);
@@ -1607,10 +1624,10 @@ var SliderControl = function (_React$Component2) {
 
         noUiSlider.create(dateSlider, {
             range: {
-                min: new Date(this.props.dims.min).getTime(),
-                max: new Date(this.props.dims.max).getTime()
+                min: new Date(this.props.time_range.min).getTime(),
+                max: new Date(this.props.time_range.max).getTime()
             },
-            start: [new Date('2010').getTime(), new Date('2015').getTime()],
+            start: [new Date(this.props.time_range.min).getTime(), new Date(this.props.time_range.max).getTime()],
             step: 7 * 24 * 60 * 60 * 1000,
             connect: true,
             behaviour: 'drag',
@@ -1627,7 +1644,7 @@ var SliderControl = function (_React$Component2) {
         });
 
         dateSlider.noUiSlider.on('update', function (values, handle) {
-            _this4.props.changeDimensions({
+            _this4.props.changeTimeRange({
                 min: new Date(values[0]),
                 max: new Date(values[1]) });
         });
@@ -1715,6 +1732,7 @@ var VisualizationGroup = function (_React$Component4) {
             dimensions: dimensions,
             space_index: null,
             time_index: null,
+            time_range: null,
             current_space_bounds: null,
             current_time_range: null
         };
@@ -1723,57 +1741,70 @@ var VisualizationGroup = function (_React$Component4) {
         return _this6;
     }
 
-    VisualizationGroup.prototype.changeDateRange = function changeDateRange(range) {
+    VisualizationGroup.prototype.changeTimeRange = function changeTimeRange(range) {
         this.setState({
-            currentDimensions: { min: range.min, max: range.max }
+            current_time_range: { min: range.min, max: range.max }
         });
     };
 
     VisualizationGroup.prototype.changeSpaceBounds = function changeSpaceBounds(bounds) {};
 
-    VisualizationGroup.prototype.updateIndexes = function updateIndexes(index) {
-        this.child_indexes.push(index);
+    VisualizationGroup.prototype.updateIndexes = function updateIndexes(indexes) {
+        this.child_indexes.push(indexes);
 
         if (this.child_indexes.length == this.props.visualizations.length) {
+            var state = {};
             if (this.state.dimensions.indexOf('time') != -1) {
-                var min = Plotly.d3.min(this.child_indexes.map(function (childDim) {
-                    return childDim[0];
-                }));
-
-                var max = Plotly.d3.max(this.child_indexes.map(function (childDim) {
-                    return childDim[1];
-                }));
-
-                this.setState({
-                    current_time_range: { min: min, max: max }
+                var time_index = this.child_indexes.map(function (both) {
+                    return both['time'];
                 });
-            } else {
-                var merged_features = [].concat.apply([], this.child_indexes);
-                this.setState({
-                    dimensions: merged_features,
-                    current_features: merged_features
+                time_index = [].concat.apply([], time_index);
+
+                time_index = time_index.map(function (str) {
+                    return new Date(str);
+                });
+                time_index.sort(function (a, b) {
+                    return a - b;
+                });
+
+                var min = Plotly.d3.min(time_index);
+                var max = Plotly.d3.max(time_index);
+
+                state = {
+                    time_index: time_index,
+                    time_range: { min: min, max: max },
+                    current_time_range: { min: min, max: max }
+                };
+            }
+            if (this.state.dimensions.indexOf('space') != -1) {
+                var space_index = this.child_indexes.map(function (both) {
+                    return both['space'];
+                });
+                space_index = [].concat.apply([], space_index);
+
+                //var merged_features = [].concat.apply([], this.child_indexes);
+                state = Object.assign(state, {
+                    space_index: space_index
                 });
             }
+            this.setState(state);
         }
     };
 
     VisualizationGroup.prototype.render = function render() {
         var _this7 = this;
 
-        console.log(this.state.dimensions);
-
         return React.createElement(
             'div',
             null,
-            this.state.dimensions.indexOf('time') != -1 ? React.createElement(SliderControl, {
-                date_range: this.state.date_range,
-                current_date_range: this.state.current_date_range,
-                changeDateRange: this.changeDateRange.bind(this)
+            this.state.dimensions.indexOf('time') != -1 && this.state.time_range ? React.createElement(SliderControl, {
+                time_range: this.state.time_range,
+                changeTimeRange: this.changeTimeRange.bind(this)
             }) : null,
             this.props.visualizations.map(function (v) {
                 return React.createElement(Visualization, _extends({
                     updateIndexes: _this7.updateIndexes.bind(_this7),
-                    changeDateRange: _this7.changeDateRange.bind(_this7),
+                    changeTimeRange: _this7.changeTimeRange.bind(_this7),
                     changeSpaceBounds: _this7.changeSpaceBounds.bind(_this7)
                 }, v));
             })

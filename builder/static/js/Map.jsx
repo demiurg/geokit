@@ -6,7 +6,9 @@ class Map extends React.Component {
         this.state = {
             loading: true,
             error: false,
-            data: []
+            data: [],
+            space_index: [],
+            time_index: []
         };
 
     }
@@ -17,23 +19,33 @@ class Map extends React.Component {
         $.ajax('/variables/map_'+this.props.variable_id+'.json', {
             dataType: 'json',
             success: (data, status, xhr) => {
-                this.min_value = d3.min(
-                    Object.keys(data.data).map((key) => {
+                var shas = Object.keys(data.data);
+                var dates = [];
+                if(self.props.dimensions == 'space'){
+                    var values = shas.map((key) => {
                         return data.data[key][self.props.variable_name];
-                    })
-                );
-                this.max_value = d3.max(
-                    Object.keys(data.data).map((key) => {
-                        return data.data[key][self.props.variable_name];
-                    })
-                );
+                    });
+                    this.min_value = d3.min(values);
+                    this.max_value = d3.max(values);
+                } else if (self.props.dimensions == 'spacetime') {
+                    var rows = shas.map((key) => {
+                        if (dates.length == 0){
+                            dates = Object.keys(data.data[key]);
+                        }
+                        return Object.values(data.data[key]);
+                    });
+                    let values = [].concat(rows);
+                    this.min_value = d3.min(values);
+                    this.max_value = d3.max(values);
+                }
 
                 this.color_scale = d3.scale.linear()
                     .domain([this.min_value, this.max_value])
                     .range(this.props.color_ramp.map((stop) => { return stop[1]; }));
 
                 this.setState(
-                    Object.assign(data, {loading: false})
+                    Object.assign(data, {loading: false}),
+                    () => self.props.updateIndexes({'space': shas, 'time': dates})
                 );
             },
             error: (xhr, status, error) => {

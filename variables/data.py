@@ -22,6 +22,12 @@ def rpc_con():
     return RPC_CONNECTION
 
 
+def new_rpc_con():
+    return xmlrpclib.ServerProxy(
+        settings.RPC_URL, use_datetime=True
+    )
+
+
 def treeToNode(tree):
     return NODE_TYPES[tree[0]](tree[0], tree[1])
 
@@ -460,7 +466,7 @@ class RasterSource(DataNode):
         return {'space': True, 'time': True}
 
     def execute(self):
-        conn = rpc_con()
+        conn = new_rpc_con()
         from variables.models import RasterRequest
 
         layer = self.vector.get_layers().pop()
@@ -475,6 +481,7 @@ class RasterSource(DataNode):
         # print job_id
 
         results = conn.stats_request_results({'job': job_id})
+        print "requesting job {}".format(job_id)
         for r in results:
             date = r['date'].date()
             r['date_range'] = DateRange(date, date, '[]')
