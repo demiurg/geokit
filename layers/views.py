@@ -690,7 +690,7 @@ class GADMView(views.APIView):
             request.tenant.schema_name,
             layer,
             args['features'],
-            timeout=1200  # This could take a while...
+            timeout=4800  # This could take a while...
         )
 
         return Response({'result': 'success'})
