@@ -1311,7 +1311,7 @@ class SieveComponent extends React.Component {
 }
 
 var tab = (level) => {return Array(level * 4).join("&nbsp;")};
-var formatHtml = (html, level) => {return tab(level) + html + "<br>";};
+var formatHtml = (html, level) => {return tab(level) + html;};
 
 class DataNode {
   constructor(operands) {
@@ -1322,8 +1322,12 @@ class DataNode {
     return JSON.encode(data);
   }
 
-  html(level) {
-    return this.json()
+  html(text, level=0, newline=true) {
+    var output = tab(level) + text + " (" + this.dimensions + ")";
+    if (newline) {
+      output += "<br>";
+    }
+    return output;
   }
 }
 
@@ -1337,13 +1341,19 @@ class MeanOperator extends DataNode {
 
     this.left = treeToNode(operands[0]);
     this.right = treeToNode(operands[1]);
+
+    if (this.left.dimensions != this.right.dimensions) {
+      throw Error("Operands must have the same dimensions");
+    }
+
+    this.dimensions = this.left.dimensions;
   }
 
-  html(level) {
-    return formatHtml('Mean of ( <br>' +
+  html(level, nl=true) {
+    return super.html('Mean of ( <br>' +
       this.left.html(level + 1) +
       this.right.html(level + 1) +
-      tab(level) + ') ', level);
+      tab(level) + ')', level, nl);
   }
 }
 
@@ -1356,12 +1366,14 @@ class TemporalMeanOperator extends DataNode {
     }
 
     this.operand = treeToNode(operands[0]);
+    
+    this.dimensions = 'space';
   }
 
-  html(level) {
-    return formatHtml('Time mean of ( <br>' +
+  html(level, nl=true) {
+    return super.html('Time mean of ( <br>' +
       this.operand.html(level + 1) +
-      tab(level) + ') ', level);
+      tab(level) + ')', level, nl);
   }
 }
 
@@ -1374,12 +1386,14 @@ class SpatialMeanOperator extends DataNode {
     }
 
     this.operand = treeToNode(operands[0]);
+
+    this.dimensions = 'time';
   }
 
-  html(level) {
-    return formatHtml('Space mean of ( <br>' +
+  html(level, nl=true) {
+    return super.html('Space mean of ( <br>' +
       this.operand.html(level + 1) +
-      tab(level) + ') ', level);
+      tab(level) + ')', level, nl);
   }
 }
 
@@ -1394,12 +1408,14 @@ class SelectOperator extends DataNode {
     this.left = treeToNode(operands[0]);
     this.child_op = operands[0][0];
     this.right = operands[1];
+
+    this.dimensions = this.left.dimensions;
   }
 
-  html(level) {
-    return formatHtml("Select " + this.right.name + "/" + this.right.field + " from (<br>" +
+  html(level, nl=true) {
+    return super.html("Select " + this.right.name + "/" + this.right.field + " from (<br>" +
       tab(level) + this.left.html(level + 1) +
-      tab(level) + ")", level);
+      tab(level) + ")", level, nl);
   }
 }
 
@@ -1412,10 +1428,12 @@ class ExpressionOperator extends DataNode {
     }
 
     this.operand = treeToNode(operands[0]);
+
+    this.dimensions = this.operand.dimensions;
   }
 
-  html(level) {
-    return formatHtml(this.operand.html(level), level);
+  html(level, nl=true) {
+    return super.html(this.operand.html(level), level, nl);
   }
 }
 
@@ -1427,15 +1445,27 @@ class JoinOperator extends DataNode {
       throw Error("JoinOperator takes exactly 2 operands");
     }
 
-    this.left = operands[0];
-    this.right = operands[1];
+    this.left = new SourceOperator([operands[0]]);
+    this.right = new SourceOperator([operands[1]]);
+
+    var dimensions = new Set();
+    dimensions.add(this.left.dimensions);
+    dimensions.add(this.right.dimensions);
+
+    this.dimensions = '';
+    if (dimensions.has('space')) {
+      this.dimensions += 'space';
+    }
+    if (dimensions.has('time')) {
+      this.dimensions += 'time';
+    }
   }
 
-  html(level) {
-    return formatHtml("Join " +
+  html(level, nl=true) {
+    return super.html("Join " +
       this.left.type + ' ' + this.left.name + ' and ' +
       this.right.type + ' ' + this.right.name + ' on ' +
-      this.left.field + ' = ' + this.right.field, level);
+      this.left.field + ' = ' + this.right.field, level, nl);
   }
 }
 
@@ -1450,10 +1480,12 @@ class RasterOperator extends DataNode {
     this.left = operands[0];
     this.middle = operands[2];
     this.right = treeToNode(operands[1]);
+
+    this.dimensions = 'spacetime';
   }
 
-  html(level) {
-    return formatHtml("Raster " + this.left.name + " in " + this.middle + " by " + this.right.html(level + 1), level);
+  html(level, nl=true) {
+    return super.html("Raster " + this.left.name + " in " + this.middle + " by (" + this.right.html(0, false) + ")", level, nl);
   }
 }
 
@@ -1466,10 +1498,19 @@ class SourceOperator extends DataNode {
     }
 
     this.operand = operands[0];
+    this.name = this.operand.name;
+    this.type = this.operand.type;
+    this.field = this.operand.field;
+
+    if (this.type == 'Layer') {
+      this.dimensions = 'space';
+    } else if (this.type == 'Table') {
+      this.dimensions = 'time';
+    }
   }
 
-  html(level) {
-    return formatHtml(this.operand.type + " '" + this.operand.name + "'", level);
+  html(level, nl=true) {
+    return super.html(this.operand.type + " '" + this.operand.name + "' ", level, nl);
   }
 }
 
