@@ -189,7 +189,7 @@ function recieveVariable(json) {
 }
 
 function updateErrors() {
-  var errors = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { "name": null, "tree": null };
+  var errors = arguments.length <= 0 || arguments[0] === undefined ? { "name": null, "tree": null } : arguments[0];
 
   return {
     type: UPDATE_ERRORS,
@@ -198,7 +198,7 @@ function updateErrors() {
 }
 
 function updateModified() {
-  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
   return {
     type: UPDATE_MODIFIED,
@@ -207,7 +207,7 @@ function updateModified() {
 }
 
 function updateCreated() {
-  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
   return {
     type: UPDATE_CREATED,
@@ -259,7 +259,7 @@ function saveVariable(variable, created) {
 }
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1075,7 +1075,7 @@ var FilterListItem = function (_React$Component12) {
           {
             bsSize: "xsmall",
             onClick: this.props.removeFilter.bind(null, this.props.filter.key) },
-          "\xA0x\xA0"
+          " x "
         )
       )
     );
@@ -1190,12 +1190,12 @@ var Aggregate = function (_React$Component13) {
 'use strict';
 
 function layers() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     name: 'Layers',
     isFetching: false,
     didInvalidate: false,
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1217,12 +1217,12 @@ function layers() {
 }
 
 function tables() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     name: 'Tables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1244,9 +1244,9 @@ function tables() {
 }
 
 function rasterCatalog() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1261,12 +1261,12 @@ function rasterCatalog() {
 }
 
 function variables() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     name: 'Variables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1300,7 +1300,7 @@ function input_variable(state, action) {
 }
 
 function input_variables() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  var state = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1316,7 +1316,7 @@ function input_variables() {
 }
 
 function tree() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1336,23 +1336,23 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var _ReactBootstrap = ReactBootstrap,
-    Panel = _ReactBootstrap.Panel,
-    ButtonGroup = _ReactBootstrap.ButtonGroup,
-    ButtonToolbar = _ReactBootstrap.ButtonToolbar,
-    ButtonInput = _ReactBootstrap.ButtonInput,
-    Button = _ReactBootstrap.Button,
-    Row = _ReactBootstrap.Row,
-    Col = _ReactBootstrap.Col,
-    Alert = _ReactBootstrap.Alert,
-    Tabs = _ReactBootstrap.Tabs,
-    DropdownButton = _ReactBootstrap.DropdownButton,
-    MenuItem = _ReactBootstrap.MenuItem,
-    Modal = _ReactBootstrap.Modal,
-    FormControl = _ReactBootstrap.FormControl,
-    ControlLabel = _ReactBootstrap.ControlLabel,
-    FormGroup = _ReactBootstrap.FormGroup,
-    HelpBlock = _ReactBootstrap.HelpBlock;
+var _ReactBootstrap = ReactBootstrap;
+var Panel = _ReactBootstrap.Panel;
+var ButtonGroup = _ReactBootstrap.ButtonGroup;
+var ButtonToolbar = _ReactBootstrap.ButtonToolbar;
+var ButtonInput = _ReactBootstrap.ButtonInput;
+var Button = _ReactBootstrap.Button;
+var Row = _ReactBootstrap.Row;
+var Col = _ReactBootstrap.Col;
+var Alert = _ReactBootstrap.Alert;
+var Tabs = _ReactBootstrap.Tabs;
+var DropdownButton = _ReactBootstrap.DropdownButton;
+var MenuItem = _ReactBootstrap.MenuItem;
+var Modal = _ReactBootstrap.Modal;
+var FormControl = _ReactBootstrap.FormControl;
+var ControlLabel = _ReactBootstrap.ControlLabel;
+var FormGroup = _ReactBootstrap.FormGroup;
+var HelpBlock = _ReactBootstrap.HelpBlock;
 
 /* app */
 
@@ -1370,7 +1370,7 @@ var initialState = Object.assign({
 }, window.sieve_props);
 
 function sieveApp() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
+  var state = arguments.length <= 0 || arguments[0] === undefined ? initialState : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1467,8 +1467,8 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
 
 /* components */
 var DropdownComponent = function DropdownComponent(_ref) {
-  var things = _ref.things,
-      onclick = _ref.onclick;
+  var things = _ref.things;
+  var onclick = _ref.onclick;
   return (
     // TODO something different when layers.isFetching
 
@@ -1782,7 +1782,7 @@ var AddRasterInputModal = function (_React$Component3) {
               React.createElement(
                 ControlLabel,
                 null,
-                "Spatial\xA0Layer"
+                "Spatial Layer"
               ),
               React.createElement(
                 FormControl,
@@ -1802,7 +1802,7 @@ var AddRasterInputModal = function (_React$Component3) {
               React.createElement(
                 ControlLabel,
                 null,
-                "Temporal\xA0Range"
+                "Temporal Range"
               ),
               React.createElement(FormControl, {
                 name: "dates", type: "text", placeholder: "enter like 2000-001,2000-31"
@@ -2777,7 +2777,7 @@ var SelectForm = function (_React$Component12) {
           React.createElement(
             ControlLabel,
             null,
-            "Variable\xA0Property"
+            "Variable Property"
           ),
           React.createElement(
             FormControl,
@@ -2807,7 +2807,7 @@ var SelectForm = function (_React$Component12) {
           React.createElement(
             ControlLabel,
             null,
-            "Variable\xA0Property"
+            "Variable Property"
           ),
           React.createElement(
             FormControl,
@@ -2838,7 +2838,7 @@ var SelectForm = function (_React$Component12) {
           React.createElement(
             ControlLabel,
             null,
-            "Variable\xA0Property"
+            "Variable Property"
           ),
           React.createElement(
             FormControl,
@@ -2869,7 +2869,7 @@ var SelectForm = function (_React$Component12) {
         React.createElement(
           ControlLabel,
           null,
-          "Input\xA0Variable"
+          "Input Variable"
         ),
         React.createElement(
           FormControl,
@@ -2935,7 +2935,7 @@ var SelectLayerForm = function (_React$Component13) {
         React.createElement(
           ControlLabel,
           null,
-          "Spatial\xA0Layer"
+          "Spatial Layer"
         ),
         React.createElement(
           FormControl,
@@ -3001,7 +3001,7 @@ var SelectTableForm = function (_React$Component14) {
         React.createElement(
           ControlLabel,
           null,
-          "Tabular\xA0Layer"
+          "Tabular Layer"
         ),
         React.createElement(
           FormControl,
@@ -3289,7 +3289,7 @@ var tab = function tab(level) {
   return Array(level * 4).join("&nbsp;");
 };
 var formatHtml = function formatHtml(html, level) {
-  return tab(level) + html + "<br>";
+  return tab(level) + html;
 };
 
 var DataNode = function () {
@@ -3301,8 +3301,15 @@ var DataNode = function () {
     return JSON.encode(data);
   };
 
-  DataNode.prototype.html = function html(level) {
-    return this.json();
+  DataNode.prototype.html = function html(text) {
+    var level = arguments.length <= 1 || arguments[1] === undefined ? 0 : arguments[1];
+    var newline = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
+
+    var output = tab(level) + text + " (" + this.dimensions + ")";
+    if (newline) {
+      output += "<br>";
+    }
+    return output;
   };
 
   return DataNode;
@@ -3322,11 +3329,19 @@ var MeanOperator = function (_DataNode) {
 
     _this29.left = treeToNode(operands[0]);
     _this29.right = treeToNode(operands[1]);
+
+    if (_this29.left.dimensions != _this29.right.dimensions) {
+      throw Error("Operands must have the same dimensions");
+    }
+
+    _this29.dimensions = _this29.left.dimensions;
     return _this29;
   }
 
   MeanOperator.prototype.html = function html(level) {
-    return formatHtml('Mean of ( <br>' + this.left.html(level + 1) + this.right.html(level + 1) + tab(level) + ') ', level);
+    var nl = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
+    return _DataNode.prototype.html.call(this, 'Mean of ( <br>' + this.left.html(level + 1) + this.right.html(level + 1) + tab(level) + ')', level, nl);
   };
 
   return MeanOperator;
@@ -3345,11 +3360,15 @@ var TemporalMeanOperator = function (_DataNode2) {
     }
 
     _this30.operand = treeToNode(operands[0]);
+
+    _this30.dimensions = 'space';
     return _this30;
   }
 
   TemporalMeanOperator.prototype.html = function html(level) {
-    return formatHtml('Time mean of ( <br>' + this.operand.html(level + 1) + tab(level) + ') ', level);
+    var nl = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
+    return _DataNode2.prototype.html.call(this, 'Time mean of ( <br>' + this.operand.html(level + 1) + tab(level) + ')', level, nl);
   };
 
   return TemporalMeanOperator;
@@ -3368,11 +3387,15 @@ var SpatialMeanOperator = function (_DataNode3) {
     }
 
     _this31.operand = treeToNode(operands[0]);
+
+    _this31.dimensions = 'time';
     return _this31;
   }
 
   SpatialMeanOperator.prototype.html = function html(level) {
-    return formatHtml('Space mean of ( <br>' + this.operand.html(level + 1) + tab(level) + ') ', level);
+    var nl = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
+    return _DataNode3.prototype.html.call(this, 'Space mean of ( <br>' + this.operand.html(level + 1) + tab(level) + ')', level, nl);
   };
 
   return SpatialMeanOperator;
@@ -3393,11 +3416,15 @@ var SelectOperator = function (_DataNode4) {
     _this32.left = treeToNode(operands[0]);
     _this32.child_op = operands[0][0];
     _this32.right = operands[1];
+
+    _this32.dimensions = _this32.left.dimensions;
     return _this32;
   }
 
   SelectOperator.prototype.html = function html(level) {
-    return formatHtml("Select " + this.right.name + "/" + this.right.field + " from (<br>" + tab(level) + this.left.html(level + 1) + tab(level) + ")", level);
+    var nl = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
+    return _DataNode4.prototype.html.call(this, "Select " + this.right.name + "/" + this.right.field + " from (<br>" + tab(level) + this.left.html(level + 1) + tab(level) + ")", level, nl);
   };
 
   return SelectOperator;
@@ -3416,11 +3443,15 @@ var ExpressionOperator = function (_DataNode5) {
     }
 
     _this33.operand = treeToNode(operands[0]);
+
+    _this33.dimensions = _this33.operand.dimensions;
     return _this33;
   }
 
   ExpressionOperator.prototype.html = function html(level) {
-    return formatHtml(this.operand.html(level), level);
+    var nl = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
+    return _DataNode5.prototype.html.call(this, this.operand.html(level), level, nl);
   };
 
   return ExpressionOperator;
@@ -3438,13 +3469,27 @@ var JoinOperator = function (_DataNode6) {
       throw Error("JoinOperator takes exactly 2 operands");
     }
 
-    _this34.left = operands[0];
-    _this34.right = operands[1];
+    _this34.left = new SourceOperator([operands[0]]);
+    _this34.right = new SourceOperator([operands[1]]);
+
+    var dimensions = new Set();
+    dimensions.add(_this34.left.dimensions);
+    dimensions.add(_this34.right.dimensions);
+
+    _this34.dimensions = '';
+    if (dimensions.has('space')) {
+      _this34.dimensions += 'space';
+    }
+    if (dimensions.has('time')) {
+      _this34.dimensions += 'time';
+    }
     return _this34;
   }
 
   JoinOperator.prototype.html = function html(level) {
-    return formatHtml("Join " + this.left.type + ' ' + this.left.name + ' and ' + this.right.type + ' ' + this.right.name + ' on ' + this.left.field + ' = ' + this.right.field, level);
+    var nl = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
+    return _DataNode6.prototype.html.call(this, "Join " + this.left.type + ' ' + this.left.name + ' and ' + this.right.type + ' ' + this.right.name + ' on ' + this.left.field + ' = ' + this.right.field, level, nl);
   };
 
   return JoinOperator;
@@ -3465,11 +3510,15 @@ var RasterOperator = function (_DataNode7) {
     _this35.left = operands[0];
     _this35.middle = operands[2];
     _this35.right = treeToNode(operands[1]);
+
+    _this35.dimensions = 'spacetime';
     return _this35;
   }
 
   RasterOperator.prototype.html = function html(level) {
-    return formatHtml("Raster " + this.left.name + " in " + this.middle + " by " + this.right.html(level + 1), level);
+    var nl = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
+    return _DataNode7.prototype.html.call(this, "Raster " + this.left.name + " in " + this.middle + " by (" + this.right.html(0, false) + ")", level, nl);
   };
 
   return RasterOperator;
@@ -3488,11 +3537,22 @@ var SourceOperator = function (_DataNode8) {
     }
 
     _this36.operand = operands[0];
+    _this36.name = _this36.operand.name;
+    _this36.type = _this36.operand.type;
+    _this36.field = _this36.operand.field;
+
+    if (_this36.type == 'Layer') {
+      _this36.dimensions = 'space';
+    } else if (_this36.type == 'Table') {
+      _this36.dimensions = 'time';
+    }
     return _this36;
   }
 
   SourceOperator.prototype.html = function html(level) {
-    return formatHtml(this.operand.type + " '" + this.operand.name + "'", level);
+    var nl = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
+    return _DataNode8.prototype.html.call(this, this.operand.type + " '" + this.operand.name + "' ", level, nl);
   };
 
   return SourceOperator;
