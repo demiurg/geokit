@@ -70,13 +70,14 @@ def process_rasters(variable_pk, schema_name):
                 vector=vector
             )
         except RasterRequest.DoesNotExist:
+            layer = Layer.objects.get(pk=vector)
             job_request = RasterRequest(
                 raster_id=r.raster['id'],
                 dates=r.dates,
-                vector=vector
+                vector=layer
             )
 
-            layer_file = vector.export_to_file(schema_name)
+            layer_file = layer.export_to_file(schema_name)
 
             shp_file = "{}/{}.shp".format(
                 settings.MEDIA_ROOT, str(layer_file.file)[:-4]

@@ -79,7 +79,6 @@ class VisualizationBlock(StructBlock):
 
 
 class VisualizationGroupBlock(StructBlock):
-    control = VisualizationControlBlock()
     visualizations = ListBlock(VisualizationBlock)
 
     class Meta:

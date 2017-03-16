@@ -3558,13 +3558,47 @@ var SourceOperator = function (_DataNode8) {
   return SourceOperator;
 }(DataNode);
 
-var EmptyTree = function (_DataNode9) {
-  _inherits(EmptyTree, _DataNode9);
+var MathOperator = function (_DataNode9) {
+  _inherits(MathOperator, _DataNode9);
+
+  function MathOperator(operator, operands) {
+    _classCallCheck(this, MathOperator);
+
+    var _this37 = _possibleConstructorReturn(this, _DataNode9.call(this, operands));
+
+    _this37.operator = operator;
+
+    if (operands.length != 2) {
+      throw Error("MathOperator takes exactly 2 operands");
+    }
+
+    _this37.left = treeToNode(operands[0]);
+    _this37.right = treeToNode(operands[1]);
+
+    if (_this37.left.dimensions != _this37.right.dimensions) {
+      throw Error("Operators must have the same dimensions");
+    }
+
+    _this37.dimensions = _this37.left.dimensions;
+    return _this37;
+  }
+
+  MathOperator.prototype.html = function html(level) {
+    var nl = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
+    return _DataNode9.prototype.html.call(this, this.left.html(0, true) + tab(level + 1) + this.operator + "<br>" + tab(level + 1) + this.right.html(0, false));
+  };
+
+  return MathOperator;
+}(DataNode);
+
+var EmptyTree = function (_DataNode10) {
+  _inherits(EmptyTree, _DataNode10);
 
   function EmptyTree() {
     _classCallCheck(this, EmptyTree);
 
-    return _possibleConstructorReturn(this, _DataNode9.call(this, []));
+    return _possibleConstructorReturn(this, _DataNode10.call(this, []));
   }
 
   EmptyTree.prototype.html = function html() {
@@ -3605,6 +3639,12 @@ function treeToNode(tree) {
       break;
     case 'source':
       node = new SourceOperator(tree[1]);
+      break;
+    case '+':
+    case '-':
+    case '*':
+    case '/':
+      node = new MathOperator(tree[0], tree[1]);
       break;
     default:
       throw Error("'" + tree[0] + "' is not a valid operator");

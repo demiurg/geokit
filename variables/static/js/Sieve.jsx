@@ -1514,6 +1514,31 @@ class SourceOperator extends DataNode {
   }
 }
 
+class MathOperator extends DataNode {
+  constructor(operator, operands) {
+    super(operands);
+
+    this.operator = operator;
+
+    if (operands.length != 2) {
+      throw Error("MathOperator takes exactly 2 operands");
+    }
+
+    this.left = treeToNode(operands[0]);
+    this.right = treeToNode(operands[1]);
+
+    if (this.left.dimensions != this.right.dimensions) {
+      throw Error("Operators must have the same dimensions");
+    }
+
+    this.dimensions = this.left.dimensions;
+  }
+
+  html(level, nl=true) {
+    return super.html(this.left.html(0, true) + tab(level + 1) + this.operator + "<br>" + tab(level + 1) + this.right.html(0, false));
+  }
+}
+
 class EmptyTree extends DataNode {
   constructor() {
     super([]);
@@ -1555,6 +1580,12 @@ function treeToNode(tree) {
       break;
     case 'source':
       node = new SourceOperator(tree[1]);
+      break;
+    case '+':
+    case '-':
+    case '*':
+    case '/':
+      node = new MathOperator(tree[0], tree[1]);
       break;
     default:
       throw Error("'" + tree[0] + "' is not a valid operator");
