@@ -29,6 +29,15 @@ class Graph extends React.Component {
                     ));
                     graph['type'] = 'scatter';
                     graph['mode'] = 'markers';
+                } else if (data.dimensions == "spacetime") {
+                    //graph.x = dates = Object.keys(data.data[this.props.current_feature])
+                    //graph.y = Object.keys(data.data[this.props.current_feature]).map((key) => (
+                        //data.data[this.props.current_feature][key]
+                    //));
+                    graph['type'] = 'scatter';
+                    graph['mode'] = 'lines';
+                    graph.x = [];
+                    graph.y = [];
                 }
 
                 this.setState({
@@ -53,20 +62,33 @@ class Graph extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         if (!this.state.error) {
-            if (!prevState.data) {
-                var xaxis;
+            if (!prevState.data || prevProps.current_feature != this.props.current_feature) {
+                var xaxis, data;
 
                 if (this.props.dimensions == "time") {
                     xaxis = {
                         title: 'Date'
                     };
-                } else {
+                    data = this.state.data
+                } else if (this.props.dimensions == "space") {
                     xaxis = {title: 'Location'};
+                    data = this.state.data;
+                } else if (this.props.dimensions == "spacetime") {
+                    xaxis = {title: 'Date'};
+                    if (this.props.current_feature) {
+                        var x = Object.keys(this.state.ajax_data.data[this.props.current_feature]);
+                        var y = x.map((key) => (
+                            this.state.ajax_data.data[this.props.current_feature][key]
+                        ));
+                        data = {x: x, y: y}; 
+                    } else {
+                        var data = {x: [], y: []};
+                    }
                 }
 
                 Plotly.newPlot(
                     'graph-'+this.props.unique_id,
-                    [this.state.data],
+                    [data],
                     {
                         xaxis: xaxis,
                         yaxis: {title: this.props.variable_name}
