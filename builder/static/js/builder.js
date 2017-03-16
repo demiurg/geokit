@@ -892,7 +892,7 @@ var Map = function (_React$Component) {
                 click: function click(e) {
                     var feature = e.target.feature;
                     if (feature.properties) {
-                        self.changeFeature(feature.properties.shaid);
+                        self.props.changeFeature(feature.properties.shaid);
                         var popupString = '<div class="popup">';
                         for (var k in feature.properties) {
                             var v = feature.properties[k];
