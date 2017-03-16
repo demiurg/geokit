@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from layers.models import Feature, Layer
 from variables.models import Variable, RasterRequest
 from variables.serializers import VariableSerializer, RasterRequestSerializer
-from variables.data import NODE_TYPES
+from variables.data import NODE_TYPES, JobIncompleteException
 
 import json
 import xmlrpclib
@@ -55,7 +55,10 @@ def edit(request, variable_id):
 def data_json(request, variable_id):
     variable = get_object_or_404(Variable, pk=variable_id)
 
-    data_frame = variable.data()
+    try:
+        data_frame = variable.data()
+    except JobIncompleteException:
+        return HttpResponse('{"status": "incomplete"}')
 
     text = '{"dimensions": "' + variable.dimensions + '", '
 

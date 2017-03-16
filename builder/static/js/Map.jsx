@@ -6,6 +6,7 @@ class Map extends React.Component {
         this.state = {
             loading: true,
             error: false,
+            incomplete: false,
             data: [],
             space_index: [],
             time_index: []
@@ -19,35 +20,42 @@ class Map extends React.Component {
         $.ajax('/variables/data_'+this.props.variable_id+'.json', {
             dataType: 'json',
             success: (data, status, xhr) => {
-                var shas = Object.keys(data.data);
-                var dates = [];
-                if(self.props.dimensions == 'space'){
-                    var values = shas.map((key) => {
-                        return data.data[key][self.props.variable_name];
+                if (data.status == "incomplete") {
+                    this.setState({
+                        loading: false,
+                        incomplete: true
                     });
-                    this.min_value = d3.min(values);
-                    this.max_value = d3.max(values);
-                } else if (self.props.dimensions == 'spacetime') {
-                    var rows = shas.map((key) => {
-                        if (dates.length == 0){
-                            dates = Object.keys(data.data[key]);
-                        }
-                        return Object.values(data.data[key]);
-                    });
-                    let values = [].concat.apply([], rows);
-                    this.min_value = d3.min(values);
-                    this.max_value = d3.max(values);
-                    console.log(this.min_value, this.max_value);
+                } else {
+                    var shas = Object.keys(data.data);
+                    var dates = [];
+                    if(self.props.dimensions == 'space'){
+                        var values = shas.map((key) => {
+                            return data.data[key][self.props.variable_name];
+                        });
+                        this.min_value = d3.min(values);
+                        this.max_value = d3.max(values);
+                    } else if (self.props.dimensions == 'spacetime') {
+                        var rows = shas.map((key) => {
+                            if (dates.length == 0){
+                                dates = Object.keys(data.data[key]);
+                            }
+                            return Object.values(data.data[key]);
+                        });
+                        let values = [].concat.apply([], rows);
+                        this.min_value = d3.min(values);
+                        this.max_value = d3.max(values);
+                        console.log(this.min_value, this.max_value);
+                    }
+
+                    this.color_scale = d3.scale.linear()
+                        .domain([this.min_value, this.max_value])
+                        .range(this.props.color_ramp.map((stop) => { return stop[1]; }));
+
+                    this.setState(
+                        Object.assign(data, {loading: false}),
+                        () => self.props.updateIndexes({'space': shas, 'time': dates})
+                    );
                 }
-
-                this.color_scale = d3.scale.linear()
-                    .domain([this.min_value, this.max_value])
-                    .range(this.props.color_ramp.map((stop) => { return stop[1]; }));
-
-                this.setState(
-                    Object.assign(data, {loading: false}),
-                    () => self.props.updateIndexes({'space': shas, 'time': dates})
-                );
             },
             error: (xhr, status, error) => {
                 console.log(error);
@@ -77,7 +85,7 @@ class Map extends React.Component {
         var self = this;
         if (self.props.current_time && this.props.current_time != prevProps.current_time) {
             console.log("update map");
-        } else if (!self.state.error) {
+        } else if (!self.state.error && !self.state.incomplete) {
             var map = L.map('map-'+self.props.unique_id);
 
             L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
@@ -225,6 +233,8 @@ class Map extends React.Component {
     render() {
         if (this.state.loading) {
             return <div>Loading...</div>
+        } else if (this.state.incomplete) {
+            return <div>{this.props.variable_name} is still being processed. Periodically refresh this page to check if it has finished.</div>;
         } else if (this.state.error) {
             return <div>An error occured: <em>{this.state.error}</em></div>
         } else {

@@ -1052,6 +1052,7 @@ var Map = function (_React$Component) {
         _this.state = {
             loading: true,
             error: false,
+            incomplete: false,
             data: [],
             space_index: [],
             time_index: []
@@ -1068,34 +1069,41 @@ var Map = function (_React$Component) {
         $.ajax('/variables/data_' + this.props.variable_id + '.json', {
             dataType: 'json',
             success: function success(data, status, xhr) {
-                var shas = Object.keys(data.data);
-                var dates = [];
-                if (self.props.dimensions == 'space') {
-                    var values = shas.map(function (key) {
-                        return data.data[key][self.props.variable_name];
+                if (data.status == "incomplete") {
+                    _this2.setState({
+                        loading: false,
+                        incomplete: true
                     });
-                    _this2.min_value = d3.min(values);
-                    _this2.max_value = d3.max(values);
-                } else if (self.props.dimensions == 'spacetime') {
-                    var rows = shas.map(function (key) {
-                        if (dates.length == 0) {
-                            dates = Object.keys(data.data[key]);
-                        }
-                        return Object.values(data.data[key]);
+                } else {
+                    var shas = Object.keys(data.data);
+                    var dates = [];
+                    if (self.props.dimensions == 'space') {
+                        var values = shas.map(function (key) {
+                            return data.data[key][self.props.variable_name];
+                        });
+                        _this2.min_value = d3.min(values);
+                        _this2.max_value = d3.max(values);
+                    } else if (self.props.dimensions == 'spacetime') {
+                        var rows = shas.map(function (key) {
+                            if (dates.length == 0) {
+                                dates = Object.keys(data.data[key]);
+                            }
+                            return Object.values(data.data[key]);
+                        });
+                        var _values = [].concat.apply([], rows);
+                        _this2.min_value = d3.min(_values);
+                        _this2.max_value = d3.max(_values);
+                        console.log(_this2.min_value, _this2.max_value);
+                    }
+
+                    _this2.color_scale = d3.scale.linear().domain([_this2.min_value, _this2.max_value]).range(_this2.props.color_ramp.map(function (stop) {
+                        return stop[1];
+                    }));
+
+                    _this2.setState(Object.assign(data, { loading: false }), function () {
+                        return self.props.updateIndexes({ 'space': shas, 'time': dates });
                     });
-                    var _values = [].concat.apply([], rows);
-                    _this2.min_value = d3.min(_values);
-                    _this2.max_value = d3.max(_values);
-                    console.log(_this2.min_value, _this2.max_value);
                 }
-
-                _this2.color_scale = d3.scale.linear().domain([_this2.min_value, _this2.max_value]).range(_this2.props.color_ramp.map(function (stop) {
-                    return stop[1];
-                }));
-
-                _this2.setState(Object.assign(data, { loading: false }), function () {
-                    return self.props.updateIndexes({ 'space': shas, 'time': dates });
-                });
             },
             error: function error(xhr, status, _error) {
                 console.log(_error);
@@ -1118,7 +1126,7 @@ var Map = function (_React$Component) {
         var self = this;
         if (self.props.current_time && this.props.current_time != prevProps.current_time) {
             console.log("update map");
-        } else if (!self.state.error) {
+        } else if (!self.state.error && !self.state.incomplete) {
             var map = L.map('map-' + self.props.unique_id);
 
             L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
@@ -1189,6 +1197,13 @@ var Map = function (_React$Component) {
                 'div',
                 null,
                 'Loading...'
+            );
+        } else if (this.state.incomplete) {
+            return React.createElement(
+                'div',
+                null,
+                this.props.variable_name,
+                ' is still being processed. Periodically refresh this page to check if it has finished.'
             );
         } else if (this.state.error) {
             return React.createElement(
