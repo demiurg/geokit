@@ -84,7 +84,11 @@ class Map extends React.Component {
     componentDidUpdate(prevProps, prevState) {
         var self = this;
         if (self.props.current_time && this.props.current_time != prevProps.current_time) {
-            console.log("update map");
+            if(self.geojsonTileLayer){
+                self.geojsonTileLayer.geojsonLayer.eachLayer((layer) => {
+                    layer.setStyle(self.getStyle);
+                });
+            }
         } else if (!self.state.error && !self.state.incomplete) {
             var map = L.map('map-'+self.props.unique_id);
 
@@ -92,7 +96,7 @@ class Map extends React.Component {
 
             self.state.layers.map((id, idx) => {
                 var geojsonURL = '/layers/'+id+'/{z}/{x}/{y}.json';
-                var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
+                self.geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
                     clipTiles: true,
                     unique: function(feature) {
                         return feature.properties.shaid;
@@ -111,7 +115,7 @@ class Map extends React.Component {
                         });
                     },
                 });
-                map.addLayer(geojsonTileLayer);
+                map.addLayer(self.geojsonTileLayer);
             })
             if(self.props.bounds){
                 map.fitBounds([
