@@ -156,7 +156,6 @@ class VisualizationGroup extends React.Component {
             state['current_time'] = current_time;
         }
         this.setState(state);
-        console.log(state);
     }
 
     changeSpaceBounds(bounds){
