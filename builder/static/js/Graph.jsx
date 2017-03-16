@@ -10,14 +10,35 @@ class Graph extends React.Component {
 
     componentDidMount() {
         // make AJAX call
-        $.ajax('/api/variables/'+this.props.variable_id+'/graph/', {
+        $.ajax('/variables/data_'+this.props.variable_id+'.json', {
             dataType: 'json',
             success: (data, status, xhr) => {
+                var dates = [], shas = [], graph = {'x': [], 'y': []};
+
+                if (data.dimensions == "time") {
+                    graph.x = dates = Object.keys(data.data);
+                    graph.y = Object.keys(data.data).map((key) => (
+                        data.data[key]
+                    ));
+                    graph['type'] = 'scatter';
+                    graph['mode'] = 'lines';
+                } else if (data.dimensions == "space") {
+                    graph.x = shas = Object.keys(data.data)
+                    graph.y = Object.keys(data.data).map((key) => (
+                        data.data[key][self.props.variable_name]
+                    ));
+                    graph['type'] = 'scatter';
+                    graph['mode'] = 'markers';
+                }
+
                 this.setState({
-                    data: data,
+                    ajax_data: data,
+                    data: graph,
                     loading: false
                 }, () => {
-                    this.props.setDimensions([Plotly.d3.min(data.x), Plotly.d3.max(data.x)]);
+                    this.props.updateIndexes({
+                        'time': dates, 'space': shas
+                    });
                 });
             },
             error: (xhr, status, error) => {
@@ -35,7 +56,7 @@ class Graph extends React.Component {
             if (!prevState.data) {
                 var xaxis;
 
-                if (this.state.data.type == "timeseries") {
+                if (this.props.dimensions == "time") {
                     xaxis = {
                         title: 'Date'
                     };
@@ -51,11 +72,11 @@ class Graph extends React.Component {
                         yaxis: {title: this.props.variable_name}
                     }
                 );
-            } else if (this.props.dimensions && prevProps.dimensions) {
-                if (this.props.dimensions.min.getTime() != prevProps.dimensions.min.getTime() ||
-                        this.props.dimensions.max.getTime() != prevProps.dimensions.max.getTime()) {
+            } else if (this.props.time_range && prevProps.time_range) {
+                if (this.props.time_range.min.getTime() != prevProps.time_range.min.getTime() ||
+                        this.props.time_range.max.getTime() != prevProps.time_range.max.getTime()) {
                     var update = {
-                        'xaxis.range': [this.props.dimensions.min.getTime(), this.props.dimensions.max.getTime()]
+                        'xaxis.range': [this.props.time_range.min.getTime(), this.props.time_range.max.getTime()]
                     };
                     Plotly.relayout('graph-'+this.props.unique_id, update);
                 }

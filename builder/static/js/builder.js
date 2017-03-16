@@ -411,7 +411,7 @@ var GADMChooser = function (_React$Component) {
                     { className: 'fields' },
                     React.createElement(
                         'li',
-                        { className: 'required' },
+                        null,
                         React.createElement(
                             'div',
                             { className: 'field slug_field text_input' },
@@ -426,7 +426,7 @@ var GADMChooser = function (_React$Component) {
                                 React.createElement(
                                     'div',
                                     { className: 'input' },
-                                    React.createElement('input', { id: 'id_name', maxlength: '250', name: 'name', type: 'text', required: true, value: this.state.layer_name, onChange: this.updateLayerName.bind(this) })
+                                    React.createElement('input', { id: 'id_name', maxlength: '250', type: 'text', value: this.state.layer_name, onChange: this.updateLayerName.bind(this) })
                                 ),
                                 React.createElement(
                                     'p',
@@ -533,14 +533,37 @@ var Graph = function (_React$Component) {
         var _this2 = this;
 
         // make AJAX call
-        $.ajax('/api/variables/' + this.props.variable_id + '/graph/', {
+        $.ajax('/variables/data_' + this.props.variable_id + '.json', {
             dataType: 'json',
             success: function success(data, status, xhr) {
+                var dates = [],
+                    shas = [],
+                    graph = { 'x': [], 'y': [] };
+
+                if (data.dimensions == "time") {
+                    graph.x = dates = Object.keys(data.data);
+                    graph.y = Object.keys(data.data).map(function (key) {
+                        return data.data[key];
+                    });
+                    graph['type'] = 'scatter';
+                    graph['mode'] = 'lines';
+                } else if (data.dimensions == "space") {
+                    graph.x = shas = Object.keys(data.data);
+                    graph.y = Object.keys(data.data).map(function (key) {
+                        return data.data[key][self.props.variable_name];
+                    });
+                    graph['type'] = 'scatter';
+                    graph['mode'] = 'markers';
+                }
+
                 _this2.setState({
-                    data: data,
+                    ajax_data: data,
+                    data: graph,
                     loading: false
                 }, function () {
-                    _this2.props.setDimensions([Plotly.d3.min(data.x), Plotly.d3.max(data.x)]);
+                    _this2.props.updateIndexes({
+                        'time': dates, 'space': shas
+                    });
                 });
             },
             error: function error(xhr, status, _error) {
@@ -558,7 +581,7 @@ var Graph = function (_React$Component) {
             if (!prevState.data) {
                 var xaxis;
 
-                if (this.state.data.type == "timeseries") {
+                if (this.props.dimensions == "time") {
                     xaxis = {
                         title: 'Date'
                     };
@@ -570,10 +593,10 @@ var Graph = function (_React$Component) {
                     xaxis: xaxis,
                     yaxis: { title: this.props.variable_name }
                 });
-            } else if (this.props.dimensions && prevProps.dimensions) {
-                if (this.props.dimensions.min.getTime() != prevProps.dimensions.min.getTime() || this.props.dimensions.max.getTime() != prevProps.dimensions.max.getTime()) {
+            } else if (this.props.time_range && prevProps.time_range) {
+                if (this.props.time_range.min.getTime() != prevProps.time_range.min.getTime() || this.props.time_range.max.getTime() != prevProps.time_range.max.getTime()) {
                     var update = {
-                        'xaxis.range': [this.props.dimensions.min.getTime(), this.props.dimensions.max.getTime()]
+                        'xaxis.range': [this.props.time_range.min.getTime(), this.props.time_range.max.getTime()]
                     };
                     Plotly.relayout('graph-' + this.props.unique_id, update);
                 }
@@ -974,6 +997,33 @@ var Map = function (_React$Component) {
 
         var _this = _possibleConstructorReturn(this, _React$Component.call(this, props));
 
+        _this.getStyle = function (feature) {
+            var self = _this;
+            var fdata = self.state.data[feature.properties.shaid];
+            var color = "#000";
+            var opacity = 0.1;
+
+            if (fdata) {
+                var value;
+                if (self.state.dimensions == 'space') {
+                    value = fdata[self.props.variable_name];
+                } else {
+                    var date = self.props.current_time.toISOString().slice(0, 10);
+                    value = fdata[date];
+                }
+                color = self.color_scale(value);
+                opacity = 0.7;
+            } else {
+                console.log('no ' + feature.properties.shaid);
+            }
+            return {
+                color: "#000",
+                weight: 1,
+                fillColor: color,
+                fillOpacity: opacity
+            };
+        };
+
         _this.featureHandler = function (feature, layer) {
             self = _this;
             layer.on({
@@ -1002,6 +1052,7 @@ var Map = function (_React$Component) {
         _this.state = {
             loading: true,
             error: false,
+            incomplete: false,
             data: [],
             space_index: [],
             time_index: []
@@ -1018,33 +1069,41 @@ var Map = function (_React$Component) {
         $.ajax('/variables/data_' + this.props.variable_id + '.json', {
             dataType: 'json',
             success: function success(data, status, xhr) {
-                var shas = Object.keys(data.data);
-                var dates = [];
-                if (self.props.dimensions == 'space') {
-                    var values = shas.map(function (key) {
-                        return data.data[key][self.props.variable_name];
+                if (data.status == "incomplete") {
+                    _this2.setState({
+                        loading: false,
+                        incomplete: true
                     });
-                    _this2.min_value = d3.min(values);
-                    _this2.max_value = d3.max(values);
-                } else if (self.props.dimensions == 'spacetime') {
-                    var rows = shas.map(function (key) {
-                        if (dates.length == 0) {
-                            dates = Object.keys(data.data[key]);
-                        }
-                        return Object.values(data.data[key]);
+                } else {
+                    var shas = Object.keys(data.data);
+                    var dates = [];
+                    if (self.props.dimensions == 'space') {
+                        var values = shas.map(function (key) {
+                            return data.data[key][self.props.variable_name];
+                        });
+                        _this2.min_value = d3.min(values);
+                        _this2.max_value = d3.max(values);
+                    } else if (self.props.dimensions == 'spacetime') {
+                        var rows = shas.map(function (key) {
+                            if (dates.length == 0) {
+                                dates = Object.keys(data.data[key]);
+                            }
+                            return Object.values(data.data[key]);
+                        });
+                        var _values = [].concat.apply([], rows);
+                        _this2.min_value = d3.min(_values);
+                        _this2.max_value = d3.max(_values);
+                        console.log(_this2.min_value, _this2.max_value);
+                    }
+
+                    _this2.color_scale = d3.scale.linear().domain([_this2.min_value, _this2.max_value]).range(_this2.props.color_ramp.map(function (stop) {
+                        return stop[1];
+                    }));
+
+                    _this2.setState(Object.assign(data, { loading: false }), function () {
+                        return self.props.updateIndexes({ 'space': shas, 'time': dates });
                     });
-                    var _values = [].concat(rows);
-                    _this2.min_value = d3.min(_values);
-                    _this2.max_value = d3.max(_values);
                 }
-
-                _this2.color_scale = d3.scale.linear().domain([_this2.min_value, _this2.max_value]).range(_this2.props.color_ramp.map(function (stop) {
-                    return stop[1];
-                }));
-
-                _this2.setState(Object.assign(data, { loading: false }), function () {
-                    return self.props.updateIndexes({ 'space': shas, 'time': dates });
-                });
             },
             error: function error(xhr, status, _error) {
                 console.log(_error);
@@ -1057,7 +1116,7 @@ var Map = function (_React$Component) {
     };
 
     Map.prototype.shouldComponentUpdate = function shouldComponentUpdate(nextProps, nextState) {
-        if (this.state.loading || this.props.dimensions && this.props.dimensions.length != nextProps.dimensions.length) {
+        if (this.state.loading || this.props.dimensions && this.props.dimensions.length != nextProps.dimensions.length || this.props.current_time != nextProps.current_time) {
             return true;
         }
         return false;
@@ -1065,41 +1124,26 @@ var Map = function (_React$Component) {
 
     Map.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
         var self = this;
-        if (self.props.dimensions && self.props.dimensions.length != prevProps.dimensions.length) {
-            console.log("update map");
-        } else if (!self.state.error) {
+        if (self.props.current_time && this.props.current_time != prevProps.current_time) {
+            if (self.geojsonTileLayer) {
+                self.geojsonTileLayer.geojsonLayer.eachLayer(function (layer) {
+                    layer.setStyle(self.getStyle);
+                });
+            }
+        } else if (!self.state.error && !self.state.incomplete) {
             var map = L.map('map-' + self.props.unique_id);
 
             L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
 
             self.state.layers.map(function (id, idx) {
                 var geojsonURL = '/layers/' + id + '/{z}/{x}/{y}.json';
-                var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
+                self.geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
                     clipTiles: true,
                     unique: function unique(feature) {
                         return feature.properties.shaid;
                     }
                 }, {
-                    style: function style(feature) {
-                        var s = self;
-                        var fdata = self.state.data[feature.properties.shaid];
-                        var color = "#000";
-                        var opacity = 0.1;
-
-                        if (fdata) {
-                            var value = fdata[self.props.variable_name];
-                            color = self.color_scale(value);
-                            opacity = 0.7;
-                        } else {
-                            console.log('no ' + feature.properties.shaid);
-                        }
-                        return {
-                            color: "#000",
-                            weight: 1,
-                            fillColor: color,
-                            fillOpacity: opacity
-                        };
-                    },
+                    style: self.getStyle,
                     onEachFeature: self.featureHandler,
                     pointToLayer: function pointToLayer(feature, latlng) {
                         return new L.CircleMarker(latlng, {
@@ -1112,7 +1156,7 @@ var Map = function (_React$Component) {
                         });
                     }
                 });
-                map.addLayer(geojsonTileLayer);
+                map.addLayer(self.geojsonTileLayer);
             });
             if (self.props.bounds) {
                 map.fitBounds([[self.props.bounds[1], self.props.bounds[0]], [self.props.bounds[3], self.props.bounds[2]]]);
@@ -1157,6 +1201,13 @@ var Map = function (_React$Component) {
                 'div',
                 null,
                 'Loading...'
+            );
+        } else if (this.state.incomplete) {
+            return React.createElement(
+                'div',
+                null,
+                this.props.variable_name,
+                ' is still being processed. Periodically refresh this page to check if it has finished.'
             );
         } else if (this.state.error) {
             return React.createElement(
@@ -1248,11 +1299,11 @@ var Table = function (_React$Component) {
     };
 
     Table.prototype.stuffChanged = function stuffChanged(old, next) {
-        if (this.state.data.dimensions == 'time') {
+        if (this.props.dimensions == 'time') {
             if (old.time_range && (old.time_range.min != next.time_range.min || old.time_range.max != next.time_range.max)) {
                 return true;
             }
-        } else if (this.state.data.dimensions == 'space') {
+        } else if (this.props.dimensions == 'space') {
             return this.state.current_feature != next.current_feature;
         }
         return false;
@@ -1261,10 +1312,10 @@ var Table = function (_React$Component) {
     Table.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
         var _this2 = this;
 
-        if (!this.state.loading && !prevState.data) {
+        if (!this.state.loading && !prevState.data && !this.state.error) {
             var columns = [],
                 data;
-            if (this.state.data.dimensions == 'space') {
+            if (this.props.dimensions == 'space') {
                 columns.push({ data: 'name' });
             } else {
                 columns.push({ data: 'date' });
@@ -1276,7 +1327,7 @@ var Table = function (_React$Component) {
                 columns: columns
             });
 
-            if (this.state.data.dimensions == 'time') {
+            if (this.props.dimensions == 'time') {
                 $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
                     var d = new Date(aData[0]);
                     if (_this2.props.time_range.min.getTime() <= d && d <= _this2.props.time_range.max.getTime()) {
@@ -1722,14 +1773,15 @@ var SliderControl = function (_React$Component2) {
         var _this4 = this;
 
         var dateSlider = document.getElementById('date-slider-control');
-
+        var start = new Date(this.props.time_range.min).getTime();
+        var stop = new Date(this.props.time_range.max).getTime();
         noUiSlider.create(dateSlider, {
             range: {
-                min: new Date(this.props.time_range.min).getTime(),
-                max: new Date(this.props.time_range.max).getTime()
+                min: start,
+                max: stop
             },
-            start: [new Date(this.props.time_range.min).getTime(), new Date(this.props.time_range.max).getTime()],
-            step: 7 * 24 * 60 * 60 * 1000,
+            start: [start, start + (stop - start) / 2, stop],
+            step: /*7*/1 * 24 * 60 * 60 * 1000,
             connect: true,
             behaviour: 'drag',
             tooltips: true,
@@ -1747,7 +1799,8 @@ var SliderControl = function (_React$Component2) {
         dateSlider.noUiSlider.on('update', function (values, handle) {
             _this4.props.changeTimeRange({
                 min: new Date(values[0]),
-                max: new Date(values[1]) });
+                max: new Date(values[2])
+            }, new Date(values[1]));
         });
     };
 
@@ -1835,18 +1888,24 @@ var VisualizationGroup = function (_React$Component4) {
             time_index: null,
             time_range: null,
             current_space_bounds: null,
+            current_feature: null,
             current_time_range: null,
-            current_feature: null
+            current_time: null
         };
 
         _this6.child_indexes = [];
         return _this6;
     }
 
-    VisualizationGroup.prototype.changeTimeRange = function changeTimeRange(range) {
-        this.setState({
+    VisualizationGroup.prototype.changeTimeRange = function changeTimeRange(range, current_time) {
+        var state = {
             current_time_range: { min: range.min, max: range.max }
-        });
+        };
+        if (current_time) {
+            state['current_time'] = current_time;
+        }
+        this.setState(state);
+        console.log(state);
     };
 
     VisualizationGroup.prototype.changeSpaceBounds = function changeSpaceBounds(bounds) {};
@@ -1855,6 +1914,7 @@ var VisualizationGroup = function (_React$Component4) {
         this.setState({
             current_feature: shaid
         });
+        console.log(shaid);
     };
 
     VisualizationGroup.prototype.updateIndexes = function updateIndexes(indexes) {
@@ -1914,6 +1974,7 @@ var VisualizationGroup = function (_React$Component4) {
                     updateIndexes: _this7.updateIndexes.bind(_this7),
                     time_range: _this7.state.current_time_range,
                     changeTimeRange: _this7.changeTimeRange.bind(_this7),
+                    current_time: _this7.state.current_time,
                     changeSpaceBounds: _this7.changeSpaceBounds.bind(_this7),
                     current_feature: _this7.state.current_feature,
                     changeFeature: _this7.changeFeature.bind(_this7)

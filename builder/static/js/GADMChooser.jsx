@@ -177,7 +177,7 @@ class GADMChooser extends React.Component {
                                 layer.setStyle({
                                     fillColor: "grey"
                                 });
-                    
+
                                 var selected = this.state.selected.slice();
                                 selected.splice(featureIdx, 1);
                                 this.setState({
@@ -187,7 +187,7 @@ class GADMChooser extends React.Component {
                                 layer.setStyle({
                                     fillColor: "blue"
                                 });
-                        
+
                                 var selected = this.state.selected.slice();
                                 selected.push(featureIdString);
                                 this.setState({
@@ -369,12 +369,12 @@ class GADMChooser extends React.Component {
             return (
                 <div>
                     <ul className="fields">
-                        <li className="required">
+                        <li>
                             <div className="field slug_field text_input">
                                 <label htmlFor="id_name">Name:</label>
                                 <div className="field-content">
                                     <div className="input">
-                                        <input id="id_name" maxlength="250" name="name" type="text" required={true} value={this.state.layer_name} onChange={this.updateLayerName.bind(this)} />
+                                        <input id="id_name" maxlength="250" type="text" value={this.state.layer_name} onChange={this.updateLayerName.bind(this)} />
                                     </div>
                                     <p className="help">
                                         The name of the layer as it will appear in URLs e.g http://domain.com/blog/my-slug/ and expression e.g map(my-slug)
@@ -386,12 +386,12 @@ class GADMChooser extends React.Component {
                             <h1>
                                 <span>
                                     <a href="javascript:void(0)"
-                                        onClick={this.back.bind(this, 0)}>World</a> > 
+                                        onClick={this.back.bind(this, 0)}>World</a> >
                                 </span>
                                 {this.state.parents.map((unit, i) => {
                                     return <span>
                                         <a href="javascript:void(0)"
-                                            onClick={this.back.bind(this, i + 1)}>{unit}</a> > 
+                                            onClick={this.back.bind(this, i + 1)}>{unit}</a> >
                                     </span>;
                                 })}
                                 <div style={{display: "inline-block", width: 400}}>

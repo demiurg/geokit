@@ -55,24 +55,24 @@ class Table extends React.Component {
     }
 
     stuffChanged(old, next) {
-        if (this.state.data.dimensions == 'time') {
+        if (this.props.dimensions == 'time') {
             if (old.time_range && (
                     old.time_range.min != next.time_range.min ||
                     old.time_range.max != next.time_range.max)
             ) {
                 return true;
             }
-        } else if (this.state.data.dimensions == 'space'){
+        } else if (this.props.dimensions == 'space'){
             return this.state.current_feature != next.current_feature;
         }
         return false
     }
 
     componentDidUpdate(prevProps, prevState) {
-        if (!this.state.loading && !prevState.data) {
+        if (!this.state.loading && !prevState.data && !this.state.error) {
             var columns = [],
                 data;
-            if (this.state.data.dimensions == 'space') {
+            if (this.props.dimensions == 'space') {
                 columns.push({data: 'name'});
             } else {
                 columns.push({data: 'date'});
@@ -84,7 +84,7 @@ class Table extends React.Component {
                 columns: columns
             });
 
-            if (this.state.data.dimensions == 'time') {
+            if (this.props.dimensions == 'time') {
                 $.fn.dataTableExt.afnFiltering.push(
                     (oSettings, aData, iDataIndex) => {
                         var d = new Date(aData[0]);

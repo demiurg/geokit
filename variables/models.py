@@ -43,6 +43,8 @@ class Variable(models.Model):
         return super(Variable, self).save(*args, **kwargs)
 
     def __unicode__(self):
+        if self.saved_dimensions is None:
+            return self.name
         return "{} {}{}".format(
             self.name,
             'S' if 's' in self.saved_dimensions else '',

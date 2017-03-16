@@ -455,6 +455,10 @@ class DataSource(DataNode):
         return self
 
 
+class JobIncompleteException(Exception):
+    pass
+
+
 class RasterSource(DataNode):
     ''' Used for testing '''
 
@@ -481,6 +485,8 @@ class RasterSource(DataNode):
         # print job_id
 
         results = conn.stats_request_results({'job': job_id})
+        if not results:
+            raise JobIncompleteException()
         print "requesting job {}".format(job_id)
         for r in results:
             date = r['date'].date()

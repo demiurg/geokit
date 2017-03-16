@@ -6,6 +6,7 @@ class Map extends React.Component {
         this.state = {
             loading: true,
             error: false,
+            incomplete: false,
             data: [],
             space_index: [],
             time_index: []
@@ -19,34 +20,42 @@ class Map extends React.Component {
         $.ajax('/variables/data_'+this.props.variable_id+'.json', {
             dataType: 'json',
             success: (data, status, xhr) => {
-                var shas = Object.keys(data.data);
-                var dates = [];
-                if(self.props.dimensions == 'space'){
-                    var values = shas.map((key) => {
-                        return data.data[key][self.props.variable_name];
+                if (data.status == "incomplete") {
+                    this.setState({
+                        loading: false,
+                        incomplete: true
                     });
-                    this.min_value = d3.min(values);
-                    this.max_value = d3.max(values);
-                } else if (self.props.dimensions == 'spacetime') {
-                    var rows = shas.map((key) => {
-                        if (dates.length == 0){
-                            dates = Object.keys(data.data[key]);
-                        }
-                        return Object.values(data.data[key]);
-                    });
-                    let values = [].concat(rows);
-                    this.min_value = d3.min(values);
-                    this.max_value = d3.max(values);
+                } else {
+                    var shas = Object.keys(data.data);
+                    var dates = [];
+                    if(self.props.dimensions == 'space'){
+                        var values = shas.map((key) => {
+                            return data.data[key][self.props.variable_name];
+                        });
+                        this.min_value = d3.min(values);
+                        this.max_value = d3.max(values);
+                    } else if (self.props.dimensions == 'spacetime') {
+                        var rows = shas.map((key) => {
+                            if (dates.length == 0){
+                                dates = Object.keys(data.data[key]);
+                            }
+                            return Object.values(data.data[key]);
+                        });
+                        let values = [].concat.apply([], rows);
+                        this.min_value = d3.min(values);
+                        this.max_value = d3.max(values);
+                        console.log(this.min_value, this.max_value);
+                    }
+
+                    this.color_scale = d3.scale.linear()
+                        .domain([this.min_value, this.max_value])
+                        .range(this.props.color_ramp.map((stop) => { return stop[1]; }));
+
+                    this.setState(
+                        Object.assign(data, {loading: false}),
+                        () => self.props.updateIndexes({'space': shas, 'time': dates})
+                    );
                 }
-
-                this.color_scale = d3.scale.linear()
-                    .domain([this.min_value, this.max_value])
-                    .range(this.props.color_ramp.map((stop) => { return stop[1]; }));
-
-                this.setState(
-                    Object.assign(data, {loading: false}),
-                    () => self.props.updateIndexes({'space': shas, 'time': dates})
-                );
             },
             error: (xhr, status, error) => {
                 console.log(error);
@@ -59,9 +68,14 @@ class Map extends React.Component {
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-        if (this.state.loading ||
-            (this.props.dimensions &&
-             this.props.dimensions.length != nextProps.dimensions.length)) {
+        if (
+            this.state.loading ||
+            (
+                this.props.dimensions &&
+                this.props.dimensions.length != nextProps.dimensions.length
+            ) ||
+            (this.props.current_time != nextProps.current_time)
+        ) {
             return true;
         }
         return false;
@@ -69,41 +83,26 @@ class Map extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         var self = this;
-        if (self.props.dimensions && self.props.dimensions.length != prevProps.dimensions.length) {
-            console.log("update map");
-        } else if (!self.state.error) {
+        if (self.props.current_time && this.props.current_time != prevProps.current_time) {
+            if(self.geojsonTileLayer){
+                self.geojsonTileLayer.geojsonLayer.eachLayer((layer) => {
+                    layer.setStyle(self.getStyle);
+                });
+            }
+        } else if (!self.state.error && !self.state.incomplete) {
             var map = L.map('map-'+self.props.unique_id);
 
             L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
 
             self.state.layers.map((id, idx) => {
                 var geojsonURL = '/layers/'+id+'/{z}/{x}/{y}.json';
-                var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
+                self.geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
                     clipTiles: true,
                     unique: function(feature) {
                         return feature.properties.shaid;
                     }
                 }, {
-                    style: (feature) => {
-                        var s = self;
-                        let fdata = self.state.data[feature.properties.shaid];
-                        var color = "#000";
-                        var opacity = 0.1;
-
-                        if (fdata){
-                            let value = fdata[self.props.variable_name];
-                            color = self.color_scale(value)
-                            opacity = 0.7;
-                        } else {
-                            console.log('no ' + feature.properties.shaid);
-                        }
-                        return {
-                            color: "#000",
-                            weight: 1,
-                            fillColor: color,
-                            fillOpacity: opacity
-                        };
-                    },
+                    style: self.getStyle,
                     onEachFeature: self.featureHandler,
                     pointToLayer: function (feature, latlng) {
                         return new L.CircleMarker(latlng, {
@@ -116,7 +115,7 @@ class Map extends React.Component {
                         });
                     },
                 });
-                map.addLayer(geojsonTileLayer);
+                map.addLayer(self.geojsonTileLayer);
             })
             if(self.props.bounds){
                 map.fitBounds([
@@ -134,6 +133,33 @@ class Map extends React.Component {
 
             legend.addTo(map);
         }
+    }
+
+    getStyle = (feature) => {
+        var self = this;
+        let fdata = self.state.data[feature.properties.shaid];
+        var color = "#000";
+        var opacity = 0.1;
+
+        if (fdata){
+            var value;
+            if (self.state.dimensions == 'space'){
+                value = fdata[self.props.variable_name];
+            } else {
+                var date = self.props.current_time.toISOString().slice(0,10);
+                value = fdata[date];
+            }
+            color = self.color_scale(value);
+            opacity = 0.7;
+        } else {
+            console.log('no ' + feature.properties.shaid);
+        }
+        return {
+            color: "#000",
+            weight: 1,
+            fillColor: color,
+            fillOpacity: opacity
+        };
     }
 
     featureHandler = (feature, layer) => {
@@ -211,6 +237,8 @@ class Map extends React.Component {
     render() {
         if (this.state.loading) {
             return <div>Loading...</div>
+        } else if (this.state.incomplete) {
+            return <div>{this.props.variable_name} is still being processed. Periodically refresh this page to check if it has finished.</div>;
         } else if (this.state.error) {
             return <div>An error occured: <em>{this.state.error}</em></div>
         } else {

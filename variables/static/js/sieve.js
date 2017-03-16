@@ -3289,7 +3289,7 @@ var tab = function tab(level) {
   return Array(level * 4).join("&nbsp;");
 };
 var formatHtml = function formatHtml(html, level) {
-  return tab(level) + html + "<br>";
+  return tab(level) + html;
 };
 
 var DataNode = function () {
@@ -3301,8 +3301,15 @@ var DataNode = function () {
     return JSON.encode(data);
   };
 
-  DataNode.prototype.html = function html(level) {
-    return this.json();
+  DataNode.prototype.html = function html(text) {
+    var level = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+    var newline = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+    var output = tab(level) + text + " (" + this.dimensions + ")";
+    if (newline) {
+      output += "<br>";
+    }
+    return output;
   };
 
   return DataNode;
@@ -3322,11 +3329,19 @@ var MeanOperator = function (_DataNode) {
 
     _this29.left = treeToNode(operands[0]);
     _this29.right = treeToNode(operands[1]);
+
+    if (_this29.left.dimensions != _this29.right.dimensions) {
+      throw Error("Operands must have the same dimensions");
+    }
+
+    _this29.dimensions = _this29.left.dimensions;
     return _this29;
   }
 
   MeanOperator.prototype.html = function html(level) {
-    return formatHtml('Mean of ( <br>' + this.left.html(level + 1) + this.right.html(level + 1) + tab(level) + ') ', level);
+    var nl = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+    return _DataNode.prototype.html.call(this, 'Mean of ( <br>' + this.left.html(level + 1) + this.right.html(level + 1) + tab(level) + ')', level, nl);
   };
 
   return MeanOperator;
@@ -3345,11 +3360,15 @@ var TemporalMeanOperator = function (_DataNode2) {
     }
 
     _this30.operand = treeToNode(operands[0]);
+
+    _this30.dimensions = 'space';
     return _this30;
   }
 
   TemporalMeanOperator.prototype.html = function html(level) {
-    return formatHtml('Time mean of ( <br>' + this.operand.html(level + 1) + tab(level) + ') ', level);
+    var nl = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+    return _DataNode2.prototype.html.call(this, 'Time mean of ( <br>' + this.operand.html(level + 1) + tab(level) + ')', level, nl);
   };
 
   return TemporalMeanOperator;
@@ -3368,11 +3387,15 @@ var SpatialMeanOperator = function (_DataNode3) {
     }
 
     _this31.operand = treeToNode(operands[0]);
+
+    _this31.dimensions = 'time';
     return _this31;
   }
 
   SpatialMeanOperator.prototype.html = function html(level) {
-    return formatHtml('Space mean of ( <br>' + this.operand.html(level + 1) + tab(level) + ') ', level);
+    var nl = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+    return _DataNode3.prototype.html.call(this, 'Space mean of ( <br>' + this.operand.html(level + 1) + tab(level) + ')', level, nl);
   };
 
   return SpatialMeanOperator;
@@ -3393,11 +3416,15 @@ var SelectOperator = function (_DataNode4) {
     _this32.left = treeToNode(operands[0]);
     _this32.child_op = operands[0][0];
     _this32.right = operands[1];
+
+    _this32.dimensions = _this32.left.dimensions;
     return _this32;
   }
 
   SelectOperator.prototype.html = function html(level) {
-    return formatHtml("Select " + this.right.name + "/" + this.right.field + " from (<br>" + tab(level) + this.left.html(level + 1) + tab(level) + ")", level);
+    var nl = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+    return _DataNode4.prototype.html.call(this, "Select " + this.right.name + "/" + this.right.field + " from (<br>" + tab(level) + this.left.html(level + 1) + tab(level) + ")", level, nl);
   };
 
   return SelectOperator;
@@ -3416,11 +3443,15 @@ var ExpressionOperator = function (_DataNode5) {
     }
 
     _this33.operand = treeToNode(operands[0]);
+
+    _this33.dimensions = _this33.operand.dimensions;
     return _this33;
   }
 
   ExpressionOperator.prototype.html = function html(level) {
-    return formatHtml(this.operand.html(level), level);
+    var nl = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+    return _DataNode5.prototype.html.call(this, this.operand.html(level), level, nl);
   };
 
   return ExpressionOperator;
@@ -3438,13 +3469,27 @@ var JoinOperator = function (_DataNode6) {
       throw Error("JoinOperator takes exactly 2 operands");
     }
 
-    _this34.left = operands[0];
-    _this34.right = operands[1];
+    _this34.left = new SourceOperator([operands[0]]);
+    _this34.right = new SourceOperator([operands[1]]);
+
+    var dimensions = new Set();
+    dimensions.add(_this34.left.dimensions);
+    dimensions.add(_this34.right.dimensions);
+
+    _this34.dimensions = '';
+    if (dimensions.has('space')) {
+      _this34.dimensions += 'space';
+    }
+    if (dimensions.has('time')) {
+      _this34.dimensions += 'time';
+    }
     return _this34;
   }
 
   JoinOperator.prototype.html = function html(level) {
-    return formatHtml("Join " + this.left.type + ' ' + this.left.name + ' and ' + this.right.type + ' ' + this.right.name + ' on ' + this.left.field + ' = ' + this.right.field, level);
+    var nl = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+    return _DataNode6.prototype.html.call(this, "Join " + this.left.type + ' ' + this.left.name + ' and ' + this.right.type + ' ' + this.right.name + ' on ' + this.left.field + ' = ' + this.right.field, level, nl);
   };
 
   return JoinOperator;
@@ -3465,11 +3510,15 @@ var RasterOperator = function (_DataNode7) {
     _this35.left = operands[0];
     _this35.middle = operands[2];
     _this35.right = treeToNode(operands[1]);
+
+    _this35.dimensions = 'spacetime';
     return _this35;
   }
 
   RasterOperator.prototype.html = function html(level) {
-    return formatHtml("Raster " + this.left.name + " in " + this.middle + " by " + this.right.html(level + 1), level);
+    var nl = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+    return _DataNode7.prototype.html.call(this, "Raster " + this.left.name + " in " + this.middle + " by (" + this.right.html(0, false) + ")", level, nl);
   };
 
   return RasterOperator;
@@ -3488,23 +3537,68 @@ var SourceOperator = function (_DataNode8) {
     }
 
     _this36.operand = operands[0];
+    _this36.name = _this36.operand.name;
+    _this36.type = _this36.operand.type;
+    _this36.field = _this36.operand.field;
+
+    if (_this36.type == 'Layer') {
+      _this36.dimensions = 'space';
+    } else if (_this36.type == 'Table') {
+      _this36.dimensions = 'time';
+    }
     return _this36;
   }
 
   SourceOperator.prototype.html = function html(level) {
-    return formatHtml(this.operand.type + " '" + this.operand.name + "'", level);
+    var nl = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+    return _DataNode8.prototype.html.call(this, this.operand.type + " '" + this.operand.name + "' ", level, nl);
   };
 
   return SourceOperator;
 }(DataNode);
 
-var EmptyTree = function (_DataNode9) {
-  _inherits(EmptyTree, _DataNode9);
+var MathOperator = function (_DataNode9) {
+  _inherits(MathOperator, _DataNode9);
+
+  function MathOperator(operator, operands) {
+    _classCallCheck(this, MathOperator);
+
+    var _this37 = _possibleConstructorReturn(this, _DataNode9.call(this, operands));
+
+    _this37.operator = operator;
+
+    if (operands.length != 2) {
+      throw Error("MathOperator takes exactly 2 operands");
+    }
+
+    _this37.left = treeToNode(operands[0]);
+    _this37.right = treeToNode(operands[1]);
+
+    if (_this37.left.dimensions != _this37.right.dimensions) {
+      throw Error("Operators must have the same dimensions");
+    }
+
+    _this37.dimensions = _this37.left.dimensions;
+    return _this37;
+  }
+
+  MathOperator.prototype.html = function html(level) {
+    var nl = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+    return _DataNode9.prototype.html.call(this, this.left.html(0, true) + tab(level + 1) + this.operator + "<br>" + tab(level + 1) + this.right.html(0, false));
+  };
+
+  return MathOperator;
+}(DataNode);
+
+var EmptyTree = function (_DataNode10) {
+  _inherits(EmptyTree, _DataNode10);
 
   function EmptyTree() {
     _classCallCheck(this, EmptyTree);
 
-    return _possibleConstructorReturn(this, _DataNode9.call(this, []));
+    return _possibleConstructorReturn(this, _DataNode10.call(this, []));
   }
 
   EmptyTree.prototype.html = function html() {
@@ -3545,6 +3639,12 @@ function treeToNode(tree) {
       break;
     case 'source':
       node = new SourceOperator(tree[1]);
+      break;
+    case '+':
+    case '-':
+    case '*':
+    case '/':
+      node = new MathOperator(tree[0], tree[1]);
       break;
     default:
       throw Error("'" + tree[0] + "' is not a valid operator");
