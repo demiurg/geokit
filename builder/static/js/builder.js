@@ -533,14 +533,33 @@ var Graph = function (_React$Component) {
         var _this2 = this;
 
         // make AJAX call
-        $.ajax('/api/variables/' + this.props.variable_id + '/graph/', {
+        $.ajax('/variables/data_' + this.props.variable_id + '.json', {
             dataType: 'json',
             success: function success(data, status, xhr) {
+                var dates = [],
+                    shas = [],
+                    graph = { 'x': [], 'y': [] };
+
+                if (data.dimensions == "time") {
+                    graph.x = dates = Object.keys(data.data);
+                    graph.y = Object.keys(data.data).map(function (key) {
+                        return data.data[key];
+                    });
+                } else if (data.dimensions == "space") {
+                    graph.x = shas = Object.keys(data.data);
+                    graph.y = Object.keys(data.data).map(function (key) {
+                        return data.data[key][self.props.variable_name];
+                    });
+                }
+
                 _this2.setState({
-                    data: data,
+                    ajax_data: data,
+                    data: graph,
                     loading: false
                 }, function () {
-                    _this2.props.setDimensions([Plotly.d3.min(data.x), Plotly.d3.max(data.x)]);
+                    _this2.props.updateIndexes({
+                        'time': dates, 'space': shas
+                    });
                 });
             },
             error: function error(xhr, status, _error) {
@@ -558,7 +577,7 @@ var Graph = function (_React$Component) {
             if (!prevState.data) {
                 var xaxis;
 
-                if (this.state.data.type == "timeseries") {
+                if (this.props.dimensions == "time") {
                     xaxis = {
                         title: 'Date'
                     };
@@ -570,10 +589,10 @@ var Graph = function (_React$Component) {
                     xaxis: xaxis,
                     yaxis: { title: this.props.variable_name }
                 });
-            } else if (this.props.dimensions && prevProps.dimensions) {
-                if (this.props.dimensions.min.getTime() != prevProps.dimensions.min.getTime() || this.props.dimensions.max.getTime() != prevProps.dimensions.max.getTime()) {
+            } else if (this.props.time_range && prevProps.time_range) {
+                if (this.props.time_range.min.getTime() != prevProps.time_range.min.getTime() || this.props.time_range.max.getTime() != prevProps.time_range.max.getTime()) {
                     var update = {
-                        'xaxis.range': [this.props.dimensions.min.getTime(), this.props.dimensions.max.getTime()]
+                        'xaxis.range': [this.props.time_range.min.getTime(), this.props.time_range.max.getTime()]
                     };
                     Plotly.relayout('graph-' + this.props.unique_id, update);
                 }
@@ -1248,11 +1267,11 @@ var Table = function (_React$Component) {
     };
 
     Table.prototype.stuffChanged = function stuffChanged(old, next) {
-        if (this.state.data.dimensions == 'time') {
+        if (this.props.dimensions == 'time') {
             if (old.time_range && (old.time_range.min != next.time_range.min || old.time_range.max != next.time_range.max)) {
                 return true;
             }
-        } else if (this.state.data.dimensions == 'space') {
+        } else if (this.props.dimensions == 'space') {
             return this.state.current_feature != next.current_feature;
         }
         return false;
@@ -1261,10 +1280,10 @@ var Table = function (_React$Component) {
     Table.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
         var _this2 = this;
 
-        if (!this.state.loading && !prevState.data) {
+        if (!this.state.loading && !prevState.data && !this.state.error) {
             var columns = [],
                 data;
-            if (this.state.data.dimensions == 'space') {
+            if (this.props.dimensions == 'space') {
                 columns.push({ data: 'name' });
             } else {
                 columns.push({ data: 'date' });
@@ -1276,7 +1295,7 @@ var Table = function (_React$Component) {
                 columns: columns
             });
 
-            if (this.state.data.dimensions == 'time') {
+            if (this.props.dimensions == 'time') {
                 $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
                     var d = new Date(aData[0]);
                     if (_this2.props.time_range.min.getTime() <= d && d <= _this2.props.time_range.max.getTime()) {

@@ -94,7 +94,7 @@ def data_json(request, variable_id):
             text += '"' + str(daterange.lower) + '": ' + str(value) + ','
 
         text = text[:-1]
-        text += '},'
+        text += '}'
 
     text += "}"
     return HttpResponse(text)
