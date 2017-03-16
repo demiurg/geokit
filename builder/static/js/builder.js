@@ -411,7 +411,7 @@ var GADMChooser = function (_React$Component) {
                     { className: 'fields' },
                     React.createElement(
                         'li',
-                        { className: 'required' },
+                        null,
                         React.createElement(
                             'div',
                             { className: 'field slug_field text_input' },
@@ -426,7 +426,7 @@ var GADMChooser = function (_React$Component) {
                                 React.createElement(
                                     'div',
                                     { className: 'input' },
-                                    React.createElement('input', { id: 'id_name', maxlength: '250', name: 'name', type: 'text', required: true, value: this.state.layer_name, onChange: this.updateLayerName.bind(this) })
+                                    React.createElement('input', { id: 'id_name', maxlength: '250', type: 'text', value: this.state.layer_name, onChange: this.updateLayerName.bind(this) })
                                 ),
                                 React.createElement(
                                     'p',
@@ -545,11 +545,15 @@ var Graph = function (_React$Component) {
                     graph.y = Object.keys(data.data).map(function (key) {
                         return data.data[key];
                     });
+                    graph['type'] = 'scatter';
+                    graph['mode'] = 'lines';
                 } else if (data.dimensions == "space") {
                     graph.x = shas = Object.keys(data.data);
                     graph.y = Object.keys(data.data).map(function (key) {
                         return data.data[key][self.props.variable_name];
                     });
+                    graph['type'] = 'scatter';
+                    graph['mode'] = 'markers';
                 }
 
                 _this2.setState({

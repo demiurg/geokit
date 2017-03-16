@@ -369,12 +369,12 @@ class GADMChooser extends React.Component {
             return (
                 <div>
                     <ul className="fields">
-                        <li className="required">
+                        <li>
                             <div className="field slug_field text_input">
                                 <label htmlFor="id_name">Name:</label>
                                 <div className="field-content">
                                     <div className="input">
-                                        <input id="id_name" maxlength="250" name="name" type="text" required={true} value={this.state.layer_name} onChange={this.updateLayerName.bind(this)} />
+                                        <input id="id_name" maxlength="250" type="text" value={this.state.layer_name} onChange={this.updateLayerName.bind(this)} />
                                     </div>
                                     <p className="help">
                                         The name of the layer as it will appear in URLs e.g http://domain.com/blog/my-slug/ and expression e.g map(my-slug)
