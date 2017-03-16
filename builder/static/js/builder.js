@@ -33,6 +33,7 @@ var GADMChooser = function (_React$Component) {
         _this.mapRendered = false;
 
         _this.state = {
+            layer_name: "",
             level: null,
             parents: [],
             units: [],
@@ -88,6 +89,14 @@ var GADMChooser = function (_React$Component) {
             accessToken: 'pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
         }).addTo(map);
 
+        var drawControl = new L.Control.Draw({
+            draw: {
+                marker: false,
+                polyline: false
+            }
+        });
+        map.addControl(drawControl);
+
         this.setGadmLayer(0);
         this.mapRendered = true;
     };
@@ -105,6 +114,18 @@ var GADMChooser = function (_React$Component) {
 
         parent_string += feature.properties['name_' + level];
         return parent_string;
+    };
+
+    GADMChooser.prototype.extractNameFromIdString = function extractNameFromIdString(id_string) {
+        var names_split = id_string.split('.');
+
+        var name = names_split.slice(-1)[0];
+
+        if (name == "null") {
+            return names_split.slice(-2)[0];
+        } else {
+            return name;
+        }
     };
 
     GADMChooser.prototype.isSelected = function isSelected(feature) {
@@ -133,6 +154,23 @@ var GADMChooser = function (_React$Component) {
         if (this.geojsonTileLayer) {
             this.map.removeLayer(this.geojsonTileLayer);
         }
+        if (this.super_layer) {
+            this.map.removeLayer(this.super_layer);
+        }
+
+        if (this.state.level > 0) {
+            var geojson_super_URL = '/layers/gadm/' + (level - 1) + '/{z}/{x}/{y}.json';
+            this.sub_layer = new L.TileLayer.GeoJSON(geojson_super_URL, {
+                clipTiles: true
+            }, {
+                style: {
+                    weight: 4,
+                    color: "green",
+                    fillColor: "grey"
+                }
+            }).addTo(this.map);
+        }
+
         this.geojsonURL = '/layers/gadm/' + level + '/{z}/{x}/{y}.json';
         this.geojsonTileLayer = new L.TileLayer.GeoJSON(this.geojsonURL, {
             clipTiles: true,
@@ -208,7 +246,20 @@ var GADMChooser = function (_React$Component) {
                 }
             }
         }).addTo(this.map);
-        window.jlayer = this.geojsonTileLayer;
+
+        this.map.on(L.Draw.Event.CREATED, function (e) {
+            var new_selection = [];
+            _this4.geojsonTileLayer.geojsonLayer.eachLayer(function (layer) {
+                if (e.layer.getBounds().contains(layer.getBounds())) {
+                    layer.setStyle({ fillColor: "blue" });
+                    new_selection.push(_this4.getIdString(layer.feature, _this4.state.level));
+                } else {
+                    layer.setStyle({ fillColor: "grey" });
+                }
+            });
+
+            _this4.setState({ selected: new_selection });
+        });
 
         this.zoomMap();
     };
@@ -321,7 +372,7 @@ var GADMChooser = function (_React$Component) {
 
         var data = { features: this.state.selected };
 
-        data.name = this.state.parents[this.state.parents.length - 1];
+        data.name = this.state.layer_name;
 
         $.ajax('/layers/gadm/', {
             dataType: 'json',
@@ -338,6 +389,10 @@ var GADMChooser = function (_React$Component) {
         });
     };
 
+    GADMChooser.prototype.updateLayerName = function updateLayerName(e) {
+        this.setState({ layer_name: e.target.value });
+    };
+
     GADMChooser.prototype.render = function render() {
         var _this8 = this;
 
@@ -352,58 +407,97 @@ var GADMChooser = function (_React$Component) {
                 'div',
                 null,
                 React.createElement(
-                    'h1',
-                    null,
+                    'ul',
+                    { className: 'fields' },
                     React.createElement(
-                        'span',
+                        'li',
+                        { className: 'required' },
+                        React.createElement(
+                            'div',
+                            { className: 'field slug_field text_input' },
+                            React.createElement(
+                                'label',
+                                { htmlFor: 'id_name' },
+                                'Name:'
+                            ),
+                            React.createElement(
+                                'div',
+                                { className: 'field-content' },
+                                React.createElement(
+                                    'div',
+                                    { className: 'input' },
+                                    React.createElement('input', { id: 'id_name', maxlength: '250', name: 'name', type: 'text', required: true, value: this.state.layer_name, onChange: this.updateLayerName.bind(this) })
+                                ),
+                                React.createElement(
+                                    'p',
+                                    { className: 'help' },
+                                    'The name of the layer as it will appear in URLs e.g http://domain.com/blog/my-slug/ and expression e.g map(my-slug)'
+                                )
+                            )
+                        )
+                    ),
+                    React.createElement(
+                        'li',
                         null,
                         React.createElement(
-                            'a',
-                            { href: 'javascript:void(0)',
-                                onClick: this.back.bind(this, 0) },
-                            'World'
-                        ),
-                        ' >'
-                    ),
-                    this.state.parents.map(function (unit, i) {
-                        return React.createElement(
-                            'span',
+                            'h1',
                             null,
                             React.createElement(
-                                'a',
-                                { href: 'javascript:void(0)',
-                                    onClick: _this8.back.bind(_this8, i + 1) },
-                                unit
+                                'span',
+                                null,
+                                React.createElement(
+                                    'a',
+                                    { href: 'javascript:void(0)',
+                                        onClick: this.back.bind(this, 0) },
+                                    'World'
+                                ),
+                                ' >'
                             ),
-                            ' >'
-                        );
-                    }),
-                    React.createElement(
-                        'div',
-                        { style: { display: "inline-block", width: 400 } },
-                        React.createElement(Select, { name: 'parent-selector',
-                            options: this.state.units.map(function (unit) {
-                                return { value: unit, label: unit };
+                            this.state.parents.map(function (unit, i) {
+                                return React.createElement(
+                                    'span',
+                                    null,
+                                    React.createElement(
+                                        'a',
+                                        { href: 'javascript:void(0)',
+                                            onClick: _this8.back.bind(_this8, i + 1) },
+                                        unit
+                                    ),
+                                    ' >'
+                                );
                             }),
-                            onChange: this.forward.bind(this) })
+                            React.createElement(
+                                'div',
+                                { style: { display: "inline-block", width: 400 } },
+                                React.createElement(Select, { name: 'parent-selector',
+                                    options: this.state.units.map(function (unit) {
+                                        return { value: unit, label: unit };
+                                    }),
+                                    onChange: this.forward.bind(this) })
+                            )
+                        ),
+                        React.createElement(Select, { multi: true,
+                            value: this.state.selected.map(function (selection) {
+                                var name = _this8.extractNameFromIdString(selection);
+                                return { value: selection, label: name };
+                            }),
+                            options: this.state.selected.map(function (selection) {
+                                var name = _this8.extractNameFromIdString(selection);
+                                return { value: selection, label: name };
+                            }),
+                            onChange: this.changeSelection.bind(this) }),
+                        React.createElement('div', { id: 'map', style: { height: 400 } })
+                    ),
+                    React.createElement(
+                        'li',
+                        null,
+                        React.createElement(
+                            'button',
+                            { className: 'button',
+                                onClick: this.saveLayer.bind(this) },
+                            'Save'
+                        )
                     )
-                ),
-                React.createElement(Select, { multi: true,
-                    value: this.state.selected.map(function (selection) {
-                        return { value: selection, label: selection.split(".").slice(-1)[0] };
-                    }),
-                    options: this.state.selected.map(function (selection) {
-                        return { value: selection, label: selection.split(".").slice(-1)[0] };
-                    }),
-                    onChange: this.changeSelection.bind(this) }),
-                React.createElement('div', { id: 'map', style: { height: 400 } }),
-                React.createElement(
-                    'button',
-                    { className: 'button',
-                        onClick: this.saveLayer.bind(this),
-                        disabled: this.state.level == 0
-                    },
-                    'Save'
                 )
             );
         }
