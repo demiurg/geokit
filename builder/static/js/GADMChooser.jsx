@@ -177,7 +177,7 @@ class GADMChooser extends React.Component {
                                 layer.setStyle({
                                     fillColor: "grey"
                                 });
-                    
+
                                 var selected = this.state.selected.slice();
                                 selected.splice(featureIdx, 1);
                                 this.setState({
@@ -187,7 +187,7 @@ class GADMChooser extends React.Component {
                                 layer.setStyle({
                                     fillColor: "blue"
                                 });
-                        
+
                                 var selected = this.state.selected.slice();
                                 selected.push(featureIdString);
                                 this.setState({
@@ -386,12 +386,12 @@ class GADMChooser extends React.Component {
                             <h1>
                                 <span>
                                     <a href="javascript:void(0)"
-                                        onClick={this.back.bind(this, 0)}>World</a> > 
+                                        onClick={this.back.bind(this, 0)}>World</a> >
                                 </span>
                                 {this.state.parents.map((unit, i) => {
                                     return <span>
                                         <a href="javascript:void(0)"
-                                            onClick={this.back.bind(this, i + 1)}>{unit}</a> > 
+                                            onClick={this.back.bind(this, i + 1)}>{unit}</a> >
                                     </span>;
                                 })}
                                 <div style={{display: "inline-block", width: 400}}>

@@ -34,9 +34,10 @@ class Map extends React.Component {
                         }
                         return Object.values(data.data[key]);
                     });
-                    let values = [].concat(rows);
+                    let values = [].concat.apply([], rows);
                     this.min_value = d3.min(values);
                     this.max_value = d3.max(values);
+                    console.log(this.min_value, this.max_value);
                 }
 
                 this.color_scale = d3.scale.linear()
@@ -59,9 +60,14 @@ class Map extends React.Component {
     }
 
     shouldComponentUpdate(nextProps, nextState) {
-        if (this.state.loading ||
-            (this.props.dimensions &&
-             this.props.dimensions.length != nextProps.dimensions.length)) {
+        if (
+            this.state.loading ||
+            (
+                this.props.dimensions &&
+                this.props.dimensions.length != nextProps.dimensions.length
+            ) ||
+            (this.props.current_time != nextProps.current_time)
+        ) {
             return true;
         }
         return false;
@@ -69,7 +75,7 @@ class Map extends React.Component {
 
     componentDidUpdate(prevProps, prevState) {
         var self = this;
-        if (self.props.dimensions && self.props.dimensions.length != prevProps.dimensions.length) {
+        if (self.props.current_time && this.props.current_time != prevProps.current_time) {
             console.log("update map");
         } else if (!self.state.error) {
             var map = L.map('map-'+self.props.unique_id);
@@ -84,26 +90,7 @@ class Map extends React.Component {
                         return feature.properties.shaid;
                     }
                 }, {
-                    style: (feature) => {
-                        var s = self;
-                        let fdata = self.state.data[feature.properties.shaid];
-                        var color = "#000";
-                        var opacity = 0.1;
-
-                        if (fdata){
-                            let value = fdata[self.props.variable_name];
-                            color = self.color_scale(value)
-                            opacity = 0.7;
-                        } else {
-                            console.log('no ' + feature.properties.shaid);
-                        }
-                        return {
-                            color: "#000",
-                            weight: 1,
-                            fillColor: color,
-                            fillOpacity: opacity
-                        };
-                    },
+                    style: self.getStyle,
                     onEachFeature: self.featureHandler,
                     pointToLayer: function (feature, latlng) {
                         return new L.CircleMarker(latlng, {
@@ -134,6 +121,33 @@ class Map extends React.Component {
 
             legend.addTo(map);
         }
+    }
+
+    getStyle = (feature) => {
+        var self = this;
+        let fdata = self.state.data[feature.properties.shaid];
+        var color = "#000";
+        var opacity = 0.1;
+
+        if (fdata){
+            var value;
+            if (self.state.dimensions == 'space'){
+                value = fdata[self.props.variable_name];
+            } else {
+                var date = self.props.current_time.toISOString().slice(0,10);
+                value = fdata[date];
+            }
+            color = self.color_scale(value);
+            opacity = 0.7;
+        } else {
+            console.log('no ' + feature.properties.shaid);
+        }
+        return {
+            color: "#000",
+            weight: 1,
+            fillColor: color,
+            fillOpacity: opacity
+        };
     }
 
     featureHandler = (feature, layer) => {

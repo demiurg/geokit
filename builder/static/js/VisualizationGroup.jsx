@@ -42,17 +42,19 @@ class MapControl extends React.Component {
 class SliderControl extends React.Component {
     componentDidMount() {
         var dateSlider = document.getElementById('date-slider-control');
-
+        var start = new Date(this.props.time_range.min).getTime();
+        var stop = new Date(this.props.time_range.max).getTime();
         noUiSlider.create(dateSlider, {
             range: {
-                min: new Date(this.props.time_range.min).getTime(),
-                max: new Date(this.props.time_range.max).getTime()
+                min: start,
+                max: stop
             },
             start: [
-                new Date(this.props.time_range.min).getTime(),
-                new Date(this.props.time_range.max).getTime()
+                start,
+                start + (stop - start) / 2,
+                stop
             ],
-            step: 7 * 24 * 60 * 60 * 1000,
+            step: /*7*/ 1 * 24 * 60 * 60 * 1000,
             connect: true,
             behaviour: 'drag',
             tooltips: true,
@@ -70,8 +72,8 @@ class SliderControl extends React.Component {
         dateSlider.noUiSlider.on('update', (values, handle) => {
             this.props.changeTimeRange({
                 min: new Date(values[0]),
-                max: new Date(values[1])}
-            );
+                max: new Date(values[2])
+            }, new Date(values[1]));
         });
     }
 
@@ -138,17 +140,23 @@ class VisualizationGroup extends React.Component {
             time_index: null,
             time_range: null,
             current_space_bounds: null,
+            current_feature: null,
             current_time_range: null,
-            current_feature: null
+            current_time: null
         };
 
         this.child_indexes = [];
     }
 
-    changeTimeRange(range) {
-        this.setState({
+    changeTimeRange(range, current_time) {
+        var state = {
             current_time_range: {min: range.min, max: range.max}
-        });
+        };
+        if (current_time){
+            state['current_time'] = current_time;
+        }
+        this.setState(state);
+        console.log(state);
     }
 
     changeSpaceBounds(bounds){
@@ -159,6 +167,7 @@ class VisualizationGroup extends React.Component {
         this.setState({
             current_feature: shaid
         });
+        console.log(shaid);
     }
 
     updateIndexes(indexes) {
@@ -211,6 +220,7 @@ class VisualizationGroup extends React.Component {
                         updateIndexes={this.updateIndexes.bind(this)}
                         time_range={this.state.current_time_range}
                         changeTimeRange={this.changeTimeRange.bind(this)}
+                        current_time={this.state.current_time}
                         changeSpaceBounds={this.changeSpaceBounds.bind(this)}
                         current_feature={this.state.current_feature}
                         changeFeature={this.changeFeature.bind(this)}

@@ -997,6 +997,33 @@ var Map = function (_React$Component) {
 
         var _this = _possibleConstructorReturn(this, _React$Component.call(this, props));
 
+        _this.getStyle = function (feature) {
+            var self = _this;
+            var fdata = self.state.data[feature.properties.shaid];
+            var color = "#000";
+            var opacity = 0.1;
+
+            if (fdata) {
+                var value;
+                if (self.state.dimensions == 'space') {
+                    value = fdata[self.props.variable_name];
+                } else {
+                    var date = self.props.current_time.toISOString().slice(0, 10);
+                    value = fdata[date];
+                }
+                color = self.color_scale(value);
+                opacity = 0.7;
+            } else {
+                console.log('no ' + feature.properties.shaid);
+            }
+            return {
+                color: "#000",
+                weight: 1,
+                fillColor: color,
+                fillOpacity: opacity
+            };
+        };
+
         _this.featureHandler = function (feature, layer) {
             self = _this;
             layer.on({
@@ -1056,9 +1083,10 @@ var Map = function (_React$Component) {
                         }
                         return Object.values(data.data[key]);
                     });
-                    var _values = [].concat(rows);
+                    var _values = [].concat.apply([], rows);
                     _this2.min_value = d3.min(_values);
                     _this2.max_value = d3.max(_values);
+                    console.log(_this2.min_value, _this2.max_value);
                 }
 
                 _this2.color_scale = d3.scale.linear().domain([_this2.min_value, _this2.max_value]).range(_this2.props.color_ramp.map(function (stop) {
@@ -1080,7 +1108,7 @@ var Map = function (_React$Component) {
     };
 
     Map.prototype.shouldComponentUpdate = function shouldComponentUpdate(nextProps, nextState) {
-        if (this.state.loading || this.props.dimensions && this.props.dimensions.length != nextProps.dimensions.length) {
+        if (this.state.loading || this.props.dimensions && this.props.dimensions.length != nextProps.dimensions.length || this.props.current_time != nextProps.current_time) {
             return true;
         }
         return false;
@@ -1088,7 +1116,7 @@ var Map = function (_React$Component) {
 
     Map.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
         var self = this;
-        if (self.props.dimensions && self.props.dimensions.length != prevProps.dimensions.length) {
+        if (self.props.current_time && this.props.current_time != prevProps.current_time) {
             console.log("update map");
         } else if (!self.state.error) {
             var map = L.map('map-' + self.props.unique_id);
@@ -1103,26 +1131,7 @@ var Map = function (_React$Component) {
                         return feature.properties.shaid;
                     }
                 }, {
-                    style: function style(feature) {
-                        var s = self;
-                        var fdata = self.state.data[feature.properties.shaid];
-                        var color = "#000";
-                        var opacity = 0.1;
-
-                        if (fdata) {
-                            var value = fdata[self.props.variable_name];
-                            color = self.color_scale(value);
-                            opacity = 0.7;
-                        } else {
-                            console.log('no ' + feature.properties.shaid);
-                        }
-                        return {
-                            color: "#000",
-                            weight: 1,
-                            fillColor: color,
-                            fillOpacity: opacity
-                        };
-                    },
+                    style: self.getStyle,
                     onEachFeature: self.featureHandler,
                     pointToLayer: function pointToLayer(feature, latlng) {
                         return new L.CircleMarker(latlng, {
@@ -1745,14 +1754,15 @@ var SliderControl = function (_React$Component2) {
         var _this4 = this;
 
         var dateSlider = document.getElementById('date-slider-control');
-
+        var start = new Date(this.props.time_range.min).getTime();
+        var stop = new Date(this.props.time_range.max).getTime();
         noUiSlider.create(dateSlider, {
             range: {
-                min: new Date(this.props.time_range.min).getTime(),
-                max: new Date(this.props.time_range.max).getTime()
+                min: start,
+                max: stop
             },
-            start: [new Date(this.props.time_range.min).getTime(), new Date(this.props.time_range.max).getTime()],
-            step: 7 * 24 * 60 * 60 * 1000,
+            start: [start, start + (stop - start) / 2, stop],
+            step: /*7*/1 * 24 * 60 * 60 * 1000,
             connect: true,
             behaviour: 'drag',
             tooltips: true,
@@ -1770,7 +1780,8 @@ var SliderControl = function (_React$Component2) {
         dateSlider.noUiSlider.on('update', function (values, handle) {
             _this4.props.changeTimeRange({
                 min: new Date(values[0]),
-                max: new Date(values[1]) });
+                max: new Date(values[2])
+            }, new Date(values[1]));
         });
     };
 
@@ -1858,18 +1869,24 @@ var VisualizationGroup = function (_React$Component4) {
             time_index: null,
             time_range: null,
             current_space_bounds: null,
+            current_feature: null,
             current_time_range: null,
-            current_feature: null
+            current_time: null
         };
 
         _this6.child_indexes = [];
         return _this6;
     }
 
-    VisualizationGroup.prototype.changeTimeRange = function changeTimeRange(range) {
-        this.setState({
+    VisualizationGroup.prototype.changeTimeRange = function changeTimeRange(range, current_time) {
+        var state = {
             current_time_range: { min: range.min, max: range.max }
-        });
+        };
+        if (current_time) {
+            state['current_time'] = current_time;
+        }
+        this.setState(state);
+        console.log(state);
     };
 
     VisualizationGroup.prototype.changeSpaceBounds = function changeSpaceBounds(bounds) {};
@@ -1878,6 +1895,7 @@ var VisualizationGroup = function (_React$Component4) {
         this.setState({
             current_feature: shaid
         });
+        console.log(shaid);
     };
 
     VisualizationGroup.prototype.updateIndexes = function updateIndexes(indexes) {
@@ -1937,6 +1955,7 @@ var VisualizationGroup = function (_React$Component4) {
                     updateIndexes: _this7.updateIndexes.bind(_this7),
                     time_range: _this7.state.current_time_range,
                     changeTimeRange: _this7.changeTimeRange.bind(_this7),
+                    current_time: _this7.state.current_time,
                     changeSpaceBounds: _this7.changeSpaceBounds.bind(_this7),
                     current_feature: _this7.state.current_feature,
                     changeFeature: _this7.changeFeature.bind(_this7)
