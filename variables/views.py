@@ -52,7 +52,7 @@ def edit(request, variable_id):
     })
 
 
-def map_json(request, variable_id):
+def data_json(request, variable_id):
     variable = get_object_or_404(Variable, pk=variable_id)
 
     data_frame = variable.data()
@@ -83,6 +83,19 @@ def map_json(request, variable_id):
                 text += '},'
         text = text[:-1]
         text += "}"
+    elif "time" == variable.dimensions:
+        text += '"data": {'
+        if hasattr(data_frame, 'iterrows'):
+            iterable = data_frame.iterrows()
+        elif hasattr(data_frame, 'iteritems'):
+            iterable = data_frame.iteritems()
+
+        for daterange, value in iterable:
+            text += '"' + str(daterange.lower) + '": ' + str(value) + ','
+
+        text = text[:-1]
+        text += '},'
+
     text += "}"
     return HttpResponse(text)
 
@@ -140,48 +153,6 @@ class VariableViewSet(viewsets.ModelViewSet):
                 data['invalid'] = True
         except Exception as e:
             print e
-            data['invalid'] = True
-
-        return Response(data)
-
-    @detail_route(url_path='table')
-    def table_data(self, request, pk=None):
-        variable = get_object_or_404(Variable, pk=pk)
-
-        df = variable.data()
-        data = {}
-        dim = variable.dimensions
-        if 'time' in dim:
-            data['dimension'] = 'time'
-            data['values'] = []
-            for i, value in enumerate(df.values):
-                date = df.index[i].lower
-                data['values'].append({'date': date.strftime("%Y-%m-%d"), 'value': value})
-
-        elif 'space' in dim:
-            features = list(
-                Feature.objects.filter(
-                    properties__shaid__in=df.index
-                )
-            )
-            names = {
-                f.properties['shaid']: f for f in features
-            }
-
-            data['dimension'] = 'space'
-            data['values'] = []
-            for i, value in enumerate(df.values):
-                f = names[df.index[i]]
-                f.geometry.transform(4326)
-                feature = {}
-                feature['geometry'] = json.loads(f.geometry.geojson)
-                feature['type'] = 'Feature'
-                feature['properties'] = {}
-                feature['properties']['name'] = f.verbose_name
-                feature['properties']['id'] = f.pk
-                data['values'].append({'feature': feature, 'value': value})
-        else:
-            # Can't handle this presently...
             data['invalid'] = True
 
         return Response(data)

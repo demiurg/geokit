@@ -5,41 +5,48 @@ class Table extends React.Component {
             loading: true,
             error: false,
             data: null,
+            current_feature: null
         };
     }
 
     componentDidMount() {
-        $.ajax('/api/variables/'+this.props.variable_id+'/table/', {
+        var self = this;
+        $.ajax('/variables/data_'+this.props.variable_id+'.json', {
             dataType: 'json',
             success: (data, status, xhr) => {
-                if (data.dimension == "time") {
-                    data.values = data.values.map((value) => {
+                var dates = [], shas = [];
+                if (data.dimensions == "time") {
+                    dates = Object.keys(data.data);
+                    data.values = Object.keys(data.data).map((key) => {
                         return {
-                            date: new Date(value.date),
-                            value: value.value
+                            date: new Date(key),
+                            value: data.data[key]
+                        };
+                    })
+                } else if (data.dimensions == "space") {
+                    shas = Object.keys(data.data)
+                    data.values = Object.keys(data.data).map((key) => {
+                        return {
+                            name: key,
+                            value: data.data[key][self.props.variable_name]
                         };
                     })
                 }
 
-                this.setState({
+                self.setState({
                     data: data,
+                    time_index: dates,
+                    space_index: shas,
                     loading: false
                 }, () => {
-                    if (this.state.data.dimension == "time") {
-                        this.props.setDimensions([
-                            this.state.data.values[0].date,
-                            this.state.data.values[this.state.data.values.length - 1].date
-                        ]);
-                    } else {
-                        this.props.setDimensions(this.state.data.values.map((datum) => {
-                            return datum.feature;
-                        }));
-                    }
+                    self.props.updateIndexes({
+                        'time_index': dates, 'space_index': shas
+                    });
                 });
             },
             error: (xhr, status, error) => {
                 console.log(error);
-                this.setState({
+                self.setState({
                     loading: false,
                     error: status
                 });
@@ -47,13 +54,16 @@ class Table extends React.Component {
         });
     }
 
-    dimensionsChanged(old, next) {
-        if (this.state.data.dimension == 'time') {
-            if (old && (old.min != next.min || old.max != next.max)) {
+    stuffChanged(old, next) {
+        if (this.state.data.dimensions == 'time') {
+            if (old.time_range && (
+                    old.time_range.min != next.time_range.min ||
+                    old.time_range.max != next.time_range.max)
+            ) {
                 return true;
             }
-        } else if (old && old.length != next.length) {
-            return true;
+        } else if (this.state.data.dimensions == 'space'){
+            return this.state.current_feature != next.current_feature;
         }
         return false
     }
@@ -62,8 +72,8 @@ class Table extends React.Component {
         if (!this.state.loading && !prevState.data) {
             var columns = [],
                 data;
-            if (this.state.data.dimension == 'space') {
-                columns.push({data: 'feature.properties', render: 'name'});
+            if (this.state.data.dimensions == 'space') {
+                columns.push({data: 'name'});
             } else {
                 columns.push({data: 'date'});
             }
@@ -74,11 +84,14 @@ class Table extends React.Component {
                 columns: columns
             });
 
-            if (this.state.data.dimension == 'time') {
+            if (this.state.data.dimensions == 'time') {
                 $.fn.dataTableExt.afnFiltering.push(
                     (oSettings, aData, iDataIndex) => {
                         var d = new Date(aData[0]);
-                        if (this.props.dimensions.min.getTime() <= d && d <= this.props.dimensions.max.getTime()) {
+                        if (
+                            this.props.time_range.min.getTime() <= d &&
+                            d <= this.props.time_range.max.getTime()
+                        ) {
                             return true;
                         }
                         return false;
@@ -87,8 +100,9 @@ class Table extends React.Component {
             } else {
                 $.fn.dataTableExt.afnFiltering.push(
                     (oSettings, aData, iDataIndex) => {
-                        var dims = this.props.dimensions.map((dim) => {return dim.properties.id;});
-                        var index = dims.indexOf(oSettings.aoData[iDataIndex]._aData.feature.properties.id);
+                        var index = this.state.space_index.indexOf(
+                            oSettings.aoData[iDataIndex]._aData.name
+                        );
                         if (index != -1) {
                             return true;
                         }
@@ -96,7 +110,7 @@ class Table extends React.Component {
                     }
                 );
             }
-        } else if (this.dimensionsChanged(prevProps.dimensions, this.props.dimensions)) {
+        } else if (this.stuffChanged(prevProps, this.props)) {
             $("#data-table-"+this.props.unique_id).DataTable().draw();
         }
     }

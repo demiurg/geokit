@@ -892,6 +892,7 @@ var Map = function (_React$Component) {
                 click: function click(e) {
                     var feature = e.target.feature;
                     if (feature.properties) {
+                        self.changeFeature(feature.properties.shaid);
                         var popupString = '<div class="popup">';
                         for (var k in feature.properties) {
                             var v = feature.properties[k];
@@ -920,7 +921,7 @@ var Map = function (_React$Component) {
 
         // make AJAX call
         var self = this;
-        $.ajax('/variables/map_' + this.props.variable_id + '.json', {
+        $.ajax('/variables/data_' + this.props.variable_id + '.json', {
             dataType: 'json',
             success: function success(data, status, xhr) {
                 var shas = Object.keys(data.data);
@@ -1100,42 +1101,51 @@ var Table = function (_React$Component) {
         _this.state = {
             loading: true,
             error: false,
-            data: null
+            data: null,
+            current_feature: null
         };
         return _this;
     }
 
     Table.prototype.componentDidMount = function componentDidMount() {
-        var _this2 = this;
-
-        $.ajax('/api/variables/' + this.props.variable_id + '/table/', {
+        var self = this;
+        $.ajax('/variables/data_' + this.props.variable_id + '.json', {
             dataType: 'json',
             success: function success(data, status, xhr) {
-                if (data.dimension == "time") {
-                    data.values = data.values.map(function (value) {
+                var dates = [],
+                    shas = [];
+                if (data.dimensions == "time") {
+                    dates = Object.keys(data.data);
+                    data.values = Object.keys(data.data).map(function (key) {
                         return {
-                            date: new Date(value.date),
-                            value: value.value
+                            date: new Date(key),
+                            value: data.data[key]
+                        };
+                    });
+                } else if (data.dimensions == "space") {
+                    shas = Object.keys(data.data);
+                    data.values = Object.keys(data.data).map(function (key) {
+                        return {
+                            name: key,
+                            value: data.data[key][self.props.variable_name]
                         };
                     });
                 }
 
-                _this2.setState({
+                self.setState({
                     data: data,
+                    time_index: dates,
+                    space_index: shas,
                     loading: false
                 }, function () {
-                    if (_this2.state.data.dimension == "time") {
-                        _this2.props.setDimensions([_this2.state.data.values[0].date, _this2.state.data.values[_this2.state.data.values.length - 1].date]);
-                    } else {
-                        _this2.props.setDimensions(_this2.state.data.values.map(function (datum) {
-                            return datum.feature;
-                        }));
-                    }
+                    self.props.updateIndexes({
+                        'time_index': dates, 'space_index': shas
+                    });
                 });
             },
             error: function error(xhr, status, _error) {
                 console.log(_error);
-                _this2.setState({
+                self.setState({
                     loading: false,
                     error: status
                 });
@@ -1143,25 +1153,25 @@ var Table = function (_React$Component) {
         });
     };
 
-    Table.prototype.dimensionsChanged = function dimensionsChanged(old, next) {
-        if (this.state.data.dimension == 'time') {
-            if (old && (old.min != next.min || old.max != next.max)) {
+    Table.prototype.stuffChanged = function stuffChanged(old, next) {
+        if (this.state.data.dimensions == 'time') {
+            if (old.time_range && (old.time_range.min != next.time_range.min || old.time_range.max != next.time_range.max)) {
                 return true;
             }
-        } else if (old && old.length != next.length) {
-            return true;
+        } else if (this.state.data.dimensions == 'space') {
+            return this.state.current_feature != next.current_feature;
         }
         return false;
     };
 
     Table.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
-        var _this3 = this;
+        var _this2 = this;
 
         if (!this.state.loading && !prevState.data) {
             var columns = [],
                 data;
-            if (this.state.data.dimension == 'space') {
-                columns.push({ data: 'feature.properties', render: 'name' });
+            if (this.state.data.dimensions == 'space') {
+                columns.push({ data: 'name' });
             } else {
                 columns.push({ data: 'date' });
             }
@@ -1172,27 +1182,24 @@ var Table = function (_React$Component) {
                 columns: columns
             });
 
-            if (this.state.data.dimension == 'time') {
+            if (this.state.data.dimensions == 'time') {
                 $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
                     var d = new Date(aData[0]);
-                    if (_this3.props.dimensions.min.getTime() <= d && d <= _this3.props.dimensions.max.getTime()) {
+                    if (_this2.props.time_range.min.getTime() <= d && d <= _this2.props.time_range.max.getTime()) {
                         return true;
                     }
                     return false;
                 });
             } else {
                 $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
-                    var dims = _this3.props.dimensions.map(function (dim) {
-                        return dim.properties.id;
-                    });
-                    var index = dims.indexOf(oSettings.aoData[iDataIndex]._aData.feature.properties.id);
+                    var index = _this2.state.space_index.indexOf(oSettings.aoData[iDataIndex]._aData.name);
                     if (index != -1) {
                         return true;
                     }
                     return false;
                 });
             }
-        } else if (this.dimensionsChanged(prevProps.dimensions, this.props.dimensions)) {
+        } else if (this.stuffChanged(prevProps, this.props)) {
             $("#data-table-" + this.props.unique_id).DataTable().draw();
         }
     };
@@ -1669,13 +1676,13 @@ var Visualization = function (_React$Component3) {
     Visualization.prototype.render = function render() {
         switch (this.props.type) {
             case "map":
-                return React.createElement(
+                return this.props.dimensions.indexOf('space') != -1 ? React.createElement(
                     'div',
                     { style: { height: 400 } },
                     React.createElement(Map, _extends({
                         color_ramp: [[0, "#4286f4"], [50, "#f48341"]]
                     }, this.props))
-                );
+                ) : null;
             case "graph":
                 return React.createElement(
                     'div',
@@ -1734,7 +1741,8 @@ var VisualizationGroup = function (_React$Component4) {
             time_index: null,
             time_range: null,
             current_space_bounds: null,
-            current_time_range: null
+            current_time_range: null,
+            current_feature: null
         };
 
         _this6.child_indexes = [];
@@ -1748,6 +1756,12 @@ var VisualizationGroup = function (_React$Component4) {
     };
 
     VisualizationGroup.prototype.changeSpaceBounds = function changeSpaceBounds(bounds) {};
+
+    VisualizationGroup.prototype.changeFeature = function changeFeature(shaid) {
+        this.setState({
+            current_feature: shaid
+        });
+    };
 
     VisualizationGroup.prototype.updateIndexes = function updateIndexes(indexes) {
         this.child_indexes.push(indexes);
@@ -1804,8 +1818,11 @@ var VisualizationGroup = function (_React$Component4) {
             this.props.visualizations.map(function (v) {
                 return React.createElement(Visualization, _extends({
                     updateIndexes: _this7.updateIndexes.bind(_this7),
+                    time_range: _this7.state.current_time_range,
                     changeTimeRange: _this7.changeTimeRange.bind(_this7),
-                    changeSpaceBounds: _this7.changeSpaceBounds.bind(_this7)
+                    changeSpaceBounds: _this7.changeSpaceBounds.bind(_this7),
+                    current_feature: _this7.state.current_feature,
+                    changeFeature: _this7.changeFeature.bind(_this7)
                 }, v));
             })
         );

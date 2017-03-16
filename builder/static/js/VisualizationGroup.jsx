@@ -86,14 +86,14 @@ class Visualization extends React.Component {
     render() {
         switch(this.props.type){
             case "map":
-                return (
+                return (this.props.dimensions.indexOf('space') != -1) ? (
                     <div style={{height: 400}}>
                         <Map
                             color_ramp={[[0, "#4286f4"],[50, "#f48341"]]}
                             {...this.props}
                         />
                     </div>
-                );
+                ) : null;
             case "graph":
                 return (
                     <div>
@@ -138,7 +138,8 @@ class VisualizationGroup extends React.Component {
             time_index: null,
             time_range: null,
             current_space_bounds: null,
-            current_time_range: null
+            current_time_range: null,
+            current_feature: null
         };
 
         this.child_indexes = [];
@@ -152,6 +153,12 @@ class VisualizationGroup extends React.Component {
 
     changeSpaceBounds(bounds){
 
+    }
+
+    changeFeature(shaid){
+        this.setState({
+            current_feature: shaid
+        });
     }
 
     updateIndexes(indexes) {
@@ -202,8 +209,11 @@ class VisualizationGroup extends React.Component {
                 {this.props.visualizations.map((v) => (
                     <Visualization
                         updateIndexes={this.updateIndexes.bind(this)}
+                        time_range={this.state.current_time_range}
                         changeTimeRange={this.changeTimeRange.bind(this)}
                         changeSpaceBounds={this.changeSpaceBounds.bind(this)}
+                        current_feature={this.state.current_feature}
+                        changeFeature={this.changeFeature.bind(this)}
                         {...v}
                     />
                 ))}

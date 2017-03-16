@@ -16,7 +16,7 @@ class Map extends React.Component {
     componentDidMount() {
         // make AJAX call
         var self = this;
-        $.ajax('/variables/map_'+this.props.variable_id+'.json', {
+        $.ajax('/variables/data_'+this.props.variable_id+'.json', {
             dataType: 'json',
             success: (data, status, xhr) => {
                 var shas = Object.keys(data.data);
@@ -148,6 +148,7 @@ class Map extends React.Component {
             click: function(e) {
                 var feature = e.target.feature;
                 if (feature.properties) {
+                    self.changeFeature(feature.properties.shaid);
                     var popupString = '<div class="popup">';
                     for (var k in feature.properties) {
                         var v = feature.properties[k];
