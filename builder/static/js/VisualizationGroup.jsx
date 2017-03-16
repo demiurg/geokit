@@ -45,10 +45,13 @@ class SliderControl extends React.Component {
 
         noUiSlider.create(dateSlider, {
             range: {
-                min: new Date(this.props.dims.min).getTime(),
-                max: new Date(this.props.dims.max).getTime()
+                min: new Date(this.props.time_range.min).getTime(),
+                max: new Date(this.props.time_range.max).getTime()
             },
-            start: [new Date('2010').getTime(), new Date('2015').getTime()],
+            start: [
+                new Date(this.props.time_range.min).getTime(),
+                new Date(this.props.time_range.max).getTime()
+            ],
             step: 7 * 24 * 60 * 60 * 1000,
             connect: true,
             behaviour: 'drag',
@@ -58,14 +61,14 @@ class SliderControl extends React.Component {
                     var format = Plotly.d3.time.format("%B %e, %Y");
                     return format(new Date(value));
                 },
-                from: (value) => { 
+                from: (value) => {
                     return value;
                 }
             }
         });
 
         dateSlider.noUiSlider.on('update', (values, handle) => {
-            this.props.changeDimensions({
+            this.props.changeTimeRange({
                 min: new Date(values[0]),
                 max: new Date(values[1])}
             );
@@ -81,40 +84,32 @@ class SliderControl extends React.Component {
 
 class Visualization extends React.Component {
     render() {
-        if (this.props.type == "map") {
-            return (
-                <div style={{height: 400}}>
-                    <Map
-                        variable_id={this.props.variable_id}
-                        variable_name={this.props.variable_name}
-                        color_ramp={[[0, "#4286f4"],[50, "#f48341"]]}
-                        setDimensions={this.props.getChildDimensions}
-                        dimensions={this.props.dimensions}
-                        unique_id={this.props.unique_id} />
-                </div>
-            );
-        } else if (this.props.type == "graph") {
-            return (
-                <div>
-                    <Graph
-                        variable_id={this.props.variable_id}
-                        variable_name={this.props.variable_name}
-                        setDimensions={this.props.getChildDimensions}
-                        dimensions={this.props.dimensions}
-                        unique_id={this.props.unique_id} />
-                </div>
-            );
-        } else if (this.props.type == "table") {
-            return (
-                <div>
-                    <Table
-                        variable_id={this.props.variable_id}
-                        variable_name={this.props.variable_name}
-                        setDimensions={this.props.getChildDimensions}
-                        dimensions={this.props.dimensions}
-                        unique_id={this.props.unique_id} />
-                </div>
-            );
+        switch(this.props.type){
+            case "map":
+                return (this.props.dimensions.indexOf('space') != -1) ? (
+                    <div style={{height: 400}}>
+                        <Map
+                            color_ramp={[[0, "#4286f4"],[50, "#f48341"]]}
+                            {...this.props}
+                        />
+                    </div>
+                ) : null;
+            case "graph":
+                return (
+                    <div>
+                        <Graph
+                            {...this.props}
+                        />
+                    </div>
+                );
+            case "table":
+                return (
+                    <div>
+                        <Table
+                            {...this.props}
+                        />
+                    </div>
+                );
         }
     }
 }
@@ -122,70 +117,106 @@ class Visualization extends React.Component {
 class VisualizationGroup extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {
-            dimensions: null,
-            currentDimensions: null
-        };
 
-        this.childStartingDimensions = [];
-    }
-
-    changeDimensions(newDims) {
-        if (this.props.control == 'time') {
-            this.setState({
-                currentDimensions: {min: newDims.min, max: newDims.max}
-            });
-        } else {
-            this.setState({currentDimensions: newDims});
-        }
-    }
-
-    getChildDimensions(dimensions) {
-        this.childStartingDimensions.push(dimensions);
-
-        if (this.childStartingDimensions.length == this.props.children.length) {
-            if (this.props.control == "slider") {
-                var min = Plotly.d3.min(this.childStartingDimensions.map((childDim) => {
-                    return childDim[0];
-                }));
-
-                var max = Plotly.d3.max(this.childStartingDimensions.map((childDim) => {
-                    return childDim[1];
-                }));
-
-                this.setState({
-                    dimensions: {min: min, max: max},
-                    currentDimensions: {min: min, max: max}
-                });
-            } else {
-                var merged_features = [].concat.apply([], this.childStartingDimensions);
-                this.setState({
-                    dimensions: merged_features,
-                    currentDimensions: merged_features
-                });
+        var dimensions = {};
+        for (let v of this.props.visualizations){
+            if (v.dimensions == 'space'){
+                dimensions['space'] = true;
+            } else if (v.dimensions == 'time') {
+                dimensions['time'] = true;
+            } else if (v.dimensions == 'spacetime'){
+                dimensions['space'] = dimensions['time'] = true;
             }
         }
+
+        dimensions = (dimensions['space'] ? 'space' : '') +
+            (dimensions['time'] ?  'time' : '');
+
+        this.state = {
+            dimensions: dimensions,
+            space_index: null,
+            time_index: null,
+            time_range: null,
+            current_space_bounds: null,
+            current_time_range: null,
+            current_feature: null
+        };
+
+        this.child_indexes = [];
     }
 
-    render() {
-        var Control = null;
-        if (this.props.control == "map") {
-            Control = MapControl;
-        } else if (this.props.control == "slider") {
-            Control = SliderControl;
-        }
+    changeTimeRange(range) {
+        this.setState({
+            current_time_range: {min: range.min, max: range.max}
+        });
+    }
 
+    changeSpaceBounds(bounds){
+
+    }
+
+    changeFeature(shaid){
+        this.setState({
+            current_feature: shaid
+        });
+    }
+
+    updateIndexes(indexes) {
+        this.child_indexes.push(indexes);
+
+        if (this.child_indexes.length == this.props.visualizations.length) {
+            let state = {};
+            if (this.state.dimensions.indexOf('time') != -1) {
+                var time_index = this.child_indexes.map((both) => both['time']);
+                time_index = [].concat.apply([], time_index);
+
+                time_index = time_index.map((str) => new Date(str));
+                time_index.sort((a, b) => a - b);
+
+                var min = Plotly.d3.min(time_index);
+                var max = Plotly.d3.max(time_index);
+
+                state = {
+                    time_index: time_index,
+                    time_range: {min: min, max: max},
+                    current_time_range: {min: min, max: max}
+                };
+            }
+            if (this.state.dimensions.indexOf('space') != -1) {
+                var space_index = this.child_indexes.map((both)=>both['space']);
+                space_index = [].concat.apply([], space_index);
+
+                //var merged_features = [].concat.apply([], this.child_indexes);
+                state = Object.assign(state, {
+                    space_index: space_index
+                });
+            }
+            this.setState(state);
+        }
+    }
+    render() {
         return (
             <div>
-                {(Control && this.state.dimensions) ?
-                    <Control dims={this.state.dimensions} currentDims={this.state.currentDimensions} changeDimensions={this.changeDimensions.bind(this)} /> :
-                    null}
-                {this.props.children.map((child) => {
-                    return React.cloneElement(child, {
-                        dimensions: this.state.currentDimensions,
-                        getChildDimensions: this.getChildDimensions.bind(this)
-                    });
-                })}
+                {((this.state.dimensions.indexOf('time') != -1)
+                  && this.state.time_range) ?
+                    <SliderControl
+                        time_range={this.state.time_range}
+                        changeTimeRange={this.changeTimeRange.bind(this)}
+                    />
+                :
+                    null
+                }
+                {this.props.visualizations.map((v) => (
+                    <Visualization
+                        updateIndexes={this.updateIndexes.bind(this)}
+                        time_range={this.state.current_time_range}
+                        changeTimeRange={this.changeTimeRange.bind(this)}
+                        changeSpaceBounds={this.changeSpaceBounds.bind(this)}
+                        current_feature={this.state.current_feature}
+                        changeFeature={this.changeFeature.bind(this)}
+                        {...v}
+                    />
+                ))}
             </div>
         );
     }

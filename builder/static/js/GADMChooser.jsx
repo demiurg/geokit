@@ -21,6 +21,7 @@ class GADMChooser extends React.Component {
         this.mapRendered = false;
 
         this.state = {
+            layer_name: "",
             level: null,
             parents: [],
             units: [],
@@ -67,6 +68,14 @@ class GADMChooser extends React.Component {
             accessToken: 'pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
         }).addTo(map);
 
+        var drawControl = new L.Control.Draw({
+            draw: {
+                marker: false,
+                polyline: false
+            }
+        });
+        map.addControl(drawControl);
+
         this.setGadmLayer(0);
         this.mapRendered = true;
     }
@@ -84,6 +93,18 @@ class GADMChooser extends React.Component {
 
         parent_string += feature.properties['name_'+level];
         return parent_string;
+    }
+
+    extractNameFromIdString(id_string) {
+        var names_split = id_string.split('.');
+
+        var name = names_split.slice(-1)[0];
+
+        if (name == "null") {
+            return names_split.slice(-2)[0];
+        } else {
+            return name;
+        }
     }
 
     isSelected(feature) {
@@ -110,6 +131,23 @@ class GADMChooser extends React.Component {
         if (this.geojsonTileLayer){
             this.map.removeLayer(this.geojsonTileLayer);
         }
+        if (this.super_layer) {
+            this.map.removeLayer(this.super_layer);
+        }
+
+        if (this.state.level > 0) {
+            var geojson_super_URL = '/layers/gadm/' + (level - 1) + '/{z}/{x}/{y}.json';
+            this.sub_layer = new L.TileLayer.GeoJSON(geojson_super_URL, {
+                clipTiles: true
+            }, {
+                style: {
+                    weight: 4,
+                    color: "green",
+                    fillColor: "grey"
+                }
+            }).addTo(this.map);
+        }
+
         this.geojsonURL = '/layers/gadm/' + level + '/{z}/{x}/{y}.json';
         this.geojsonTileLayer = new L.TileLayer.GeoJSON(this.geojsonURL, {
             clipTiles: true,
@@ -185,7 +223,20 @@ class GADMChooser extends React.Component {
                 }
             }
         }).addTo(this.map);
-        window.jlayer = this.geojsonTileLayer;
+
+        this.map.on(L.Draw.Event.CREATED, (e) => {
+            var new_selection = [];
+            this.geojsonTileLayer.geojsonLayer.eachLayer((layer) => {
+                if (e.layer.getBounds().contains(layer.getBounds())) {
+                    layer.setStyle({fillColor: "blue"});
+                    new_selection.push(this.getIdString(layer.feature, this.state.level));
+                } else {
+                    layer.setStyle({fillColor: "grey"});
+                }
+            });
+
+            this.setState({selected: new_selection});
+        });
 
         this.zoomMap();
     }
@@ -289,7 +340,7 @@ class GADMChooser extends React.Component {
 
         var data = {features: this.state.selected};
 
-        data.name = this.state.parents[this.state.parents.length - 1];
+        data.name = this.state.layer_name;
 
         $.ajax('/layers/gadm/', {
             dataType: 'json',
@@ -307,44 +358,69 @@ class GADMChooser extends React.Component {
         });
     }
 
+    updateLayerName(e) {
+        this.setState({layer_name: e.target.value});
+    }
+
     render() {
         if (this.state.loading) {
             return <div>Loading...</div>
         } else {
             return (
                 <div>
-                    <h1>
-                        <span>
-                            <a href="javascript:void(0)"
-                                onClick={this.back.bind(this, 0)}>World</a> > 
-                        </span>
-                        {this.state.parents.map((unit, i) => {
-                            return <span>
-                                <a href="javascript:void(0)"
-                                    onClick={this.back.bind(this, i + 1)}>{unit}</a> > 
-                            </span>;
-                        })}
-                        <div style={{display: "inline-block", width: 400}}>
-                            <Select name="parent-selector"
-                                    options={this.state.units.map((unit) => {
-                                        return {value: unit, label: unit};})
-                                    }
-                                onChange={this.forward.bind(this)} />
-                        </div>
-                    </h1>
-                    <Select multi={true}
-                            value={this.state.selected.map((selection) => {
-                                return {value: selection, label: selection.split(".").slice(-1)[0]};
-                            })}
-                            options={this.state.selected.map((selection) => {
-                                return {value: selection, label: selection.split(".").slice(-1)[0]};})
-                            }
-                            onChange={this.changeSelection.bind(this)} />
-                    <div id="map" style={{height: 400}}></div>
-                    <button className="button"
-                        onClick={this.saveLayer.bind(this)}
-                        disabled={this.state.level == 0}
-                    >Save</button>
+                    <ul className="fields">
+                        <li className="required">
+                            <div className="field slug_field text_input">
+                                <label htmlFor="id_name">Name:</label>
+                                <div className="field-content">
+                                    <div className="input">
+                                        <input id="id_name" maxlength="250" name="name" type="text" required={true} value={this.state.layer_name} onChange={this.updateLayerName.bind(this)} />
+                                    </div>
+                                    <p className="help">
+                                        The name of the layer as it will appear in URLs e.g http://domain.com/blog/my-slug/ and expression e.g map(my-slug)
+                                    </p>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <h1>
+                                <span>
+                                    <a href="javascript:void(0)"
+                                        onClick={this.back.bind(this, 0)}>World</a> > 
+                                </span>
+                                {this.state.parents.map((unit, i) => {
+                                    return <span>
+                                        <a href="javascript:void(0)"
+                                            onClick={this.back.bind(this, i + 1)}>{unit}</a> > 
+                                    </span>;
+                                })}
+                                <div style={{display: "inline-block", width: 400}}>
+                                    <Select name="parent-selector"
+                                            options={this.state.units.map((unit) => {
+                                                return {value: unit, label: unit};})
+                                            }
+                                        onChange={this.forward.bind(this)} />
+                                </div>
+                            </h1>
+                            <Select multi={true}
+                                    value={this.state.selected.map((selection) => {
+                                        var name = this.extractNameFromIdString(selection);
+                                        return {value: selection, label: name};
+                                    })}
+                                    options={this.state.selected.map((selection) => {
+                                        var name = this.extractNameFromIdString(selection);
+                                        return {value: selection, label: name};
+                                    })}
+                                    onChange={this.changeSelection.bind(this)} />
+                            <div id="map" style={{height: 400}}></div>
+                        </li>
+                        <li>
+                            <button className="button"
+                                onClick={this.saveLayer.bind(this)}>
+                                Save
+                            </button>
+                        </li>
+                    </ul>
                 </div>
             );
         }

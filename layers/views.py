@@ -682,7 +682,7 @@ class GADMView(views.APIView):
                 'shaid': 'str'
             }
         }
-        layer = Layer(name=name, field_names=['id'], schema=schema)
+        layer = Layer(name=name, field_names=['shaid'], schema=schema)
         layer.save()
 
         django_rq.enqueue(
@@ -690,7 +690,7 @@ class GADMView(views.APIView):
             request.tenant.schema_name,
             layer,
             args['features'],
-            timeout=1200  # This could take a while...
+            timeout=4800  # This could take a while...
         )
 
         return Response({'result': 'success'})
