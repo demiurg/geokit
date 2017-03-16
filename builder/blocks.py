@@ -2,7 +2,9 @@ import uuid
 
 from django.forms import CharField
 
-from wagtail.wagtailcore.blocks import CharBlock, ChoiceBlock, FieldBlock, ListBlock, StructBlock
+from wagtail.wagtailcore.blocks import (
+    CharBlock, ChoiceBlock, FieldBlock, ListBlock, StructBlock
+)
 
 from builder.widgets import ColorWidget
 from variables.blocks import VariableChooserBlock

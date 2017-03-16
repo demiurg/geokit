@@ -14,11 +14,13 @@
             <col />
             <col />
             <col />
+            <col />
             <thead>
                 <tr class="table-headers">
                     <th>Name</th>
                     <th>Description</th>
                     <th>Dimensions</th>
+                    <th>Bounds</th>
                     <th>Last Modified</th>
                 </tr>
             </thead>
@@ -35,6 +37,9 @@
                     </td>
                     <td class="spatial_domain">
                         {{ variable.saved_dimensions }}
+                    </td>
+                    <td class='bounds'>
+                        {{ variable.bounds }}
                     </td>
                     <td>
                         {{ variable.modified }}

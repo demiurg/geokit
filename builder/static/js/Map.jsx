@@ -6,7 +6,9 @@ class Map extends React.Component {
         this.state = {
             loading: true,
             error: false,
-            data: []
+            data: [],
+            space_index: [],
+            time_index: []
         };
 
     }
@@ -14,27 +16,36 @@ class Map extends React.Component {
     componentDidMount() {
         // make AJAX call
         var self = this;
-        $.ajax('/variables/map_'+this.props.variable_id+'.json', {
+        $.ajax('/variables/data_'+this.props.variable_id+'.json', {
             dataType: 'json',
             success: (data, status, xhr) => {
-                this.min_value = d3.min(
-                    Object.keys(data.data).map((key) => {
+                var shas = Object.keys(data.data);
+                var dates = [];
+                if(self.props.dimensions == 'space'){
+                    var values = shas.map((key) => {
                         return data.data[key][self.props.variable_name];
-                    })
-                );
-                this.max_value = d3.max(
-                    Object.keys(data.data).map((key) => {
-                        return data.data[key][self.props.variable_name];
-                    })
-                );
-                console.log(this.min_value, this.max_value);
+                    });
+                    this.min_value = d3.min(values);
+                    this.max_value = d3.max(values);
+                } else if (self.props.dimensions == 'spacetime') {
+                    var rows = shas.map((key) => {
+                        if (dates.length == 0){
+                            dates = Object.keys(data.data[key]);
+                        }
+                        return Object.values(data.data[key]);
+                    });
+                    let values = [].concat(rows);
+                    this.min_value = d3.min(values);
+                    this.max_value = d3.max(values);
+                }
+
                 this.color_scale = d3.scale.linear()
                     .domain([this.min_value, this.max_value])
                     .range(this.props.color_ramp.map((stop) => { return stop[1]; }));
 
                 this.setState(
                     Object.assign(data, {loading: false}),
-                    () => this.props.setDimensions(Object.values(data.data))
+                    () => self.props.updateIndexes({'space': shas, 'time': dates})
                 );
             },
             error: (xhr, status, error) => {
@@ -74,13 +85,23 @@ class Map extends React.Component {
                     }
                 }, {
                     style: (feature) => {
+                        var s = self;
+                        let fdata = self.state.data[feature.properties.shaid];
+                        var color = "#000";
+                        var opacity = 0.1;
+
+                        if (fdata){
+                            let value = fdata[self.props.variable_name];
+                            color = self.color_scale(value)
+                            opacity = 0.7;
+                        } else {
+                            console.log('no ' + feature.properties.shaid);
+                        }
                         return {
                             color: "#000",
                             weight: 1,
-                            fillColor: self.color_scale(
-                                self.state.data[feature.properties.shaid][self.props.variable_name]
-                            ),
-                            fillOpacity: 0.7
+                            fillColor: color,
+                            fillOpacity: opacity
                         };
                     },
                     onEachFeature: self.featureHandler,
@@ -96,12 +117,13 @@ class Map extends React.Component {
                     },
                 });
                 map.addLayer(geojsonTileLayer);
-                map.fitBounds([
-                    [self.state.bounds[idx][1], self.state.bounds[idx][0]],
-                    [self.state.bounds[idx][3], self.state.bounds[idx][2]]
-                ]);
             })
-
+            if(self.props.bounds){
+                map.fitBounds([
+                    [self.props.bounds[1], self.props.bounds[0]],
+                    [self.props.bounds[3], self.props.bounds[2]]
+                ]);
+            }
             var legend = L.control({position: 'bottomright'});
 
             legend.onAdd = (map) => {
@@ -113,6 +135,32 @@ class Map extends React.Component {
             legend.addTo(map);
         }
     }
+
+    featureHandler = (feature, layer) => {
+        self = this;
+        layer.on({
+            mouseover: function() {
+                layer.setStyle(self.activeStyle);
+            },
+            mouseout: function() {
+                layer.setStyle(self.defaultStyle);
+            },
+            click: function(e) {
+                var feature = e.target.feature;
+                if (feature.properties) {
+                    self.props.changeFeature(feature.properties.shaid);
+                    var popupString = '<div class="popup">';
+                    for (var k in feature.properties) {
+                        var v = feature.properties[k];
+                        popupString += k + ': ' + v + '<br />';
+                    }
+                    popupString += '</div>';
+                    layer.bindPopup(popupString).openPopup();
+                }
+            }
+        });
+    }
+
 
     addColorRamp(dom_el) {
         var key = d3.select(dom_el).append("svg")

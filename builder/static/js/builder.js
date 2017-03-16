@@ -974,10 +974,37 @@ var Map = function (_React$Component) {
 
         var _this = _possibleConstructorReturn(this, _React$Component.call(this, props));
 
+        _this.featureHandler = function (feature, layer) {
+            self = _this;
+            layer.on({
+                mouseover: function mouseover() {
+                    layer.setStyle(self.activeStyle);
+                },
+                mouseout: function mouseout() {
+                    layer.setStyle(self.defaultStyle);
+                },
+                click: function click(e) {
+                    var feature = e.target.feature;
+                    if (feature.properties) {
+                        self.props.changeFeature(feature.properties.shaid);
+                        var popupString = '<div class="popup">';
+                        for (var k in feature.properties) {
+                            var v = feature.properties[k];
+                            popupString += k + ': ' + v + '<br />';
+                        }
+                        popupString += '</div>';
+                        layer.bindPopup(popupString).openPopup();
+                    }
+                }
+            });
+        };
+
         _this.state = {
             loading: true,
             error: false,
-            data: []
+            data: [],
+            space_index: [],
+            time_index: []
         };
 
         return _this;
@@ -988,22 +1015,35 @@ var Map = function (_React$Component) {
 
         // make AJAX call
         var self = this;
-        $.ajax('/variables/map_' + this.props.variable_id + '.json', {
+        $.ajax('/variables/data_' + this.props.variable_id + '.json', {
             dataType: 'json',
             success: function success(data, status, xhr) {
-                _this2.min_value = d3.min(Object.keys(data.data).map(function (key) {
-                    return data.data[key][self.props.variable_name];
-                }));
-                _this2.max_value = d3.max(Object.keys(data.data).map(function (key) {
-                    return data.data[key][self.props.variable_name];
-                }));
-                console.log(_this2.min_value, _this2.max_value);
+                var shas = Object.keys(data.data);
+                var dates = [];
+                if (self.props.dimensions == 'space') {
+                    var values = shas.map(function (key) {
+                        return data.data[key][self.props.variable_name];
+                    });
+                    _this2.min_value = d3.min(values);
+                    _this2.max_value = d3.max(values);
+                } else if (self.props.dimensions == 'spacetime') {
+                    var rows = shas.map(function (key) {
+                        if (dates.length == 0) {
+                            dates = Object.keys(data.data[key]);
+                        }
+                        return Object.values(data.data[key]);
+                    });
+                    var _values = [].concat(rows);
+                    _this2.min_value = d3.min(_values);
+                    _this2.max_value = d3.max(_values);
+                }
+
                 _this2.color_scale = d3.scale.linear().domain([_this2.min_value, _this2.max_value]).range(_this2.props.color_ramp.map(function (stop) {
                     return stop[1];
                 }));
 
                 _this2.setState(Object.assign(data, { loading: false }), function () {
-                    return _this2.props.setDimensions(Object.values(data.data));
+                    return self.props.updateIndexes({ 'space': shas, 'time': dates });
                 });
             },
             error: function error(xhr, status, _error) {
@@ -1041,11 +1081,23 @@ var Map = function (_React$Component) {
                     }
                 }, {
                     style: function style(feature) {
+                        var s = self;
+                        var fdata = self.state.data[feature.properties.shaid];
+                        var color = "#000";
+                        var opacity = 0.1;
+
+                        if (fdata) {
+                            var value = fdata[self.props.variable_name];
+                            color = self.color_scale(value);
+                            opacity = 0.7;
+                        } else {
+                            console.log('no ' + feature.properties.shaid);
+                        }
                         return {
                             color: "#000",
                             weight: 1,
-                            fillColor: self.color_scale(self.state.data[feature.properties.shaid][self.props.variable_name]),
-                            fillOpacity: 0.7
+                            fillColor: color,
+                            fillOpacity: opacity
                         };
                     },
                     onEachFeature: self.featureHandler,
@@ -1061,9 +1113,10 @@ var Map = function (_React$Component) {
                     }
                 });
                 map.addLayer(geojsonTileLayer);
-                map.fitBounds([[self.state.bounds[idx][1], self.state.bounds[idx][0]], [self.state.bounds[idx][3], self.state.bounds[idx][2]]]);
             });
-
+            if (self.props.bounds) {
+                map.fitBounds([[self.props.bounds[1], self.props.bounds[0]], [self.props.bounds[3], self.props.bounds[2]]]);
+            }
             var legend = L.control({ position: 'bottomright' });
 
             legend.onAdd = function (map) {
@@ -1142,42 +1195,51 @@ var Table = function (_React$Component) {
         _this.state = {
             loading: true,
             error: false,
-            data: null
+            data: null,
+            current_feature: null
         };
         return _this;
     }
 
     Table.prototype.componentDidMount = function componentDidMount() {
-        var _this2 = this;
-
-        $.ajax('/api/variables/' + this.props.variable_id + '/table/', {
+        var self = this;
+        $.ajax('/variables/data_' + this.props.variable_id + '.json', {
             dataType: 'json',
             success: function success(data, status, xhr) {
-                if (data.dimension == "time") {
-                    data.values = data.values.map(function (value) {
+                var dates = [],
+                    shas = [];
+                if (data.dimensions == "time") {
+                    dates = Object.keys(data.data);
+                    data.values = Object.keys(data.data).map(function (key) {
                         return {
-                            date: new Date(value.date),
-                            value: value.value
+                            date: new Date(key),
+                            value: data.data[key]
+                        };
+                    });
+                } else if (data.dimensions == "space") {
+                    shas = Object.keys(data.data);
+                    data.values = Object.keys(data.data).map(function (key) {
+                        return {
+                            name: key,
+                            value: data.data[key][self.props.variable_name]
                         };
                     });
                 }
 
-                _this2.setState({
+                self.setState({
                     data: data,
+                    time_index: dates,
+                    space_index: shas,
                     loading: false
                 }, function () {
-                    if (_this2.state.data.dimension == "time") {
-                        _this2.props.setDimensions([_this2.state.data.values[0].date, _this2.state.data.values[_this2.state.data.values.length - 1].date]);
-                    } else {
-                        _this2.props.setDimensions(_this2.state.data.values.map(function (datum) {
-                            return datum.feature;
-                        }));
-                    }
+                    self.props.updateIndexes({
+                        'time_index': dates, 'space_index': shas
+                    });
                 });
             },
             error: function error(xhr, status, _error) {
                 console.log(_error);
-                _this2.setState({
+                self.setState({
                     loading: false,
                     error: status
                 });
@@ -1185,25 +1247,25 @@ var Table = function (_React$Component) {
         });
     };
 
-    Table.prototype.dimensionsChanged = function dimensionsChanged(old, next) {
-        if (this.state.data.dimension == 'time') {
-            if (old && (old.min != next.min || old.max != next.max)) {
+    Table.prototype.stuffChanged = function stuffChanged(old, next) {
+        if (this.state.data.dimensions == 'time') {
+            if (old.time_range && (old.time_range.min != next.time_range.min || old.time_range.max != next.time_range.max)) {
                 return true;
             }
-        } else if (old && old.length != next.length) {
-            return true;
+        } else if (this.state.data.dimensions == 'space') {
+            return this.state.current_feature != next.current_feature;
         }
         return false;
     };
 
     Table.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
-        var _this3 = this;
+        var _this2 = this;
 
         if (!this.state.loading && !prevState.data) {
             var columns = [],
                 data;
-            if (this.state.data.dimension == 'space') {
-                columns.push({ data: 'feature.properties', render: 'name' });
+            if (this.state.data.dimensions == 'space') {
+                columns.push({ data: 'name' });
             } else {
                 columns.push({ data: 'date' });
             }
@@ -1214,27 +1276,24 @@ var Table = function (_React$Component) {
                 columns: columns
             });
 
-            if (this.state.data.dimension == 'time') {
+            if (this.state.data.dimensions == 'time') {
                 $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
                     var d = new Date(aData[0]);
-                    if (_this3.props.dimensions.min.getTime() <= d && d <= _this3.props.dimensions.max.getTime()) {
+                    if (_this2.props.time_range.min.getTime() <= d && d <= _this2.props.time_range.max.getTime()) {
                         return true;
                     }
                     return false;
                 });
             } else {
                 $.fn.dataTableExt.afnFiltering.push(function (oSettings, aData, iDataIndex) {
-                    var dims = _this3.props.dimensions.map(function (dim) {
-                        return dim.properties.id;
-                    });
-                    var index = dims.indexOf(oSettings.aoData[iDataIndex]._aData.feature.properties.id);
+                    var index = _this2.state.space_index.indexOf(oSettings.aoData[iDataIndex]._aData.name);
                     if (index != -1) {
                         return true;
                     }
                     return false;
                 });
             }
-        } else if (this.dimensionsChanged(prevProps.dimensions, this.props.dimensions)) {
+        } else if (this.stuffChanged(prevProps, this.props)) {
             $("#data-table-" + this.props.unique_id).DataTable().draw();
         }
     };
@@ -1585,6 +1644,8 @@ var TableListItem = function (_React$Component2) {
 }(React.Component);
 'use strict';
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -1664,10 +1725,10 @@ var SliderControl = function (_React$Component2) {
 
         noUiSlider.create(dateSlider, {
             range: {
-                min: new Date(this.props.dims.min).getTime(),
-                max: new Date(this.props.dims.max).getTime()
+                min: new Date(this.props.time_range.min).getTime(),
+                max: new Date(this.props.time_range.max).getTime()
             },
-            start: [new Date('2010').getTime(), new Date('2015').getTime()],
+            start: [new Date(this.props.time_range.min).getTime(), new Date(this.props.time_range.max).getTime()],
             step: 7 * 24 * 60 * 60 * 1000,
             connect: true,
             behaviour: 'drag',
@@ -1684,7 +1745,7 @@ var SliderControl = function (_React$Component2) {
         });
 
         dateSlider.noUiSlider.on('update', function (values, handle) {
-            _this4.props.changeDimensions({
+            _this4.props.changeTimeRange({
                 min: new Date(values[0]),
                 max: new Date(values[1]) });
         });
@@ -1707,40 +1768,27 @@ var Visualization = function (_React$Component3) {
     }
 
     Visualization.prototype.render = function render() {
-        if (this.props.type == "map") {
-            return React.createElement(
-                'div',
-                { style: { height: 400 } },
-                React.createElement(Map, {
-                    variable_id: this.props.variable_id,
-                    variable_name: this.props.variable_name,
-                    color_ramp: [[0, "#4286f4"], [50, "#f48341"]],
-                    setDimensions: this.props.getChildDimensions,
-                    dimensions: this.props.dimensions,
-                    unique_id: this.props.unique_id })
-            );
-        } else if (this.props.type == "graph") {
-            return React.createElement(
-                'div',
-                null,
-                React.createElement(Graph, {
-                    variable_id: this.props.variable_id,
-                    variable_name: this.props.variable_name,
-                    setDimensions: this.props.getChildDimensions,
-                    dimensions: this.props.dimensions,
-                    unique_id: this.props.unique_id })
-            );
-        } else if (this.props.type == "table") {
-            return React.createElement(
-                'div',
-                null,
-                React.createElement(Table, {
-                    variable_id: this.props.variable_id,
-                    variable_name: this.props.variable_name,
-                    setDimensions: this.props.getChildDimensions,
-                    dimensions: this.props.dimensions,
-                    unique_id: this.props.unique_id })
-            );
+        switch (this.props.type) {
+            case "map":
+                return this.props.dimensions.indexOf('space') != -1 ? React.createElement(
+                    'div',
+                    { style: { height: 400 } },
+                    React.createElement(Map, _extends({
+                        color_ramp: [[0, "#4286f4"], [50, "#f48341"]]
+                    }, this.props))
+                ) : null;
+            case "graph":
+                return React.createElement(
+                    'div',
+                    null,
+                    React.createElement(Graph, this.props)
+                );
+            case "table":
+                return React.createElement(
+                    'div',
+                    null,
+                    React.createElement(Table, this.props)
+                );
         }
     };
 
@@ -1755,71 +1803,121 @@ var VisualizationGroup = function (_React$Component4) {
 
         var _this6 = _possibleConstructorReturn(this, _React$Component4.call(this, props));
 
+        var dimensions = {};
+        for (var _iterator = _this6.props.visualizations, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+            var _ref;
+
+            if (_isArray) {
+                if (_i >= _iterator.length) break;
+                _ref = _iterator[_i++];
+            } else {
+                _i = _iterator.next();
+                if (_i.done) break;
+                _ref = _i.value;
+            }
+
+            var v = _ref;
+
+            if (v.dimensions == 'space') {
+                dimensions['space'] = true;
+            } else if (v.dimensions == 'time') {
+                dimensions['time'] = true;
+            } else if (v.dimensions == 'spacetime') {
+                dimensions['space'] = dimensions['time'] = true;
+            }
+        }
+
+        dimensions = (dimensions['space'] ? 'space' : '') + (dimensions['time'] ? 'time' : '');
+
         _this6.state = {
-            dimensions: null,
-            currentDimensions: null
+            dimensions: dimensions,
+            space_index: null,
+            time_index: null,
+            time_range: null,
+            current_space_bounds: null,
+            current_time_range: null,
+            current_feature: null
         };
 
-        _this6.childStartingDimensions = [];
+        _this6.child_indexes = [];
         return _this6;
     }
 
-    VisualizationGroup.prototype.changeDimensions = function changeDimensions(newDims) {
-        if (this.props.control == 'time') {
-            this.setState({
-                currentDimensions: { min: newDims.min, max: newDims.max }
-            });
-        } else {
-            this.setState({ currentDimensions: newDims });
-        }
+    VisualizationGroup.prototype.changeTimeRange = function changeTimeRange(range) {
+        this.setState({
+            current_time_range: { min: range.min, max: range.max }
+        });
     };
 
-    VisualizationGroup.prototype.getChildDimensions = function getChildDimensions(dimensions) {
-        this.childStartingDimensions.push(dimensions);
+    VisualizationGroup.prototype.changeSpaceBounds = function changeSpaceBounds(bounds) {};
 
-        if (this.childStartingDimensions.length == this.props.children.length) {
-            if (this.props.control == "slider") {
-                var min = Plotly.d3.min(this.childStartingDimensions.map(function (childDim) {
-                    return childDim[0];
-                }));
+    VisualizationGroup.prototype.changeFeature = function changeFeature(shaid) {
+        this.setState({
+            current_feature: shaid
+        });
+    };
 
-                var max = Plotly.d3.max(this.childStartingDimensions.map(function (childDim) {
-                    return childDim[1];
-                }));
+    VisualizationGroup.prototype.updateIndexes = function updateIndexes(indexes) {
+        this.child_indexes.push(indexes);
 
-                this.setState({
-                    dimensions: { min: min, max: max },
-                    currentDimensions: { min: min, max: max }
+        if (this.child_indexes.length == this.props.visualizations.length) {
+            var state = {};
+            if (this.state.dimensions.indexOf('time') != -1) {
+                var time_index = this.child_indexes.map(function (both) {
+                    return both['time'];
                 });
-            } else {
-                var merged_features = [].concat.apply([], this.childStartingDimensions);
-                this.setState({
-                    dimensions: merged_features,
-                    currentDimensions: merged_features
+                time_index = [].concat.apply([], time_index);
+
+                time_index = time_index.map(function (str) {
+                    return new Date(str);
+                });
+                time_index.sort(function (a, b) {
+                    return a - b;
+                });
+
+                var min = Plotly.d3.min(time_index);
+                var max = Plotly.d3.max(time_index);
+
+                state = {
+                    time_index: time_index,
+                    time_range: { min: min, max: max },
+                    current_time_range: { min: min, max: max }
+                };
+            }
+            if (this.state.dimensions.indexOf('space') != -1) {
+                var space_index = this.child_indexes.map(function (both) {
+                    return both['space'];
+                });
+                space_index = [].concat.apply([], space_index);
+
+                //var merged_features = [].concat.apply([], this.child_indexes);
+                state = Object.assign(state, {
+                    space_index: space_index
                 });
             }
+            this.setState(state);
         }
     };
 
     VisualizationGroup.prototype.render = function render() {
         var _this7 = this;
 
-        var Control = null;
-        if (this.props.control == "map") {
-            Control = MapControl;
-        } else if (this.props.control == "slider") {
-            Control = SliderControl;
-        }
-
         return React.createElement(
             'div',
             null,
-            Control && this.state.dimensions ? React.createElement(Control, { dims: this.state.dimensions, currentDims: this.state.currentDimensions, changeDimensions: this.changeDimensions.bind(this) }) : null,
-            this.props.children.map(function (child) {
-                return React.cloneElement(child, {
-                    dimensions: _this7.state.currentDimensions,
-                    getChildDimensions: _this7.getChildDimensions.bind(_this7)
-                });
+            this.state.dimensions.indexOf('time') != -1 && this.state.time_range ? React.createElement(SliderControl, {
+                time_range: this.state.time_range,
+                changeTimeRange: this.changeTimeRange.bind(this)
+            }) : null,
+            this.props.visualizations.map(function (v) {
+                return React.createElement(Visualization, _extends({
+                    updateIndexes: _this7.updateIndexes.bind(_this7),
+                    time_range: _this7.state.current_time_range,
+                    changeTimeRange: _this7.changeTimeRange.bind(_this7),
+                    changeSpaceBounds: _this7.changeSpaceBounds.bind(_this7),
+                    current_feature: _this7.state.current_feature,
+                    changeFeature: _this7.changeFeature.bind(_this7)
+                }, v));
             })
         );
     };
