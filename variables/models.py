@@ -25,7 +25,10 @@ class Variable(models.Model):
 
     @cached_property
     def root(self):
-        return treeToNode(self.tree)
+        if not self.tree:
+            return None
+        else:
+            return treeToNode(self.tree)
 
     def __init__(self, *args, **kwargs):
         super(Variable, self).__init__(*args, **kwargs)

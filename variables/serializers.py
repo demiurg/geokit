@@ -83,7 +83,7 @@ def process_rasters(variable_pk, schema_name):
                 settings.MEDIA_ROOT, str(layer_file.file)[:-4]
             )
             if (
-                layer_file.status in ('finished', None) 
+                layer_file.status in ('finished', None)
                 and os.path.isfile(shp_file)
             ):
                 job_id = rpc_con().submit_job(
