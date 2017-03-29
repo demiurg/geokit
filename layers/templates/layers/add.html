@@ -44,7 +44,7 @@
         <input type="hidden" name="next" />
         <ul class="tab-nav merged">
             <li class="active"><a href="#shapefile" class="active">From Shapefile</a></li>
-            <li><a href="#gadm">From GADM boundries</a></li>
+            <li id="vector-catalog-tab"><a href="#gadm">From Vector Catalog</a></li>
         </ul>
         <div class="tab-content">
             <section id="shapefile" class="active">
@@ -66,13 +66,20 @@
     </form>
 
 <script>
-ReactDOM.render(
-    React.createElement(
-        GADMChooser,
-        {},
-        []
-    ),
-    document.getElementById("gadm-field")
-);
+$.ajax('/layers/vector-catalog/', {
+    dataType: 'json',
+    success: function(data, status, xhr) {
+        ReactDOM.render(
+            React.createElement(
+                GADMChooser,
+                {
+                    layers: data
+                },
+                []
+            ),
+            document.getElementById("gadm-field")
+        );
+    }
+});
 </script>
 {% endblock %}

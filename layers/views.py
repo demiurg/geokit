@@ -111,7 +111,7 @@ def gadm_tile_json(request, level, z, x, y):
         geom = GEOSGeometry(buffer(wkb))
 
         try:
-            props['id'] = props['__id__']
+            props['id'] = ".".join([props['name_%s' % l] for l in range(level + 1)])
         except Exception as e:
             print(e)
 
@@ -619,42 +619,34 @@ class LayerViewSet(viewsets.ModelViewSet):
     serializer_class = LayerSerializer
 
 
-def gadm_layer_save(tenant, layer, admin_units):
-    connection.close()
-    connection.set_schema(tenant)
+def gadm_layer_geometries(level, features):
+    cursor = connections['geodata'].cursor()
 
-    with transaction.atomic():
-        union = GEOSGeometry('POINT EMPTY')
-        for u in admin_units:
-            levels = u.split('.')
-            gadm_data_args = {}
-            for i, l in enumerate(levels):
-                if l == 'null':
-                    gadm_data_args['name_' + str(i)] = None
-                else:
-                    gadm_data_args['name_' + str(i)] = l
+    group_by_names = ", ".join(['name_%s' % l for l in range(level + 1)])
+    where_clause_values = {'name_%s' % l: set() for l in range(level + 1)}
+    for f in features:
+        names = f.split('.')
+        for i, name in enumerate(names):
+            where_clause_values['name_%s' % i].add(name)
 
-            unit_features = gadm_data(len(levels), False, **gadm_data_args)
-            geom = GEOSGeometry(unit_features[0]['geometry'], srid=4326)
-            for f in unit_features:
-                geom.union(GEOSGeometry(f['geometry'], srid=4326))
+    WHERE = ""
+    for col, val in where_clause_values.iteritems():
+        WHERE += "%s IN %s AND " % (col, cursor.mogrify("%s", [tuple(val)]))
+    WHERE = WHERE[0:-5]  # Remove final `AND<space>`
 
-            union = union.union(geom)
-            geom.transform(3857)
+    SELECT = """SELECT ST_UNARYUNION(ST_COLLECT(geometry)) FROM gadm28
+        WHERE %s GROUP BY %s""" % (WHERE, group_by_names)
 
-            s = hashlib.sha1()
-            s.update(GeometryCollection(geom).ewkb)
-            feature = Feature(
-                layer=layer,
-                geometry=GeometryCollection(geom),
-                properties={'shaid': s.hexdigest()}
-            )
-            feature.save()
+    cursor.execute(SELECT)
 
-        envelope = union.envelope.coords[0]
-        layer.bounds = envelope[2] + envelope[0]
-        layer.status = 0
-        layer.save()
+    columns = [col[0] for col in cursor.description]
+
+    data = [
+        (bytes(row[0]), dict(zip(columns[1:], row[1:])),)
+        for row in cursor.fetchall()
+    ]
+
+    return [GEOSGeometry(d[0]) for d in data]
 
 
 def gadm_layer_save_handler(tenant, layer, *args):
@@ -666,16 +658,103 @@ def gadm_layer_save_handler(tenant, layer, *args):
     layer.save()
 
 
-class GADMView(views.APIView):
+#class GADMView(views.APIView):
+    #def get(self, request):
+        #results = gadm_data(**gadm_data_args(request.GET))
+        #level = request.GET['level']
+        #return Response([{'name': r['name_' + level], 'id': r['id']} for r in results])
+
+    #def post(self, request):
+        #args = request.data
+
+        #name = args['name']
+        #schema = {
+            #'geometry': 'Polygon',
+            #'properties': {
+                #'shaid': 'str'
+            #}
+        #}
+        #layer = Layer(name=name, field_names=['shaid'], schema=schema)
+        #layer.save()
+
+        #django_rq.enqueue(
+            #gadm_layer_save,
+            #request.tenant.schema_name,
+            #layer,
+            #args['features'],
+            #timeout=4800  # This could take a while...
+        #)
+
+        #return Response({'result': 'success'})
+
+
+VECTOR_LAYERS = {
+    'gadm_0': {
+        'tile_layer': lambda r, z, x, y: gadm_tile_json(r, 0, z, x, y),
+        'retrieve_geometries': lambda features: gadm_layer_geometries(0, features),
+    },
+    'gadm_1': {
+        'tile_layer': lambda r, z, x, y: gadm_tile_json(r, 1, z, x, y),
+        'retrieve_geometries': lambda features: gadm_layer_geometries(1, features),
+    },
+    'gadm_2': {
+        'tile_layer': lambda r, z, x, y: gadm_tile_json(r, 2, z, x, y),
+        'retrieve_geometries': lambda features: gadm_layer_geometries(2, features),
+    },
+}
+
+
+def vector_catalog_save_layer(tenant, layer, vector_layer, features):
+    connection.close()
+    connection.set_schema(tenant)
+
+    geometries = VECTOR_LAYERS[vector_layer]['retrieve_geometries'](features)
+
+    with transaction.atomic():
+        union = GEOSGeometry('POINT EMPTY')
+        for g in geometries:
+            union = union.union(g)
+            g.transform(3857)
+
+            s = hashlib.sha1()
+            s.update(GeometryCollection(g).ewkb)
+            properties = {'shaid': s.hexdigest()}
+            f = Feature(
+                layer=layer,
+                geometry=GeometryCollection(g),
+                properties=properties
+            )
+            f.save()
+
+        envelope = union.envelope.coords[0]
+        layer.bounds = envelope[2] + envelope[0]
+        layer.status = 0
+        layer.save()
+
+
+def vector_catalog_save_layer_handler(tenant, layer, *args):
+    connection.close()
+    connection.set_schema(tenant)
+
+    layer = Layer.objects.get(pk=layer.id)
+    layer.status = 2
+    layer.save()
+
+
+def vector_catalog_tile_json(request, layer, z, x, y):
+    return VECTOR_LAYERS[layer]['tile_layer'](request, z, x, y)
+
+
+class VectorCatalogView(views.APIView):
     def get(self, request):
-        results = gadm_data(**gadm_data_args(request.GET))
-        level = request.GET['level']
-        return Response([{'name': r['name_' + level], 'id': r['id']} for r in results])
+        vector_layers = VECTOR_LAYERS.keys()
+        return Response(vector_layers)
 
     def post(self, request):
-        args = request.data
+        vector_layer = request.data['layer']
+        features = request.data['features']
 
-        name = args['name']
+        name = request.data['name']
         schema = {
             'geometry': 'Polygon',
             'properties': {
@@ -686,11 +765,12 @@ class GADMView(views.APIView):
         layer.save()
 
         django_rq.enqueue(
-            gadm_layer_save,
+            vector_catalog_save_layer,
             request.tenant.schema_name,
             layer,
-            args['features'],
-            timeout=4800  # This could take a while...
+            vector_layer,
+            features,
+            timeout=4800
         )
 
         return Response({'result': 'success'})
