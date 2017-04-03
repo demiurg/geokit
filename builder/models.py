@@ -11,11 +11,12 @@ from wagtail.wagtailcore import blocks
 from wagtail.wagtailcore.models import Page
 from wagtail.wagtailcore.fields import RichTextField, StreamField
 from wagtail.wagtailadmin.edit_handlers import FieldPanel, StreamFieldPanel, InlinePanel, PageChooserPanel
+from wagtail.wagtailadmin.forms import WagtailAdminPageForm
 from wagtail.wagtailembeds.blocks import EmbedBlock
 from wagtail.wagtailforms.models import AbstractFormField, FORM_FIELD_CHOICES
 from wagtail.wagtailimages.blocks import ImageChooserBlock
 
-from builder.blocks import GraphBlock, MapBlock, TableBlock, VisualizationGroupBlock
+from builder.blocks import VisualizationGroupBlock
 from builder.forms import GeoKitFormBuilder
 import re
 
@@ -31,6 +32,16 @@ class HomePage(Page):
     content_panels = Page.content_panels + [
         FieldPanel('body', classname="full"),
     ]
+
+
+class CustomPageForm(WagtailAdminPageForm):
+    def __init__(self, *args, **kwargs):
+        instance = kwargs.get('instance')
+
+        if instance is None or instance.pk is None:
+            kwargs.update(initial={'show_in_menus': True})
+
+        super(CustomPageForm, self).__init__(*args, **kwargs)
 
 
 class CustomPage(Page):
@@ -49,9 +60,7 @@ class CustomPage(Page):
         StreamFieldPanel('body'),
     ]
 
-    def save(self, *args, **kwargs):
-        self.show_in_menus = True
-        super(CustomPage, self).save(*args, **kwargs)
+    base_form_class = CustomPageForm  # Show in menus by default
 
 
 class FormVariable(models.Model):
