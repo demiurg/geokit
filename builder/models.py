@@ -49,6 +49,10 @@ class CustomPage(Page):
         StreamFieldPanel('body'),
     ]
 
+    def save(self, *args, **kwargs):
+        self.show_in_menus = True
+        super(CustomPage, self).save(*args, **kwargs)
+
 
 class FormVariable(models.Model):
     name = models.CharField(max_length=100)
