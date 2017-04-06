@@ -13,5 +13,6 @@ urlpatterns = [
     url(r'^gadm/(\d+)/(\d+)/(\d+)/(\d+)\.json$', views.gadm_tile_json),
     #url(r'^gadm/?$', views.GADMView.as_view(), name='gadm_view'),
     url(r'^vector-catalog/(\w+)/(\d+)/(\d+)/(\d+)\.json$', views.vector_catalog_tile_json, name='vector_catalog_tile_json'),
+    url(r'^vector-catalog/translate/(\w+)/(\w+)/?$', views.vector_catalog_translate_features, name='vector_catalog_translate_features'),
     url(r'^vector-catalog/?$', views.VectorCatalogView.as_view(), name='vector_catalog'),
 ]

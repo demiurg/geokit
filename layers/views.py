@@ -1,3 +1,5 @@
+import timeit
+
 import glob
 import hashlib
 import json
@@ -649,57 +651,50 @@ def gadm_layer_geometries(level, features):
     return [GEOSGeometry(d[0]) for d in data]
 
 
-def gadm_layer_save_handler(tenant, layer, *args):
-    connection.close()
-    connection.set_schema(tenant)
+def gadm_layer_features_from_bbox(level, bbox):
+    cursor = connections['geodata'].cursor()
 
-    layer = Layer.objects.get(pk=layer.id)
-    layer.status = 2
-    layer.save()
+    names = ",".join(['name_%s' % l for l in range(level + 1)])
+    SELECT = cursor.mogrify(
+        "SELECT " + names + """
+            FROM gadm28
+            WHERE
+                ST_Contains(
+                    ST_GeomFromText(%s, 4326),
+                    geometry
+                )
+            GROUP BY """ + names, [bbox])
 
+    cursor.execute(SELECT)
 
-#class GADMView(views.APIView):
-    #def get(self, request):
-        #results = gadm_data(**gadm_data_args(request.GET))
-        #level = request.GET['level']
-        #return Response([{'name': r['name_' + level], 'id': r['id']} for r in results])
+    data = cursor.fetchall()
 
-    #def post(self, request):
-        #args = request.data
+    ids = []
+    for d in data:
+        try:
+            ids.append(".".join(d))
+        except TypeError:
+            fixed_id = ".".join(filter(lambda x: x, d))  # Remove instances of None
+            ids.append(fixed_id)
 
-        #name = args['name']
-        #schema = {
-            #'geometry': 'Polygon',
-            #'properties': {
-                #'shaid': 'str'
-            #}
-        #}
-        #layer = Layer(name=name, field_names=['shaid'], schema=schema)
-        #layer.save()
-
-        #django_rq.enqueue(
-            #gadm_layer_save,
-            #request.tenant.schema_name,
-            #layer,
-            #args['features'],
-            #timeout=4800  # This could take a while...
-        #)
-
-        #return Response({'result': 'success'})
+    return ids
 
 
 VECTOR_LAYERS = {
     'gadm_0': {
         'tile_layer': lambda r, z, x, y: gadm_tile_json(r, 0, z, x, y),
-        'retrieve_geometries': lambda features: gadm_layer_geometries(0, features),
+        'retrieve_geometries_by_id': lambda features: gadm_layer_geometries(0, features),
+        'retrieve_features_by_bbox': lambda bbox: gadm_layer_features_from_bbox(0, bbox),
     },
     'gadm_1': {
         'tile_layer': lambda r, z, x, y: gadm_tile_json(r, 1, z, x, y),
-        'retrieve_geometries': lambda features: gadm_layer_geometries(1, features),
+        'retrieve_geometries_by_id': lambda features: gadm_layer_geometries(1, features),
+        'retrieve_features_by_bbox': lambda bbox: gadm_layer_features_from_bbox(1, bbox),
     },
     'gadm_2': {
         'tile_layer': lambda r, z, x, y: gadm_tile_json(r, 2, z, x, y),
-        'retrieve_geometries': lambda features: gadm_layer_geometries(2, features),
+        'retrieve_geometries_by_id': lambda features: gadm_layer_geometries(2, features),
+        'retrieve_features_by_bbox': lambda bbox: gadm_layer_features_from_bbox(2, bbox),
     },
 }
 
@@ -708,7 +703,7 @@ def vector_catalog_save_layer(tenant, layer, vector_layer, features):
     connection.close()
     connection.set_schema(tenant)
 
-    geometries = VECTOR_LAYERS[vector_layer]['retrieve_geometries'](features)
+    geometries = VECTOR_LAYERS[vector_layer]['retrieve_geometries_by_id'](features)
 
     with transaction.atomic():
         union = GEOSGeometry('POINT EMPTY')
@@ -743,6 +738,22 @@ def vector_catalog_save_layer_handler(tenant, layer, *args):
 
 def vector_catalog_tile_json(request, layer, z, x, y):
     return VECTOR_LAYERS[layer]['tile_layer'](request, z, x, y)
+
+
+@api_view(['POST'])
+def vector_catalog_translate_features(request, old_layer, new_layer):
+    first = timeit.timeit()
+    geometries = VECTOR_LAYERS[old_layer]['retrieve_geometries_by_id'](request.data['features'])
+    second = timeit.timeit()
+    bbox = GeometryCollection(*geometries).unary_union.envelope
+    third = timeit.timeit()
+    response = Response(VECTOR_LAYERS[new_layer]['retrieve_features_by_bbox'](bbox.wkt))
+    fourth = timeit.timeit()
+
+    print "retrieve geoms: ", second - first
+    print "union: ", third - second
+    print "retrieve features: ", fourth - third
+    return response
 
 
 class VectorCatalogView(views.APIView):

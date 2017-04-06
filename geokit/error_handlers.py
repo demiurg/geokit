@@ -9,7 +9,6 @@ from layers.views import (
 ERROR_HANDLERS = {
     'geokit_tables.views.populate_table': populate_table_handler,
     'layers.views.process_shapefile': process_shapefile_handler,
-    'layers.views.gadm_layer_save': gadm_layer_save_handler,
     'layers.views.vector_catalog_save_layer': vector_catalog_save_layer_handler,
 }
 

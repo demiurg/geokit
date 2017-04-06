@@ -43,20 +43,6 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
-        //if (!this.mapRendered) {
-        //this.renderMap();
-        //} else {
-        //if (prevState.level != this.state.level) {
-        //this.setGadmLayer(this.state.level);
-        //} else {
-        //prevState.selected.map((selection) => {
-        //if (this.state.selected.indexOf(selection) == -1) {
-        //var e = new Event(selection + "-deselect");
-        //window.dispatchEvent(e);
-        //}
-        //});
-        //}
-        //}
         if (prevState.layer != this.state.layer) {
             this.switchLayer(this.state.layer);
         }
@@ -206,10 +192,30 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.changeLayer = function changeLayer(newSelection) {
-        this.setState({
-            layer: newSelection.value,
-            featureIds: []
-        });
+        var _this4 = this;
+
+        if (this.state.layer && this.state.featureIds.length != 0) {
+            $.ajax('/layers/vector-catalog/translate/' + this.state.layer + '/' + newSelection.value, {
+                dataType: 'json',
+                contentType: 'application/json',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                data: JSON.stringify({ features: this.state.featureIds }),
+                success: function success(data, status, xhr) {
+                    _this4.setState({
+                        layer: newSelection.value,
+                        featureIds: data
+                    });
+                },
+                error: function error(xhr, status, _error2) {}
+            });
+        } else {
+            this.setState({
+                layer: newSelection.value
+            });
+        }
     };
 
     GADMChooser.prototype.saveLayer = function saveLayer(e) {
@@ -232,7 +238,7 @@ var GADMChooser = function (_React$Component) {
             success: function success(data, status, xhr) {
                 window.location = '/builder/admin/layers';
             },
-            error: function error(xhr, status, _error2) {}
+            error: function error(xhr, status, _error3) {}
         });
     };
 

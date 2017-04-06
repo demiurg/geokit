@@ -30,20 +30,6 @@ class GADMChooser extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        //if (!this.mapRendered) {
-            //this.renderMap();
-        //} else {
-            //if (prevState.level != this.state.level) {
-                //this.setGadmLayer(this.state.level);
-            //} else {
-                //prevState.selected.map((selection) => {
-                    //if (this.state.selected.indexOf(selection) == -1) {
-                        //var e = new Event(selection + "-deselect");
-                        //window.dispatchEvent(e);
-                    //}
-                //});
-            //}
-        //}
         if (prevState.layer != this.state.layer) {
             this.switchLayer(this.state.layer);
         }
@@ -191,10 +177,29 @@ class GADMChooser extends React.Component {
     }
 
     changeLayer(newSelection) {
-        this.setState({
-            layer: newSelection.value,
-            featureIds: []
-        });
+        if (this.state.layer && this.state.featureIds.length != 0) {
+            $.ajax('/layers/vector-catalog/translate/'+this.state.layer+'/'+newSelection.value, {
+                dataType: 'json',
+                contentType: 'application/json',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                data: JSON.stringify({features: this.state.featureIds}),
+                success: (data, status, xhr) => {
+                    this.setState({
+                        layer: newSelection.value,
+                        featureIds: data
+                    });
+                },
+                error: (xhr, status, error) => {
+                }
+            });
+        } else {
+            this.setState({
+                layer: newSelection.value
+            });
+        }
     }
 
     saveLayer(e) {
