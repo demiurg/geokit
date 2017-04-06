@@ -1174,6 +1174,87 @@ class SelectTableForm extends React.Component {
   }
 }
 
+class SpatialConfiguration extends React.Component {
+  render() {
+    return (
+      <Panel header="Spatial configuration">
+      </Panel>
+    );
+  }
+}
+
+class TabularDataSource extends React.Component {
+  onSave() {
+    // Call `this.props.onAddInputVariable(var) when Save button is clicked.
+    //
+    // var should be in the form:
+    // {
+    //   name: '',
+    //   node: [
+    //      'join', [<source (see below)>, <source>]
+    //   ]
+    // }
+    //
+    // <source> should be in the form:
+    // {
+    //   type: 'Layer' | 'Table',
+    //   id: <Number>,
+    //   name: '',
+    //   field: ''
+    // }
+  }
+
+  render() {
+    return (
+      <Panel header="Tabular data">
+      </Panel>
+    );
+  }
+}
+
+class RasterDataSource extends React.Component {
+  onSave() {
+    // Call `this.props.onAddInputVariable(var) when Save button is clicked.
+    // 
+    // var should be an object in the form:
+    // {
+    //   name: '',
+    //   node: [
+    //     'raster',
+    //     [
+    //       '<raster_layer>',
+    //       '<spatial_layer>',
+    //       '<temporal_range, e.g. '2010-001,2010-030'>'
+    //     ]]
+    // }
+    //
+  }
+
+  render() {
+    return (
+      <Panel header="Raster data">
+      </Panel>
+    );
+  }
+}
+
+class ExpressionEditor extends React.Component {
+  render() {
+    return (
+      <Panel header="Expression editor">
+      </Panel>
+    );
+  }
+}
+
+class VariableTable extends React.Component {
+  render() {
+    return (
+      <Panel header="Variables">
+      </Panel>
+    );
+  }
+}
 
 class SieveComponent extends React.Component {
   render() {
@@ -1200,111 +1281,29 @@ class SieveComponent extends React.Component {
 
     return (
       <div className="sieve">
-        {this.props.errors.detail ? <Alert bsStyle="danger">{this.props.errors.detail}</Alert> : null}
-        <Panel header={
-          this.props.created ?
-          <h3>
-            Variable {this.props.name}
-            <small>  created on {this.props.created} and last modified {this.props.modified}</small>
-          </h3> : null
-        }>
-          <div className="sieve-metadata">
-            <div className="sieve-metadata-title">
-              {this.props.created ? null :
-                <FormGroup controlId="name" validationState={
-                  this.props.errors.name ? 'error' : null
-                }>
-                  <FormControl
-                    componentClass="input"
-                    placeholder="Name..."
-                    initialValue={self.props.name}
-                    onChange={self.props.onNameChange}
-                    value={self.props.name}
-                  />
-                  <HelpBlock>{
-                    this.props.errors.name ?
-                    this.props.errors.name :
-                    "Name must be alphanumeric, without spaces."
-                  }</HelpBlock>
-                </FormGroup>
-              }
-            </div>
-            <div className="sieve-metadata-description">
-              <FormGroup controlId="name">
-                <FormControl
-                  componentClass="textarea"
-                  placeholder="Description..."
-                  initialValue={self.props.description}
-                  value={self.props.description}
-                  onChange={self.props.onDescriptionChange}
-                  style={{resize:"vertical"}}
-                />
-              </FormGroup>
-            </div>
-          </div>
-        </Panel>
-
-        <Panel header={<h3>Input Variables</h3>}>
-          {this.props.input_variables.length ?
-            <dl>{
-            this.props.input_variables.map((variable, idx)=>{
-              return [
-                <dt>
-                  {variable.name}
-                  <div className='pull-right'>
-                    <a className='btn btn-sm' onClick={() => self.props.onRemoveInputVariable(idx)}>Remove</a>
-                  </div>
-                </dt>,
-                <dd dangerouslySetInnerHTML={{__html: treeToNode(variable.node).html(0)}}></dd>
-              ];
-            })
-            }</dl>
-            : "Add some!"
-          }
-          <div className='pull-right'>
-            <ButtonToolbar>
-              <ButtonGroup>
-                <AddLayerInputModal {...this.props} >Add Spatial Layer</AddLayerInputModal>
-                <AddTableInputModal {...this.props} >Add Tabular/Time Data</AddTableInputModal>
-                <AddDataInputModal {...this.props} >Combine Space/Time Data</AddDataInputModal>
-                <AddRasterInputModal {...this.props} >Add Raster Data</AddRasterInputModal>
-                <AddExpressionInputModal {...this.props} >Add Expression Input</AddExpressionInputModal>
-                <AddSelectInputModal {...this.props}>Select Input</AddSelectInputModal>
-              </ButtonGroup>
-            </ButtonToolbar>
-          </div>
-        </Panel>
-
-        <Panel header={<h3>Operation Tree</h3>}>
-          <div className='pull-right'>
-            <ButtonToolbar>
-              <ButtonGroup>
-                <AddSelectModal op='select' {...this.props}>Select Attribute</AddSelectModal>
-                <AddMeanModal op='mean' {...this.props}>Mathematical Mean</AddMeanModal>
-                <AddUnaryOpModal op='tmean' {...this.props}>Temporal Mean</AddUnaryOpModal>
-                <AddUnaryOpModal op='smean' {...this.props}>Spatial Mean</AddUnaryOpModal>
-                <AddBinOpModal op='*' {...this.props}>x</AddBinOpModal>
-                <AddBinOpModal op='/' {...this.props}>/</AddBinOpModal>
-                <AddBinOpModal op='+' {...this.props}>+</AddBinOpModal>
-                <AddBinOpModal op='-' {...this.props}>-</AddBinOpModal>
-              </ButtonGroup>
-            </ButtonToolbar>
-          </div>
-          <br/>
-          {this.props.errors.tree ?
-            <Alert bsStyle="danger">
-            <p>{this.props.errors.tree}</p>
-            </Alert>
-          : null}
-          <p dangerouslySetInnerHTML={createMarkup()}>
-          </p>
-
-        </Panel>
-        {self.props.changed && !self.props.errors.name && !self.props.errors.tree ?
-          <Button onClick={onSave}>Save</Button>
-          :
-          null
-        }
+        <Row className="show-grid">
+          <Col xs={11}>
+            <SpatialConfiguration />
+          </Col>
+        </Row>
+        <Row className="show-grid">
+          <Col xs={5}>
+            <TabularDataSource onAddInputVarialbe={this.props.onAddInputVariable} />
+          </Col>
+          <Col xs={5} xsOffset={1}>
+            <RasterDataSource onAddInputVariable={this.props.onAddInputVariable} />
+          </Col>
+        </Row>
+        <Row className="show-grid">
+          <Col xs={11}>
+            <ExpressionEditor />
+          </Col>
+        </Row>
+        <Row className="show-grid">
+          <Col xs={11}>
+            <VariableTable />
+          </Col>
+        </Row>
       </div>
     );
   }

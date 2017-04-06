@@ -3031,13 +3031,130 @@ var SelectTableForm = function (_React$Component14) {
   return SelectTableForm;
 }(React.Component);
 
-var SieveComponent = function (_React$Component15) {
-  _inherits(SieveComponent, _React$Component15);
+var SpatialConfiguration = function (_React$Component15) {
+  _inherits(SpatialConfiguration, _React$Component15);
+
+  function SpatialConfiguration() {
+    _classCallCheck(this, SpatialConfiguration);
+
+    return _possibleConstructorReturn(this, _React$Component15.apply(this, arguments));
+  }
+
+  SpatialConfiguration.prototype.render = function render() {
+    return React.createElement(Panel, { header: "Spatial configuration" });
+  };
+
+  return SpatialConfiguration;
+}(React.Component);
+
+var TabularDataSource = function (_React$Component16) {
+  _inherits(TabularDataSource, _React$Component16);
+
+  function TabularDataSource() {
+    _classCallCheck(this, TabularDataSource);
+
+    return _possibleConstructorReturn(this, _React$Component16.apply(this, arguments));
+  }
+
+  TabularDataSource.prototype.onSave = function onSave() {
+    // Call `this.props.onAddInputVariable(var) when Save button is clicked.
+    //
+    // var should be in the form:
+    // {
+    //   name: '',
+    //   node: [
+    //      'join', [<source (see below)>, <source>]
+    //   ]
+    // }
+    //
+    // <source> should be in the form:
+    // {
+    //   type: 'Layer' | 'Table',
+    //   id: <Number>,
+    //   name: '',
+    //   field: ''
+    // }
+  };
+
+  TabularDataSource.prototype.render = function render() {
+    return React.createElement(Panel, { header: "Tabular data" });
+  };
+
+  return TabularDataSource;
+}(React.Component);
+
+var RasterDataSource = function (_React$Component17) {
+  _inherits(RasterDataSource, _React$Component17);
+
+  function RasterDataSource() {
+    _classCallCheck(this, RasterDataSource);
+
+    return _possibleConstructorReturn(this, _React$Component17.apply(this, arguments));
+  }
+
+  RasterDataSource.prototype.onSave = function onSave() {
+    // Call `this.props.onAddInputVariable(var) when Save button is clicked.
+    // 
+    // var should be an object in the form:
+    // {
+    //   name: '',
+    //   node: [
+    //     'raster',
+    //     [
+    //       '<raster_layer>',
+    //       '<spatial_layer>',
+    //       '<temporal_range, e.g. '2010-001,2010-030'>'
+    //     ]]
+    // }
+    //
+  };
+
+  RasterDataSource.prototype.render = function render() {
+    return React.createElement(Panel, { header: "Raster data" });
+  };
+
+  return RasterDataSource;
+}(React.Component);
+
+var ExpressionEditor = function (_React$Component18) {
+  _inherits(ExpressionEditor, _React$Component18);
+
+  function ExpressionEditor() {
+    _classCallCheck(this, ExpressionEditor);
+
+    return _possibleConstructorReturn(this, _React$Component18.apply(this, arguments));
+  }
+
+  ExpressionEditor.prototype.render = function render() {
+    return React.createElement(Panel, { header: "Expression editor" });
+  };
+
+  return ExpressionEditor;
+}(React.Component);
+
+var VariableTable = function (_React$Component19) {
+  _inherits(VariableTable, _React$Component19);
+
+  function VariableTable() {
+    _classCallCheck(this, VariableTable);
+
+    return _possibleConstructorReturn(this, _React$Component19.apply(this, arguments));
+  }
+
+  VariableTable.prototype.render = function render() {
+    return React.createElement(Panel, { header: "Variables" });
+  };
+
+  return VariableTable;
+}(React.Component);
+
+var SieveComponent = function (_React$Component20) {
+  _inherits(SieveComponent, _React$Component20);
 
   function SieveComponent() {
     _classCallCheck(this, SieveComponent);
 
-    return _possibleConstructorReturn(this, _React$Component15.apply(this, arguments));
+    return _possibleConstructorReturn(this, _React$Component20.apply(this, arguments));
   }
 
   SieveComponent.prototype.render = function render() {
@@ -3069,216 +3186,47 @@ var SieveComponent = function (_React$Component15) {
     return React.createElement(
       "div",
       { className: "sieve" },
-      this.props.errors.detail ? React.createElement(
-        Alert,
-        { bsStyle: "danger" },
-        this.props.errors.detail
-      ) : null,
       React.createElement(
-        Panel,
-        { header: this.props.created ? React.createElement(
-            "h3",
-            null,
-            "Variable ",
-            this.props.name,
-            React.createElement(
-              "small",
-              null,
-              "  created on ",
-              this.props.created,
-              " and last modified ",
-              this.props.modified
-            )
-          ) : null },
+        Row,
+        { className: "show-grid" },
         React.createElement(
-          "div",
-          { className: "sieve-metadata" },
-          React.createElement(
-            "div",
-            { className: "sieve-metadata-title" },
-            this.props.created ? null : React.createElement(
-              FormGroup,
-              { controlId: "name", validationState: this.props.errors.name ? 'error' : null },
-              React.createElement(FormControl, {
-                componentClass: "input",
-                placeholder: "Name...",
-                initialValue: self.props.name,
-                onChange: self.props.onNameChange,
-                value: self.props.name
-              }),
-              React.createElement(
-                HelpBlock,
-                null,
-                this.props.errors.name ? this.props.errors.name : "Name must be alphanumeric, without spaces."
-              )
-            )
-          ),
-          React.createElement(
-            "div",
-            { className: "sieve-metadata-description" },
-            React.createElement(
-              FormGroup,
-              { controlId: "name" },
-              React.createElement(FormControl, {
-                componentClass: "textarea",
-                placeholder: "Description...",
-                initialValue: self.props.description,
-                value: self.props.description,
-                onChange: self.props.onDescriptionChange,
-                style: { resize: "vertical" }
-              })
-            )
-          )
+          Col,
+          { xs: 11 },
+          React.createElement(SpatialConfiguration, null)
         )
       ),
       React.createElement(
-        Panel,
-        { header: React.createElement(
-            "h3",
-            null,
-            "Input Variables"
-          ) },
-        this.props.input_variables.length ? React.createElement(
-          "dl",
-          null,
-          this.props.input_variables.map(function (variable, idx) {
-            return [React.createElement(
-              "dt",
-              null,
-              variable.name,
-              React.createElement(
-                "div",
-                { className: "pull-right" },
-                React.createElement(
-                  "a",
-                  { className: "btn btn-sm", onClick: function onClick() {
-                      return self.props.onRemoveInputVariable(idx);
-                    } },
-                  "Remove"
-                )
-              )
-            ), React.createElement("dd", { dangerouslySetInnerHTML: { __html: treeToNode(variable.node).html(0) } })];
-          })
-        ) : "Add some!",
+        Row,
+        { className: "show-grid" },
         React.createElement(
-          "div",
-          { className: "pull-right" },
-          React.createElement(
-            ButtonToolbar,
-            null,
-            React.createElement(
-              ButtonGroup,
-              null,
-              React.createElement(
-                AddLayerInputModal,
-                this.props,
-                "Add Spatial Layer"
-              ),
-              React.createElement(
-                AddTableInputModal,
-                this.props,
-                "Add Tabular/Time Data"
-              ),
-              React.createElement(
-                AddDataInputModal,
-                this.props,
-                "Combine Space/Time Data"
-              ),
-              React.createElement(
-                AddRasterInputModal,
-                this.props,
-                "Add Raster Data"
-              ),
-              React.createElement(
-                AddExpressionInputModal,
-                this.props,
-                "Add Expression Input"
-              ),
-              React.createElement(
-                AddSelectInputModal,
-                this.props,
-                "Select Input"
-              )
-            )
-          )
-        )
-      ),
-      React.createElement(
-        Panel,
-        { header: React.createElement(
-            "h3",
-            null,
-            "Operation Tree"
-          ) },
-        React.createElement(
-          "div",
-          { className: "pull-right" },
-          React.createElement(
-            ButtonToolbar,
-            null,
-            React.createElement(
-              ButtonGroup,
-              null,
-              React.createElement(
-                AddSelectModal,
-                _extends({ op: "select" }, this.props),
-                "Select Attribute"
-              ),
-              React.createElement(
-                AddMeanModal,
-                _extends({ op: "mean" }, this.props),
-                "Mathematical Mean"
-              ),
-              React.createElement(
-                AddUnaryOpModal,
-                _extends({ op: "tmean" }, this.props),
-                "Temporal Mean"
-              ),
-              React.createElement(
-                AddUnaryOpModal,
-                _extends({ op: "smean" }, this.props),
-                "Spatial Mean"
-              ),
-              React.createElement(
-                AddBinOpModal,
-                _extends({ op: "*" }, this.props),
-                "x"
-              ),
-              React.createElement(
-                AddBinOpModal,
-                _extends({ op: "/" }, this.props),
-                "/"
-              ),
-              React.createElement(
-                AddBinOpModal,
-                _extends({ op: "+" }, this.props),
-                "+"
-              ),
-              React.createElement(
-                AddBinOpModal,
-                _extends({ op: "-" }, this.props),
-                "-"
-              )
-            )
-          )
+          Col,
+          { xs: 5 },
+          React.createElement(TabularDataSource, { onAddInputVarialbe: this.props.onAddInputVariable })
         ),
-        React.createElement("br", null),
-        this.props.errors.tree ? React.createElement(
-          Alert,
-          { bsStyle: "danger" },
-          React.createElement(
-            "p",
-            null,
-            this.props.errors.tree
-          )
-        ) : null,
-        React.createElement("p", { dangerouslySetInnerHTML: createMarkup() })
+        React.createElement(
+          Col,
+          { xs: 5, xsOffset: 1 },
+          React.createElement(RasterDataSource, { onAddInputVariable: this.props.onAddInputVariable })
+        )
       ),
-      self.props.changed && !self.props.errors.name && !self.props.errors.tree ? React.createElement(
-        Button,
-        { onClick: onSave },
-        "Save"
-      ) : null
+      React.createElement(
+        Row,
+        { className: "show-grid" },
+        React.createElement(
+          Col,
+          { xs: 11 },
+          React.createElement(ExpressionEditor, null)
+        )
+      ),
+      React.createElement(
+        Row,
+        { className: "show-grid" },
+        React.createElement(
+          Col,
+          { xs: 11 },
+          React.createElement(VariableTable, null)
+        )
+      )
     );
   };
 
@@ -3321,21 +3269,21 @@ var MeanOperator = function (_DataNode) {
   function MeanOperator(operands) {
     _classCallCheck(this, MeanOperator);
 
-    var _this29 = _possibleConstructorReturn(this, _DataNode.call(this, operands));
+    var _this34 = _possibleConstructorReturn(this, _DataNode.call(this, operands));
 
     if (operands.length != 2) {
       throw Error("MeanOperator takes exactly 2 operands");
     }
 
-    _this29.left = treeToNode(operands[0]);
-    _this29.right = treeToNode(operands[1]);
+    _this34.left = treeToNode(operands[0]);
+    _this34.right = treeToNode(operands[1]);
 
-    if (_this29.left.dimensions != _this29.right.dimensions) {
+    if (_this34.left.dimensions != _this34.right.dimensions) {
       throw Error("Operands must have the same dimensions");
     }
 
-    _this29.dimensions = _this29.left.dimensions;
-    return _this29;
+    _this34.dimensions = _this34.left.dimensions;
+    return _this34;
   }
 
   MeanOperator.prototype.html = function html(level) {
@@ -3353,16 +3301,16 @@ var TemporalMeanOperator = function (_DataNode2) {
   function TemporalMeanOperator(operands) {
     _classCallCheck(this, TemporalMeanOperator);
 
-    var _this30 = _possibleConstructorReturn(this, _DataNode2.call(this, operands));
+    var _this35 = _possibleConstructorReturn(this, _DataNode2.call(this, operands));
 
     if (operands.length != 1) {
       throw Error("TemporalMeanOperator takes exactly 1 operand");
     }
 
-    _this30.operand = treeToNode(operands[0]);
+    _this35.operand = treeToNode(operands[0]);
 
-    _this30.dimensions = 'space';
-    return _this30;
+    _this35.dimensions = 'space';
+    return _this35;
   }
 
   TemporalMeanOperator.prototype.html = function html(level) {
@@ -3380,16 +3328,16 @@ var SpatialMeanOperator = function (_DataNode3) {
   function SpatialMeanOperator(operands) {
     _classCallCheck(this, SpatialMeanOperator);
 
-    var _this31 = _possibleConstructorReturn(this, _DataNode3.call(this, operands));
+    var _this36 = _possibleConstructorReturn(this, _DataNode3.call(this, operands));
 
     if (operands.length != 1) {
       throw Error("SpatialMeanOperator takes exactly 1 operand");
     }
 
-    _this31.operand = treeToNode(operands[0]);
+    _this36.operand = treeToNode(operands[0]);
 
-    _this31.dimensions = 'time';
-    return _this31;
+    _this36.dimensions = 'time';
+    return _this36;
   }
 
   SpatialMeanOperator.prototype.html = function html(level) {
@@ -3407,18 +3355,18 @@ var SelectOperator = function (_DataNode4) {
   function SelectOperator(operands) {
     _classCallCheck(this, SelectOperator);
 
-    var _this32 = _possibleConstructorReturn(this, _DataNode4.call(this, operands));
+    var _this37 = _possibleConstructorReturn(this, _DataNode4.call(this, operands));
 
     if (operands.length != 2) {
       throw Error("SelectOperator takes exactly 2 operands");
     }
 
-    _this32.left = treeToNode(operands[0]);
-    _this32.child_op = operands[0][0];
-    _this32.right = operands[1];
+    _this37.left = treeToNode(operands[0]);
+    _this37.child_op = operands[0][0];
+    _this37.right = operands[1];
 
-    _this32.dimensions = _this32.left.dimensions;
-    return _this32;
+    _this37.dimensions = _this37.left.dimensions;
+    return _this37;
   }
 
   SelectOperator.prototype.html = function html(level) {
@@ -3436,16 +3384,16 @@ var ExpressionOperator = function (_DataNode5) {
   function ExpressionOperator(operands) {
     _classCallCheck(this, ExpressionOperator);
 
-    var _this33 = _possibleConstructorReturn(this, _DataNode5.call(this, operands));
+    var _this38 = _possibleConstructorReturn(this, _DataNode5.call(this, operands));
 
     if (operands.length != 1) {
       throw Error("ExpressionOperator takes exactly 1 operand");
     }
 
-    _this33.operand = treeToNode(operands[0]);
+    _this38.operand = treeToNode(operands[0]);
 
-    _this33.dimensions = _this33.operand.dimensions;
-    return _this33;
+    _this38.dimensions = _this38.operand.dimensions;
+    return _this38;
   }
 
   ExpressionOperator.prototype.html = function html(level) {
@@ -3463,27 +3411,27 @@ var JoinOperator = function (_DataNode6) {
   function JoinOperator(operands) {
     _classCallCheck(this, JoinOperator);
 
-    var _this34 = _possibleConstructorReturn(this, _DataNode6.call(this, operands));
+    var _this39 = _possibleConstructorReturn(this, _DataNode6.call(this, operands));
 
     if (operands.length != 2) {
       throw Error("JoinOperator takes exactly 2 operands");
     }
 
-    _this34.left = new SourceOperator([operands[0]]);
-    _this34.right = new SourceOperator([operands[1]]);
+    _this39.left = new SourceOperator([operands[0]]);
+    _this39.right = new SourceOperator([operands[1]]);
 
     var dimensions = new Set();
-    dimensions.add(_this34.left.dimensions);
-    dimensions.add(_this34.right.dimensions);
+    dimensions.add(_this39.left.dimensions);
+    dimensions.add(_this39.right.dimensions);
 
-    _this34.dimensions = '';
+    _this39.dimensions = '';
     if (dimensions.has('space')) {
-      _this34.dimensions += 'space';
+      _this39.dimensions += 'space';
     }
     if (dimensions.has('time')) {
-      _this34.dimensions += 'time';
+      _this39.dimensions += 'time';
     }
-    return _this34;
+    return _this39;
   }
 
   JoinOperator.prototype.html = function html(level) {
@@ -3501,18 +3449,18 @@ var RasterOperator = function (_DataNode7) {
   function RasterOperator(operands) {
     _classCallCheck(this, RasterOperator);
 
-    var _this35 = _possibleConstructorReturn(this, _DataNode7.call(this, operands));
+    var _this40 = _possibleConstructorReturn(this, _DataNode7.call(this, operands));
 
     if (operands.length != 3) {
       throw Error("RasterOperator takes exactly 3 operands");
     }
 
-    _this35.left = operands[0];
-    _this35.middle = operands[2];
-    _this35.right = treeToNode(operands[1]);
+    _this40.left = operands[0];
+    _this40.middle = operands[2];
+    _this40.right = treeToNode(operands[1]);
 
-    _this35.dimensions = 'spacetime';
-    return _this35;
+    _this40.dimensions = 'spacetime';
+    return _this40;
   }
 
   RasterOperator.prototype.html = function html(level) {
@@ -3530,23 +3478,23 @@ var SourceOperator = function (_DataNode8) {
   function SourceOperator(operands) {
     _classCallCheck(this, SourceOperator);
 
-    var _this36 = _possibleConstructorReturn(this, _DataNode8.call(this, operands));
+    var _this41 = _possibleConstructorReturn(this, _DataNode8.call(this, operands));
 
     if (operands.length != 1) {
       throw Error("SourceOperator takes exactly 1 operand");
     }
 
-    _this36.operand = operands[0];
-    _this36.name = _this36.operand.name;
-    _this36.type = _this36.operand.type;
-    _this36.field = _this36.operand.field;
+    _this41.operand = operands[0];
+    _this41.name = _this41.operand.name;
+    _this41.type = _this41.operand.type;
+    _this41.field = _this41.operand.field;
 
-    if (_this36.type == 'Layer') {
-      _this36.dimensions = 'space';
-    } else if (_this36.type == 'Table') {
-      _this36.dimensions = 'time';
+    if (_this41.type == 'Layer') {
+      _this41.dimensions = 'space';
+    } else if (_this41.type == 'Table') {
+      _this41.dimensions = 'time';
     }
-    return _this36;
+    return _this41;
   }
 
   SourceOperator.prototype.html = function html(level) {
@@ -3564,23 +3512,23 @@ var MathOperator = function (_DataNode9) {
   function MathOperator(operator, operands) {
     _classCallCheck(this, MathOperator);
 
-    var _this37 = _possibleConstructorReturn(this, _DataNode9.call(this, operands));
+    var _this42 = _possibleConstructorReturn(this, _DataNode9.call(this, operands));
 
-    _this37.operator = operator;
+    _this42.operator = operator;
 
     if (operands.length != 2) {
       throw Error("MathOperator takes exactly 2 operands");
     }
 
-    _this37.left = treeToNode(operands[0]);
-    _this37.right = treeToNode(operands[1]);
+    _this42.left = treeToNode(operands[0]);
+    _this42.right = treeToNode(operands[1]);
 
-    if (_this37.left.dimensions != _this37.right.dimensions) {
+    if (_this42.left.dimensions != _this42.right.dimensions) {
       throw Error("Operators must have the same dimensions");
     }
 
-    _this37.dimensions = _this37.left.dimensions;
-    return _this37;
+    _this42.dimensions = _this42.left.dimensions;
+    return _this42;
   }
 
   MathOperator.prototype.html = function html(level) {
@@ -3653,13 +3601,13 @@ function treeToNode(tree) {
   return node;
 }
 
-var TreeView = function (_React$Component16) {
-  _inherits(TreeView, _React$Component16);
+var TreeView = function (_React$Component21) {
+  _inherits(TreeView, _React$Component21);
 
   function TreeView() {
     _classCallCheck(this, TreeView);
 
-    return _possibleConstructorReturn(this, _React$Component16.apply(this, arguments));
+    return _possibleConstructorReturn(this, _React$Component21.apply(this, arguments));
   }
 
   TreeView.prototype.render = function render() {
