@@ -13,6 +13,7 @@ const REQUEST_VARIABLES = 'REQUEST_VARIABLES';
 
 const UPDATE_NAME = 'UPDATE_NAME';
 const UPDATE_DESCRIPTION = 'UPDATE_DESCRIPTION';
+const UPDATE_SPATIAL_DOMAIN = 'UPDATE_SPATIAL_DOMAIN';
 const UPDATE_TREE = 'UPDATE_TREE';
 const UPDATE_ERRORS = 'UPDATE_ERRORS';
 const UPDATE_MODIFIED = 'UPDATE_MODIFIED';
@@ -173,6 +174,13 @@ function updateDescription(description){
   return {
     type: UPDATE_DESCRIPTION,
     description: description
+  };
+}
+
+function updateSpatialDomain(layer_id) {
+  return {
+    type: UPDATE_SPATIAL_DOMAIN,
+    layer_id: layer_id
   };
 }
 

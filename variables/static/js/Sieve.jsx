@@ -52,6 +52,10 @@ function sieveApp(state=initialState, action){
         changed: true,
         description: action.description
       });
+    case UPDATE_SPATIAL_DOMAIN:
+      return Object.assign({}, state, {
+        spatialDomain: action.layer_id
+      });
     case UPDATE_TREE:
       return Object.assign({}, state, {
         changed: true,
@@ -100,6 +104,12 @@ var mapDispatchToProps = (dispatch) => {
     },
     onDescriptionChange: (e) => {
       dispatch(updateDescription(e.target.value));
+    },
+    onSpatialDomainChange: (e) => {
+      if (e == null)
+        dispatch(updateSpatialDomain(null));
+      else
+        dispatch(updateSpatialDomain(e.value));
     },
     onAddInputVariable: (variable) => {
       dispatch(addInputVariable(variable));
@@ -1175,9 +1185,67 @@ class SelectTableForm extends React.Component {
 }
 
 class SpatialConfiguration extends React.Component {
+  componentDidMount() {
+    var map = this.map = L.map('spatial-config-map').setView([0, 0], 2);
+
+    this.terrain = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+        maxZoom: 18,
+        id: 'ags.n5m0p5ci',
+        accessToken: 'pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
+    }).addTo(map);
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.spatialDomain != this.props.spatialDomain) {
+      if (this.geoJsonTileLayer)
+        this.map.removeLayer(this.geoJsonTileLayer);
+
+      if (this.props.spatialDomain) {
+        var geoJsonURL = '/layers/' + this.props.spatialDomain + '/{z}/{x}/{y}.json';
+        this.geoJsonTileLayer = new L.TileLayer.GeoJSON(geoJsonURL, {
+          clipTiles: true,
+          unique: function(feature) {
+            return feature.properties.id;
+          }
+        }, {
+          pointToLayer: function(feature, latlng) {
+            return new L.CircleMarker(latlng, {
+              radius: 4,
+              fillColor: "#A3C990",
+              color: "#000",
+              weight: 1,
+              opacity: 0.7,
+              fillOpacity: 0.3
+            });
+          }
+        });
+
+        this.map.addLayer(this.geoJsonTileLayer);
+
+        $.ajax('/api/layers/' + this.props.spatialDomain, {
+          dataType: 'json',
+          success: (data, status, xhr) => {
+            var bounds = [
+              [data['bounds'][1], data['bounds'][0]],
+              [data['bounds'][3], data['bounds'][2]]
+            ];
+            this.map.fitBounds(bounds);
+          }
+        });
+      }
+    }
+  }
+
   render() {
+    var layer_options = this.props.layers.items.map((layer) => {
+      return { value: layer.id, label: layer.name };
+    });
+
     return (
       <Panel header="Spatial configuration">
+        <Select value={this.props.spatialDomain} options={layer_options} onChange={this.props.onSpatialDomainChange} />
+        <div id="spatial-config-map" style={{height: 400, marginTop: 10}}></div>
       </Panel>
     );
   }
@@ -1283,7 +1351,10 @@ class SieveComponent extends React.Component {
       <div className="sieve">
         <Row className="show-grid">
           <Col xs={11}>
-            <SpatialConfiguration />
+            <SpatialConfiguration
+              onSpatialDomainChange={this.props.onSpatialDomainChange}
+              spatialDomain={this.props.spatialDomain}
+              layers={this.props.layers} />
           </Col>
         </Row>
         <Row className="show-grid">

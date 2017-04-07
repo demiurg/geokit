@@ -5,6 +5,7 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}" />
 <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/react-select/dist/react-select.css" />
 <style>
   .map {
     height: 400px;
@@ -15,7 +16,7 @@
 </style>
 {% endblock %}
 
-{% block titletag %}Sieve{% endblock %}
+{% block titletag %}Add new variable{% endblock %}
 {% block bodyclass %}menu-sieve{% endblock %}
 
 {% block extra_js %}
@@ -28,6 +29,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/redux-form/6.0.0/redux-form.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/EventEmitter/5.1.0/EventEmitter.js"></script>
 <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+<script src="/static/js/TileLayer.GeoJSON.js"></script>
+<script src="https://unpkg.com/classnames/index.js"></script>
+<script src="https://unpkg.com/react-input-autosize/dist/react-input-autosize.js"></script>
+<script src="https://unpkg.com/react-select/dist/react-select.js"></script>
 
 <script>
 function getCookie(name) {
@@ -49,7 +54,7 @@ function getCookie(name) {
 {% endblock %}
 
 {% block content %}
-{% include "wagtailadmin/shared/header.html" with title="Sieve" icon="placeholder" %}
+{% include "wagtailadmin/shared/header.html" with title="Add new variable" icon="placeholder" add_link="variables:add" add_text="Add Variable" %}
 
 <div class="nice-padding">
     <div id="sieve-container"></div>

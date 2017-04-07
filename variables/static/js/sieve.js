@@ -13,6 +13,7 @@ var REQUEST_VARIABLES = 'REQUEST_VARIABLES';
 
 var UPDATE_NAME = 'UPDATE_NAME';
 var UPDATE_DESCRIPTION = 'UPDATE_DESCRIPTION';
+var UPDATE_SPATIAL_DOMAIN = 'UPDATE_SPATIAL_DOMAIN';
 var UPDATE_TREE = 'UPDATE_TREE';
 var UPDATE_ERRORS = 'UPDATE_ERRORS';
 var UPDATE_MODIFIED = 'UPDATE_MODIFIED';
@@ -171,6 +172,13 @@ function updateDescription(description) {
   return {
     type: UPDATE_DESCRIPTION,
     description: description
+  };
+}
+
+function updateSpatialDomain(layer_id) {
+  return {
+    type: UPDATE_SPATIAL_DOMAIN,
+    layer_id: layer_id
   };
 }
 
@@ -1404,6 +1412,10 @@ function sieveApp() {
         changed: true,
         description: action.description
       });
+    case UPDATE_SPATIAL_DOMAIN:
+      return Object.assign({}, state, {
+        spatialDomain: action.layer_id
+      });
     case UPDATE_TREE:
       return Object.assign({}, state, {
         changed: true,
@@ -1452,6 +1464,9 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
     },
     onDescriptionChange: function onDescriptionChange(e) {
       dispatch(updateDescription(e.target.value));
+    },
+    onSpatialDomainChange: function onSpatialDomainChange(e) {
+      if (e == null) dispatch(updateSpatialDomain(null));else dispatch(updateSpatialDomain(e.value));
     },
     onAddInputVariable: function onAddInputVariable(variable) {
       dispatch(addInputVariable(variable));
@@ -3040,8 +3055,67 @@ var SpatialConfiguration = function (_React$Component15) {
     return _possibleConstructorReturn(this, _React$Component15.apply(this, arguments));
   }
 
+  SpatialConfiguration.prototype.componentDidMount = function componentDidMount() {
+    var map = this.map = L.map('spatial-config-map').setView([0, 0], 2);
+
+    this.terrain = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+      attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+      maxZoom: 18,
+      id: 'ags.n5m0p5ci',
+      accessToken: 'pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
+    }).addTo(map);
+  };
+
+  SpatialConfiguration.prototype.componentDidUpdate = function componentDidUpdate(prevProps) {
+    var _this29 = this;
+
+    if (prevProps.spatialDomain != this.props.spatialDomain) {
+      if (this.geoJsonTileLayer) this.map.removeLayer(this.geoJsonTileLayer);
+
+      if (this.props.spatialDomain) {
+        var geoJsonURL = '/layers/' + this.props.spatialDomain + '/{z}/{x}/{y}.json';
+        this.geoJsonTileLayer = new L.TileLayer.GeoJSON(geoJsonURL, {
+          clipTiles: true,
+          unique: function unique(feature) {
+            return feature.properties.id;
+          }
+        }, {
+          pointToLayer: function pointToLayer(feature, latlng) {
+            return new L.CircleMarker(latlng, {
+              radius: 4,
+              fillColor: "#A3C990",
+              color: "#000",
+              weight: 1,
+              opacity: 0.7,
+              fillOpacity: 0.3
+            });
+          }
+        });
+
+        this.map.addLayer(this.geoJsonTileLayer);
+
+        $.ajax('/api/layers/' + this.props.spatialDomain, {
+          dataType: 'json',
+          success: function success(data, status, xhr) {
+            var bounds = [[data['bounds'][1], data['bounds'][0]], [data['bounds'][3], data['bounds'][2]]];
+            _this29.map.fitBounds(bounds);
+          }
+        });
+      }
+    }
+  };
+
   SpatialConfiguration.prototype.render = function render() {
-    return React.createElement(Panel, { header: "Spatial configuration" });
+    var layer_options = this.props.layers.items.map(function (layer) {
+      return { value: layer.id, label: layer.name };
+    });
+
+    return React.createElement(
+      Panel,
+      { header: "Spatial configuration" },
+      React.createElement(Select, { value: this.props.spatialDomain, options: layer_options, onChange: this.props.onSpatialDomainChange }),
+      React.createElement("div", { id: "spatial-config-map", style: { height: 400, marginTop: 10 } })
+    );
   };
 
   return SpatialConfiguration;
@@ -3192,7 +3266,10 @@ var SieveComponent = function (_React$Component20) {
         React.createElement(
           Col,
           { xs: 11 },
-          React.createElement(SpatialConfiguration, null)
+          React.createElement(SpatialConfiguration, {
+            onSpatialDomainChange: this.props.onSpatialDomainChange,
+            spatialDomain: this.props.spatialDomain,
+            layers: this.props.layers })
         )
       ),
       React.createElement(
@@ -3269,21 +3346,21 @@ var MeanOperator = function (_DataNode) {
   function MeanOperator(operands) {
     _classCallCheck(this, MeanOperator);
 
-    var _this34 = _possibleConstructorReturn(this, _DataNode.call(this, operands));
+    var _this35 = _possibleConstructorReturn(this, _DataNode.call(this, operands));
 
     if (operands.length != 2) {
       throw Error("MeanOperator takes exactly 2 operands");
     }
 
-    _this34.left = treeToNode(operands[0]);
-    _this34.right = treeToNode(operands[1]);
+    _this35.left = treeToNode(operands[0]);
+    _this35.right = treeToNode(operands[1]);
 
-    if (_this34.left.dimensions != _this34.right.dimensions) {
+    if (_this35.left.dimensions != _this35.right.dimensions) {
       throw Error("Operands must have the same dimensions");
     }
 
-    _this34.dimensions = _this34.left.dimensions;
-    return _this34;
+    _this35.dimensions = _this35.left.dimensions;
+    return _this35;
   }
 
   MeanOperator.prototype.html = function html(level) {
@@ -3301,16 +3378,16 @@ var TemporalMeanOperator = function (_DataNode2) {
   function TemporalMeanOperator(operands) {
     _classCallCheck(this, TemporalMeanOperator);
 
-    var _this35 = _possibleConstructorReturn(this, _DataNode2.call(this, operands));
+    var _this36 = _possibleConstructorReturn(this, _DataNode2.call(this, operands));
 
     if (operands.length != 1) {
       throw Error("TemporalMeanOperator takes exactly 1 operand");
     }
 
-    _this35.operand = treeToNode(operands[0]);
+    _this36.operand = treeToNode(operands[0]);
 
-    _this35.dimensions = 'space';
-    return _this35;
+    _this36.dimensions = 'space';
+    return _this36;
   }
 
   TemporalMeanOperator.prototype.html = function html(level) {
@@ -3328,16 +3405,16 @@ var SpatialMeanOperator = function (_DataNode3) {
   function SpatialMeanOperator(operands) {
     _classCallCheck(this, SpatialMeanOperator);
 
-    var _this36 = _possibleConstructorReturn(this, _DataNode3.call(this, operands));
+    var _this37 = _possibleConstructorReturn(this, _DataNode3.call(this, operands));
 
     if (operands.length != 1) {
       throw Error("SpatialMeanOperator takes exactly 1 operand");
     }
 
-    _this36.operand = treeToNode(operands[0]);
+    _this37.operand = treeToNode(operands[0]);
 
-    _this36.dimensions = 'time';
-    return _this36;
+    _this37.dimensions = 'time';
+    return _this37;
   }
 
   SpatialMeanOperator.prototype.html = function html(level) {
@@ -3355,18 +3432,18 @@ var SelectOperator = function (_DataNode4) {
   function SelectOperator(operands) {
     _classCallCheck(this, SelectOperator);
 
-    var _this37 = _possibleConstructorReturn(this, _DataNode4.call(this, operands));
+    var _this38 = _possibleConstructorReturn(this, _DataNode4.call(this, operands));
 
     if (operands.length != 2) {
       throw Error("SelectOperator takes exactly 2 operands");
     }
 
-    _this37.left = treeToNode(operands[0]);
-    _this37.child_op = operands[0][0];
-    _this37.right = operands[1];
+    _this38.left = treeToNode(operands[0]);
+    _this38.child_op = operands[0][0];
+    _this38.right = operands[1];
 
-    _this37.dimensions = _this37.left.dimensions;
-    return _this37;
+    _this38.dimensions = _this38.left.dimensions;
+    return _this38;
   }
 
   SelectOperator.prototype.html = function html(level) {
@@ -3384,16 +3461,16 @@ var ExpressionOperator = function (_DataNode5) {
   function ExpressionOperator(operands) {
     _classCallCheck(this, ExpressionOperator);
 
-    var _this38 = _possibleConstructorReturn(this, _DataNode5.call(this, operands));
+    var _this39 = _possibleConstructorReturn(this, _DataNode5.call(this, operands));
 
     if (operands.length != 1) {
       throw Error("ExpressionOperator takes exactly 1 operand");
     }
 
-    _this38.operand = treeToNode(operands[0]);
+    _this39.operand = treeToNode(operands[0]);
 
-    _this38.dimensions = _this38.operand.dimensions;
-    return _this38;
+    _this39.dimensions = _this39.operand.dimensions;
+    return _this39;
   }
 
   ExpressionOperator.prototype.html = function html(level) {
@@ -3411,27 +3488,27 @@ var JoinOperator = function (_DataNode6) {
   function JoinOperator(operands) {
     _classCallCheck(this, JoinOperator);
 
-    var _this39 = _possibleConstructorReturn(this, _DataNode6.call(this, operands));
+    var _this40 = _possibleConstructorReturn(this, _DataNode6.call(this, operands));
 
     if (operands.length != 2) {
       throw Error("JoinOperator takes exactly 2 operands");
     }
 
-    _this39.left = new SourceOperator([operands[0]]);
-    _this39.right = new SourceOperator([operands[1]]);
+    _this40.left = new SourceOperator([operands[0]]);
+    _this40.right = new SourceOperator([operands[1]]);
 
     var dimensions = new Set();
-    dimensions.add(_this39.left.dimensions);
-    dimensions.add(_this39.right.dimensions);
+    dimensions.add(_this40.left.dimensions);
+    dimensions.add(_this40.right.dimensions);
 
-    _this39.dimensions = '';
+    _this40.dimensions = '';
     if (dimensions.has('space')) {
-      _this39.dimensions += 'space';
+      _this40.dimensions += 'space';
     }
     if (dimensions.has('time')) {
-      _this39.dimensions += 'time';
+      _this40.dimensions += 'time';
     }
-    return _this39;
+    return _this40;
   }
 
   JoinOperator.prototype.html = function html(level) {
@@ -3449,18 +3526,18 @@ var RasterOperator = function (_DataNode7) {
   function RasterOperator(operands) {
     _classCallCheck(this, RasterOperator);
 
-    var _this40 = _possibleConstructorReturn(this, _DataNode7.call(this, operands));
+    var _this41 = _possibleConstructorReturn(this, _DataNode7.call(this, operands));
 
     if (operands.length != 3) {
       throw Error("RasterOperator takes exactly 3 operands");
     }
 
-    _this40.left = operands[0];
-    _this40.middle = operands[2];
-    _this40.right = treeToNode(operands[1]);
+    _this41.left = operands[0];
+    _this41.middle = operands[2];
+    _this41.right = treeToNode(operands[1]);
 
-    _this40.dimensions = 'spacetime';
-    return _this40;
+    _this41.dimensions = 'spacetime';
+    return _this41;
   }
 
   RasterOperator.prototype.html = function html(level) {
@@ -3478,23 +3555,23 @@ var SourceOperator = function (_DataNode8) {
   function SourceOperator(operands) {
     _classCallCheck(this, SourceOperator);
 
-    var _this41 = _possibleConstructorReturn(this, _DataNode8.call(this, operands));
+    var _this42 = _possibleConstructorReturn(this, _DataNode8.call(this, operands));
 
     if (operands.length != 1) {
       throw Error("SourceOperator takes exactly 1 operand");
     }
 
-    _this41.operand = operands[0];
-    _this41.name = _this41.operand.name;
-    _this41.type = _this41.operand.type;
-    _this41.field = _this41.operand.field;
+    _this42.operand = operands[0];
+    _this42.name = _this42.operand.name;
+    _this42.type = _this42.operand.type;
+    _this42.field = _this42.operand.field;
 
-    if (_this41.type == 'Layer') {
-      _this41.dimensions = 'space';
-    } else if (_this41.type == 'Table') {
-      _this41.dimensions = 'time';
+    if (_this42.type == 'Layer') {
+      _this42.dimensions = 'space';
+    } else if (_this42.type == 'Table') {
+      _this42.dimensions = 'time';
     }
-    return _this41;
+    return _this42;
   }
 
   SourceOperator.prototype.html = function html(level) {
@@ -3512,23 +3589,23 @@ var MathOperator = function (_DataNode9) {
   function MathOperator(operator, operands) {
     _classCallCheck(this, MathOperator);
 
-    var _this42 = _possibleConstructorReturn(this, _DataNode9.call(this, operands));
+    var _this43 = _possibleConstructorReturn(this, _DataNode9.call(this, operands));
 
-    _this42.operator = operator;
+    _this43.operator = operator;
 
     if (operands.length != 2) {
       throw Error("MathOperator takes exactly 2 operands");
     }
 
-    _this42.left = treeToNode(operands[0]);
-    _this42.right = treeToNode(operands[1]);
+    _this43.left = treeToNode(operands[0]);
+    _this43.right = treeToNode(operands[1]);
 
-    if (_this42.left.dimensions != _this42.right.dimensions) {
+    if (_this43.left.dimensions != _this43.right.dimensions) {
       throw Error("Operators must have the same dimensions");
     }
 
-    _this42.dimensions = _this42.left.dimensions;
-    return _this42;
+    _this43.dimensions = _this43.left.dimensions;
+    return _this43;
   }
 
   MathOperator.prototype.html = function html(level) {
