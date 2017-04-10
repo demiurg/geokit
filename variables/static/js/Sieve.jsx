@@ -1324,6 +1324,7 @@ class TabularDataSource extends React.Component {
               name="name" type="text" placeholder="enter variable name"
             />
           </FormGroup>
+          <Button onClick={this.onSave.bind(this)}>Add</Button>
         </form>
       </Panel>
     );
@@ -1400,6 +1401,7 @@ class RasterDataSource extends React.Component {
               name="name" type="text" placeholder="enter variable name"
             />
           </FormGroup>
+          <Button onClick={this.onSave.bind(this)}>Add</Button>
         </form>
       </Panel>
     );

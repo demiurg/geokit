@@ -3223,6 +3223,11 @@ var TabularDataSource = function (_React$Component16) {
           React.createElement(FormControl, {
             name: "name", type: "text", placeholder: "enter variable name"
           })
+        ),
+        React.createElement(
+          Button,
+          { onClick: this.onSave.bind(this) },
+          "Add"
         )
       )
     );
@@ -3326,6 +3331,11 @@ var RasterDataSource = function (_React$Component17) {
           React.createElement(FormControl, {
             name: "name", type: "text", placeholder: "enter variable name"
           })
+        ),
+        React.createElement(
+          Button,
+          { onClick: this.onSave.bind(this) },
+          "Add"
         )
       )
     );
