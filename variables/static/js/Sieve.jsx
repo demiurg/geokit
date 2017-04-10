@@ -1270,11 +1270,61 @@ class TabularDataSource extends React.Component {
     //   name: '',
     //   field: ''
     // }
+
+    this.props.onAddInputVariable(variable);
   }
+
+  validate() {
+    var form = $(this.form).serializeArray();
+    if (form[0]['value'] && form[1]['value'] && form[2]['value']){
+      var variable = {
+        name: form[2]['value'],
+        node: [
+          'join',
+          [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]
+        ]
+      };
+      this.setState({
+        variable: variable
+      });
+    }
+  };
 
   render() {
     return (
       <Panel header="Tabular data">
+        <form ref={(ref)=>{this.form=ref}} onChange={this.validate.bind(this)}>
+          <FormGroup controlId="formSelectSource">
+            <ControlLabel>Table</ControlLabel>
+            <FormControl
+              componentClass="select"
+              placeholder="select"
+              name="table"
+            >
+              {
+                this.props.tables.items.map(i2o('Table'))
+              }
+            </FormControl>
+          </FormGroup>
+          <FormGroup controlId="formSelectDest">
+            <ControlLabel>Layer</ControlLabel>
+            <FormControl
+              componentClass="select"
+              placeholder="select"
+              name="layer"
+            >
+              {
+                this.props.layers.items.map(i2o('Table'))
+              }
+            </FormControl>
+          </FormGroup>
+          <FormGroup controlId="name">
+            <ControlLabel>Name</ControlLabel>
+            <FormControl
+              name="name" type="text" placeholder="enter variable name"
+            />
+          </FormGroup>
+        </form>
       </Panel>
     );
   }
@@ -1296,11 +1346,61 @@ class RasterDataSource extends React.Component {
     //     ]]
     // }
     //
+
+    this.props.onAddInputVariable(this.state.variable);
   }
+
+  validate() {
+    var form = $(this.form).serializeArray();
+    if (form[0]['value'] && form[1]['value'] && form[2]['value']){
+      var variable = {
+        name: form[2]['value'],
+        node: [
+          'raster',
+          this.props.spatialDomain,
+          [
+            JSON.parse(form[0]['value']),
+            form[1]['value']
+          ]
+        ]
+      };
+      this.setState({
+        variable: variable
+      });
+    }
+  };
 
   render() {
     return (
       <Panel header="Raster data">
+        <form ref={(ref)=>{this.form=ref}} onChange={this.validate.bind(this)}>
+          <FormGroup controlId="rightSelect">
+            <ControlLabel>Raster</ControlLabel>
+            <FormControl componentClass="select" placeholder="select" name="right">
+              {
+                this.props.raster_catalog.items.map((r, i) => (
+                  <option key={i} value={
+                    `{"name": "${r.description}", "id": "${r.name}"}`
+                  }>
+                    {r.description + ': ' + r.band}
+                  </option>
+                ))
+              }
+            </FormControl>
+          </FormGroup>
+          <FormGroup controlId="name">
+            <ControlLabel>Temporal&nbsp;Range</ControlLabel>
+            <FormControl
+              name="dates" type="text" placeholder="enter like 2000-001,2000-31"
+            />
+          </FormGroup>
+          <FormGroup controlId="name">
+            <ControlLabel>Name</ControlLabel>
+            <FormControl
+              name="name" type="text" placeholder="enter variable name"
+            />
+          </FormGroup>
+        </form>
       </Panel>
     );
   }
@@ -1359,10 +1459,18 @@ class SieveComponent extends React.Component {
         </Row>
         <Row className="show-grid">
           <Col xs={5}>
-            <TabularDataSource onAddInputVarialbe={this.props.onAddInputVariable} />
+            <TabularDataSource
+              onAddInputVarialbe={this.props.onAddInputVariable}
+              layers={this.props.layers}
+              tables={this.props.tables}
+            />
           </Col>
           <Col xs={5} xsOffset={1}>
-            <RasterDataSource onAddInputVariable={this.props.onAddInputVariable} />
+            <RasterDataSource
+              onAddInputVariable={this.props.onAddInputVariable}
+              raster_catalog={this.props.raster_catalog}
+              spatialDomain={this.props.spatialDomain}
+          />
           </Col>
         </Row>
         <Row className="show-grid">
