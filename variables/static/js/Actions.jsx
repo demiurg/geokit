@@ -22,6 +22,7 @@ const UPDATE_CREATED = 'UPDATE_CREATED';
 
 const REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
 const ADD_INPUT_VARIABLE = 'ADD_INPUT_VARIABLE';
+const EDIT_INPUT_VARIABLE = 'EDIT_INPUT_VARIABLE';
 
 const ADD_TREE_NODE = 'ADD_TREE_NODE';
 
@@ -143,6 +144,14 @@ function addInputVariable(variable){
   return {
     type: ADD_INPUT_VARIABLE,
     id: nextVariableId++,
+    variable
+  };
+}
+
+function editInputVariable(variable, idx){
+  return {
+    type: EDIT_INPUT_VARIABLE,
+    index: idx,
     variable
   };
 }
