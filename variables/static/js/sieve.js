@@ -28,6 +28,9 @@ var SAVE_VARIABLE = 'SAVE_VARIABLE';
 var POST_VARIABLE = 'POST_VARIABLE';
 var RECIEVE_VARIABLE = 'RECIEVE_VARIABLE';
 
+var EDIT_TABULAR_DATA = 'EDIT_TABULAR_DATA';
+var EDIT_RASTER_DATA = 'EDIT_RASTER_DATA';
+
 function requestLayers() {
   return {
     type: REQUEST_LAYERS
@@ -263,6 +266,20 @@ function saveVariable(variable, created) {
         dispatch(updateErrors(errors));
       }
     });
+  };
+}
+
+function editTabularData(data) {
+  return {
+    type: EDIT_TABULAR_DATA,
+    data: data
+  };
+}
+
+function editRasterData(data) {
+  return {
+    type: EDIT_RASTER_DATA,
+    data: data
   };
 }
 "use strict";
@@ -1336,6 +1353,8 @@ function tree() {
 }
 "use strict";
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1356,6 +1375,7 @@ var _ReactBootstrap = ReactBootstrap,
     Tabs = _ReactBootstrap.Tabs,
     DropdownButton = _ReactBootstrap.DropdownButton,
     MenuItem = _ReactBootstrap.MenuItem,
+    Table = _ReactBootstrap.Table,
     Modal = _ReactBootstrap.Modal,
     FormControl = _ReactBootstrap.FormControl,
     ControlLabel = _ReactBootstrap.ControlLabel,
@@ -1374,7 +1394,9 @@ var initialState = Object.assign({
   input_variables: [],
   modified: null,
   created: null,
-  changed: false
+  changed: false,
+  editingTabularData: {},
+  editingRasterData: {}
 }, window.sieve_props);
 
 function sieveApp() {
@@ -1445,6 +1467,14 @@ function sieveApp() {
       return Object.assign({}, state, {
         created: action.time
       });
+    case EDIT_RASTER_DATA:
+      return Object.assign({}, state, {
+        editingRasterData: action.data
+      });
+    case EDIT_TABULAR_DATA:
+      return Object.assign({}, state, {
+        editingTabularData: action.data
+      });
     default:
       return state;
   }
@@ -1476,6 +1506,12 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
     },
     onAddTreeOp: function onAddTreeOp(op) {
       dispatch(addTreeNode(op));
+    },
+    onEditRasterData: function onEditRasterData(data) {
+      dispatch(editRasterData(data));
+    },
+    onEditTabularData: function onEditTabularData(data) {
+      dispatch(editTabularData(data));
     }
   };
 };
@@ -3149,20 +3185,43 @@ var TabularDataSource = function (_React$Component16) {
     //   field: ''
     // }
 
+    var variable = {
+      name: this.props.editingTabularData.name,
+      node: ['join', [this.props.editingTabularData.source1, this.props.editingTabularData.source2]]
+    };
+    this.props.onEditTabularData({
+      name: "",
+      source1: "",
+      source2: ""
+    });
     this.props.onAddInputVariable(variable);
   };
 
   TabularDataSource.prototype.validate = function validate() {
     var form = $(this.form).serializeArray();
-    if (form[0]['value'] && form[1]['value'] && form[2]['value']) {
-      var variable = {
-        name: form[2]['value'],
-        node: ['join', [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]]
-      };
-      this.setState({
-        variable: variable
-      });
-    }
+    var name = form[2]['value'];
+    var source1 = form[0]['value'];
+    var source2 = form[1]['value'];
+
+    var data = {
+      name: name,
+      source1: source1,
+      source2: source2
+    };
+
+    this.props.onEditTabularData(data);
+    // if (form[0]['value'] && form[1]['value'] && form[2]['value']){
+    //   var variable = {
+    //     name: form[2]['value'],
+    //     node: [
+    //       'join',
+    //       [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]
+    //     ]
+    //   };
+    //   this.setState({
+    //     variable: variable
+    //   });
+    // }
   };
 
   TabularDataSource.prototype.render = function render() {
@@ -3182,16 +3241,17 @@ var TabularDataSource = function (_React$Component16) {
           React.createElement(
             ControlLabel,
             null,
-            "Table"
+            "Source 1"
           ),
           React.createElement(
             FormControl,
             {
               componentClass: "select",
               placeholder: "select",
+              value: this.props.editingTabularData.source1,
               name: "table"
             },
-            this.props.tables.items.map(i2o('Table'))
+            this.props.tables.items.map(i2o('Table')).concat(this.props.layers.items.map(i2o('Layer')))
           )
         ),
         React.createElement(
@@ -3200,16 +3260,17 @@ var TabularDataSource = function (_React$Component16) {
           React.createElement(
             ControlLabel,
             null,
-            "Layer"
+            "Source 2"
           ),
           React.createElement(
             FormControl,
             {
               componentClass: "select",
               placeholder: "select",
-              name: "layer"
+              name: "layer",
+              value: this.props.editingTabularData.source2
             },
-            this.props.layers.items.map(i2o('Table'))
+            this.props.tables.items.map(i2o('Table')).concat(this.props.layers.items.map(i2o('Layer')))
           )
         ),
         React.createElement(
@@ -3221,7 +3282,8 @@ var TabularDataSource = function (_React$Component16) {
             "Name"
           ),
           React.createElement(FormControl, {
-            name: "name", type: "text", placeholder: "enter variable name"
+            name: "name", type: "text", placeholder: "enter variable name",
+            value: this.props.editingTabularData.name
           })
         ),
         React.createElement(
@@ -3247,7 +3309,7 @@ var RasterDataSource = function (_React$Component17) {
 
   RasterDataSource.prototype.onSave = function onSave() {
     // Call `this.props.onAddInputVariable(var) when Save button is clicked.
-    // 
+    //
     // var should be an object in the form:
     // {
     //   name: '',
@@ -3261,20 +3323,51 @@ var RasterDataSource = function (_React$Component17) {
     // }
     //
 
-    this.props.onAddInputVariable(this.state.variable);
+    var variable = {
+      name: this.props.editingRasterData.name,
+      node: ['raster', [this.props.editingRasterData.raster, this.props.spatialDomain, this.props.editingRasterData.temporalRange]]
+    };
+
+    this.props.onEditRasterData({
+      name: "",
+      raster: "",
+      temporalRange: ""
+    });
+    this.props.onAddInputVariable(variable);
   };
 
   RasterDataSource.prototype.validate = function validate() {
+
     var form = $(this.form).serializeArray();
-    if (form[0]['value'] && form[1]['value'] && form[2]['value']) {
-      var variable = {
-        name: form[2]['value'],
-        node: ['raster', this.props.spatialDomain, [JSON.parse(form[0]['value']), form[1]['value']]]
-      };
-      this.setState({
-        variable: variable
-      });
-    }
+    var name = form[2]['value'];
+    var raster = form[0]['value'];
+    var temporalRange = form[1]['value'];
+
+    var data = {
+      name: name,
+      raster: raster,
+      temporalRange: temporalRange
+    };
+
+    this.props.onEditRasterData(data);
+
+    // var form = $(this.form).serializeArray();
+    // if (form[0]['value'] && form[1]['value'] && form[2]['value']){
+    //   var variable = {
+    //     name: form[2]['value'],
+    //     node: [
+    //       'raster',
+    //       this.props.spatialDomain,
+    //       [
+    //         JSON.parse(form[0]['value']),
+    //         form[1]['value']
+    //       ]
+    //     ]
+    //   };
+    //   this.setState({
+    //     variable: variable
+    //   });
+    // }
   };
 
   RasterDataSource.prototype.render = function render() {
@@ -3298,7 +3391,12 @@ var RasterDataSource = function (_React$Component17) {
           ),
           React.createElement(
             FormControl,
-            { componentClass: "select", placeholder: "select", name: "right" },
+            {
+              componentClass: "select",
+              placeholder: "select",
+              name: "right",
+              value: this.props.editingRasterData.raster
+            },
             this.props.raster_catalog.items.map(function (r, i) {
               return React.createElement(
                 "option",
@@ -3310,14 +3408,17 @@ var RasterDataSource = function (_React$Component17) {
         ),
         React.createElement(
           FormGroup,
-          { controlId: "name" },
+          { controlId: "range" },
           React.createElement(
             ControlLabel,
             null,
             "Temporal\xA0Range"
           ),
           React.createElement(FormControl, {
-            name: "dates", type: "text", placeholder: "enter like 2000-001,2000-31"
+            name: "dates",
+            type: "text",
+            placeholder: "enter like 2000-001,2000-31",
+            value: this.props.editingRasterData.temporalRange
           })
         ),
         React.createElement(
@@ -3329,7 +3430,8 @@ var RasterDataSource = function (_React$Component17) {
             "Name"
           ),
           React.createElement(FormControl, {
-            name: "name", type: "text", placeholder: "enter variable name"
+            name: "name", type: "text", placeholder: "enter variable name",
+            value: this.props.editingRasterData.name
           })
         ),
         React.createElement(
@@ -3370,7 +3472,42 @@ var VariableTable = function (_React$Component19) {
   }
 
   VariableTable.prototype.render = function render() {
-    return React.createElement(Panel, { header: "Variables" });
+    console.log(this.props.input_variables);
+    if (this.props.input_variables.length > 0) {
+      var item = this.props.input_variables[0];
+      console.log(treeToNode(item.node));
+    }
+    return React.createElement(
+      Panel,
+      { header: "Variables" },
+      React.createElement(
+        Table,
+        { striped: true },
+        React.createElement(
+          "thead",
+          null,
+          React.createElement(
+            "tr",
+            null,
+            React.createElement(
+              "th",
+              null,
+              "Name"
+            ),
+            React.createElement(
+              "th",
+              null,
+              "Type"
+            ),
+            React.createElement(
+              "th",
+              null,
+              "Dimensions"
+            )
+          )
+        )
+      )
+    );
   };
 
   return VariableTable;
@@ -3433,7 +3570,9 @@ var SieveComponent = function (_React$Component20) {
           Col,
           { xs: 5 },
           React.createElement(TabularDataSource, {
-            onAddInputVarialbe: this.props.onAddInputVariable,
+            onAddInputVariable: this.props.onAddInputVariable,
+            onEditTabularData: this.props.onEditTabularData,
+            editingTabularData: this.props.editingTabularData,
             layers: this.props.layers,
             tables: this.props.tables
           })
@@ -3443,6 +3582,8 @@ var SieveComponent = function (_React$Component20) {
           { xs: 5, xsOffset: 1 },
           React.createElement(RasterDataSource, {
             onAddInputVariable: this.props.onAddInputVariable,
+            onEditRasterData: this.props.onEditRasterData,
+            editingRasterData: this.props.editingRasterData,
             raster_catalog: this.props.raster_catalog,
             spatialDomain: this.props.spatialDomain
           })
@@ -3463,7 +3604,10 @@ var SieveComponent = function (_React$Component20) {
         React.createElement(
           Col,
           { xs: 11 },
-          React.createElement(VariableTable, null)
+          React.createElement(VariableTable, {
+            onRemoveInputVariable: this.props.onRemoveInputVariable,
+            input_variables: this.props.input_variables
+          })
         )
       )
     );
@@ -3656,6 +3800,7 @@ var JoinOperator = function (_DataNode6) {
       throw Error("JoinOperator takes exactly 2 operands");
     }
 
+    console.log("operands is a ", _typeof(operands[0]));
     _this42.left = new SourceOperator([operands[0]]);
     _this42.right = new SourceOperator([operands[1]]);
 
@@ -3725,7 +3870,7 @@ var SourceOperator = function (_DataNode8) {
 
     _this44.operand = operands[0];
     _this44.name = _this44.operand.name;
-    _this44.type = _this44.operand.type;
+    _this44.type = _this44.operand['type'];
     _this44.field = _this44.operand.field;
 
     if (_this44.type == 'Layer') {

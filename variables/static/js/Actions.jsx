@@ -29,6 +29,9 @@ const SAVE_VARIABLE = 'SAVE_VARIABLE';
 const POST_VARIABLE = 'POST_VARIABLE';
 const RECIEVE_VARIABLE = 'RECIEVE_VARIABLE';
 
+const EDIT_TABULAR_DATA = 'EDIT_TABULAR_DATA';
+const EDIT_RASTER_DATA = 'EDIT_RASTER_DATA';
+
 function requestLayers() {
   return {
     type: REQUEST_LAYERS
@@ -259,5 +262,19 @@ function saveVariable(variable, created){
         dispatch(updateErrors(errors));
       }
     });
+  };
+}
+
+function editTabularData(data) {
+  return {
+    type: EDIT_TABULAR_DATA,
+    data: data
+  };
+}
+
+function editRasterData(data) {
+  return {
+    type: EDIT_RASTER_DATA,
+    data: data
   };
 }

@@ -1,6 +1,6 @@
 const {
   Panel, ButtonGroup, ButtonToolbar, ButtonInput, Button, Row, Col,
-  Alert, Tabs, DropdownButton, MenuItem,
+  Alert, Tabs, DropdownButton, MenuItem, Table,
   Modal, FormControl, ControlLabel, FormGroup, HelpBlock
 } = ReactBootstrap;
 
@@ -16,7 +16,9 @@ var initialState = Object.assign({
   input_variables: [],
   modified: null,
   created: null,
-  changed: false
+  changed: false,
+  editingTabularData: {},
+  editingRasterData: {}
 }, window.sieve_props);
 
 
@@ -85,6 +87,14 @@ function sieveApp(state=initialState, action){
       return Object.assign({}, state, {
         created: action.time
       });
+    case EDIT_RASTER_DATA:
+      return Object.assign({}, state, {
+        editingRasterData: action.data
+      });
+    case EDIT_TABULAR_DATA:
+      return Object.assign({}, state, {
+        editingTabularData: action.data
+      });
     default:
       return state;
   }
@@ -119,6 +129,12 @@ var mapDispatchToProps = (dispatch) => {
     },
     onAddTreeOp: (op) => {
       dispatch(addTreeNode(op));
+    },
+    onEditRasterData: (data) => {
+      dispatch(editRasterData(data));
+    },
+    onEditTabularData: (data) => {
+      dispatch(editTabularData(data));
     }
   };
 };
@@ -1271,23 +1287,49 @@ class TabularDataSource extends React.Component {
     //   field: ''
     // }
 
+    var variable = {
+      name: this.props.editingTabularData.name,
+      node: [
+        'join',
+        [
+          this.props.editingTabularData.source1,
+          this.props.editingTabularData.source2
+        ]
+      ]
+    };
+    this.props.onEditTabularData({
+      name: "",
+      source1: "",
+      source2: ""
+    });
     this.props.onAddInputVariable(variable);
   }
 
   validate() {
     var form = $(this.form).serializeArray();
-    if (form[0]['value'] && form[1]['value'] && form[2]['value']){
-      var variable = {
-        name: form[2]['value'],
-        node: [
-          'join',
-          [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]
-        ]
-      };
-      this.setState({
-        variable: variable
-      });
-    }
+    var name = form[2]['value'];
+    var source1 = form[0]['value'];
+    var source2 = form[1]['value'];
+
+    var data = {
+      name: name,
+      source1: source1,
+      source2: source2
+    };
+
+    this.props.onEditTabularData(data);
+    // if (form[0]['value'] && form[1]['value'] && form[2]['value']){
+    //   var variable = {
+    //     name: form[2]['value'],
+    //     node: [
+    //       'join',
+    //       [JSON.parse(form[0]['value']), JSON.parse(form[1]['value'])]
+    //     ]
+    //   };
+    //   this.setState({
+    //     variable: variable
+    //   });
+    // }
   };
 
   render() {
@@ -1295,26 +1337,34 @@ class TabularDataSource extends React.Component {
       <Panel header="Tabular data">
         <form ref={(ref)=>{this.form=ref}} onChange={this.validate.bind(this)}>
           <FormGroup controlId="formSelectSource">
-            <ControlLabel>Table</ControlLabel>
+            <ControlLabel>Source 1</ControlLabel>
             <FormControl
               componentClass="select"
               placeholder="select"
+              value={this.props.editingTabularData.source1}
               name="table"
             >
               {
-                this.props.tables.items.map(i2o('Table'))
+                this.props.tables.items.map(i2o('Table')
+                ).concat(
+                  this.props.layers.items.map(i2o('Layer'))
+                )
               }
             </FormControl>
           </FormGroup>
           <FormGroup controlId="formSelectDest">
-            <ControlLabel>Layer</ControlLabel>
+            <ControlLabel>Source 2</ControlLabel>
             <FormControl
               componentClass="select"
               placeholder="select"
               name="layer"
+              value={this.props.editingTabularData.source2}
             >
               {
-                this.props.layers.items.map(i2o('Table'))
+                this.props.tables.items.map(i2o('Table')
+                ).concat(
+                  this.props.layers.items.map(i2o('Layer'))
+                )
               }
             </FormControl>
           </FormGroup>
@@ -1322,6 +1372,7 @@ class TabularDataSource extends React.Component {
             <ControlLabel>Name</ControlLabel>
             <FormControl
               name="name" type="text" placeholder="enter variable name"
+              value={this.props.editingTabularData.name}
             />
           </FormGroup>
           <Button onClick={this.onSave.bind(this)}>Add</Button>
@@ -1334,7 +1385,7 @@ class TabularDataSource extends React.Component {
 class RasterDataSource extends React.Component {
   onSave() {
     // Call `this.props.onAddInputVariable(var) when Save button is clicked.
-    // 
+    //
     // var should be an object in the form:
     // {
     //   name: '',
@@ -1348,27 +1399,58 @@ class RasterDataSource extends React.Component {
     // }
     //
 
-    this.props.onAddInputVariable(this.state.variable);
+    var variable = {
+      name: this.props.editingRasterData.name,
+      node: [
+        'raster',
+        [
+          this.props.editingRasterData.raster,
+          this.props.spatialDomain,
+          this.props.editingRasterData.temporalRange
+        ]
+      ]
+    };
+
+    this.props.onEditRasterData({
+      name: "",
+      raster: "",
+      temporalRange: ""
+    });
+    this.props.onAddInputVariable(variable);
   }
 
   validate() {
+
     var form = $(this.form).serializeArray();
-    if (form[0]['value'] && form[1]['value'] && form[2]['value']){
-      var variable = {
-        name: form[2]['value'],
-        node: [
-          'raster',
-          this.props.spatialDomain,
-          [
-            JSON.parse(form[0]['value']),
-            form[1]['value']
-          ]
-        ]
-      };
-      this.setState({
-        variable: variable
-      });
-    }
+    var name = form[2]['value'];
+    var raster = form[0]['value'];
+    var temporalRange = form[1]['value'];
+
+    var data = {
+      name: name,
+      raster: raster,
+      temporalRange: temporalRange
+    };
+
+    this.props.onEditRasterData(data);
+
+    // var form = $(this.form).serializeArray();
+    // if (form[0]['value'] && form[1]['value'] && form[2]['value']){
+    //   var variable = {
+    //     name: form[2]['value'],
+    //     node: [
+    //       'raster',
+    //       this.props.spatialDomain,
+    //       [
+    //         JSON.parse(form[0]['value']),
+    //         form[1]['value']
+    //       ]
+    //     ]
+    //   };
+    //   this.setState({
+    //     variable: variable
+    //   });
+    // }
   };
 
   render() {
@@ -1377,7 +1459,12 @@ class RasterDataSource extends React.Component {
         <form ref={(ref)=>{this.form=ref}} onChange={this.validate.bind(this)}>
           <FormGroup controlId="rightSelect">
             <ControlLabel>Raster</ControlLabel>
-            <FormControl componentClass="select" placeholder="select" name="right">
+            <FormControl
+              componentClass="select"
+              placeholder="select"
+              name="right"
+              value={this.props.editingRasterData.raster}
+            >
               {
                 this.props.raster_catalog.items.map((r, i) => (
                   <option key={i} value={
@@ -1389,16 +1476,20 @@ class RasterDataSource extends React.Component {
               }
             </FormControl>
           </FormGroup>
-          <FormGroup controlId="name">
+          <FormGroup controlId="range">
             <ControlLabel>Temporal&nbsp;Range</ControlLabel>
             <FormControl
-              name="dates" type="text" placeholder="enter like 2000-001,2000-31"
+              name="dates"
+              type="text"
+              placeholder="enter like 2000-001,2000-31"
+              value={this.props.editingRasterData.temporalRange}
             />
           </FormGroup>
           <FormGroup controlId="name">
             <ControlLabel>Name</ControlLabel>
             <FormControl
               name="name" type="text" placeholder="enter variable name"
+              value={this.props.editingRasterData.name}
             />
           </FormGroup>
           <Button onClick={this.onSave.bind(this)}>Add</Button>
@@ -1419,8 +1510,23 @@ class ExpressionEditor extends React.Component {
 
 class VariableTable extends React.Component {
   render() {
+    console.log(this.props.input_variables);
+    if (this.props.input_variables.length > 0){
+      var item = this.props.input_variables[0];
+      console.log(treeToNode(item.node));
+    }
     return (
       <Panel header="Variables">
+        <Table striped>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Dimensions</th>
+            </tr>
+          </thead>
+
+        </Table>
       </Panel>
     );
   }
@@ -1462,7 +1568,9 @@ class SieveComponent extends React.Component {
         <Row className="show-grid">
           <Col xs={5}>
             <TabularDataSource
-              onAddInputVarialbe={this.props.onAddInputVariable}
+              onAddInputVariable={this.props.onAddInputVariable}
+              onEditTabularData={this.props.onEditTabularData}
+              editingTabularData={this.props.editingTabularData}
               layers={this.props.layers}
               tables={this.props.tables}
             />
@@ -1470,6 +1578,8 @@ class SieveComponent extends React.Component {
           <Col xs={5} xsOffset={1}>
             <RasterDataSource
               onAddInputVariable={this.props.onAddInputVariable}
+              onEditRasterData={this.props.onEditRasterData}
+              editingRasterData={this.props.editingRasterData}
               raster_catalog={this.props.raster_catalog}
               spatialDomain={this.props.spatialDomain}
           />
@@ -1482,7 +1592,10 @@ class SieveComponent extends React.Component {
         </Row>
         <Row className="show-grid">
           <Col xs={11}>
-            <VariableTable />
+            <VariableTable
+              onRemoveInputVariable={this.props.onRemoveInputVariable}
+              input_variables={this.props.input_variables}
+            />
           </Col>
         </Row>
       </div>
@@ -1495,7 +1608,7 @@ var formatHtml = (html, level) => {return tab(level) + html;};
 
 class DataNode {
   constructor(operands) {
-    
+
   }
 
   json() {
@@ -1546,7 +1659,7 @@ class TemporalMeanOperator extends DataNode {
     }
 
     this.operand = treeToNode(operands[0]);
-    
+
     this.dimensions = 'space';
   }
 
@@ -1679,7 +1792,7 @@ class SourceOperator extends DataNode {
 
     this.operand = operands[0];
     this.name = this.operand.name;
-    this.type = this.operand.type;
+    this.type = this.operand['type'];
     this.field = this.operand.field;
 
     if (this.type == 'Layer') {
