@@ -1630,6 +1630,25 @@ class VariableTable extends React.Component {
   }
 }
 
+var node2tree  = (node) => {
+  var buildTree = (node, tree, branch) => {
+    if (branch[0] == 'const'){
+      tree.push(branch[1]);
+      return tree;
+    } else {
+      tree.push(branch[0]);
+      var subPaths = branch[1];
+      var subBranch = [];
+      subPaths.forEach((element) => {
+        buildTree(node, subBranch, node[element]);
+      });
+      tree.push(subBranch);
+      return tree;
+    };
+  }
+  return buildTree(node, [], node[0]);
+}
+
 class SieveComponent extends React.Component {
   render() {
     var self = this;
@@ -1645,7 +1664,7 @@ class SieveComponent extends React.Component {
       self.props.onSaveVariable({
         id: self.props.id,
         name: self.props.name,
-        tree: self.props.tree,
+        tree: node2tree(self.props.tree),
         input_variables: self.props.input_variables,
         description: self.props.description,
         temporal_domain: self.props.temporal_domain,
@@ -1687,6 +1706,18 @@ class SieveComponent extends React.Component {
         </Row>
         <Row className="show-grid">
           <Col xs={11}>
+            <VariableTable
+              onRemoveInputVariable={this.props.onRemoveInputVariable}
+              onEditTabularData={this.props.onEditTabularData}
+              onEditRasterData={this.props.onEditRasterData}
+              onSpatialDomainChange={this.props.onSpatialDomainChange}
+              input_variables={this.props.input_variables}
+              onInitTree={this.props.onInitTree}
+            />
+          </Col>
+        </Row>
+        <Row className="show-grid">
+          <Col xs={11}>
             <ExpressionEditor
               tree={this.props.tree}
               onInitTree={this.props.onInitTree}
@@ -1698,18 +1729,7 @@ class SieveComponent extends React.Component {
               errors={this.props.errors} />
           </Col>
         </Row>
-        <Row className="show-grid">
-          <Col xs={11}>
-            <VariableTable
-              onRemoveInputVariable={this.props.onRemoveInputVariable}
-              onEditTabularData={this.props.onEditTabularData}
-              onEditRasterData={this.props.onEditRasterData}
-              onSpatialDomainChange={this.props.onSpatialDomainChange}
-              input_variables={this.props.input_variables}
-              onInitTree={this.props.onInitTree}
-            />
-          </Col>
-        </Row>
+        <Button onClick={onSave}>Save</Button>
       </div>
     );
   }

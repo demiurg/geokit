@@ -3754,6 +3754,25 @@ var VariableTable = function (_React$Component19) {
   return VariableTable;
 }(React.Component);
 
+var node2tree = function node2tree(node) {
+  var buildTree = function buildTree(node, tree, branch) {
+    if (branch[0] == 'const') {
+      tree.push(branch[1]);
+      return tree;
+    } else {
+      tree.push(branch[0]);
+      var subPaths = branch[1];
+      var subBranch = [];
+      subPaths.forEach(function (element) {
+        buildTree(node, subBranch, node[element]);
+      });
+      tree.push(subBranch);
+      return tree;
+    };
+  };
+  return buildTree(node, [], node[0]);
+};
+
 var SieveComponent = function (_React$Component20) {
   _inherits(SieveComponent, _React$Component20);
 
@@ -3781,7 +3800,7 @@ var SieveComponent = function (_React$Component20) {
       self.props.onSaveVariable({
         id: self.props.id,
         name: self.props.name,
-        tree: self.props.tree,
+        tree: node2tree(self.props.tree),
         input_variables: self.props.input_variables,
         description: self.props.description,
         temporal_domain: self.props.temporal_domain,
@@ -3838,6 +3857,22 @@ var SieveComponent = function (_React$Component20) {
         React.createElement(
           Col,
           { xs: 11 },
+          React.createElement(VariableTable, {
+            onRemoveInputVariable: this.props.onRemoveInputVariable,
+            onEditTabularData: this.props.onEditTabularData,
+            onEditRasterData: this.props.onEditRasterData,
+            onSpatialDomainChange: this.props.onSpatialDomainChange,
+            input_variables: this.props.input_variables,
+            onInitTree: this.props.onInitTree
+          })
+        )
+      ),
+      React.createElement(
+        Row,
+        { className: "show-grid" },
+        React.createElement(
+          Col,
+          { xs: 11 },
           React.createElement(ExpressionEditor, {
             tree: this.props.tree,
             onInitTree: this.props.onInitTree,
@@ -3850,20 +3885,9 @@ var SieveComponent = function (_React$Component20) {
         )
       ),
       React.createElement(
-        Row,
-        { className: "show-grid" },
-        React.createElement(
-          Col,
-          { xs: 11 },
-          React.createElement(VariableTable, {
-            onRemoveInputVariable: this.props.onRemoveInputVariable,
-            onEditTabularData: this.props.onEditTabularData,
-            onEditRasterData: this.props.onEditRasterData,
-            onSpatialDomainChange: this.props.onSpatialDomainChange,
-            input_variables: this.props.input_variables,
-            onInitTree: this.props.onInitTree
-          })
-        )
+        Button,
+        { onClick: onSave },
+        "Save"
       )
     );
   };
