@@ -1372,12 +1372,13 @@ function input_variables() {
 }
 
 var nextNodeId = 1;
+var EMPTY = 'EMPTY';
 
 function separateOperands(operands, tree) {
   return operands.map(function (operand) {
     var id = nextNodeId;
     nextNodeId++;
-    if (operand.constructor != Array || operand.length != 2) {
+    if (operand == EMPTY || operand.constructor != Array || operand.length != 2) {
       tree[id] = ['const', operand];
     } else {
       tree[id] = [operand[0], separateOperands(operand[1], tree)];
@@ -3575,7 +3576,7 @@ var ExpressionEditor = function (_React$Component18) {
             null,
             React.createElement(
               Button,
-              { onClick: this.props.onInitTree.bind(this, ['+', [2, 1]]) },
+              { onClick: this.props.onInitTree.bind(this, ['+', [EMPTY, EMPTY]]) },
               "+"
             ),
             React.createElement(

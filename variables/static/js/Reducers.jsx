@@ -119,12 +119,13 @@ function input_variables(state=[], action){
 }
 
 let nextNodeId = 1;
+let EMPTY = 'EMPTY';
 
 function separateOperands(operands, tree) {
   return operands.map((operand) => {
     var id = nextNodeId;
     nextNodeId++;
-    if (operand.constructor != Array || operand.length != 2) {
+    if (operand == EMPTY || operand.constructor != Array || operand.length != 2) {
       tree[id] = ['const', operand];
     } else {
       tree[id] = [operand[0], separateOperands(operand[1], tree)];

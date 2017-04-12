@@ -1532,7 +1532,7 @@ class ExpressionEditor extends React.Component {
         <Panel>
           <div className="pull-right">
             <ButtonGroup>
-              <Button onClick={this.props.onInitTree.bind(this, ['+', [2,1]])}>+</Button>
+              <Button onClick={this.props.onInitTree.bind(this, ['+', [EMPTY,EMPTY]])}>+</Button>
               <Button>-</Button>
               <Button>*</Button>
               <Button>/</Button>
