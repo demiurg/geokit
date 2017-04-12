@@ -1585,6 +1585,9 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
     onRemoveInputVariable: function onRemoveInputVariable(i) {
       dispatch(removeInputVariable(i));
     },
+    onEditInputVariable: function onEditInputVariable(variable, i) {
+      dispatch(editInputVariable(variable, i));
+    },
     onInitTree: function onInitTree(node) {
       dispatch(initTree(node));
     },

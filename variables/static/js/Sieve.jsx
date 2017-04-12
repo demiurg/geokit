@@ -134,6 +134,9 @@ var mapDispatchToProps = (dispatch) => {
     onRemoveInputVariable: (i) => {
       dispatch(removeInputVariable(i));
     },
+    onEditInputVariable: (variable, i) => {
+      dispatch(editInputVariable(variable, i));
+    },
     onInitTree: (node) => {
       dispatch(initTree(node));
     },
