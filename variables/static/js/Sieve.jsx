@@ -1276,7 +1276,8 @@ class SpatialConfiguration extends React.Component {
 
     return (
       <Panel header="Spatial configuration">
-        <Select value={this.props.spatialDomain} options={layer_options} onChange={this.props.onSpatialDomainChange} />
+        <Select value={this.props.spatialDomain} options={layer_options}
+                onChange={this.props.onSpatialDomainChange} />
         <div id="spatial-config-map" style={{height: 400, marginTop: 10}}></div>
       </Panel>
     );
@@ -1285,26 +1286,14 @@ class SpatialConfiguration extends React.Component {
 
 class TabularDataSource extends React.Component {
   onSave() {
-    // Call `this.props.onAddInputVariable(var) when Save button is clicked.
-    //
-    // var should be in the form:
-    // {
-    //   name: '',
-    //   node: [
-    //      'join', [<source (see below)>, <source>]
-    //   ]
-    // }
-    //
-    // <source> should be in the form:
-    // {
-    //   type: 'Layer' | 'Table',
-    //   id: <Number>,
-    //   name: '',
-    //   field: ''
-    // }
+
+    var name = this.props.editingTabularData.name;
+    if (name == null || name.length == 0){
+      name = this.props.editingTabularData.defaultName;
+    }
 
     var variable = {
-      name: this.props.editingTabularData.name,
+      name: name,
       node: [
         'join',
         [
@@ -1331,19 +1320,69 @@ class TabularDataSource extends React.Component {
     });
   }
 
+  componentWillReceiveProps(newProps){
+
+    if (!newProps.editingTabularData.defaultName ||
+        newProps.input_variables != this.props.input_variables
+      ){
+      var t1 = newProps.tables.items[0];
+      if (t1){
+        var source1 = {name: t1.name, field: t1.field_names[0]};
+        var source2 = Object.assign({}, source1);
+        var name = this.generateName(source1, source2, newProps.input_variables);
+         var data = Object.assign(
+           {},
+           newProps.editingTabularData,
+           {defaultName: name}
+         );
+         this.props.onEditTabularData(data);
+      }
+    }
+  }
+
+  generateName(source1, source2, var_list=null) {
+
+    if (source1.name == source2.name){
+      var name = source1.name + '-' + source1.field + '-' + source2.field;
+    } else {
+      var name = source1.name + '-' + source2.name;
+    }
+
+    var i = 1;
+    var unique = false;
+    var input_variables = [];
+    if (var_list){
+      input_variables = var_list;
+    } else {
+      input_variables = this.props.input_variables;
+    }
+
+    input_variables.forEach((input) => {
+        if ((name + '-' + i) == input.name ){
+          i++;
+        }
+    });
+
+    return name + '-' + i;
+  }
+
   validate() {
     var form = $(this.form).serializeArray();
     var name = form[2]['value'];
     var source1 = JSON.parse(form[0]['value']);
     var source2 = JSON.parse(form[1]['value']);
+    var defaultName = this.generateName(source1, source2);
 
-    var data = {
-      name: name,
-      source1: source1,
-      source2: source2,
-      isEditing: this.props.editingTabularData.isEditing,
-      index: this.props.editingTabularData.index
-    };
+    var data = Object.assign(
+      {},
+      this.props.editingTabularData,
+      {
+        name: name,
+        source1: source1,
+        source2: source2,
+        defaultName: defaultName
+      }
+    );
 
     this.props.onEditTabularData(data);
   }
@@ -1391,7 +1430,8 @@ class TabularDataSource extends React.Component {
           <FormGroup controlId="name">
             <ControlLabel>Name</ControlLabel>
             <FormControl
-              name="name" type="text" placeholder="enter variable name"
+              name="name" type="text"
+              placeholder={this.props.editingTabularData.defaultName}
               value={this.props.editingTabularData.name}
             />
           </FormGroup>
@@ -1404,23 +1444,14 @@ class TabularDataSource extends React.Component {
 
 class RasterDataSource extends React.Component {
   onSave() {
-    // Call `this.props.onAddInputVariable(var) when Save button is clicked.
-    //
-    // var should be an object in the form:
-    // {
-    //   name: '',
-    //   node: [
-    //     'raster',
-    //     [
-    //       '<raster_layer>',
-    //       '<spatial_layer>',
-    //       '<temporal_range, e.g. '2010-001,2010-030'>'
-    //     ]]
-    // }
-    //
+
+    var name = this.props.editingRasterData.name;
+    if (name == null || name.length == 0){
+      name = this.props.editingRasterData.defaultName;
+    }
 
     var variable = {
-      name: this.props.editingRasterData.name,
+      name: name,
       node: [
         'raster',
         [
@@ -1433,23 +1464,63 @@ class RasterDataSource extends React.Component {
     var index = this.props.editingRasterData.index;
     var isEditing = this.props.editingRasterData.isEditing;
 
+    this.props.onEditRasterData({
+      name: "",
+      raster: "",
+      temporalRange: "",
+      isEditing: false,
+      index: -1,
+      defaultName: null
+    });
+
     if (isEditing){
       this.props.onEditInputVariable(variable, index);
     } else {
       this.props.onAddInputVariable(variable);
     }
 
-    this.props.onEditRasterData({
-      name: "",
-      raster: "",
-      temporalRange: "",
-      isEditing: false,
-      index: -1
-    });
   }
 
   sourceToString(source) {
     return JSON.stringify(source);
+  }
+
+  generateName(raster, var_list=null) {
+    var name = raster.id;
+    var i = 1;
+
+    var unique = false;
+    var input_variables = [];
+    if (var_list){
+      input_variables = var_list;
+    } else {
+      input_variables = this.props.input_variables;
+    }
+
+    input_variables.forEach((input) => {
+        if ((name + '-' + i) == input.name ){
+          i++;
+        }
+    });
+
+    return name + '-' + i;
+  }
+
+  componentWillReceiveProps(newProps){
+
+    if (!newProps.editingRasterData.defaultName ||
+        newProps.input_variables != this.props.input_variables
+      ){
+      var raster = newProps.raster_catalog.items[0];
+      var raster2 = Object.assign({}, raster, {id: raster.name});
+      var name = this.generateName(raster2, newProps.input_variables);
+      var data = Object.assign(
+        {},
+        newProps.editingRasterData,
+        {defaultName: name}
+      );
+      this.props.onEditRasterData(data);
+    }
   }
 
   validate() {
@@ -1458,14 +1529,18 @@ class RasterDataSource extends React.Component {
     var name = form[2]['value'];
     var raster = JSON.parse(form[0]['value']);
     var temporalRange = form[1]['value'];
+    var defaultName = this.generateName(raster);
 
-    var data = {
-      name: name,
-      raster: raster,
-      temporalRange: temporalRange,
-      isEditing: this.props.editingRasterData.isEditing,
-      index: this.props.editingRasterData.index
-    };
+    var data = Object.assign(
+      {},
+      this.props.editingRasterData,
+      {
+        name: name,
+        raster: raster,
+        temporalRange: temporalRange,
+        defaultName: defaultName
+      }
+    );
 
     this.props.onEditRasterData(data);
   };
@@ -1485,7 +1560,7 @@ class RasterDataSource extends React.Component {
               {
                 this.props.raster_catalog.items.map((r, i) => (
                   <option key={i} value={
-                    `{"name":"${r.description}","id":"${r.name}"}`
+                    `{"name":"${r.description}","id":"${r.name}",}`
                   }>
                     {r.description + ': ' + r.band}
                   </option>
@@ -1505,7 +1580,8 @@ class RasterDataSource extends React.Component {
           <FormGroup controlId="name">
             <ControlLabel>Name</ControlLabel>
             <FormControl
-              name="name" type="text" placeholder="enter variable name"
+              name="name" type="text"
+              placeholder={this.props.editingRasterData.defaultName}
               value={this.props.editingRasterData.name}
             />
           </FormGroup>
@@ -1692,6 +1768,7 @@ class SieveComponent extends React.Component {
               onEditInputVariable={this.props.onEditInputVariable}
               onEditTabularData={this.props.onEditTabularData}
               editingTabularData={this.props.editingTabularData}
+              input_variables={this.props.input_variables}
               layers={this.props.layers}
               tables={this.props.tables}
             />
@@ -1702,6 +1779,7 @@ class SieveComponent extends React.Component {
               onEditInputVariable={this.props.onEditInputVariable}
               onEditRasterData={this.props.onEditRasterData}
               editingRasterData={this.props.editingRasterData}
+              input_variables={this.props.input_variables}
               raster_catalog={this.props.raster_catalog}
               spatialDomain={this.props.spatialDomain}
           />
