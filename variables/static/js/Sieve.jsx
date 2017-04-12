@@ -18,7 +18,8 @@ var initialState = Object.assign({
   created: null,
   changed: false,
   editingTabularData: {},
-  editingRasterData: {}
+  editingRasterData: {},
+  operandSelections: {}
 }, window.sieve_props);
 
 
@@ -81,6 +82,10 @@ function sieveApp(state=initialState, action){
         changed: true,
         input_variables: input_variables(state.input_variables, action)
       });
+    case CHANGE_OPERAND_SELECTION:
+      return Object.assign({}, state, {
+        operandSelections: operandSelections(state.operandSelections, action)
+      });
     case UPDATE_MODIFIED:
       return Object.assign({}, state, {
         modified: action.time
@@ -134,6 +139,9 @@ var mapDispatchToProps = (dispatch) => {
     },
     onEditTreeNode: (id, node) => {
       dispatch(editTreeNode(id, node));
+    },
+    onChangeOperandSelection: (id, value) => {
+      dispatch(changeOperandSelection(id, value));
     },
     onEditRasterData: (data) => {
       dispatch(editRasterData(data));
@@ -1506,15 +1514,6 @@ class RasterDataSource extends React.Component {
 }
 
 class ExpressionEditor extends React.Component {
-  constructor(props) {
-    super(props);
-  }
-
-  onTreeChange() {
-    console.log(this.props.children.type);
-    this.props.onAddTreeOp(this.props.children.type.json());
-  }
-
   render() {
     if (this.props.tree[0]) {
       var RootNode = treeToNode(this.props.tree[0]);
@@ -1543,7 +1542,11 @@ class ExpressionEditor extends React.Component {
           </div>
         </Panel>
         <Panel>
-          <RootNode tree={this.props.tree} node_id={0} onEditTreeNode={this.props.onEditTreeNode} />
+          <RootNode input_variables={this.props.input_variables}
+                    tree={this.props.tree} node_id={0}
+                    onEditTreeNode={this.props.onEditTreeNode}
+                    onChangeOperandSelection={this.props.onChangeOperandSelection}
+                    operandSelections={this.props.operandSelections} />
         </Panel>
       </Panel>
     );
@@ -1551,7 +1554,9 @@ class ExpressionEditor extends React.Component {
 }
 
 class VariableTable extends React.Component {
-
+  onUseVariable(variable) {
+    this.props.onInitTree(variable.node);
+  }
 
   render() {
     if (this.props.input_variables.length > 0){
@@ -1577,39 +1582,44 @@ class VariableTable extends React.Component {
                   <td>{item.name}</td>
                   <td>{item.node[0]}</td>
                   <td>{operator.dimensions}</td>
-                  <td><Button
-                    onClick={ () => {
-                      if (item.node[0] == "join"){
-                        var source1 = item.node[1][0]
-                        var source2 = item.node[1][1]
-                        this.props.onEditTabularData({
-                          name: item.name,
-                          source1: source1,
-                          source2: source2,
-                          isEditing: true,
-                          index: i
-                        });
-                      } else if (item.node[0] == "raster"){
-                        var raster = item.node[1][0];
-                        var temporalRange = item.node[1][2];
-                        this.props.onSpatialDomainChange(
-                          {value: item.node[1][1]}
-                        );
-                        this.props.onEditRasterData({
-                          name: item.name,
-                          raster: raster,
-                          temporalRange: temporalRange,
-                          isEditing: true,
-                          index: i
-                        });
-                      }
-                    }}>
-                    Edit
-                  </Button></td>
-                  <td><Button
+                  <td>
+                    <Button onClick={this.onUseVariable.bind(this, item)}>Use</Button>
+                    <Button
+                      onClick={ () => {
+                        if (item.node[0] == "join"){
+                          var source1 = item.node[1][0]
+                          var source2 = item.node[1][1]
+                          this.props.onEditTabularData({
+                            name: item.name,
+                            source1: source1,
+                            source2: source2,
+                            isEditing: true,
+                            index: i
+                          });
+                        } else if (item.node[0] == "raster"){
+                          var raster = item.node[1][0];
+                          var temporalRange = item.node[1][2];
+                          this.props.onSpatialDomainChange(
+                            {value: item.node[1][1]}
+                          );
+                          this.props.onEditRasterData({
+                            name: item.name,
+                            raster: raster,
+                            temporalRange: temporalRange,
+                            isEditing: true,
+                            index: i
+                          });
+                        }
+                      }}>
+                      Edit
+                    </Button>
+                  </td>
+                  <td>
+                    <Button
                         onClick={() => {this.props.onRemoveInputVariable(i)}}>
                         Delete
-                      </Button></td>
+                    </Button>
+                  </td>
                 </tr>
               );
             })}
@@ -1682,6 +1692,9 @@ class SieveComponent extends React.Component {
               onInitTree={this.props.onInitTree}
               onEditTreeNode={this.props.onEditTreeNode}
               onNameChange={this.props.onNameChange}
+              onChangeOperandSelection={this.props.onChangeOperandSelection}
+              input_variables={this.props.input_variables}
+              operandSelections={this.props.operandSelections}
               errors={this.props.errors} />
           </Col>
         </Row>
@@ -1693,6 +1706,7 @@ class SieveComponent extends React.Component {
               onEditRasterData={this.props.onEditRasterData}
               onSpatialDomainChange={this.props.onSpatialDomainChange}
               input_variables={this.props.input_variables}
+              onInitTree={this.props.onInitTree}
             />
           </Col>
         </Row>
@@ -1705,26 +1719,25 @@ var tab = (level) => {return Array(level * 4).join("&nbsp;")};
 var formatHtml = (html, level) => {return tab(level) + html;};
 
 class OperandChooser extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.selectKeyToVal = {};
-    this.props.operands.forEach((operand) => {
-      this.selectKeyToVal[operand.toString()] = operand;
-    });
-  }
-
   onChangeOperand(e) {
-    this.props.onEditTreeNode(this.props.node_id, this.selectKeyToVal[e.target.value]);
+    this.props.onEditTreeNode(this.props.node_id, this.props.operandToNode(e.value));
   }
 
   render() {
+    var Component;
+
+    if (this.props.editable) {
+      Component = Select.Creatable;
+    } else {
+      Component = Select;
+    }
     return (
-      <select style={{display: "inline-block", width: 100}} onChange={this.onChangeOperand.bind(this)} value={this.props.value}>
-        {this.props.operands.map((operand) => {
-          return <option value={operand}>{operand}</option>;
-        })}
-      </select>
+      <div style={{display: "inline-block", width: 100}}>
+        <Component onChange={this.onChangeOperand.bind(this)}
+                  value={this.props.value}
+                  options={this.props.operands}
+                  clearable={false} />
+      </div>
     );
   }
 }
@@ -1910,8 +1923,12 @@ class JoinOperator extends DataNode {
 }
 
 class RasterOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
+  constructor(props) {
+    super(props);
+
+    var operands = props.tree[props.node_id][1].map((operand_id) => {
+      return props.tree[operand_id];
+    });
 
     if (operands.length != 3) {
       throw Error("RasterOperator takes exactly 3 operands");
@@ -1919,7 +1936,7 @@ class RasterOperator extends DataNode {
 
     this.left = operands[0];
     this.middle = operands[2];
-    this.right = treeToNode(operands[1]);
+    //this.right = treeToNode(operands[1]);
 
     this.dimensions = 'spacetime';
   }
@@ -1928,8 +1945,36 @@ class RasterOperator extends DataNode {
     return ['raster', [this.left, this.right.json(), this.middle]];
   }
 
-  render(level, nl=true) {
-    return super.html("Raster " + this.left.name + " in " + this.middle + " by (" + this.right.html(0, false) + ")", level, nl);
+  operandOptions() {
+    var options = [];
+    this.props.input_variables.forEach((input_var) => {
+      if (input_var.node[0] == 'raster') {
+        options.push({value: input_var.name, label: input_var.name});
+      }
+    });
+
+    return options;
+  }
+
+  operandToNode(operand) {
+    return this.props.input_variables.filter((input_var) => {
+      if (input_var.name == operand) {
+        return true;
+      }
+    })[0].node;
+  }
+
+  render() {
+    return (
+      <span>
+        Raster( <OperandChooser node_id={this.props.node_id}
+                                operands={this.operandOptions()}
+                                operandToNode={this.operandToNode.bind(this)}
+                                onEditTreeNode={this.props.onEditTreeNode}
+                                onChangeOperandSelection={this.props.onChangeOperandSelection}
+                                operandSelections={this.props.operandSelections} /> )
+      </span>
+    );
   }
 }
 
@@ -2000,28 +2045,34 @@ class MathOperator extends React.Component {
     this.right = treeToNode(nextProps.tree[this.right_id]);
   }
 
-  onChangeLeftOperand(e) {
-    this.left = e.target.value;
-
-    this.props.onTreeChange();
-  }
-
-  onChangeRightOperand(e) {
-    this.left = e.target.value;
-
-    this.props.onTreeChange();
-  }
-
   json() {
     return [this.operator, [this.left.json(), this.right.json()]];
+  }
+
+  operandToNode(operand) {
+    if (!isNaN(operand)) {
+      return Number.parseFloat(operand);
+    } else {
+      return null;
+    }
   }
 
   render() {
     return (
       <span>
-        <OperandChooser node_id={this.left_id} operands={[1,2]} value={this.left} onEditTreeNode={this.props.onEditTreeNode} />
+        <OperandChooser node_id={this.left_id}
+                        operands={[{value: this.left, label: this.left}]}
+                        operandToNode={this.operandToNode}
+                        editable={true}
+                        value={this.left}
+                        onEditTreeNode={this.props.onEditTreeNode} />
         {this.operator}
-        <OperandChooser node_id={this.right_id} operands={[1,2]} value={this.right} onEditTreeNode={this.props.onEditTreeNode} />
+        <OperandChooser node_id={this.right_id}
+                        operands={[{value: this.right, label: this.right}]}
+                        operandToNode={this.operandToNode}
+                        editable={true}
+                        value={this.right}
+                        onEditTreeNode={this.props.onEditTreeNode} />
       </span>
     );
   }

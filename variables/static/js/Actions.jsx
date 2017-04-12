@@ -27,6 +27,8 @@ const EDIT_INPUT_VARIABLE = 'EDIT_INPUT_VARIABLE';
 const INIT_TREE = 'INIT_TREE';
 const EDIT_TREE_NODE = 'EDIT_TREE_NODE';
 
+const CHANGE_OPERAND_SELECTION = 'CHANGE_OPERAND_SELECTION';
+
 const SAVE_VARIABLE = 'SAVE_VARIABLE';
 const POST_VARIABLE = 'POST_VARIABLE';
 const RECIEVE_VARIABLE = 'RECIEVE_VARIABLE';
@@ -176,6 +178,14 @@ function editTreeNode(id, node) {
     type: EDIT_TREE_NODE,
     id: id,
     node: node
+  };
+}
+
+function changeOperandSelection(id, value) {
+  return {
+    type: CHANGE_OPERAND_SELECTION,
+    id: id,
+    value: value
   };
 }
 

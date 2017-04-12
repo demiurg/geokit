@@ -158,3 +158,12 @@ function tree(state={}, action){
       return state;
   }
 }
+
+function operandSelections(state={}, action) {
+  switch (action.type) {
+    case CHANGE_OPERAND_SELECTION:
+      return Object.assign({}, state, {
+        [action.id]: action.value
+      });
+  }
+}
