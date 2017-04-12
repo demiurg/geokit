@@ -1706,18 +1706,6 @@ class SieveComponent extends React.Component {
         </Row>
         <Row className="show-grid">
           <Col xs={11}>
-            <VariableTable
-              onRemoveInputVariable={this.props.onRemoveInputVariable}
-              onEditTabularData={this.props.onEditTabularData}
-              onEditRasterData={this.props.onEditRasterData}
-              onSpatialDomainChange={this.props.onSpatialDomainChange}
-              input_variables={this.props.input_variables}
-              onInitTree={this.props.onInitTree}
-            />
-          </Col>
-        </Row>
-        <Row className="show-grid">
-          <Col xs={11}>
             <ExpressionEditor
               tree={this.props.tree}
               onInitTree={this.props.onInitTree}
@@ -1727,6 +1715,18 @@ class SieveComponent extends React.Component {
               input_variables={this.props.input_variables}
               operandSelections={this.props.operandSelections}
               errors={this.props.errors} />
+          </Col>
+        </Row>
+        <Row className="show-grid">
+          <Col xs={11}>
+            <VariableTable
+              onRemoveInputVariable={this.props.onRemoveInputVariable}
+              onEditTabularData={this.props.onEditTabularData}
+              onEditRasterData={this.props.onEditRasterData}
+              onSpatialDomainChange={this.props.onSpatialDomainChange}
+              input_variables={this.props.input_variables}
+              onInitTree={this.props.onInitTree}
+            />
           </Col>
         </Row>
         <Button onClick={onSave}>Save</Button>
