@@ -115,10 +115,42 @@ function input_variables(state=[], action){
   }
 }
 
+let nextNodeId = 1;
+
+function separateOperands(operands, tree) {
+  return operands.map((operand) => {
+    var id = nextNodeId;
+    nextNodeId++;
+    if (operand.constructor != Array || operand.length != 2) {
+      tree[id] = ['const', operand];
+    } else {
+      tree[id] = [operand[0], separateOperands(operand[1], tree)];
+    }
+    return id;
+  });
+}
+
 function tree(state={}, action){
   switch (action.type){
-    case ADD_TREE_NODE:
-      return action.node;
+    case INIT_TREE:
+      {
+        var tree= {
+          0: [action.node[0], []]
+        };
+        tree[0][1] = separateOperands(action.node[1], tree);
+
+        return tree;
+      }
+    case EDIT_TREE_NODE:
+      {
+        var new_tree = Object.assign({}, state);
+        if (action.node.constructor != Array || action.node.length != 2) {
+          new_tree[action.id] = ['const', action.node];
+        } else {
+          new_tree[action.id] = [action.node[0], separateOperands(action.node[1], new_tree)];
+        }
+        return new_tree;
+      }
     default:
       return state;
   }

@@ -23,7 +23,8 @@ const UPDATE_CREATED = 'UPDATE_CREATED';
 const REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
 const ADD_INPUT_VARIABLE = 'ADD_INPUT_VARIABLE';
 
-const ADD_TREE_NODE = 'ADD_TREE_NODE';
+const INIT_TREE = 'INIT_TREE';
+const EDIT_TREE_NODE = 'EDIT_TREE_NODE';
 
 const SAVE_VARIABLE = 'SAVE_VARIABLE';
 const POST_VARIABLE = 'POST_VARIABLE';
@@ -154,16 +155,24 @@ function removeInputVariable(idx){
   }
 }
 
-function addTreeNode(node){
+function initTree(node){
   return {
-    type: ADD_TREE_NODE,
+    type: INIT_TREE,
+    node: node
+  };
+}
+
+function editTreeNode(id, node) {
+  return {
+    type: EDIT_TREE_NODE,
+    id: id,
     node: node
   };
 }
 
 function updateName(name){
   var error = null;
-  if (!name || !name.match(/^[a-zA-Z0-9]+$/)){
+  if (!name || !name.match(/^[a-zA-Z0-9-]+$/)){
     error = "Name is not alphanumeric or contains spaces.";
   }
   return {

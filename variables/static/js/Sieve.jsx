@@ -68,7 +68,8 @@ function sieveApp(state=initialState, action){
       return Object.assign({}, state, {
         errors: action.errors
       });
-    case ADD_TREE_NODE:
+    case INIT_TREE:
+    case EDIT_TREE_NODE:
       return Object.assign({}, state, {
         changed: true,
         tree: tree(state.tree, action)
@@ -127,8 +128,11 @@ var mapDispatchToProps = (dispatch) => {
     onRemoveInputVariable: (i) => {
       dispatch(removeInputVariable(i));
     },
-    onAddTreeOp: (op) => {
-      dispatch(addTreeNode(op));
+    onInitTree: (node) => {
+      dispatch(initTree(node));
+    },
+    onEditTreeNode: (id, node) => {
+      dispatch(editTreeNode(id, node));
     },
     onEditRasterData: (data) => {
       dispatch(editRasterData(data));
@@ -1500,9 +1504,45 @@ class RasterDataSource extends React.Component {
 }
 
 class ExpressionEditor extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  onTreeChange() {
+    console.log(this.props.children.type);
+    this.props.onAddTreeOp(this.props.children.type.json());
+  }
+
   render() {
+    if (this.props.tree[0]) {
+      var RootNode = treeToNode(this.props.tree[0]);
+    } else {
+      var RootNode = EmptyTree;
+    }
     return (
       <Panel header="Expression editor">
+        <FormGroup controlId="name" validationState={this.props.errors.name ? 'error' : null}>
+          <FormControl componentClass="input"
+            placeholder="Name..."
+            onChange={this.props.onNameChange}
+            value={this.props.name} />
+          <HelpBlock>{this.props.errors.name ? this.props.errors.name : "Name must be alphanumeric, without spaces."}</HelpBlock>
+        </FormGroup>
+        <Panel>
+          <div className="pull-right">
+            <ButtonGroup>
+              <Button onClick={this.props.onInitTree.bind(this, ['+', [2,1]])}>+</Button>
+              <Button>-</Button>
+              <Button>*</Button>
+              <Button>/</Button>
+              <Button>Temporal Mean</Button>
+              <Button>Spatial Mean</Button>
+            </ButtonGroup>
+          </div>
+        </Panel>
+        <Panel>
+          <RootNode tree={this.props.tree} node_id={0} onEditTreeNode={this.props.onEditTreeNode} />
+        </Panel>
       </Panel>
     );
   }
@@ -1510,10 +1550,8 @@ class ExpressionEditor extends React.Component {
 
 class VariableTable extends React.Component {
   render() {
-    console.log(this.props.input_variables);
     if (this.props.input_variables.length > 0){
       var item = this.props.input_variables[0];
-      console.log(treeToNode(item.node));
     }
     return (
       <Panel header="Variables">
@@ -1587,7 +1625,12 @@ class SieveComponent extends React.Component {
         </Row>
         <Row className="show-grid">
           <Col xs={11}>
-            <ExpressionEditor />
+            <ExpressionEditor
+              tree={this.props.tree}
+              onInitTree={this.props.onInitTree}
+              onEditTreeNode={this.props.onEditTreeNode}
+              onNameChange={this.props.onNameChange}
+              errors={this.props.errors} />
           </Col>
         </Row>
         <Row className="show-grid">
@@ -1606,16 +1649,41 @@ class SieveComponent extends React.Component {
 var tab = (level) => {return Array(level * 4).join("&nbsp;")};
 var formatHtml = (html, level) => {return tab(level) + html;};
 
-class DataNode {
-  constructor(operands) {
+class OperandChooser extends React.Component {
+  constructor(props) {
+    super(props);
 
+    this.selectKeyToVal = {};
+    this.props.operands.forEach((operand) => {
+      this.selectKeyToVal[operand.toString()] = operand;
+    });
+  }
+
+  onChangeOperand(e) {
+    this.props.onEditTreeNode(this.props.node_id, this.selectKeyToVal[e.target.value]);
+  }
+
+  render() {
+    return (
+      <select style={{display: "inline-block", width: 100}} onChange={this.onChangeOperand.bind(this)} value={this.props.value}>
+        {this.props.operands.map((operand) => {
+          return <option value={operand}>{operand}</option>;
+        })}
+      </select>
+    );
+  }
+}
+
+class DataNode extends React.Component {
+  constructor(operands) {
+    super();
   }
 
   json() {
     return JSON.encode(data);
   }
 
-  html(text, level=0, newline=true) {
+  render(text, level=0, newline=true) {
     var output = tab(level) + text + " (" + this.dimensions + ")";
     if (newline) {
       output += "<br>";
@@ -1642,7 +1710,11 @@ class MeanOperator extends DataNode {
     this.dimensions = this.left.dimensions;
   }
 
-  html(level, nl=true) {
+  json() {
+    return ['mean', [this.left.json(), this.right.json()]];
+  }
+
+  render(level, nl=true) {
     return super.html('Mean of ( <br>' +
       this.left.html(level + 1) +
       this.right.html(level + 1) +
@@ -1663,7 +1735,11 @@ class TemporalMeanOperator extends DataNode {
     this.dimensions = 'space';
   }
 
-  html(level, nl=true) {
+  json() {
+    return ['tmean', [this.operand.json()]];
+  }
+
+  render(level, nl=true) {
     return super.html('Time mean of ( <br>' +
       this.operand.html(level + 1) +
       tab(level) + ')', level, nl);
@@ -1683,7 +1759,11 @@ class SpatialMeanOperator extends DataNode {
     this.dimensions = 'time';
   }
 
-  html(level, nl=true) {
+  json() {
+    return ['smean', [this.operand.json()]];
+  }
+
+  render(level, nl=true) {
     return super.html('Space mean of ( <br>' +
       this.operand.html(level + 1) +
       tab(level) + ')', level, nl);
@@ -1705,7 +1785,11 @@ class SelectOperator extends DataNode {
     this.dimensions = this.left.dimensions;
   }
 
-  html(level, nl=true) {
+  json() {
+    return ['select', [this.left.json(), this.right.json()]];
+  }
+
+  render(level, nl=true) {
     return super.html("Select " + this.right.name + "/" + this.right.field + " from (<br>" +
       tab(level) + this.left.html(level + 1) +
       tab(level) + ")", level, nl);
@@ -1725,7 +1809,11 @@ class ExpressionOperator extends DataNode {
     this.dimensions = this.operand.dimensions;
   }
 
-  html(level, nl=true) {
+  json() {
+    return ['expression', [this.operand.json()]];
+  }
+
+  render(level, nl=true) {
     return super.html(this.operand.html(level), level, nl);
   }
 }
@@ -1754,7 +1842,11 @@ class JoinOperator extends DataNode {
     }
   }
 
-  html(level, nl=true) {
+  json() {
+    return ['join', [this.left.json(), this.right.json()]];
+  }
+
+  render(level, nl=true) {
     return super.html("Join " +
       this.left.type + ' ' + this.left.name + ' and ' +
       this.right.type + ' ' + this.right.name + ' on ' +
@@ -1777,7 +1869,11 @@ class RasterOperator extends DataNode {
     this.dimensions = 'spacetime';
   }
 
-  html(level, nl=true) {
+  json() {
+    return ['raster', [this.left, this.right.json(), this.middle]];
+  }
+
+  render(level, nl=true) {
     return super.html("Raster " + this.left.name + " in " + this.middle + " by (" + this.right.html(0, false) + ")", level, nl);
   }
 }
@@ -1802,14 +1898,26 @@ class SourceOperator extends DataNode {
     }
   }
 
-  html(level, nl=true) {
+  json() {
+    return ['source', [{name: this.name, type: this.type, field: this.field}]];
+  }
+
+  render(level, nl=true) {
     return super.html(this.operand.type + " '" + this.operand.name + "' ", level, nl);
   }
 }
 
-class MathOperator extends DataNode {
-  constructor(operator, operands) {
-    super(operands);
+class MathOperator extends React.Component {
+  constructor(props) {
+    super(props);
+
+    var operator = props.tree[props.node_id][0];
+    var operands = props.tree[props.node_id][1].map((operand_id) => {
+      return props.tree[operand_id];
+    });
+
+    this.left_id = props.tree[props.node_id][1][0];
+    this.right_id = props.tree[props.node_id][1][1];
 
     this.operator = operator;
 
@@ -1827,64 +1935,86 @@ class MathOperator extends DataNode {
     this.dimensions = this.left.dimensions;
   }
 
-  html(level, nl=true) {
-    return super.html(this.left.html(0, true) + tab(level + 1) + this.operator + "<br>" + tab(level + 1) + this.right.html(0, false));
+  componentWillUpdate(nextProps) {
+    this.operator = nextProps.tree[nextProps.node_id][0];
+
+    this.left_id = nextProps.tree[nextProps.node_id][1][0];
+    this.right_id = nextProps.tree[nextProps.node_id][1][1];
+
+    this.left = treeToNode(nextProps.tree[this.left_id]);
+    this.right = treeToNode(nextProps.tree[this.right_id]);
+  }
+
+  onChangeLeftOperand(e) {
+    this.left = e.target.value;
+
+    this.props.onTreeChange();
+  }
+
+  onChangeRightOperand(e) {
+    this.left = e.target.value;
+
+    this.props.onTreeChange();
+  }
+
+  json() {
+    return [this.operator, [this.left.json(), this.right.json()]];
+  }
+
+  render() {
+    return (
+      <span>
+        <OperandChooser node_id={this.left_id} operands={[1,2]} value={this.left} onEditTreeNode={this.props.onEditTreeNode} />
+        {this.operator}
+        <OperandChooser node_id={this.right_id} operands={[1,2]} value={this.right} onEditTreeNode={this.props.onEditTreeNode} />
+      </span>
+    );
   }
 }
 
-class EmptyTree extends DataNode {
-  constructor() {
-    super([]);
+class EmptyTree extends React.Component {
+  constructor(props) {
+    super(props);
   }
 
-  html() {
-    return '';
+  render() {
+    return null;
   }
 }
 
 function treeToNode(tree) {
-  var node;
-
   if (Object.keys(tree).length == 0) {
-    return new EmptyTree();
+    return EmptyTree;
   }
 
   switch (tree[0]) {
     case 'mean':
-      node = new MeanOperator(tree[1]);
-      break;
+      return MeanOperator;
     case 'tmean':
-      node = new TemporalMeanOperator(tree[1]);
-      break;
+      return TemporalMeanOperator;
     case 'smean':
-      node = new SpatialMeanOperator(tree[1]);
-      break;
+      return SpatialMeanOperator;
     case 'select':
-      node = new SelectOperator(tree[1]);
-      break;
+      return SelectOperator;
     case 'expression':
-      node = new ExpressionOperator(tree[1]);
-      break;
+      return ExpressionOperator;
     case 'join':
-      node = new JoinOperator(tree[1]);
-      break;
+      return JoinOperator;
     case 'raster':
-      node = new RasterOperator(tree[1]);
+      return RasterOperator;
       break;
     case 'source':
-      node = new SourceOperator(tree[1]);
-      break;
+      return SourceOperator;
     case '+':
     case '-':
     case '*':
     case '/':
-      node = new MathOperator(tree[0], tree[1]);
-      break;
+      return MathOperator;
+    case 'const':
+      return tree[1];
     default:
       throw Error("'" + tree[0] + "' is not a valid operator");
   }
-
-  return node;
 }
 
 class TreeView extends React.Component {
