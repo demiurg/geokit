@@ -1,7 +1,6 @@
 from geokit_tables.views import populate_table_handler
 from layers.views import (
     process_shapefile_handler,
-    gadm_layer_save_handler,
     vector_catalog_save_layer_handler
 )
 
