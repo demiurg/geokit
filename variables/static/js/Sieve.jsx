@@ -396,7 +396,7 @@ class AddRasterInputModal extends React.Component {
               </FormGroup>
               <FormGroup controlId="name">
                 <ControlLabel>Temporal&nbsp;Range</ControlLabel>
-                <FormControl
+                <input
                   name="dates" type="text" placeholder="enter like 2000-001,2000-31"
                 />
               </FormGroup>
@@ -1442,6 +1442,21 @@ class TabularDataSource extends React.Component {
   }
 }
 
+var dateToDOY = (date) => {
+  var year = date.getFullYear();
+  var oneDay = 1000 * 60 * 60 * 24; // A day in milliseconds
+
+  var doy = (Date.UTC(year, date.getMonth(), date.getDate()) -
+            Date.UTC(year, 0, 0)) / 24 / 60 / 60 / 1000;
+
+  var doyStr = doy.toString();
+  while (doyStr.length < 3){ //pad with zeros
+    doyStr = "0" + doyStr;
+  }
+
+  return year.toString() + "-" + doyStr;
+}
+
 class RasterDataSource extends React.Component {
   onSave() {
 
@@ -1457,7 +1472,8 @@ class RasterDataSource extends React.Component {
         [
           this.props.editingRasterData.raster,
           this.props.spatialDomain,
-          this.props.editingRasterData.temporalRange
+          this.props.editingRasterData.temporalRangeStart,
+          this.props.editingRasterData.temporalRangeEnd
         ]
       ]
     };
@@ -1467,7 +1483,8 @@ class RasterDataSource extends React.Component {
     this.props.onEditRasterData({
       name: "",
       raster: "",
-      temporalRange: "",
+      temporalRangeStart: "",
+      temporalRangeEnd: "",
       isEditing: false,
       index: -1,
       defaultName: null
@@ -1506,8 +1523,35 @@ class RasterDataSource extends React.Component {
     return name + '-' + i;
   }
 
-  componentWillReceiveProps(newProps){
+  componentDidMount(){
 
+    var format = {
+      toDisplay: function (date, format, language){
+        var userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        var d = new Date(date.getTime() + userTimezoneOffset);
+        return dateToDOY(d);
+      },
+      toValue: function (date, format, language){
+        var d = new Date(date);
+        return d;
+      }
+    }
+
+    $(this.startpicker).datepicker({
+      format: format
+     }).on("changeDate", (e) => {
+      this.validate();
+     });
+
+    $(this.endpicker).datepicker({
+      format: format
+     }).on("changeDate", (e) => {
+      this.validate();
+     });
+
+  }
+
+  componentWillReceiveProps(newProps){
     if (!newProps.editingRasterData.defaultName ||
         newProps.input_variables != this.props.input_variables
       ){
@@ -1526,9 +1570,10 @@ class RasterDataSource extends React.Component {
   validate() {
 
     var form = $(this.form).serializeArray();
-    var name = form[2]['value'];
+    var name = form[3]['value'];
     var raster = JSON.parse(form[0]['value']);
-    var temporalRange = form[1]['value'];
+    var temporalRangeStart = form[1]['value'];
+    var temporalRangeEnd = form[2]['value'];
     var defaultName = this.generateName(raster);
 
     var data = Object.assign(
@@ -1537,7 +1582,8 @@ class RasterDataSource extends React.Component {
       {
         name: name,
         raster: raster,
-        temporalRange: temporalRange,
+        temporalRangeStart: temporalRangeStart,
+        temporalRangeEnd: temporalRangeEnd,
         defaultName: defaultName
       }
     );
@@ -1560,7 +1606,7 @@ class RasterDataSource extends React.Component {
               {
                 this.props.raster_catalog.items.map((r, i) => (
                   <option key={i} value={
-                    `{"name":"${r.description}","id":"${r.name}",}`
+                    `{"name":"${r.description}","id":"${r.name}"}`
                   }>
                     {r.description + ': ' + r.band}
                   </option>
@@ -1570,12 +1616,19 @@ class RasterDataSource extends React.Component {
           </FormGroup>
           <FormGroup controlId="range">
             <ControlLabel>Temporal&nbsp;Range</ControlLabel>
-            <FormControl
-              name="dates"
-              type="text"
-              placeholder="enter like 2000-001,2000-31"
-              value={this.props.editingRasterData.temporalRange}
+            <div class="input-group input-daterange">
+            <input
+              ref={(ref)=>{this.startpicker=ref}}
+              name="temporalRangeStart" type="text" placeholder="yyyy-ddd"
+              value={this.props.editingRasterData.temporalRangeStart}
             />
+            <span class="input-group-addon">to</span>
+            <input
+              ref={(ref)=>{this.endpicker=ref}}
+              name="temporalRangeEnd" type="text" placeholder="yyyy-ddd"
+              value={this.props.editingRasterData.temporalRangeEnd}
+            />
+            </div>
           </FormGroup>
           <FormGroup controlId="name">
             <ControlLabel>Name</ControlLabel>
@@ -1677,14 +1730,16 @@ class VariableTable extends React.Component {
                           });
                         } else if (item.node[0] == "raster"){
                           var raster = item.node[1][0];
-                          var temporalRange = item.node[1][2];
+                          var temporalRangeStart = item.node[1][2];
+                          var temporalRangeEnd = item.node[1][3];
                           this.props.onSpatialDomainChange(
                             {value: item.node[1][1]}
                           );
                           this.props.onEditRasterData({
                             name: item.name,
                             raster: raster,
-                            temporalRange: temporalRange,
+                            temporalRangeStart: temporalRangeStart,
+                            temporalRangeEnd: temporalRangeEnd,
                             isEditing: true,
                             index: i
                           });

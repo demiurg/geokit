@@ -1945,7 +1945,7 @@ var AddRasterInputModal = function (_React$Component3) {
                 null,
                 "Temporal\xA0Range"
               ),
-              React.createElement(FormControl, {
+              React.createElement("input", {
                 name: "dates", type: "text", placeholder: "enter like 2000-001,2000-31"
               })
             ),
@@ -3424,6 +3424,21 @@ var TabularDataSource = function (_React$Component16) {
   return TabularDataSource;
 }(React.Component);
 
+var dateToDOY = function dateToDOY(date) {
+  var year = date.getFullYear();
+  var oneDay = 1000 * 60 * 60 * 24; // A day in milliseconds
+
+  var doy = (Date.UTC(year, date.getMonth(), date.getDate()) - Date.UTC(year, 0, 0)) / 24 / 60 / 60 / 1000;
+
+  var doyStr = doy.toString();
+  while (doyStr.length < 3) {
+    //pad with zeros
+    doyStr = "0" + doyStr;
+  }
+
+  return year.toString() + "-" + doyStr;
+};
+
 var RasterDataSource = function (_React$Component17) {
   _inherits(RasterDataSource, _React$Component17);
 
@@ -3442,7 +3457,7 @@ var RasterDataSource = function (_React$Component17) {
 
     var variable = {
       name: name,
-      node: ['raster', [this.props.editingRasterData.raster, this.props.spatialDomain, this.props.editingRasterData.temporalRange]]
+      node: ['raster', [this.props.editingRasterData.raster, this.props.spatialDomain, this.props.editingRasterData.temporalRangeStart, this.props.editingRasterData.temporalRangeEnd]]
     };
     var index = this.props.editingRasterData.index;
     var isEditing = this.props.editingRasterData.isEditing;
@@ -3450,7 +3465,8 @@ var RasterDataSource = function (_React$Component17) {
     this.props.onEditRasterData({
       name: "",
       raster: "",
-      temporalRange: "",
+      temporalRangeStart: "",
+      temporalRangeEnd: "",
       isEditing: false,
       index: -1,
       defaultName: null
@@ -3490,8 +3506,35 @@ var RasterDataSource = function (_React$Component17) {
     return name + '-' + i;
   };
 
-  RasterDataSource.prototype.componentWillReceiveProps = function componentWillReceiveProps(newProps) {
+  RasterDataSource.prototype.componentDidMount = function componentDidMount() {
+    var _this33 = this;
 
+    var format = {
+      toDisplay: function toDisplay(date, format, language) {
+        var userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        var d = new Date(date.getTime() + userTimezoneOffset);
+        return dateToDOY(d);
+      },
+      toValue: function toValue(date, format, language) {
+        var d = new Date(date);
+        return d;
+      }
+    };
+
+    $(this.startpicker).datepicker({
+      format: format
+    }).on("changeDate", function (e) {
+      _this33.validate();
+    });
+
+    $(this.endpicker).datepicker({
+      format: format
+    }).on("changeDate", function (e) {
+      _this33.validate();
+    });
+  };
+
+  RasterDataSource.prototype.componentWillReceiveProps = function componentWillReceiveProps(newProps) {
     if (!newProps.editingRasterData.defaultName || newProps.input_variables != this.props.input_variables) {
       var raster = newProps.raster_catalog.items[0];
       var raster2 = Object.assign({}, raster, { id: raster.name });
@@ -3504,15 +3547,17 @@ var RasterDataSource = function (_React$Component17) {
   RasterDataSource.prototype.validate = function validate() {
 
     var form = $(this.form).serializeArray();
-    var name = form[2]['value'];
+    var name = form[3]['value'];
     var raster = JSON.parse(form[0]['value']);
-    var temporalRange = form[1]['value'];
+    var temporalRangeStart = form[1]['value'];
+    var temporalRangeEnd = form[2]['value'];
     var defaultName = this.generateName(raster);
 
     var data = Object.assign({}, this.props.editingRasterData, {
       name: name,
       raster: raster,
-      temporalRange: temporalRange,
+      temporalRangeStart: temporalRangeStart,
+      temporalRangeEnd: temporalRangeEnd,
       defaultName: defaultName
     });
 
@@ -3520,15 +3565,15 @@ var RasterDataSource = function (_React$Component17) {
   };
 
   RasterDataSource.prototype.render = function render() {
-    var _this33 = this;
+    var _this34 = this;
 
     return React.createElement(
       Panel,
       { header: "Raster data" },
       React.createElement(
         "form",
-        { ref: function ref(_ref15) {
-            _this33.form = _ref15;
+        { ref: function ref(_ref17) {
+            _this34.form = _ref17;
           }, onChange: this.validate.bind(this) },
         React.createElement(
           FormGroup,
@@ -3549,7 +3594,7 @@ var RasterDataSource = function (_React$Component17) {
             this.props.raster_catalog.items.map(function (r, i) {
               return React.createElement(
                 "option",
-                { key: i, value: "{\"name\":\"" + r.description + "\",\"id\":\"" + r.name + "\",}" },
+                { key: i, value: "{\"name\":\"" + r.description + "\",\"id\":\"" + r.name + "\"}" },
                 r.description + ': ' + r.band
               );
             })
@@ -3563,12 +3608,29 @@ var RasterDataSource = function (_React$Component17) {
             null,
             "Temporal\xA0Range"
           ),
-          React.createElement(FormControl, {
-            name: "dates",
-            type: "text",
-            placeholder: "enter like 2000-001,2000-31",
-            value: this.props.editingRasterData.temporalRange
-          })
+          React.createElement(
+            "div",
+            { "class": "input-group input-daterange" },
+            React.createElement("input", {
+              ref: function ref(_ref15) {
+                _this34.startpicker = _ref15;
+              },
+              name: "temporalRangeStart", type: "text", placeholder: "yyyy-ddd",
+              value: this.props.editingRasterData.temporalRangeStart
+            }),
+            React.createElement(
+              "span",
+              { "class": "input-group-addon" },
+              "to"
+            ),
+            React.createElement("input", {
+              ref: function ref(_ref16) {
+                _this34.endpicker = _ref16;
+              },
+              name: "temporalRangeEnd", type: "text", placeholder: "yyyy-ddd",
+              value: this.props.editingRasterData.temporalRangeEnd
+            })
+          )
         ),
         React.createElement(
           FormGroup,
@@ -3698,7 +3760,7 @@ var VariableTable = function (_React$Component19) {
   };
 
   VariableTable.prototype.render = function render() {
-    var _this36 = this;
+    var _this37 = this;
 
     if (this.props.input_variables.length > 0) {
       var item = this.props.input_variables[0];
@@ -3762,7 +3824,7 @@ var VariableTable = function (_React$Component19) {
                 null,
                 React.createElement(
                   Button,
-                  { onClick: _this36.onUseVariable.bind(_this36, item) },
+                  { onClick: _this37.onUseVariable.bind(_this37, item) },
                   "Use"
                 ),
                 React.createElement(
@@ -3772,7 +3834,7 @@ var VariableTable = function (_React$Component19) {
                       if (item.node[0] == "join") {
                         var source1 = item.node[1][0];
                         var source2 = item.node[1][1];
-                        _this36.props.onEditTabularData({
+                        _this37.props.onEditTabularData({
                           name: item.name,
                           source1: source1,
                           source2: source2,
@@ -3781,12 +3843,14 @@ var VariableTable = function (_React$Component19) {
                         });
                       } else if (item.node[0] == "raster") {
                         var raster = item.node[1][0];
-                        var temporalRange = item.node[1][2];
-                        _this36.props.onSpatialDomainChange({ value: item.node[1][1] });
-                        _this36.props.onEditRasterData({
+                        var temporalRangeStart = item.node[1][2];
+                        var temporalRangeEnd = item.node[1][3];
+                        _this37.props.onSpatialDomainChange({ value: item.node[1][1] });
+                        _this37.props.onEditRasterData({
                           name: item.name,
                           raster: raster,
-                          temporalRange: temporalRange,
+                          temporalRangeStart: temporalRangeStart,
+                          temporalRangeEnd: temporalRangeEnd,
                           isEditing: true,
                           index: i
                         });
@@ -3802,7 +3866,7 @@ var VariableTable = function (_React$Component19) {
                   Button,
                   {
                     onClick: function onClick() {
-                      _this36.props.onRemoveInputVariable(i);
+                      _this37.props.onRemoveInputVariable(i);
                     } },
                   "Delete"
                 )
@@ -4034,21 +4098,21 @@ var MeanOperator = function (_DataNode) {
   function MeanOperator(operands) {
     _classCallCheck(this, MeanOperator);
 
-    var _this40 = _possibleConstructorReturn(this, _DataNode.call(this, operands));
+    var _this41 = _possibleConstructorReturn(this, _DataNode.call(this, operands));
 
     if (operands.length != 2) {
       throw Error("MeanOperator takes exactly 2 operands");
     }
 
-    _this40.left = treeToNode(operands[0]);
-    _this40.right = treeToNode(operands[1]);
+    _this41.left = treeToNode(operands[0]);
+    _this41.right = treeToNode(operands[1]);
 
-    if (_this40.left.dimensions != _this40.right.dimensions) {
+    if (_this41.left.dimensions != _this41.right.dimensions) {
       throw Error("Operands must have the same dimensions");
     }
 
-    _this40.dimensions = _this40.left.dimensions;
-    return _this40;
+    _this41.dimensions = _this41.left.dimensions;
+    return _this41;
   }
 
   MeanOperator.prototype.json = function json() {
@@ -4070,16 +4134,16 @@ var TemporalMeanOperator = function (_DataNode2) {
   function TemporalMeanOperator(operands) {
     _classCallCheck(this, TemporalMeanOperator);
 
-    var _this41 = _possibleConstructorReturn(this, _DataNode2.call(this, operands));
+    var _this42 = _possibleConstructorReturn(this, _DataNode2.call(this, operands));
 
     if (operands.length != 1) {
       throw Error("TemporalMeanOperator takes exactly 1 operand");
     }
 
-    _this41.operand = treeToNode(operands[0]);
+    _this42.operand = treeToNode(operands[0]);
 
-    _this41.dimensions = 'space';
-    return _this41;
+    _this42.dimensions = 'space';
+    return _this42;
   }
 
   TemporalMeanOperator.prototype.json = function json() {
@@ -4101,16 +4165,16 @@ var SpatialMeanOperator = function (_DataNode3) {
   function SpatialMeanOperator(operands) {
     _classCallCheck(this, SpatialMeanOperator);
 
-    var _this42 = _possibleConstructorReturn(this, _DataNode3.call(this, operands));
+    var _this43 = _possibleConstructorReturn(this, _DataNode3.call(this, operands));
 
     if (operands.length != 1) {
       throw Error("SpatialMeanOperator takes exactly 1 operand");
     }
 
-    _this42.operand = treeToNode(operands[0]);
+    _this43.operand = treeToNode(operands[0]);
 
-    _this42.dimensions = 'time';
-    return _this42;
+    _this43.dimensions = 'time';
+    return _this43;
   }
 
   SpatialMeanOperator.prototype.json = function json() {
@@ -4132,18 +4196,18 @@ var SelectOperator = function (_DataNode4) {
   function SelectOperator(operands) {
     _classCallCheck(this, SelectOperator);
 
-    var _this43 = _possibleConstructorReturn(this, _DataNode4.call(this, operands));
+    var _this44 = _possibleConstructorReturn(this, _DataNode4.call(this, operands));
 
     if (operands.length != 2) {
       throw Error("SelectOperator takes exactly 2 operands");
     }
 
-    _this43.left = treeToNode(operands[0]);
-    _this43.child_op = operands[0][0];
-    _this43.right = operands[1];
+    _this44.left = treeToNode(operands[0]);
+    _this44.child_op = operands[0][0];
+    _this44.right = operands[1];
 
-    _this43.dimensions = _this43.left.dimensions;
-    return _this43;
+    _this44.dimensions = _this44.left.dimensions;
+    return _this44;
   }
 
   SelectOperator.prototype.json = function json() {
@@ -4165,16 +4229,16 @@ var ExpressionOperator = function (_DataNode5) {
   function ExpressionOperator(operands) {
     _classCallCheck(this, ExpressionOperator);
 
-    var _this44 = _possibleConstructorReturn(this, _DataNode5.call(this, operands));
+    var _this45 = _possibleConstructorReturn(this, _DataNode5.call(this, operands));
 
     if (operands.length != 1) {
       throw Error("ExpressionOperator takes exactly 1 operand");
     }
 
-    _this44.operand = treeToNode(operands[0]);
+    _this45.operand = treeToNode(operands[0]);
 
-    _this44.dimensions = _this44.operand.dimensions;
-    return _this44;
+    _this45.dimensions = _this45.operand.dimensions;
+    return _this45;
   }
 
   ExpressionOperator.prototype.json = function json() {
@@ -4196,27 +4260,27 @@ var JoinOperator = function (_DataNode6) {
   function JoinOperator(operands) {
     _classCallCheck(this, JoinOperator);
 
-    var _this45 = _possibleConstructorReturn(this, _DataNode6.call(this, operands));
+    var _this46 = _possibleConstructorReturn(this, _DataNode6.call(this, operands));
 
     if (operands.length != 2) {
       throw Error("JoinOperator takes exactly 2 operands");
     }
 
-    _this45.left = new SourceOperator([operands[0]]);
-    _this45.right = new SourceOperator([operands[1]]);
+    _this46.left = new SourceOperator([operands[0]]);
+    _this46.right = new SourceOperator([operands[1]]);
 
     var dimensions = new Set();
-    dimensions.add(_this45.left.dimensions);
-    dimensions.add(_this45.right.dimensions);
+    dimensions.add(_this46.left.dimensions);
+    dimensions.add(_this46.right.dimensions);
 
-    _this45.dimensions = '';
+    _this46.dimensions = '';
     if (dimensions.has('space')) {
-      _this45.dimensions += 'space';
+      _this46.dimensions += 'space';
     }
     if (dimensions.has('time')) {
-      _this45.dimensions += 'time';
+      _this46.dimensions += 'time';
     }
-    return _this45;
+    return _this46;
   }
 
   JoinOperator.prototype.json = function json() {
@@ -4238,7 +4302,7 @@ var RasterOperator = function (_DataNode7) {
   function RasterOperator(props) {
     _classCallCheck(this, RasterOperator);
 
-    var _this46 = _possibleConstructorReturn(this, _DataNode7.call(this, props));
+    var _this47 = _possibleConstructorReturn(this, _DataNode7.call(this, props));
 
     var operands = props.tree[props.node_id][1].map(function (operand_id) {
       return props.tree[operand_id];
@@ -4248,12 +4312,12 @@ var RasterOperator = function (_DataNode7) {
       throw Error("RasterOperator takes exactly 3 operands");
     }
 
-    _this46.left = operands[0];
-    _this46.middle = operands[2];
+    _this47.left = operands[0];
+    _this47.middle = operands[2];
     //this.right = treeToNode(operands[1]);
 
-    _this46.dimensions = 'spacetime';
-    return _this46;
+    _this47.dimensions = 'spacetime';
+    return _this47;
   }
 
   RasterOperator.prototype.json = function json() {
@@ -4303,23 +4367,23 @@ var SourceOperator = function (_DataNode8) {
   function SourceOperator(operands) {
     _classCallCheck(this, SourceOperator);
 
-    var _this47 = _possibleConstructorReturn(this, _DataNode8.call(this, operands));
+    var _this48 = _possibleConstructorReturn(this, _DataNode8.call(this, operands));
 
     if (operands.length != 1) {
       throw Error("SourceOperator takes exactly 1 operand");
     }
 
-    _this47.operand = operands[0];
-    _this47.name = _this47.operand.name;
-    _this47.type = _this47.operand['type'];
-    _this47.field = _this47.operand.field;
+    _this48.operand = operands[0];
+    _this48.name = _this48.operand.name;
+    _this48.type = _this48.operand['type'];
+    _this48.field = _this48.operand.field;
 
-    if (_this47.type == 'Layer') {
-      _this47.dimensions = 'space';
-    } else if (_this47.type == 'Table') {
-      _this47.dimensions = 'time';
+    if (_this48.type == 'Layer') {
+      _this48.dimensions = 'space';
+    } else if (_this48.type == 'Table') {
+      _this48.dimensions = 'time';
     }
-    return _this47;
+    return _this48;
   }
 
   SourceOperator.prototype.json = function json() {
@@ -4341,31 +4405,31 @@ var MathOperator = function (_React$Component23) {
   function MathOperator(props) {
     _classCallCheck(this, MathOperator);
 
-    var _this48 = _possibleConstructorReturn(this, _React$Component23.call(this, props));
+    var _this49 = _possibleConstructorReturn(this, _React$Component23.call(this, props));
 
     var operator = props.tree[props.node_id][0];
     var operands = props.tree[props.node_id][1].map(function (operand_id) {
       return props.tree[operand_id];
     });
 
-    _this48.left_id = props.tree[props.node_id][1][0];
-    _this48.right_id = props.tree[props.node_id][1][1];
+    _this49.left_id = props.tree[props.node_id][1][0];
+    _this49.right_id = props.tree[props.node_id][1][1];
 
-    _this48.operator = operator;
+    _this49.operator = operator;
 
     if (operands.length != 2) {
       throw Error("MathOperator takes exactly 2 operands");
     }
 
-    _this48.left = treeToNode(operands[0]);
-    _this48.right = treeToNode(operands[1]);
+    _this49.left = treeToNode(operands[0]);
+    _this49.right = treeToNode(operands[1]);
 
-    if (_this48.left.dimensions != _this48.right.dimensions) {
+    if (_this49.left.dimensions != _this49.right.dimensions) {
       throw Error("Operators must have the same dimensions");
     }
 
-    _this48.dimensions = _this48.left.dimensions;
-    return _this48;
+    _this49.dimensions = _this49.left.dimensions;
+    return _this49;
   }
 
   MathOperator.prototype.componentWillUpdate = function componentWillUpdate(nextProps) {
