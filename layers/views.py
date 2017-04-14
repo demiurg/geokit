@@ -21,6 +21,7 @@ from rest_framework import views, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
+import django_filters
 from wagtail.wagtailadmin import messages
 
 from models import Layer, Feature
@@ -614,11 +615,15 @@ class Lock:
 class FeatureViewSet(viewsets.ModelViewSet):
     queryset = Feature.objects.all()
     serializer_class = FeatureSerializer
+    filter_backends = (django_filters.rest_framework.DjangoFilterBackend,)
+    filter_fields = ('id', 'layer__name', 'layer__status',)
 
 
 class LayerViewSet(viewsets.ModelViewSet):
     queryset = Layer.objects.all()
     serializer_class = LayerSerializer
+    filter_backends = (django_filters.rest_framework.DjangoFilterBackend,)
+    filter_fields = ('id', 'name', 'status',)
 
 
 def gadm_layer_geometries(level, features):
