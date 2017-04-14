@@ -64,7 +64,7 @@ function fetchLayers() {
     dispatch(requestLayers());
 
     return $.ajax({
-      url: '/api/layers',
+      url: '/api/layers?status=0',
       dataType: 'json',
       cache: 'false',
       success: function success(data) {
@@ -96,7 +96,7 @@ function fetchTables() {
     dispatch(requestTables());
 
     return $.ajax({
-      url: '/api/tables',
+      url: '/api/tables?status=0',
       dataType: 'json',
       cache: 'false',
       success: function success(data) {

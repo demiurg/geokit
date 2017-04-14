@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404, render, redirect
 
 import django_rq
 from rest_framework import viewsets
+import django_filters
 from wagtail.wagtailadmin import messages
 
 from psycopg2.extras import DateRange
@@ -25,6 +26,8 @@ NoneType = type(None)
 class GeoKitTableViewSet(viewsets.ModelViewSet):
     queryset = GeoKitTable.objects.all()
     serializer_class = GeoKitTableSerializer
+    filter_backends = (django_filters.rest_framework.DjangoFilterBackend,)
+    filter_fields = ('id', 'name', 'status',)
 
 
 def index(request):

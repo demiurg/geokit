@@ -59,6 +59,7 @@ SHARED_APPS = [
     'compressor',
     'modelcluster',
     'rest_framework',
+    'rest_framework_filters',
     'crispy_forms',
     'django_rq',
 ]
@@ -90,6 +91,9 @@ INSTALLED_APPS = SHARED_APPS + [app for app in TENANT_APPS if app not in SHARED_
 
 TENANT_MODEL = "account.GeoKitSite"
 
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',)
+}
 
 MIDDLEWARE_CLASSES = [
     # implement tenant_schemas logic as well as wagtail sites middleware
