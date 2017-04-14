@@ -23,6 +23,7 @@ const UPDATE_CREATED = 'UPDATE_CREATED';
 const REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
 const ADD_INPUT_VARIABLE = 'ADD_INPUT_VARIABLE';
 const EDIT_INPUT_VARIABLE = 'EDIT_INPUT_VARIABLE';
+const ERROR_INPUT_VARIABLE = 'ERROR_INPUT_VARIABLE';
 
 const INIT_TREE = 'INIT_TREE';
 const EDIT_TREE_NODE = 'EDIT_TREE_NODE';
@@ -144,12 +145,41 @@ function fetchVariables(){
 
 let nextVariableId = 0;
 
+function validateRaster(raster){
+  var range = raster[1][2];
+
+  if (range.includes("undefined"))
+    return "Start and end date must be specified.";
+  if (!range.match(/\d{4}-\d{3},\d{4}-\d{3}/g))
+    return "Date must be entered in the form yyyy-ddd"
+
+  return null;
+}
+
 function addInputVariable(variable){
-  return {
-    type: ADD_INPUT_VARIABLE,
-    id: nextVariableId++,
-    variable
-  };
+  var node= variable.node;
+  var inputType = node[0];
+  var error = null;
+
+  if (inputType == 'raster'){
+    error = validateRaster(node);
+  }
+  if (error){
+    return {
+      type: ERROR_INPUT_VARIABLE,
+      error: error,
+      field: "rasterDataTemporalRange",
+      variable
+    };
+  } else {
+    return {
+      type: ADD_INPUT_VARIABLE,
+      error: error,
+      field: "rasterDataTemporalRange",
+      id: nextVariableId++,
+      variable
+    };
+  }
 }
 
 function editInputVariable(variable, idx){

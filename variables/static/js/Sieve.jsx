@@ -81,9 +81,18 @@ function sieveApp(state=initialState, action){
     case ADD_INPUT_VARIABLE:
     case REMOVE_INPUT_VARIABLE:
     case EDIT_INPUT_VARIABLE:
+      var errors = {}
+      errors[action.field] = action.error;
       return Object.assign({}, state, {
         changed: true,
-        input_variables: input_variables(state.input_variables, action)
+        errors: Object.assign({}, state.errors, errors),
+        input_variables: input_variables(state.input_variables, action),
+      });
+    case ERROR_INPUT_VARIABLE:
+      var errors = {};
+      errors[action.field] = action.error;
+      return Object.assign({}, state, {
+        errors: Object.assign({}, state.errors, errors)
       });
     case CHANGE_OPERAND_SELECTION:
       return Object.assign({}, state, {
@@ -1340,11 +1349,18 @@ class TabularDataSource extends React.Component {
         var source1 = {name: t1.name, field: t1.field_names[0]};
         var source2 = Object.assign({}, source1);
         var name = this.generateName(source1, source2, newProps.input_variables);
-         var data = Object.assign(
-           {},
-           newProps.editingTabularData,
-           {defaultName: name}
-         );
+        var data = Object.assign(
+          {},
+          newProps.editingTabularData,
+          {defaultName: name}
+        );
+
+        if (!this.props.editingTabularData.source1)
+          data.source1 = source1;
+        if (!this.props.editingTabularData.source2)
+          data.source2 = source2;
+
+
          this.props.onEditTabularData(data);
       }
     }
@@ -1477,8 +1493,9 @@ var dateToDOY = (date) => {
 
 class RasterDataSource extends React.Component {
   onSave() {
-    if (this.props.errors.rasterDataName)
+    if (this.props.errors.rasterDataName || this.props.errors.rasterDate)
       return; // Do not submit if there are errors
+
     var name = this.props.editingRasterData.name;
     if (name == null || name.length == 0){
       name = this.props.editingRasterData.defaultName;
@@ -1579,6 +1596,8 @@ class RasterDataSource extends React.Component {
         newProps.editingRasterData,
         {defaultName: name}
       );
+      if (!this.props.editingRasterData.raster)
+        data.raster = raster;
       this.props.onEditRasterData(data);
     }
   }
@@ -1645,7 +1664,9 @@ class RasterDataSource extends React.Component {
               }
             </FormControl>
           </FormGroup>
-          <FormGroup controlId="range">
+          <FormGroup controlId="range"
+            validationState={this.props.errors.rasterDataTemporalRange ?
+              'error' : null}>
             <ControlLabel>Temporal&nbsp;Range</ControlLabel>
             <div class="input-group input-daterange">
             <input
@@ -1660,6 +1681,11 @@ class RasterDataSource extends React.Component {
               value={this.props.editingRasterData.temporalRangeEnd}
             />
             </div>
+            <HelpBlock>
+              {this.props.errors.rasterDataTemporalRange ?
+                this.props.errors.rasterDataTemporalRange :
+                "Date must be entered in the form yyyy-ddd"}
+            </HelpBlock>
           </FormGroup>
           <FormGroup controlId="name"
             validationState={this.props.errors.rasterDataName ? 'error' : null}>
@@ -2035,7 +2061,6 @@ class JoinOperator extends DataNode {
 class RasterOperator extends DataNode {
   constructor(operands) {
     super(operands);
-    console.log(operands);
 
     if (operands.length != 3) {
       throw Error("RasterOperator takes exactly 3 operands");
