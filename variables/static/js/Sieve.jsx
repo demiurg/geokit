@@ -106,7 +106,7 @@ function sieveApp(state=initialState, action){
         editingTabularData: action.data
       });
     case EDIT_EXPRESSION_DATA:
-      return Ojectassign({}, state, {
+      return Object.assign({}, state, {
         editingExpressionData: action.data
       });
     default:
@@ -1682,41 +1682,117 @@ class RasterDataSource extends React.Component {
   }
 }
 
-class ExpressionEditor extends React.Component {
+class OperandChooser extends React.Component {
+  changeOperand(e) {
+    var operand_refs = this.props.editingExpressionData.operand_refs;
+    operand_refs[this.props.operand_index] = e.value;
+    
+    var expressionData = Object.assign(
+      {},
+      this.props.editingExpressionData,
+      {operand_refs: operand_refs}
+    );
+    this.props.onEditExpressionData(expressionData);
+  }
+
   render() {
-    if (this.props.tree[0]) {
-      var RootNode = treeToNode(this.props.tree[0]);
-    } else {
-      var RootNode = EmptyTree;
+    var options = this.props.input_variables.map(input_var => { return {value: input_var.name, label: input_var.name}; });
+    return (
+      <div style={{display: "inline-block", width: 400}}>
+        <Select onChange={this.changeOperand.bind(this)}
+                value={this.props.editingExpressionData.operand_refs[this.props.operand_index]}
+                options={options}
+                clearable={false} />
+      </div>
+    );
+  }
+}
+
+class TreeViewer extends React.Component {
+  render() {
+    var operand_inputs = [];
+    for (var i = 0; i < this.props.tree.arity; i++) {
+      operand_inputs.push(<OperandChooser {...this.props} operand_index={i} />);
     }
+
+    return (
+      <span>{this.props.tree.name} ( {operand_inputs} )</span>
+    );
+  }
+}
+
+class ExpressionEditor extends React.Component {
+  changeName(e) {
+    var expressionData = Object.assign(
+      {},
+      this.props.editingExpressionData,
+      {name: e.target.value}
+    );
+    this.props.onEditExpressionData(expressionData);
+  }
+
+  addOp(op) {
+    var node_object = treeToNode(op);
+    var expressionData = Object.assign(
+      {},
+      this.props.editingExpressionData,
+      {node: op, operand_refs: Array(node_object.arity)}
+    );
+    this.props.onEditExpressionData(expressionData);
+  }
+
+  populateOperands(arity) {
+    var operands = [];
+
+    for (var i = 0; i < arity; i++) {
+      var operand_tree = this.props.input_variables.filter((input_var) => {
+        return input_var.name == this.props.editingExpressionData.operand_refs[i];
+      })[0].node;
+
+      operands.push(operand_tree);
+    }
+
+    return operands;
+  }
+
+  onSave() {
+    var expressionData = this.props.editingExpressionData;
+    if (expressionData.name && expressionData.name.length > 0 &&
+        expressionData.node && expressionData.node.length == 2) {
+
+      var node = treeToNode(expressionData.node);
+      expressionData.node[1] = this.populateOperands(node.arity);
+
+      this.props.onEditExpressionData({name: "", node: [], operand_refs: []});
+      this.props.onAddInputVariable(expressionData);
+    }
+  }
+
+  render() {
     return (
       <Panel header="Expression editor">
         <FormGroup controlId="name">
           <FormControl componentClass="input"
             placeholder="Name..."
-            onChange={this.changeName}
+            onChange={this.changeName.bind(this)}
             value={this.props.editingExpressionData.name} />
         </FormGroup>
         <Panel>
           <div className="pull-right">
             <ButtonGroup>
-              <Button onClick={this.props.onInitTree.bind(this, ['+', [EMPTY,EMPTY]])}>+</Button>
-              <Button>-</Button>
-              <Button>*</Button>
-              <Button>/</Button>
-              <Button>Temporal Mean</Button>
-              <Button>Spatial Mean</Button>
+              <Button onClick={this.addOp.bind(this, ['+', [null, null]])}>+</Button>
+              <Button onClick={this.addOp.bind(this, ['-', [null, null]])}>-</Button>
+              <Button onClick={this.addOp.bind(this, ['*', [null, null]])}>*</Button>
+              <Button onClick={this.addOp.bind(this, ['/', [null, null]])}>/</Button>
+              <Button onClick={this.addOp.bind(this, ['tmean', [null]])}>Temporal Mean</Button>
+              <Button onClick={this.addOp.bind(this, ['smean', [null]])}>Spatial Mean</Button>
             </ButtonGroup>
           </div>
         </Panel>
         <Panel>
-          <RootNode input_variables={this.props.input_variables}
-                    tree={this.props.tree} node_id={0}
-                    onEditTreeNode={this.props.onEditTreeNode}
-                    onChangeOperandSelection={this.props.onChangeOperandSelection}
-                    operandSelections={this.props.operandSelections} />
+          <TreeViewer {...this.props} tree={treeToNode(this.props.editingExpressionData.node)} />
         </Panel>
-        <Button>Add</Button>
+        <Button onClick={this.onSave.bind(this)}>Add</Button>
       </Panel>
     );
   }
@@ -1724,7 +1800,15 @@ class ExpressionEditor extends React.Component {
 
 class VariableTable extends React.Component {
   onUseVariable(variable) {
-    this.props.onInitTree(variable.node);
+    this.props.onSaveVariable({
+      id: this.props.id,
+      name: variable.name,
+      tree: variable.node,
+      input_variables: this.props.input_variables,
+      description: this.props.description,
+      temporal_domain: this.props.temporal_domain,
+      spatial_domain: this.props.spatial_domain
+    });
   }
 
   render() {
@@ -1867,7 +1951,6 @@ class SieveComponent extends React.Component {
             <VariableTable {...this.props} />
           </Col>
         </Row>
-        <Button onClick={onSave}>Save</Button>
       </div>
     );
   }
@@ -1876,29 +1959,6 @@ class SieveComponent extends React.Component {
 var tab = (level) => {return Array(level * 4).join("&nbsp;")};
 var formatHtml = (html, level) => {return tab(level) + html;};
 
-class OperandChooser extends React.Component {
-  onChangeOperand(e) {
-    this.props.onEditTreeNode(this.props.node_id, this.props.operandToNode(e.value));
-  }
-
-  render() {
-    var Component;
-
-    if (this.props.editable) {
-      Component = Select.Creatable;
-    } else {
-      Component = Select;
-    }
-    return (
-      <div style={{display: "inline-block", width: 100}}>
-        <Component onChange={this.onChangeOperand.bind(this)}
-                  value={this.props.value}
-                  options={this.props.operands}
-                  clearable={false} />
-      </div>
-    );
-  }
-}
 
 class DataNode {
   json() {
@@ -1910,8 +1970,11 @@ class MeanOperator extends DataNode {
   constructor(operands) {
     super(operands);
 
-    if (operands.length != 2) {
-        throw Error("MeanOperator takes exactly 2 operands");
+    this.name = 'Mean';
+    this.arity = 2;
+
+    if (operands.length != this.arity) {
+        throw Error(`MeanOperator takes exactly ${this.arity} operands`);
     }
 
     this.left = treeToNode(operands[0]);
@@ -1933,8 +1996,11 @@ class TemporalMeanOperator extends DataNode {
   constructor(operands) {
     super(operands);
 
-    if (operands.length != 1) {
-      throw Error("TemporalMeanOperator takes exactly 1 operand");
+    this.name = 'Temporal Mean';
+    this.arity = 1;
+
+    if (operands.length != this.arity) {
+      throw Error(`TemporalMeanOperator takes exactly ${this.arity} operand`);
     }
 
     this.operand = treeToNode(operands[0]);
@@ -1951,8 +2017,11 @@ class SpatialMeanOperator extends DataNode {
   constructor(operands) {
     super(operands);
 
-    if (operands.length != 1) {
-      throw Error("SpatialMeanOperator takes exactly 1 operand");
+    this.name = 'Spatial Mean';
+    this.arity = 1;
+
+    if (operands.length != this.arity) {
+      throw Error(`SpatialMeanOperator takes exactly ${this.arity} operand`);
     }
 
     this.operand = treeToNode(operands[0]);
@@ -1969,8 +2038,11 @@ class SelectOperator extends DataNode {
   constructor(operands) {
     super(operands);
 
-    if (operands.length != 2) {
-      throw Error("SelectOperator takes exactly 2 operands");
+    this.name = 'Select';
+    this.arity = 2;
+
+    if (operands.length != this.arity) {
+      throw Error(`SelectOperator takes exactly ${this.arity} operands`);
     }
 
     this.left = treeToNode(operands[0]);
@@ -1989,8 +2061,11 @@ class ExpressionOperator extends DataNode {
   constructor(operands) {
     super(operands);
 
-    if (operands.length != 1) {
-      throw Error("ExpressionOperator takes exactly 1 operand");
+    this.name = 'Expression';
+    this.arity = 1;
+
+    if (operands.length != this.arity) {
+      throw Error(`"ExpressionOperator takes exactly ${this.arity} operand`);
     }
 
     this.operand = treeToNode(operands[0]);
@@ -2007,8 +2082,11 @@ class JoinOperator extends DataNode {
   constructor(operands) {
     super(operands);
 
-    if (operands.length != 2) {
-      throw Error("JoinOperator takes exactly 2 operands");
+    this.name = 'Join';
+    this.arity = 2
+
+    if (operands.length != this.arity) {
+      throw Error(`JoinOperator takes exactly ${this.arity} operands`);
     }
 
     this.left = new SourceOperator([operands[0]]);
@@ -2035,10 +2113,12 @@ class JoinOperator extends DataNode {
 class RasterOperator extends DataNode {
   constructor(operands) {
     super(operands);
-    console.log(operands);
 
-    if (operands.length != 3) {
-      throw Error("RasterOperator takes exactly 3 operands");
+    this.name = 'Raster';
+    this.arity = 3;
+
+    if (operands.length != this.arity) {
+      throw Error(`RasterOperator takes exactly ${this.arity} operands`);
     }
 
     this.left = operands[0];
@@ -2057,12 +2137,15 @@ class SourceOperator extends DataNode {
   constructor(operands) {
     super(operands);
 
-    if (operands.length != 1) {
-      throw Error("SourceOperator takes exactly 1 operand");
+    this.name= 'Source';
+    this.arity = 1
+
+    if (operands.length != this.arity) {
+      throw Error(`SourceOperator takes exactly ${this.arity} operand`);
     }
 
     this.operand = operands[0];
-    this.name = this.operand.name;
+    this.source_name = this.operand.name;
     this.type = this.operand['type'];
     this.field = this.operand.field;
 
@@ -2074,7 +2157,7 @@ class SourceOperator extends DataNode {
   }
 
   json() {
-    return ['source', [{name: this.name, type: this.type, field: this.field}]];
+    return ['source', [{source_name: this.name, type: this.type, field: this.field}]];
   }
 }
 
@@ -2083,9 +2166,11 @@ class MathOperator extends React.Component {
     super(operands);
 
     this.operator = operator;
+    this.name = operator;
+    this.arity = 2;
 
-    if (operands.length != 2) {
-      throw Error("MathOperator takes exactly 2 operands");
+    if (operands.length != this.arity) {
+      throw Error(`MathOperator takes exactly ${this.arity} operands`);
     }
 
     this.left = treeToNode(operands[0]);
@@ -2103,9 +2188,12 @@ class MathOperator extends React.Component {
   }
 }
 
-class EmptyTree extends React.Component {
+class EmptyTree extends DataNode {
   constructor(props) {
     super(props);
+
+    this.name = 'Empty';
+    this.arity = 0;
   }
 
   render() {
@@ -2116,7 +2204,7 @@ class EmptyTree extends React.Component {
 function treeToNode(tree) {
   var node;
 
-  if (Object.keys(tree).length == 0) {
+  if (!tree || Object.keys(tree).length == 0) {
     return new EmptyTree();
   }
 
@@ -2141,7 +2229,7 @@ function treeToNode(tree) {
     case '-':
     case '*':
     case '/':
-      return new MathOperator(tree[1]);
+      return new MathOperator(tree[0], tree[1]);
     default:
       throw Error("'" + tree[0] + "' is not a valid operator");
   }
