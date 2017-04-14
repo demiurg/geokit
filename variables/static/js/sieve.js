@@ -187,7 +187,7 @@ function changeOperandSelection(id, value) {
   };
 }
 
-function updateName(name) {
+function updateName(name, field) {
   var error = null;
   if (!name || !name.match(/^[a-zA-Z0-9-]+$/)) {
     error = "Name is not alphanumeric or contains spaces.";
@@ -195,6 +195,7 @@ function updateName(name) {
   return {
     type: UPDATE_NAME,
     name: name,
+    field: field,
     error: error
   };
 }
@@ -1499,10 +1500,12 @@ function sieveApp() {
         raster_catalog: rasterCatalog(state.raster_catalog, action)
       });
     case UPDATE_NAME:
+      var errors = {};
+      errors[action.field] = action.error;
       return Object.assign({}, state, {
         changed: true,
         name: action.name,
-        errors: Object.assign({}, state.errors, { name: action.error })
+        errors: Object.assign({}, state.errors, errors)
       });
     case UPDATE_DESCRIPTION:
       return Object.assign({}, state, {
@@ -1570,8 +1573,8 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
     onSaveVariable: function onSaveVariable(v, c) {
       dispatch(saveVariable(v, c));
     },
-    onNameChange: function onNameChange(e) {
-      dispatch(updateName(e.target.value));
+    onNameChange: function onNameChange(name, field) {
+      dispatch(updateName(name, field));
     },
     onDescriptionChange: function onDescriptionChange(e) {
       dispatch(updateDescription(e.target.value));
@@ -3258,7 +3261,7 @@ var TabularDataSource = function (_React$Component16) {
   }
 
   TabularDataSource.prototype.onSave = function onSave() {
-
+    if (this.props.errors.tabularDataName) return; // Do not submit if there are errors
     var name = this.props.editingTabularData.name;
     if (name == null || name.length == 0) {
       name = this.props.editingTabularData.defaultName;
@@ -3287,7 +3290,6 @@ var TabularDataSource = function (_React$Component16) {
   };
 
   TabularDataSource.prototype.componentWillReceiveProps = function componentWillReceiveProps(newProps) {
-
     if (!newProps.editingTabularData.defaultName || newProps.input_variables != this.props.input_variables) {
       var t1 = newProps.tables.items[0];
       if (t1) {
@@ -3302,7 +3304,6 @@ var TabularDataSource = function (_React$Component16) {
 
   TabularDataSource.prototype.generateName = function generateName(source1, source2) {
     var var_list = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-
 
     if (source1.name == source2.name) {
       var name = source1.name + '-' + source1.field + '-' + source2.field;
@@ -3331,6 +3332,7 @@ var TabularDataSource = function (_React$Component16) {
   TabularDataSource.prototype.validate = function validate() {
     var form = $(this.form).serializeArray();
     var name = form[2]['value'];
+    if (name.length > 0) this.props.onNameChange(name, "tabularDataName");
     var source1 = JSON.parse(form[0]['value']);
     var source2 = JSON.parse(form[1]['value']);
     var defaultName = this.generateName(source1, source2);
@@ -3400,7 +3402,9 @@ var TabularDataSource = function (_React$Component16) {
         ),
         React.createElement(
           FormGroup,
-          { controlId: "name" },
+          {
+            validationState: this.props.errors.tabularDataName ? 'error' : null,
+            controlId: "name" },
           React.createElement(
             ControlLabel,
             null,
@@ -3410,7 +3414,12 @@ var TabularDataSource = function (_React$Component16) {
             name: "name", type: "text",
             placeholder: this.props.editingTabularData.defaultName,
             value: this.props.editingTabularData.name
-          })
+          }),
+          React.createElement(
+            HelpBlock,
+            null,
+            this.props.errors.tabularDataName ? this.props.errors.tabularDataName : "Name must be alphanumeric, without spaces."
+          )
         ),
         React.createElement(
           Button,
@@ -3449,7 +3458,7 @@ var RasterDataSource = function (_React$Component17) {
   }
 
   RasterDataSource.prototype.onSave = function onSave() {
-
+    if (this.props.errors.rasterDataName) return; // Do not submit if there are errors
     var name = this.props.editingRasterData.name;
     if (name == null || name.length == 0) {
       name = this.props.editingRasterData.defaultName;
@@ -3544,10 +3553,20 @@ var RasterDataSource = function (_React$Component17) {
     }
   };
 
-  RasterDataSource.prototype.validate = function validate() {
-
+  RasterDataSource.prototype.updateDefaultName = function updateDefaultName() {
     var form = $(this.form).serializeArray();
     var name = form[3]['value'];
+    if (!name || name.length < 1) {
+      var raster = JSON.parse(form[0]['value']);
+      var data = Object.assign({}, this.props.editingRasterData, { defaultName: this.generateName(raster) });
+      this.props.onEditRasterData(data);
+    }
+  };
+
+  RasterDataSource.prototype.validate = function validate() {
+    var form = $(this.form).serializeArray();
+    var name = form[3]['value'];
+    if (name.length > 0) this.props.onNameChange(name, "rasterDataName");
     var raster = JSON.parse(form[0]['value']);
     var temporalRangeStart = form[1]['value'];
     var temporalRangeEnd = form[2]['value'];
@@ -3634,7 +3653,8 @@ var RasterDataSource = function (_React$Component17) {
         ),
         React.createElement(
           FormGroup,
-          { controlId: "name" },
+          { controlId: "name",
+            validationState: this.props.errors.rasterDataName ? 'error' : null },
           React.createElement(
             ControlLabel,
             null,
@@ -3644,7 +3664,12 @@ var RasterDataSource = function (_React$Component17) {
             name: "name", type: "text",
             placeholder: this.props.editingRasterData.defaultName,
             value: this.props.editingRasterData.name
-          })
+          }),
+          React.createElement(
+            HelpBlock,
+            null,
+            this.props.errors.rasterDataName ? this.props.errors.rasterDataName : "Name must be alphanumeric, without spaces."
+          )
         ),
         React.createElement(
           Button,
@@ -3960,10 +3985,12 @@ var SieveComponent = function (_React$Component20) {
             onAddInputVariable: this.props.onAddInputVariable,
             onEditInputVariable: this.props.onEditInputVariable,
             onEditTabularData: this.props.onEditTabularData,
+            onNameChange: this.props.onNameChange,
             editingTabularData: this.props.editingTabularData,
             input_variables: this.props.input_variables,
             layers: this.props.layers,
-            tables: this.props.tables
+            tables: this.props.tables,
+            errors: this.props.errors
           })
         ),
         React.createElement(
@@ -3973,10 +4000,12 @@ var SieveComponent = function (_React$Component20) {
             onAddInputVariable: this.props.onAddInputVariable,
             onEditInputVariable: this.props.onEditInputVariable,
             onEditRasterData: this.props.onEditRasterData,
+            onNameChange: this.props.onNameChange,
             editingRasterData: this.props.editingRasterData,
             input_variables: this.props.input_variables,
             raster_catalog: this.props.raster_catalog,
-            spatialDomain: this.props.spatialDomain
+            spatialDomain: this.props.spatialDomain,
+            errors: this.props.errors
           })
         )
       ),

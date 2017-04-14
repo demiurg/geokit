@@ -45,10 +45,12 @@ function sieveApp(state=initialState, action){
         raster_catalog: rasterCatalog(state.raster_catalog, action)
       });
     case UPDATE_NAME:
+      var errors = {};
+      errors[action.field] = action.error;
       return Object.assign({}, state, {
         changed: true,
         name: action.name,
-        errors: Object.assign({}, state.errors, {name: action.error})
+        errors: Object.assign({}, state.errors, errors)
       });
     case UPDATE_DESCRIPTION:
       return Object.assign({}, state, {
@@ -116,8 +118,8 @@ var mapDispatchToProps = (dispatch) => {
     onSaveVariable: (v, c) => {
       dispatch(saveVariable(v, c));
     },
-    onNameChange: (e) => {
-      dispatch(updateName(e.target.value));
+    onNameChange: (name, field) => {
+      dispatch(updateName(name, field));
     },
     onDescriptionChange: (e) => {
       dispatch(updateDescription(e.target.value));
@@ -1286,7 +1288,8 @@ class SpatialConfiguration extends React.Component {
 
 class TabularDataSource extends React.Component {
   onSave() {
-
+    if (this.props.errors.tabularDataName)
+      return; // Do not submit if there are errors
     var name = this.props.editingTabularData.name;
     if (name == null || name.length == 0){
       name = this.props.editingTabularData.defaultName;
@@ -1321,7 +1324,6 @@ class TabularDataSource extends React.Component {
   }
 
   componentWillReceiveProps(newProps){
-
     if (!newProps.editingTabularData.defaultName ||
         newProps.input_variables != this.props.input_variables
       ){
@@ -1341,7 +1343,6 @@ class TabularDataSource extends React.Component {
   }
 
   generateName(source1, source2, var_list=null) {
-
     if (source1.name == source2.name){
       var name = source1.name + '-' + source1.field + '-' + source2.field;
     } else {
@@ -1369,6 +1370,8 @@ class TabularDataSource extends React.Component {
   validate() {
     var form = $(this.form).serializeArray();
     var name = form[2]['value'];
+    if (name.length > 0)
+      this.props.onNameChange(name, "tabularDataName");
     var source1 = JSON.parse(form[0]['value']);
     var source2 = JSON.parse(form[1]['value']);
     var defaultName = this.generateName(source1, source2);
@@ -1427,13 +1430,20 @@ class TabularDataSource extends React.Component {
               }
             </FormControl>
           </FormGroup>
-          <FormGroup controlId="name">
+          <FormGroup
+          validationState={this.props.errors.tabularDataName ? 'error' : null}
+          controlId="name">
             <ControlLabel>Name</ControlLabel>
             <FormControl
               name="name" type="text"
               placeholder={this.props.editingTabularData.defaultName}
               value={this.props.editingTabularData.name}
             />
+            <HelpBlock>
+              {this.props.errors.tabularDataName ?
+                this.props.errors.tabularDataName :
+                "Name must be alphanumeric, without spaces."}
+            </HelpBlock>
           </FormGroup>
           <Button onClick={this.onSave.bind(this)}>Add</Button>
         </form>
@@ -1459,7 +1469,8 @@ var dateToDOY = (date) => {
 
 class RasterDataSource extends React.Component {
   onSave() {
-
+    if (this.props.errors.rasterDataName)
+      return; // Do not submit if there are errors
     var name = this.props.editingRasterData.name;
     if (name == null || name.length == 0){
       name = this.props.editingRasterData.defaultName;
@@ -1495,7 +1506,6 @@ class RasterDataSource extends React.Component {
     } else {
       this.props.onAddInputVariable(variable);
     }
-
   }
 
   sourceToString(source) {
@@ -1524,7 +1534,6 @@ class RasterDataSource extends React.Component {
   }
 
   componentDidMount(){
-
     var format = {
       toDisplay: function (date, format, language){
         var userTimezoneOffset = date.getTimezoneOffset() * 60000;
@@ -1548,7 +1557,6 @@ class RasterDataSource extends React.Component {
      }).on("changeDate", (e) => {
       this.validate();
      });
-
   }
 
   componentWillReceiveProps(newProps){
@@ -1567,10 +1575,25 @@ class RasterDataSource extends React.Component {
     }
   }
 
-  validate() {
-
+  updateDefaultName(){
     var form = $(this.form).serializeArray();
     var name = form[3]['value'];
+    if (!name || name.length < 1){
+      var raster = JSON.parse(form[0]['value']);
+      var data = Object.assign(
+        {},
+        this.props.editingRasterData,
+        {defaultName: this.generateName(raster)}
+      );
+      this.props.onEditRasterData(data);
+    }
+  }
+
+  validate() {
+    var form = $(this.form).serializeArray();
+    var name = form[3]['value'];
+    if( name.length > 0)
+      this.props.onNameChange(name, "rasterDataName");
     var raster = JSON.parse(form[0]['value']);
     var temporalRangeStart = form[1]['value'];
     var temporalRangeEnd = form[2]['value'];
@@ -1630,13 +1653,19 @@ class RasterDataSource extends React.Component {
             />
             </div>
           </FormGroup>
-          <FormGroup controlId="name">
+          <FormGroup controlId="name"
+            validationState={this.props.errors.rasterDataName ? 'error' : null}>
             <ControlLabel>Name</ControlLabel>
             <FormControl
               name="name" type="text"
               placeholder={this.props.editingRasterData.defaultName}
               value={this.props.editingRasterData.name}
             />
+            <HelpBlock>
+              {this.props.errors.rasterDataName ?
+                this.props.errors.rasterDataName :
+                  "Name must be alphanumeric, without spaces."}
+            </HelpBlock>
           </FormGroup>
           <Button onClick={this.onSave.bind(this)}>Add</Button>
         </form>
@@ -1822,10 +1851,12 @@ class SieveComponent extends React.Component {
               onAddInputVariable={this.props.onAddInputVariable}
               onEditInputVariable={this.props.onEditInputVariable}
               onEditTabularData={this.props.onEditTabularData}
+              onNameChange={this.props.onNameChange}
               editingTabularData={this.props.editingTabularData}
               input_variables={this.props.input_variables}
               layers={this.props.layers}
               tables={this.props.tables}
+              errors={this.props.errors}
             />
           </Col>
           <Col xs={5} xsOffset={1}>
@@ -1833,10 +1864,12 @@ class SieveComponent extends React.Component {
               onAddInputVariable={this.props.onAddInputVariable}
               onEditInputVariable={this.props.onEditInputVariable}
               onEditRasterData={this.props.onEditRasterData}
+              onNameChange={this.props.onNameChange}
               editingRasterData={this.props.editingRasterData}
               input_variables={this.props.input_variables}
               raster_catalog={this.props.raster_catalog}
               spatialDomain={this.props.spatialDomain}
+              errors={this.props.errors}
           />
           </Col>
         </Row>

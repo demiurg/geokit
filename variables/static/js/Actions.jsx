@@ -189,7 +189,7 @@ function changeOperandSelection(id, value) {
   };
 }
 
-function updateName(name){
+function updateName(name, field){
   var error = null;
   if (!name || !name.match(/^[a-zA-Z0-9-]+$/)){
     error = "Name is not alphanumeric or contains spaces.";
@@ -197,6 +197,7 @@ function updateName(name){
   return {
     type: UPDATE_NAME,
     name: name,
+    field: field,
     error: error
   };
 }
