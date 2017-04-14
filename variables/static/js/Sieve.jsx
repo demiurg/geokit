@@ -1684,7 +1684,7 @@ class RasterDataSource extends React.Component {
             <HelpBlock>
               {this.props.errors.rasterDataTemporalRange ?
                 this.props.errors.rasterDataTemporalRange :
-                "Date must be entered in the form yyyy-ddd"}
+                "Date must be entered in the form yyyy-ddd."}
             </HelpBlock>
           </FormGroup>
           <FormGroup controlId="name"
@@ -1791,7 +1791,6 @@ class VariableTable extends React.Component {
                             index: i
                           });
                         } else if (item.node[0] == "raster"){
-                          console.log(item);
                           var raster = item.node[1][0];
                           var temporalRange = item.node[1][2].split(",");
 

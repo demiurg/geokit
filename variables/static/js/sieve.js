@@ -3699,7 +3699,7 @@ var RasterDataSource = function (_React$Component17) {
           React.createElement(
             HelpBlock,
             null,
-            this.props.errors.rasterDataTemporalRange ? this.props.errors.rasterDataTemporalRange : "Date must be entered in the form yyyy-ddd"
+            this.props.errors.rasterDataTemporalRange ? this.props.errors.rasterDataTemporalRange : "Date must be entered in the form yyyy-ddd."
           )
         ),
         React.createElement(
@@ -3917,7 +3917,6 @@ var VariableTable = function (_React$Component19) {
                           index: i
                         });
                       } else if (item.node[0] == "raster") {
-                        console.log(item);
                         var raster = item.node[1][0];
                         var temporalRange = item.node[1][2].split(",");
 
