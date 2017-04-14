@@ -84,17 +84,6 @@ function variables(state={
   }
 }
 
-function input_variable(state, action){
-  switch (action.type){
-    case 'ADD_INPUT_VARIABLE':
-      return {
-        id: action.id,
-        variable: action.variable
-      }
-    default:
-      return state;
-  }
-}
 
 function input_variables(state=[], action){
   switch (action.type) {
@@ -102,7 +91,6 @@ function input_variables(state=[], action){
       return [
         ...state,
         action.variable
-        //input_variable(undefined, action)
       ];
     case REMOVE_INPUT_VARIABLE:
       return state.slice(

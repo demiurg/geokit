@@ -35,6 +35,7 @@ const RECIEVE_VARIABLE = 'RECIEVE_VARIABLE';
 
 const EDIT_TABULAR_DATA = 'EDIT_TABULAR_DATA';
 const EDIT_RASTER_DATA = 'EDIT_RASTER_DATA';
+const EDIT_EXPRESSION_DATA = 'EDIT_EXPRESSION_DATA';
 
 function requestLayers() {
   return {
@@ -189,7 +190,7 @@ function changeOperandSelection(id, value) {
   };
 }
 
-function updateName(name){
+function updateName(name, field){
   var error = null;
   if (!name || !name.match(/^[a-zA-Z0-9-]+$/)){
     error = "Name is not alphanumeric or contains spaces.";
@@ -197,6 +198,7 @@ function updateName(name){
   return {
     type: UPDATE_NAME,
     name: name,
+    field: field,
     error: error
   };
 }
@@ -303,6 +305,13 @@ function editTabularData(data) {
 function editRasterData(data) {
   return {
     type: EDIT_RASTER_DATA,
+    data: data
+  };
+}
+
+function editExpressionData(data) {
+  return {
+    type: EDIT_EXPRESSION_DATA,
     data: data
   };
 }
