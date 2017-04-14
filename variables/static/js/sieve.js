@@ -3825,7 +3825,6 @@ var VariableTable = function (_React$Component19) {
           this.props.input_variables.map(function (item, i) {
             var type = item.node[0];
             var operator = treeToNode(item.node);
-
             return React.createElement(
               "tr",
               null,
@@ -3981,32 +3980,12 @@ var SieveComponent = function (_React$Component20) {
         React.createElement(
           Col,
           { xs: 5 },
-          React.createElement(TabularDataSource, {
-            onAddInputVariable: this.props.onAddInputVariable,
-            onEditInputVariable: this.props.onEditInputVariable,
-            onEditTabularData: this.props.onEditTabularData,
-            onNameChange: this.props.onNameChange,
-            editingTabularData: this.props.editingTabularData,
-            input_variables: this.props.input_variables,
-            layers: this.props.layers,
-            tables: this.props.tables,
-            errors: this.props.errors
-          })
+          React.createElement(TabularDataSource, this.props)
         ),
         React.createElement(
           Col,
           { xs: 5, xsOffset: 1 },
-          React.createElement(RasterDataSource, {
-            onAddInputVariable: this.props.onAddInputVariable,
-            onEditInputVariable: this.props.onEditInputVariable,
-            onEditRasterData: this.props.onEditRasterData,
-            onNameChange: this.props.onNameChange,
-            editingRasterData: this.props.editingRasterData,
-            input_variables: this.props.input_variables,
-            raster_catalog: this.props.raster_catalog,
-            spatialDomain: this.props.spatialDomain,
-            errors: this.props.errors
-          })
+          React.createElement(RasterDataSource, this.props)
         )
       ),
       React.createElement(
@@ -4032,14 +4011,7 @@ var SieveComponent = function (_React$Component20) {
         React.createElement(
           Col,
           { xs: 11 },
-          React.createElement(VariableTable, {
-            onRemoveInputVariable: this.props.onRemoveInputVariable,
-            onEditTabularData: this.props.onEditTabularData,
-            onEditRasterData: this.props.onEditRasterData,
-            onSpatialDomainChange: this.props.onSpatialDomainChange,
-            input_variables: this.props.input_variables,
-            onInitTree: this.props.onInitTree
-          })
+          React.createElement(VariableTable, this.props)
         )
       ),
       React.createElement(

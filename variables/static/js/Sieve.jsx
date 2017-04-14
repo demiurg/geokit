@@ -1737,7 +1737,6 @@ class VariableTable extends React.Component {
             {this.props.input_variables.map( (item, i) => {
               var type = item.node[0];
               var operator = treeToNode(item.node);
-
               return(
                 <tr>
                   <td>{item.name}</td>
@@ -1847,30 +1846,10 @@ class SieveComponent extends React.Component {
         </Row>
         <Row className="show-grid">
           <Col xs={5}>
-            <TabularDataSource
-              onAddInputVariable={this.props.onAddInputVariable}
-              onEditInputVariable={this.props.onEditInputVariable}
-              onEditTabularData={this.props.onEditTabularData}
-              onNameChange={this.props.onNameChange}
-              editingTabularData={this.props.editingTabularData}
-              input_variables={this.props.input_variables}
-              layers={this.props.layers}
-              tables={this.props.tables}
-              errors={this.props.errors}
-            />
+            <TabularDataSource {...this.props}/>
           </Col>
           <Col xs={5} xsOffset={1}>
-            <RasterDataSource
-              onAddInputVariable={this.props.onAddInputVariable}
-              onEditInputVariable={this.props.onEditInputVariable}
-              onEditRasterData={this.props.onEditRasterData}
-              onNameChange={this.props.onNameChange}
-              editingRasterData={this.props.editingRasterData}
-              input_variables={this.props.input_variables}
-              raster_catalog={this.props.raster_catalog}
-              spatialDomain={this.props.spatialDomain}
-              errors={this.props.errors}
-          />
+            <RasterDataSource {...this.props}/>
           </Col>
         </Row>
         <Row className="show-grid">
@@ -1888,13 +1867,7 @@ class SieveComponent extends React.Component {
         </Row>
         <Row className="show-grid">
           <Col xs={11}>
-            <VariableTable
-              onRemoveInputVariable={this.props.onRemoveInputVariable}
-              onEditTabularData={this.props.onEditTabularData}
-              onEditRasterData={this.props.onEditRasterData}
-              onSpatialDomainChange={this.props.onSpatialDomainChange}
-              input_variables={this.props.input_variables}
-              onInitTree={this.props.onInitTree}
+            <VariableTable {...this.props}
             />
           </Col>
         </Row>
