@@ -151,7 +151,7 @@ function validateRaster(raster){
   if (range.includes("undefined"))
     return "Start and end date must be specified.";
   if (!range.match(/\d{4}-\d{3},\d{4}-\d{3}/g))
-    return "Date must be entered in the form yyyy-ddd"
+    return "Date must be entered in the form yyyy-ddd."
 
   return null;
 }
