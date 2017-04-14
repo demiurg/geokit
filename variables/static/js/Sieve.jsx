@@ -19,6 +19,7 @@ var initialState = Object.assign({
   changed: false,
   editingTabularData: {},
   editingRasterData: {},
+  editingExpressionData: {},
   operandSelections: {}
 }, window.sieve_props);
 
@@ -102,6 +103,10 @@ function sieveApp(state=initialState, action){
       return Object.assign({}, state, {
         editingTabularData: action.data
       });
+    case EDIT_EXPRESSION_DATA:
+      return Ojectassign({}, state, {
+        editingExpressionData: action.data
+      });
     default:
       return state;
   }
@@ -151,6 +156,9 @@ var mapDispatchToProps = (dispatch) => {
     },
     onEditTabularData: (data) => {
       dispatch(editTabularData(data));
+    },
+    onEditExpressionData: (data) => {
+      dispatch(editExpressionData(data));
     }
   };
 };
@@ -1472,7 +1480,7 @@ class RasterDataSource extends React.Component {
         [
           this.props.editingRasterData.raster,
           this.props.spatialDomain,
-          this.props.editingRasterData.temporalRangeStart,
+          this.props.editingRasterData.temporalRangeStart + ',' +
           this.props.editingRasterData.temporalRangeEnd
         ]
       ]
@@ -1654,12 +1662,11 @@ class ExpressionEditor extends React.Component {
     }
     return (
       <Panel header="Expression editor">
-        <FormGroup controlId="name" validationState={this.props.errors.name ? 'error' : null}>
+        <FormGroup controlId="name">
           <FormControl componentClass="input"
             placeholder="Name..."
-            onChange={this.props.onNameChange}
-            value={this.props.name} />
-          <HelpBlock>{this.props.errors.name ? this.props.errors.name : "Name must be alphanumeric, without spaces."}</HelpBlock>
+            onChange={this.changeName}
+            value={this.props.editingExpressionData.name} />
         </FormGroup>
         <Panel>
           <div className="pull-right">
@@ -1680,6 +1687,7 @@ class ExpressionEditor extends React.Component {
                     onChangeOperandSelection={this.props.onChangeOperandSelection}
                     operandSelections={this.props.operandSelections} />
         </Panel>
+        <Button>Add</Button>
       </Panel>
     );
   }
@@ -1810,59 +1818,25 @@ class SieveComponent extends React.Component {
       <div className="sieve">
         <Row className="show-grid">
           <Col xs={11}>
-            <SpatialConfiguration
-              onSpatialDomainChange={this.props.onSpatialDomainChange}
-              spatialDomain={this.props.spatialDomain}
-              layers={this.props.layers} />
+            <SpatialConfiguration {...this.props} />
           </Col>
         </Row>
         <Row className="show-grid">
           <Col xs={5}>
-            <TabularDataSource
-              onAddInputVariable={this.props.onAddInputVariable}
-              onEditInputVariable={this.props.onEditInputVariable}
-              onEditTabularData={this.props.onEditTabularData}
-              editingTabularData={this.props.editingTabularData}
-              input_variables={this.props.input_variables}
-              layers={this.props.layers}
-              tables={this.props.tables}
-            />
+            <TabularDataSource {...this.props} />
           </Col>
           <Col xs={5} xsOffset={1}>
-            <RasterDataSource
-              onAddInputVariable={this.props.onAddInputVariable}
-              onEditInputVariable={this.props.onEditInputVariable}
-              onEditRasterData={this.props.onEditRasterData}
-              editingRasterData={this.props.editingRasterData}
-              input_variables={this.props.input_variables}
-              raster_catalog={this.props.raster_catalog}
-              spatialDomain={this.props.spatialDomain}
-          />
+            <RasterDataSource {...this.props} />
           </Col>
         </Row>
         <Row className="show-grid">
           <Col xs={11}>
-            <ExpressionEditor
-              tree={this.props.tree}
-              onInitTree={this.props.onInitTree}
-              onEditTreeNode={this.props.onEditTreeNode}
-              onNameChange={this.props.onNameChange}
-              onChangeOperandSelection={this.props.onChangeOperandSelection}
-              input_variables={this.props.input_variables}
-              operandSelections={this.props.operandSelections}
-              errors={this.props.errors} />
+            <ExpressionEditor {...this.props} />
           </Col>
         </Row>
         <Row className="show-grid">
           <Col xs={11}>
-            <VariableTable
-              onRemoveInputVariable={this.props.onRemoveInputVariable}
-              onEditTabularData={this.props.onEditTabularData}
-              onEditRasterData={this.props.onEditRasterData}
-              onSpatialDomainChange={this.props.onSpatialDomainChange}
-              input_variables={this.props.input_variables}
-              onInitTree={this.props.onInitTree}
-            />
+            <VariableTable {...this.props} />
           </Col>
         </Row>
         <Button onClick={onSave}>Save</Button>
@@ -1898,21 +1872,9 @@ class OperandChooser extends React.Component {
   }
 }
 
-class DataNode extends React.Component {
-  constructor(operands) {
-    super();
-  }
-
+class DataNode {
   json() {
     return JSON.encode(data);
-  }
-
-  render(text, level=0, newline=true) {
-    var output = tab(level) + text + " (" + this.dimensions + ")";
-    if (newline) {
-      output += "<br>";
-    }
-    return output;
   }
 }
 
@@ -1937,13 +1899,6 @@ class MeanOperator extends DataNode {
   json() {
     return ['mean', [this.left.json(), this.right.json()]];
   }
-
-  render(level, nl=true) {
-    return super.html('Mean of ( <br>' +
-      this.left.html(level + 1) +
-      this.right.html(level + 1) +
-      tab(level) + ')', level, nl);
-  }
 }
 
 class TemporalMeanOperator extends DataNode {
@@ -1962,12 +1917,6 @@ class TemporalMeanOperator extends DataNode {
   json() {
     return ['tmean', [this.operand.json()]];
   }
-
-  render(level, nl=true) {
-    return super.html('Time mean of ( <br>' +
-      this.operand.html(level + 1) +
-      tab(level) + ')', level, nl);
-  }
 }
 
 class SpatialMeanOperator extends DataNode {
@@ -1985,12 +1934,6 @@ class SpatialMeanOperator extends DataNode {
 
   json() {
     return ['smean', [this.operand.json()]];
-  }
-
-  render(level, nl=true) {
-    return super.html('Space mean of ( <br>' +
-      this.operand.html(level + 1) +
-      tab(level) + ')', level, nl);
   }
 }
 
@@ -2012,12 +1955,6 @@ class SelectOperator extends DataNode {
   json() {
     return ['select', [this.left.json(), this.right.json()]];
   }
-
-  render(level, nl=true) {
-    return super.html("Select " + this.right.name + "/" + this.right.field + " from (<br>" +
-      tab(level) + this.left.html(level + 1) +
-      tab(level) + ")", level, nl);
-  }
 }
 
 class ExpressionOperator extends DataNode {
@@ -2035,10 +1972,6 @@ class ExpressionOperator extends DataNode {
 
   json() {
     return ['expression', [this.operand.json()]];
-  }
-
-  render(level, nl=true) {
-    return super.html(this.operand.html(level), level, nl);
   }
 }
 
@@ -2069,22 +2002,12 @@ class JoinOperator extends DataNode {
   json() {
     return ['join', [this.left.json(), this.right.json()]];
   }
-
-  render(level, nl=true) {
-    return super.html("Join " +
-      this.left.type + ' ' + this.left.name + ' and ' +
-      this.right.type + ' ' + this.right.name + ' on ' +
-      this.left.field + ' = ' + this.right.field, level, nl);
-  }
 }
 
 class RasterOperator extends DataNode {
-  constructor(props) {
-    super(props);
-
-    var operands = props.tree[props.node_id][1].map((operand_id) => {
-      return props.tree[operand_id];
-    });
+  constructor(operands) {
+    super(operands);
+    console.log(operands);
 
     if (operands.length != 3) {
       throw Error("RasterOperator takes exactly 3 operands");
@@ -2092,45 +2015,13 @@ class RasterOperator extends DataNode {
 
     this.left = operands[0];
     this.middle = operands[2];
-    //this.right = treeToNode(operands[1]);
+    this.right = treeToNode(operands[1]);
 
     this.dimensions = 'spacetime';
   }
 
   json() {
     return ['raster', [this.left, this.right.json(), this.middle]];
-  }
-
-  operandOptions() {
-    var options = [];
-    this.props.input_variables.forEach((input_var) => {
-      if (input_var.node[0] == 'raster') {
-        options.push({value: input_var.name, label: input_var.name});
-      }
-    });
-
-    return options;
-  }
-
-  operandToNode(operand) {
-    return this.props.input_variables.filter((input_var) => {
-      if (input_var.name == operand) {
-        return true;
-      }
-    })[0].node;
-  }
-
-  render() {
-    return (
-      <span>
-        Raster( <OperandChooser node_id={this.props.node_id}
-                                operands={this.operandOptions()}
-                                operandToNode={this.operandToNode.bind(this)}
-                                onEditTreeNode={this.props.onEditTreeNode}
-                                onChangeOperandSelection={this.props.onChangeOperandSelection}
-                                operandSelections={this.props.operandSelections} /> )
-      </span>
-    );
   }
 }
 
@@ -2157,23 +2048,11 @@ class SourceOperator extends DataNode {
   json() {
     return ['source', [{name: this.name, type: this.type, field: this.field}]];
   }
-
-  render(level, nl=true) {
-    return super.html(this.operand.type + " '" + this.operand.name + "' ", level, nl);
-  }
 }
 
 class MathOperator extends React.Component {
-  constructor(props) {
-    super(props);
-
-    var operator = props.tree[props.node_id][0];
-    var operands = props.tree[props.node_id][1].map((operand_id) => {
-      return props.tree[operand_id];
-    });
-
-    this.left_id = props.tree[props.node_id][1][0];
-    this.right_id = props.tree[props.node_id][1][1];
+  constructor(operator, operands) {
+    super(operands);
 
     this.operator = operator;
 
@@ -2191,46 +2070,8 @@ class MathOperator extends React.Component {
     this.dimensions = this.left.dimensions;
   }
 
-  componentWillUpdate(nextProps) {
-    this.operator = nextProps.tree[nextProps.node_id][0];
-
-    this.left_id = nextProps.tree[nextProps.node_id][1][0];
-    this.right_id = nextProps.tree[nextProps.node_id][1][1];
-
-    this.left = treeToNode(nextProps.tree[this.left_id]);
-    this.right = treeToNode(nextProps.tree[this.right_id]);
-  }
-
   json() {
     return [this.operator, [this.left.json(), this.right.json()]];
-  }
-
-  operandToNode(operand) {
-    if (!isNaN(operand)) {
-      return Number.parseFloat(operand);
-    } else {
-      return null;
-    }
-  }
-
-  render() {
-    return (
-      <span>
-        <OperandChooser node_id={this.left_id}
-                        operands={[{value: this.left, label: this.left}]}
-                        operandToNode={this.operandToNode}
-                        editable={true}
-                        value={this.left}
-                        onEditTreeNode={this.props.onEditTreeNode} />
-        {this.operator}
-        <OperandChooser node_id={this.right_id}
-                        operands={[{value: this.right, label: this.right}]}
-                        operandToNode={this.operandToNode}
-                        editable={true}
-                        value={this.right}
-                        onEditTreeNode={this.props.onEditTreeNode} />
-      </span>
-    );
   }
 }
 
@@ -2245,35 +2086,34 @@ class EmptyTree extends React.Component {
 }
 
 function treeToNode(tree) {
+  var node;
+
   if (Object.keys(tree).length == 0) {
-    return EmptyTree;
+    return new EmptyTree();
   }
 
   switch (tree[0]) {
     case 'mean':
-      return MeanOperator;
+      return new MeanOperator(tree[1]);
     case 'tmean':
-      return TemporalMeanOperator;
+      return new TemporalMeanOperator(tree[1]);
     case 'smean':
-      return SpatialMeanOperator;
+      return new SpatialMeanOperator(tree[1]);
     case 'select':
-      return SelectOperator;
+      return new SelectOperator(tree[1]);
     case 'expression':
-      return ExpressionOperator;
+      return new ExpressionOperator(tree[1]);
     case 'join':
-      return JoinOperator;
+      return new JoinOperator(tree[1]);
     case 'raster':
-      return RasterOperator;
-      break;
+      return new RasterOperator(tree[1]);
     case 'source':
-      return SourceOperator;
+      return new SourceOperator(tree[1]);
     case '+':
     case '-':
     case '*':
     case '/':
-      return MathOperator;
-    case 'const':
-      return tree[1];
+      return new MathOperator(tree[1]);
     default:
       throw Error("'" + tree[0] + "' is not a valid operator");
   }

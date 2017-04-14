@@ -35,6 +35,7 @@ const RECIEVE_VARIABLE = 'RECIEVE_VARIABLE';
 
 const EDIT_TABULAR_DATA = 'EDIT_TABULAR_DATA';
 const EDIT_RASTER_DATA = 'EDIT_RASTER_DATA';
+const EDIT_EXPRESSION_DATA = 'EDIT_EXPRESSION_DATA';
 
 function requestLayers() {
   return {
@@ -303,6 +304,13 @@ function editTabularData(data) {
 function editRasterData(data) {
   return {
     type: EDIT_RASTER_DATA,
+    data: data
+  };
+}
+
+function editExpressionData(data) {
+  return {
+    type: EDIT_EXPRESSION_DATA,
     data: data
   };
 }
