@@ -22,6 +22,7 @@ var UPDATE_CREATED = 'UPDATE_CREATED';
 var REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
 var ADD_INPUT_VARIABLE = 'ADD_INPUT_VARIABLE';
 var EDIT_INPUT_VARIABLE = 'EDIT_INPUT_VARIABLE';
+var ERROR_INPUT_VARIABLE = 'ERROR_INPUT_VARIABLE';
 
 var INIT_TREE = 'INIT_TREE';
 var EDIT_TREE_NODE = 'EDIT_TREE_NODE';
@@ -63,7 +64,7 @@ function fetchLayers() {
     dispatch(requestLayers());
 
     return $.ajax({
-      url: '/api/layers',
+      url: '/api/layers?status=0',
       dataType: 'json',
       cache: 'false',
       success: function success(data) {
@@ -95,7 +96,7 @@ function fetchTables() {
     dispatch(requestTables());
 
     return $.ajax({
-      url: '/api/tables',
+      url: '/api/tables?status=0',
       dataType: 'json',
       cache: 'false',
       success: function success(data) {
@@ -142,12 +143,39 @@ function fetchVariables() {
 
 var nextVariableId = 0;
 
+function validateRaster(raster) {
+  var range = raster[1][2];
+
+  if (range.includes("undefined")) return "Start and end date must be specified.";
+  if (!range.match(/\d{4}-\d{3},\d{4}-\d{3}/g)) return "Date must be entered in the form yyyy-ddd.";
+
+  return null;
+}
+
 function addInputVariable(variable) {
-  return {
-    type: ADD_INPUT_VARIABLE,
-    id: nextVariableId++,
-    variable: variable
-  };
+  var node = variable.node;
+  var inputType = node[0];
+  var error = null;
+
+  if (inputType == 'raster') {
+    error = validateRaster(node);
+  }
+  if (error) {
+    return {
+      type: ERROR_INPUT_VARIABLE,
+      error: error,
+      field: "rasterDataTemporalRange",
+      variable: variable
+    };
+  } else {
+    return {
+      type: ADD_INPUT_VARIABLE,
+      error: error,
+      field: "rasterDataTemporalRange",
+      id: nextVariableId++,
+      variable: variable
+    };
+  }
 }
 
 function editInputVariable(variable, idx) {
@@ -1530,9 +1558,18 @@ function sieveApp() {
     case ADD_INPUT_VARIABLE:
     case REMOVE_INPUT_VARIABLE:
     case EDIT_INPUT_VARIABLE:
+      var errors = {};
+      errors[action.field] = action.error;
       return Object.assign({}, state, {
         changed: true,
+        errors: Object.assign({}, state.errors, errors),
         input_variables: input_variables(state.input_variables, action)
+      });
+    case ERROR_INPUT_VARIABLE:
+      var errors = {};
+      errors[action.field] = action.error;
+      return Object.assign({}, state, {
+        errors: Object.assign({}, state.errors, errors)
       });
     case CHANGE_OPERAND_SELECTION:
       return Object.assign({}, state, {
@@ -3299,6 +3336,10 @@ var TabularDataSource = function (_React$Component16) {
         var source2 = Object.assign({}, source1);
         var name = this.generateName(source1, source2, newProps.input_variables);
         var data = Object.assign({}, newProps.editingTabularData, { defaultName: name });
+
+        if (!this.props.editingTabularData.source1) data.source1 = source1;
+        if (!this.props.editingTabularData.source2) data.source2 = source2;
+
         this.props.onEditTabularData(data);
       }
     }
@@ -3312,7 +3353,7 @@ var TabularDataSource = function (_React$Component16) {
     } else {
       var name = source1.name + '-' + source2.name;
     }
-
+    name = name.replace(/_/g, "-");
     var i = 1;
     var unique = false;
     var input_variables = [];
@@ -3460,7 +3501,8 @@ var RasterDataSource = function (_React$Component17) {
   }
 
   RasterDataSource.prototype.onSave = function onSave() {
-    if (this.props.errors.rasterDataName) return; // Do not submit if there are errors
+    if (this.props.errors.rasterDataName || this.props.errors.rasterDate) return; // Do not submit if there are errors
+
     var name = this.props.editingRasterData.name;
     if (name == null || name.length == 0) {
       name = this.props.editingRasterData.defaultName;
@@ -3497,7 +3539,7 @@ var RasterDataSource = function (_React$Component17) {
   RasterDataSource.prototype.generateName = function generateName(raster) {
     var var_list = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
 
-    var name = raster.id;
+    var name = raster.id.replace(/_/g, "-");
     var i = 1;
 
     var unique = false;
@@ -3551,6 +3593,7 @@ var RasterDataSource = function (_React$Component17) {
       var raster2 = Object.assign({}, raster, { id: raster.name });
       var name = this.generateName(raster2, newProps.input_variables);
       var data = Object.assign({}, newProps.editingRasterData, { defaultName: name });
+      if (!this.props.editingRasterData.raster) data.raster = raster;
       this.props.onEditRasterData(data);
     }
   };
@@ -3623,7 +3666,8 @@ var RasterDataSource = function (_React$Component17) {
         ),
         React.createElement(
           FormGroup,
-          { controlId: "range" },
+          { controlId: "range",
+            validationState: this.props.errors.rasterDataTemporalRange ? 'error' : null },
           React.createElement(
             ControlLabel,
             null,
@@ -3651,6 +3695,11 @@ var RasterDataSource = function (_React$Component17) {
               name: "temporalRangeEnd", type: "text", placeholder: "yyyy-ddd",
               value: this.props.editingRasterData.temporalRangeEnd
             })
+          ),
+          React.createElement(
+            HelpBlock,
+            null,
+            this.props.errors.rasterDataTemporalRange ? this.props.errors.rasterDataTemporalRange : "Date must be entered in the form yyyy-ddd."
           )
         ),
         React.createElement(
@@ -3969,14 +4018,14 @@ var VariableTable = function (_React$Component21) {
                         });
                       } else if (item.node[0] == "raster") {
                         var raster = item.node[1][0];
-                        var temporalRangeStart = item.node[1][2];
-                        var temporalRangeEnd = item.node[1][3];
+                        var temporalRange = item.node[1][2].split(",");
+
                         _this40.props.onSpatialDomainChange({ value: item.node[1][1] });
                         _this40.props.onEditRasterData({
                           name: item.name,
                           raster: raster,
-                          temporalRangeStart: temporalRangeStart,
-                          temporalRangeEnd: temporalRangeEnd,
+                          temporalRangeStart: temporalRange[0],
+                          temporalRangeEnd: temporalRange[1],
                           isEditing: true,
                           index: i
                         });
