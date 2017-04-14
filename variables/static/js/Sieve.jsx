@@ -1372,7 +1372,7 @@ class TabularDataSource extends React.Component {
     } else {
       var name = source1.name + '-' + source2.name;
     }
-
+    name = name.replace(/_/g, "-");
     var i = 1;
     var unique = false;
     var input_variables = [];
@@ -1538,7 +1538,7 @@ class RasterDataSource extends React.Component {
   }
 
   generateName(raster, var_list=null) {
-    var name = raster.id;
+    var name = raster.id.replace(/_/g, "-");
     var i = 1;
 
     var unique = false;
@@ -1791,17 +1791,18 @@ class VariableTable extends React.Component {
                             index: i
                           });
                         } else if (item.node[0] == "raster"){
+                          console.log(item);
                           var raster = item.node[1][0];
-                          var temporalRangeStart = item.node[1][2];
-                          var temporalRangeEnd = item.node[1][3];
+                          var temporalRange = item.node[1][2].split(",");
+
                           this.props.onSpatialDomainChange(
                             {value: item.node[1][1]}
                           );
                           this.props.onEditRasterData({
                             name: item.name,
                             raster: raster,
-                            temporalRangeStart: temporalRangeStart,
-                            temporalRangeEnd: temporalRangeEnd,
+                            temporalRangeStart: temporalRange[0],
+                            temporalRangeEnd: temporalRange[1],
                             isEditing: true,
                             index: i
                           });

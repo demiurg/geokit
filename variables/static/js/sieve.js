@@ -144,7 +144,6 @@ function fetchVariables() {
 var nextVariableId = 0;
 
 function validateRaster(raster) {
-  console.log(raster);
   var range = raster[1][2];
 
   if (range.includes("undefined")) return "Start and end date must be specified.";
@@ -161,7 +160,6 @@ function addInputVariable(variable) {
   if (inputType == 'raster') {
     error = validateRaster(node);
   }
-  console.log("Error in action: ", error);
   if (error) {
     return {
       type: ERROR_INPUT_VARIABLE,
@@ -3355,7 +3353,7 @@ var TabularDataSource = function (_React$Component16) {
     } else {
       var name = source1.name + '-' + source2.name;
     }
-
+    name = name.replace(/_/g, "-");
     var i = 1;
     var unique = false;
     var input_variables = [];
@@ -3541,7 +3539,7 @@ var RasterDataSource = function (_React$Component17) {
   RasterDataSource.prototype.generateName = function generateName(raster) {
     var var_list = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
-    var name = raster.id;
+    var name = raster.id.replace(/_/g, "-");
     var i = 1;
 
     var unique = false;
@@ -3919,15 +3917,16 @@ var VariableTable = function (_React$Component19) {
                           index: i
                         });
                       } else if (item.node[0] == "raster") {
+                        console.log(item);
                         var raster = item.node[1][0];
-                        var temporalRangeStart = item.node[1][2];
-                        var temporalRangeEnd = item.node[1][3];
+                        var temporalRange = item.node[1][2].split(",");
+
                         _this37.props.onSpatialDomainChange({ value: item.node[1][1] });
                         _this37.props.onEditRasterData({
                           name: item.name,
                           raster: raster,
-                          temporalRangeStart: temporalRangeStart,
-                          temporalRangeEnd: temporalRangeEnd,
+                          temporalRangeStart: temporalRange[0],
+                          temporalRangeEnd: temporalRange[1],
                           isEditing: true,
                           index: i
                         });
