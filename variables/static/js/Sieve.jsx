@@ -199,6 +199,10 @@ class SpatialConfiguration extends React.Component {
         id: 'ags.n5m0p5ci',
         accessToken: 'pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
     }).addTo(map);
+
+    if (this.props.spatialDomain) {
+      this.updateMap(this.props.spatialDomain);
+    }
   }
 
   componentDidUpdate(prevProps) {
@@ -207,39 +211,43 @@ class SpatialConfiguration extends React.Component {
         this.map.removeLayer(this.geoJsonTileLayer);
 
       if (this.props.spatialDomain) {
-        var geoJsonURL = '/layers/' + this.props.spatialDomain + '/{z}/{x}/{y}.json';
-        this.geoJsonTileLayer = new L.TileLayer.GeoJSON(geoJsonURL, {
-          clipTiles: true,
-          unique: function(feature) {
-            return feature.properties.id;
-          }
-        }, {
-          pointToLayer: function(feature, latlng) {
-            return new L.CircleMarker(latlng, {
-              radius: 4,
-              fillColor: "#A3C990",
-              color: "#000",
-              weight: 1,
-              opacity: 0.7,
-              fillOpacity: 0.3
-            });
-          }
-        });
-
-        this.map.addLayer(this.geoJsonTileLayer);
-
-        $.ajax('/api/layers/' + this.props.spatialDomain, {
-          dataType: 'json',
-          success: (data, status, xhr) => {
-            var bounds = [
-              [data['bounds'][1], data['bounds'][0]],
-              [data['bounds'][3], data['bounds'][2]]
-            ];
-            this.map.fitBounds(bounds);
-          }
-        });
+        this.updateMap(this.props.spatialDomain);
       }
     }
+  }
+
+  updateMap(layer_id) {
+    var geoJsonURL = '/layers/' + layer_id + '/{z}/{x}/{y}.json';
+    this.geoJsonTileLayer = new L.TileLayer.GeoJSON(geoJsonURL, {
+      clipTiles: true,
+      unique: function(feature) {
+        return feature.properties.id;
+      }
+    }, {
+      pointToLayer: function(feature, latlng) {
+        return new L.CircleMarker(latlng, {
+          radius: 4,
+          fillColor: "#A3C990",
+          color: "#000",
+          weight: 1,
+          opacity: 0.7,
+          fillOpacity: 0.3
+        });
+      }
+    });
+
+    this.map.addLayer(this.geoJsonTileLayer);
+
+    $.ajax('/api/layers/' + layer_id, {
+      dataType: 'json',
+      success: (data, status, xhr) => {
+        var bounds = [
+          [data['bounds'][1], data['bounds'][0]],
+          [data['bounds'][3], data['bounds'][2]]
+        ];
+        this.map.fitBounds(bounds);
+      }
+    });
   }
 
   render() {
@@ -787,8 +795,8 @@ class VariableTable extends React.Component {
       input_variables: this.props.input_variables,
       description: this.props.description,
       temporal_domain: this.props.temporal_domain,
-      spatial_domain: this.props.spatial_domain
-    });
+      spatial_domain: this.props.spatialDomain
+    }, this.props.created);
   }
 
   render() {

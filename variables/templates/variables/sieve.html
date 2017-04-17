@@ -79,6 +79,7 @@ sieve_props = {
   description: "{{ variable.description }}",
   created: "{{ variable.created }}",
   modified: "{{ variable.modified }}",
+  spatialDomain: {{ variable.spatial_domain.pk|default_if_none:"" }},
   input_variables: {{ variable.input_variables_json|safe }} ,
   id: "{{ variable.pk }}",
   name: "{{ variable.name }}",

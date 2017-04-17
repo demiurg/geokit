@@ -11,7 +11,7 @@ from django.db import connection
 from django.conf import settings
 
 
-class VariableSerializer(serializers.HyperlinkedModelSerializer):
+class VariableSerializer(serializers.ModelSerializer):
 
     name = serializers.CharField(
         max_length=75,

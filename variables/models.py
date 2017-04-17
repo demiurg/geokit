@@ -12,7 +12,7 @@ class Variable(models.Model):
     name = models.SlugField(max_length=75, blank=False)
     description = models.TextField(null=True, blank=True)
     temporal_domain = ArrayField(models.DateField(), null=True, blank=True)
-    spatial_domain = ArrayField(models.IntegerField(), null=True, blank=True)
+    spatial_domain = models.ForeignKey(Layer, null=True, blank=True)
     saved_dimensions = models.CharField(max_length=15, null=True)
     tree = JSONField()
     input_variables = JSONField(null=True, default=[])
