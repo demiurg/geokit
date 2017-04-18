@@ -224,6 +224,9 @@ class SpatialConfiguration extends React.Component {
         return feature.properties.id;
       }
     }, {
+      style: {
+        weight: 1
+      },
       pointToLayer: function(feature, latlng) {
         return new L.CircleMarker(latlng, {
           radius: 4,
@@ -336,7 +339,6 @@ class TabularDataSource extends React.Component {
     }
     name = name.replace(/_/g, "-");
     var i = 1;
-    var unique = false;
     var input_variables = [];
     if (var_list){
       input_variables = var_list;
@@ -503,7 +505,6 @@ class RasterDataSource extends React.Component {
     var name = raster.id.replace(/_/g, "-");
     var i = 1;
 
-    var unique = false;
     var input_variables = [];
     if (var_list){
       input_variables = var_list;
@@ -710,6 +711,31 @@ class TreeViewer extends React.Component {
 }
 
 class ExpressionEditor extends React.Component {
+  componentWillReceiveProps(newProps) {
+    if (!newProps.editingExpressionData.defaultName ||
+        newProps.input_variables != this.props.input_variables) {
+      var data = {defaultName: this.generateName(newProps.input_variables)};
+      this.props.onEditExpressionData(data);
+    }
+  }
+
+  generateName(var_list=null) {
+    var i =1;
+    var input_variables = [];
+    if (var_list) {
+      input_variables = var_list;
+    } else {
+      input_variables = this.props.input_variables;
+    }
+
+    input_variables.forEach((input) => {
+      if (input.name == 'expression-' + i) {
+        i++;
+      }
+    });
+    return 'expression-' + i;
+  }
+
   changeName(e) {
     var expressionData = Object.assign(
       {},
@@ -745,8 +771,10 @@ class ExpressionEditor extends React.Component {
 
   onSave() {
     var expressionData = this.props.editingExpressionData;
-    if (expressionData.name && expressionData.name.length > 0 &&
-        expressionData.node && expressionData.node.length == 2) {
+    if (expressionData.node && expressionData.node.length == 2) {
+      if (!expressionData.name || expressionData.name == "") {
+        expressionData.name = expressionData.defaultName;
+      }
 
       var node = treeToNode(expressionData.node);
       expressionData.node[1] = this.populateOperands(node.arity);
@@ -761,7 +789,7 @@ class ExpressionEditor extends React.Component {
       <Panel header="Expression editor">
         <FormGroup controlId="name">
           <FormControl componentClass="input"
-            placeholder="Name..."
+            placeholder={this.props.editingExpressionData.defaultName}
             onChange={this.changeName.bind(this)}
             value={this.props.editingExpressionData.name} />
         </FormGroup>

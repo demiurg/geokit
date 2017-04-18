@@ -1709,6 +1709,9 @@ var SpatialConfiguration = function (_React$Component) {
         return feature.properties.id;
       }
     }, {
+      style: {
+        weight: 1
+      },
       pointToLayer: function pointToLayer(feature, latlng) {
         return new L.CircleMarker(latlng, {
           radius: 4,
@@ -1814,7 +1817,6 @@ var TabularDataSource = function (_React$Component2) {
     }
     name = name.replace(/_/g, "-");
     var i = 1;
-    var unique = false;
     var input_variables = [];
     if (var_list) {
       input_variables = var_list;
@@ -2001,7 +2003,6 @@ var RasterDataSource = function (_React$Component3) {
     var name = raster.id.replace(/_/g, "-");
     var i = 1;
 
-    var unique = false;
     var input_variables = [];
     if (var_list) {
       input_variables = var_list;
@@ -2264,6 +2265,32 @@ var ExpressionEditor = function (_React$Component6) {
     return _possibleConstructorReturn(this, _React$Component6.apply(this, arguments));
   }
 
+  ExpressionEditor.prototype.componentWillReceiveProps = function componentWillReceiveProps(newProps) {
+    if (!newProps.editingExpressionData.defaultName || newProps.input_variables != this.props.input_variables) {
+      var data = { defaultName: this.generateName(newProps.input_variables) };
+      this.props.onEditExpressionData(data);
+    }
+  };
+
+  ExpressionEditor.prototype.generateName = function generateName() {
+    var var_list = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+
+    var i = 1;
+    var input_variables = [];
+    if (var_list) {
+      input_variables = var_list;
+    } else {
+      input_variables = this.props.input_variables;
+    }
+
+    input_variables.forEach(function (input) {
+      if (input.name == 'expression-' + i) {
+        i++;
+      }
+    });
+    return 'expression-' + i;
+  };
+
   ExpressionEditor.prototype.changeName = function changeName(e) {
     var expressionData = Object.assign({}, this.props.editingExpressionData, { name: e.target.value });
     this.props.onEditExpressionData(expressionData);
@@ -2293,7 +2320,10 @@ var ExpressionEditor = function (_React$Component6) {
 
   ExpressionEditor.prototype.onSave = function onSave() {
     var expressionData = this.props.editingExpressionData;
-    if (expressionData.name && expressionData.name.length > 0 && expressionData.node && expressionData.node.length == 2) {
+    if (expressionData.node && expressionData.node.length == 2) {
+      if (!expressionData.name || expressionData.name == "") {
+        expressionData.name = expressionData.defaultName;
+      }
 
       var node = treeToNode(expressionData.node);
       expressionData.node[1] = this.populateOperands(node.arity);
@@ -2311,7 +2341,7 @@ var ExpressionEditor = function (_React$Component6) {
         FormGroup,
         { controlId: "name" },
         React.createElement(FormControl, { componentClass: "input",
-          placeholder: "Name...",
+          placeholder: this.props.editingExpressionData.defaultName,
           onChange: this.changeName.bind(this),
           value: this.props.editingExpressionData.name })
       ),
