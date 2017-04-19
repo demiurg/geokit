@@ -89,7 +89,7 @@ def process_rasters(variable_pk, schema_name):
                 job_id = rpc_con().submit_job(
                     schema_name,
                     r.raster['id'],
-                    {"site": shp_file},
+                    {"site": shp_file, "key": "shaid"},
                     {"dates": r.dates}
                 )
 
