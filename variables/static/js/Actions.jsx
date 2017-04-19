@@ -34,6 +34,8 @@ const SAVE_VARIABLE = 'SAVE_VARIABLE';
 const POST_VARIABLE = 'POST_VARIABLE';
 const RECIEVE_VARIABLE = 'RECIEVE_VARIABLE';
 
+const CHANGE_INTERFACE_STATE = 'CHANGE_INTERFACE_STATE';
+
 const EDIT_TABULAR_DATA = 'EDIT_TABULAR_DATA';
 const EDIT_RASTER_DATA = 'EDIT_RASTER_DATA';
 const EDIT_EXPRESSION_DATA = 'EDIT_EXPRESSION_DATA';
@@ -322,6 +324,13 @@ function saveVariable(variable, created){
         dispatch(updateErrors(errors));
       }
     });
+  };
+}
+
+function changeInterfaceState(newState) {
+  return {
+    type: CHANGE_INTERFACE_STATE,
+    state: newState
   };
 }
 
