@@ -978,6 +978,7 @@ class AddDataSourcePanel extends React.Component {
             </a>
           </li>
         </ul>
+        <Button onClick={this.props.onChangeInterfaceState.bind(this, DEFAULT)}>Cancel</Button>
       </Panel>
     );
   }

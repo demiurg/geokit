@@ -2666,6 +2666,11 @@ var AddDataSourcePanel = function (_React$Component8) {
             'Tabular Data'
           )
         )
+      ),
+      React.createElement(
+        Button,
+        { onClick: this.props.onChangeInterfaceState.bind(this, DEFAULT) },
+        'Cancel'
       )
     );
   };
