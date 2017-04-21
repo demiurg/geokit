@@ -1651,12 +1651,6 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
     onEditInputVariable: function onEditInputVariable(variable, i) {
       dispatch(editInputVariable(variable, i));
     },
-    onInitTree: function onInitTree(node) {
-      dispatch(initTree(node));
-    },
-    onEditTreeNode: function onEditTreeNode(id, node) {
-      dispatch(editTreeNode(id, node));
-    },
     onChangeOperandSelection: function onChangeOperandSelection(id, value) {
       dispatch(changeOperandSelection(id, value));
     },
@@ -2245,23 +2239,30 @@ var OperandChooser = function (_React$Component4) {
 
   OperandChooser.prototype.changeOperand = function changeOperand(e) {
     var operand_refs = this.props.expressionData.operand_refs;
-    operand_refs[this.props.operand_index] = e.value;
+
+    var operand_ref = e ? e.value : null;
+    operand_refs[this.props.operand_index] = operand_ref;
 
     var expressionData = Object.assign({}, this.props.expressionData, { operand_refs: operand_refs });
     this.props.onEditExpressionData(expressionData);
   };
 
-  OperandChooser.prototype.render = function render() {
-    var options = this.props.input_variables.map(function (input_var) {
+  OperandChooser.prototype.options = function options() {
+    var valid_input_vars = this.props.tree.validOperands(this.props.input_variables, this.props.expressionData.operand_refs, this.props.operand_index);
+
+    return valid_input_vars.map(function (input_var) {
       return { value: input_var.name, label: input_var.name };
     });
+  };
+
+  OperandChooser.prototype.render = function render() {
     return React.createElement(
       'div',
       { style: { display: "inline-block", width: 400 } },
       React.createElement(Select, { onChange: this.changeOperand.bind(this),
         value: this.props.expressionData.operand_refs[this.props.operand_index],
-        options: options,
-        clearable: false })
+        options: this.options(),
+        clearable: true })
     );
   };
 
@@ -2741,17 +2742,14 @@ var SieveComponent = function (_React$Component9) {
   return SieveComponent;
 }(React.Component);
 
-var tab = function tab(level) {
-  return Array(level * 4).join("&nbsp;");
-};
-var formatHtml = function formatHtml(html, level) {
-  return tab(level) + html;
-};
-
 var DataNode = function () {
   function DataNode() {
     _classCallCheck(this, DataNode);
   }
+
+  DataNode.prototype.validOperands = function validOperands(input_vars, operand_refs, op_index) {
+    return input_vars;
+  };
 
   DataNode.prototype.json = function json() {
     return JSON.encode(data);
@@ -2814,6 +2812,12 @@ var TemporalMeanOperator = function (_DataNode2) {
     return _this17;
   }
 
+  TemporalMeanOperator.prototype.validOperands = function validOperands(input_vars) {
+    return input_vars.filter(function (input_var) {
+      return treeToNode(input_var.node).dimensions.includes('time');
+    });
+  };
+
   TemporalMeanOperator.prototype.json = function json() {
     return ['tmean', [this.operand.json()]];
   };
@@ -2841,6 +2845,12 @@ var SpatialMeanOperator = function (_DataNode3) {
     _this18.dimensions = 'time';
     return _this18;
   }
+
+  SpatialMeanOperator.prototype.validOperands = function validOperands(input_vars) {
+    return input_vars.filter(function (input_var) {
+      return treeToNode(input_var.node).dimensions.includes('space');
+    });
+  };
 
   SpatialMeanOperator.prototype.json = function json() {
     return ['smean', [this.operand.json()]];
@@ -3037,6 +3047,22 @@ var MathOperator = function (_React$Component10) {
     _this24.dimensions = _this24.left.dimensions;
     return _this24;
   }
+
+  MathOperator.prototype.validOperands = function validOperands(input_vars, operand_refs, op_index) {
+    var other_op_index = op_index == 0 ? 1 : 0;
+    var other_op = input_vars.filter(function (input_var) {
+      return input_var.name == operand_refs[other_op_index];
+    })[0];
+
+    if (!other_op) {
+      return input_vars;
+    } else {
+      var other_op_node = treeToNode(other_op.node);
+      return input_vars.filter(function (input_var) {
+        return treeToNode(input_var.node).dimensions == other_op_node.dimensions;
+      });
+    }
+  };
 
   MathOperator.prototype.json = function json() {
     return [this.operator, [this.left.json(), this.right.json()]];
