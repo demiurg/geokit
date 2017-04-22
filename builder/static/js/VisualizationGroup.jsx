@@ -49,11 +49,7 @@ class SliderControl extends React.Component {
                 min: start,
                 max: stop
             },
-            start: [
-                start,
-                start + (stop - start) / 2,
-                stop
-            ],
+            start: [start],
             step: /*7*/ 1 * 24 * 60 * 60 * 1000,
             connect: true,
             behaviour: 'drag',
@@ -70,10 +66,7 @@ class SliderControl extends React.Component {
         });
 
         dateSlider.noUiSlider.on('update', (values, handle) => {
-            this.props.changeTimeRange({
-                min: new Date(values[0]),
-                max: new Date(values[2])
-            }, new Date(values[1]));
+            this.props.changeTime(new Date(values[0]));
         });
     }
 
@@ -139,46 +132,41 @@ class VisualizationGroup extends React.Component {
             space_index: null,
             time_index: null,
             time_range: null,
+            space_bounds: null,
             current_space_bounds: null,
             current_feature: null,
-            current_time_range: null,
             current_time: null
         };
 
         this.child_indexes = [];
     }
 
-    changeTimeRange(range, current_time) {
-        var state = {
-            current_time_range: {min: range.min, max: range.max}
-        };
-        if (current_time){
-            state['current_time'] = current_time;
-        }
-        this.setState(state);
+    changeTime = (current_time) => {
+        console.log("VG: " + current_time);
+        this.setState({current_time: current_time});
     }
 
-    changeSpaceBounds(bounds){
-
+    changeFeature = (shaid) => {
+        this.setState({current_feature: shaid});
     }
 
-    changeFeature(shaid){
-        this.setState({
-            current_feature: shaid
-        });
-        console.log(shaid);
-    }
-
-    updateIndexes(indexes) {
+    updateIndexes = (indexes) => {
         this.child_indexes.push(indexes);
 
         if (this.child_indexes.length == this.props.visualizations.length) {
             let state = {};
+            var date = new Date("2000-01-01");
+            var offset = date.getTimezoneOffset()*60*1000;
+
             if (this.state.dimensions.indexOf('time') != -1) {
                 var time_index = this.child_indexes.map((both) => both['time']);
                 time_index = [].concat.apply([], time_index);
 
-                time_index = time_index.map((str) => new Date(str));
+                time_index = time_index.map((str) => {
+                    var date = new Date(str);
+                    date.setTime(date.getTime() + offset);
+                    return date;
+                });
                 time_index.sort((a, b) => a - b);
 
                 var min = Plotly.d3.min(time_index);
@@ -187,7 +175,6 @@ class VisualizationGroup extends React.Component {
                 state = {
                     time_index: time_index,
                     time_range: {min: min, max: max},
-                    current_time_range: {min: min, max: max}
                 };
             }
             if (this.state.dimensions.indexOf('space') != -1) {
@@ -209,21 +196,20 @@ class VisualizationGroup extends React.Component {
                   && this.state.time_range) ?
                     <SliderControl
                         time_range={this.state.time_range}
-                        changeTimeRange={this.changeTimeRange.bind(this)}
+                        changeTime={this.changeTime.bind(this)}
                     />
                 :
                     null
                 }
                 {this.props.visualizations.map((v) => (
                     <Visualization
-                        updateIndexes={this.updateIndexes.bind(this)}
-                        time_range={this.state.current_time_range}
-                        changeTimeRange={this.changeTimeRange.bind(this)}
-                        current_time={this.state.current_time}
-                        changeSpaceBounds={this.changeSpaceBounds.bind(this)}
-                        current_feature={this.state.current_feature}
-                        changeFeature={this.changeFeature.bind(this)}
                         {...v}
+                        updateIndexes={this.updateIndexes}
+                        time_range={this.state.time_range}
+                        changeTime={this.changeTime}
+                        current_time={this.state.current_time}
+                        current_feature={this.state.current_feature}
+                        changeFeature={this.changeFeature}
                     />
                 ))}
             </div>

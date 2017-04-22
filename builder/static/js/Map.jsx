@@ -6,12 +6,12 @@ class Map extends React.Component {
         this.state = {
             loading: true,
             error: false,
-            incomplete: false,
+            data_status: null,
             data: [],
             space_index: [],
             time_index: []
         };
-
+        self.map = null;
     }
 
     componentDidMount() {
@@ -20,10 +20,11 @@ class Map extends React.Component {
         $.ajax('/variables/data_'+this.props.variable_id+'.json', {
             dataType: 'json',
             success: (data, status, xhr) => {
+                console.log('status', data.statue);
                 if (data.status == "incomplete") {
                     this.setState({
                         loading: false,
-                        incomplete: true
+                        data_status: "incomplete"
                     });
                 } else {
                     var shas = Object.keys(data.data);
@@ -44,7 +45,6 @@ class Map extends React.Component {
                         let values = [].concat.apply([], rows);
                         this.min_value = d3.min(values);
                         this.max_value = d3.max(values);
-                        console.log(this.min_value, this.max_value);
                     }
 
                     this.color_scale = d3.scale.linear()
@@ -81,42 +81,64 @@ class Map extends React.Component {
         return false;
     }
 
+    loadLayers(){
+        var self = this;
+        if (! self.map){
+            return
+        }
+
+        self.layers = [];
+        self.state.layers.map((id, idx) => {
+            var geojsonURL = '/layers/'+id+'/{z}/{x}/{y}.json';
+            var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
+                clipTiles: true,
+                unique: function(feature) {
+                    return feature.properties.shaid;
+                }
+            }, {
+                style: self.getStyle,
+                onEachFeature: self.featureHandler,
+                pointToLayer: function (feature, latlng) {
+                    return new L.CircleMarker(latlng, {
+                        radius: 4,
+                        fillColor: "#A3C990",
+                        color: "#000",
+                        weight: 1,
+                        opacity: 0.7,
+                        fillOpacity: 0.3
+                    });
+                },
+            });
+            self.layers.push(geojsonTileLayer);
+            self.map.addLayer(geojsonTileLayer);
+        })
+
+    }
+
+    reloadLayers(){
+        var self = this;
+        self.layers.map((l, idx) => {
+            self.map.removeLayer(l);
+        });
+        self.loadLayers();
+    }
+
     componentDidUpdate(prevProps, prevState) {
         var self = this;
-        if (self.props.current_time && this.props.current_time != prevProps.current_time) {
-            if(self.geojsonTileLayer){
-                self.geojsonTileLayer.geojsonLayer.eachLayer((layer) => {
-                    layer.setStyle(self.getStyle);
-                });
-            }
-        } else if (!self.state.error && !self.state.incomplete) {
-            var map = L.map('map-'+self.props.unique_id);
+        if (
+            !self.map &&
+            !self.state.error &&
+            (self.state.data_status != 'incomplete')
+        ) {
+            var map = self.map = L.map('map-'+self.props.unique_id);
 
-            L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
+            L.tileLayer(
+                'https://api.mapbox.com/v4/ags.map-g13j9y5m/'+
+                '{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
+            ).addTo(map);
 
-            self.state.layers.map((id, idx) => {
-                var geojsonURL = '/layers/'+id+'/{z}/{x}/{y}.json';
-                self.geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
-                    clipTiles: true,
-                    unique: function(feature) {
-                        return feature.properties.shaid;
-                    }
-                }, {
-                    style: self.getStyle,
-                    onEachFeature: self.featureHandler,
-                    pointToLayer: function (feature, latlng) {
-                        return new L.CircleMarker(latlng, {
-                            radius: 4,
-                            fillColor: "#A3C990",
-                            color: "#000",
-                            weight: 1,
-                            opacity: 0.7,
-                            fillOpacity: 0.3
-                        });
-                    },
-                });
-                map.addLayer(self.geojsonTileLayer);
-            })
+            self.loadLayers();
+
             if(self.props.bounds){
                 map.fitBounds([
                     [self.props.bounds[1], self.props.bounds[0]],
@@ -132,6 +154,12 @@ class Map extends React.Component {
             };
 
             legend.addTo(map);
+        } else if (
+            self.map &&
+            self.props.current_time &&
+            (this.props.current_time != prevProps.current_time)
+        ) {
+            self.reloadLayers();
         }
     }
 
@@ -145,12 +173,13 @@ class Map extends React.Component {
             var value;
             if (self.state.dimensions == 'space'){
                 value = fdata[self.props.variable_name];
-            } else {
+                opacity = 0.7;
+            } else if (self.props.current_time){
                 var date = self.props.current_time.toISOString().slice(0,10);
                 value = fdata[date];
+                opacity = 0.7;
             }
             color = self.color_scale(value);
-            opacity = 0.7;
         } else {
             console.log('no ' + feature.properties.shaid);
         }
@@ -237,7 +266,7 @@ class Map extends React.Component {
     render() {
         if (this.state.loading) {
             return <div>Loading...</div>
-        } else if (this.state.incomplete) {
+        } else if (this.state.data_status == 'incomplete') {
             return <div>{this.props.variable_name} is still being processed. Periodically refresh this page to check if it has finished.</div>;
         } else if (this.state.error) {
             return <div>An error occured: <em>{this.state.error}</em></div>

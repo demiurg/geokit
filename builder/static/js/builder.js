@@ -844,12 +844,13 @@ var Map = function (_React$Component) {
                 var value;
                 if (self.state.dimensions == 'space') {
                     value = fdata[self.props.variable_name];
-                } else {
+                    opacity = 0.7;
+                } else if (self.props.current_time) {
                     var date = self.props.current_time.toISOString().slice(0, 10);
                     value = fdata[date];
+                    opacity = 0.7;
                 }
                 color = self.color_scale(value);
-                opacity = 0.7;
             } else {
                 console.log('no ' + feature.properties.shaid);
             }
@@ -889,12 +890,12 @@ var Map = function (_React$Component) {
         _this.state = {
             loading: true,
             error: false,
-            incomplete: false,
+            data_status: null,
             data: [],
             space_index: [],
             time_index: []
         };
-
+        self.map = null;
         return _this;
     }
 
@@ -906,10 +907,11 @@ var Map = function (_React$Component) {
         $.ajax('/variables/data_' + this.props.variable_id + '.json', {
             dataType: 'json',
             success: function success(data, status, xhr) {
+                console.log('status', data.statue);
                 if (data.status == "incomplete") {
                     _this2.setState({
                         loading: false,
-                        incomplete: true
+                        data_status: "incomplete"
                     });
                 } else {
                     var shas = Object.keys(data.data);
@@ -930,7 +932,6 @@ var Map = function (_React$Component) {
                         var _values = [].concat.apply([], rows);
                         _this2.min_value = d3.min(_values);
                         _this2.max_value = d3.max(_values);
-                        console.log(_this2.min_value, _this2.max_value);
                     }
 
                     _this2.color_scale = d3.scale.linear().domain([_this2.min_value, _this2.max_value]).range(_this2.props.color_ramp.map(function (stop) {
@@ -959,42 +960,56 @@ var Map = function (_React$Component) {
         return false;
     };
 
+    Map.prototype.loadLayers = function loadLayers() {
+        var self = this;
+        if (!self.map) {
+            return;
+        }
+
+        self.layers = [];
+        self.state.layers.map(function (id, idx) {
+            var geojsonURL = '/layers/' + id + '/{z}/{x}/{y}.json';
+            var geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
+                clipTiles: true,
+                unique: function unique(feature) {
+                    return feature.properties.shaid;
+                }
+            }, {
+                style: self.getStyle,
+                onEachFeature: self.featureHandler,
+                pointToLayer: function pointToLayer(feature, latlng) {
+                    return new L.CircleMarker(latlng, {
+                        radius: 4,
+                        fillColor: "#A3C990",
+                        color: "#000",
+                        weight: 1,
+                        opacity: 0.7,
+                        fillOpacity: 0.3
+                    });
+                }
+            });
+            self.layers.push(geojsonTileLayer);
+            self.map.addLayer(geojsonTileLayer);
+        });
+    };
+
+    Map.prototype.reloadLayers = function reloadLayers() {
+        var self = this;
+        self.layers.map(function (l, idx) {
+            self.map.removeLayer(l);
+        });
+        self.loadLayers();
+    };
+
     Map.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
         var self = this;
-        if (self.props.current_time && this.props.current_time != prevProps.current_time) {
-            if (self.geojsonTileLayer) {
-                self.geojsonTileLayer.geojsonLayer.eachLayer(function (layer) {
-                    layer.setStyle(self.getStyle);
-                });
-            }
-        } else if (!self.state.error && !self.state.incomplete) {
-            var map = L.map('map-' + self.props.unique_id);
+        if (!self.map && !self.state.error && self.state.data_status != 'incomplete') {
+            var map = self.map = L.map('map-' + self.props.unique_id);
 
-            L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
+            L.tileLayer('https://api.mapbox.com/v4/ags.map-g13j9y5m/' + '{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ').addTo(map);
 
-            self.state.layers.map(function (id, idx) {
-                var geojsonURL = '/layers/' + id + '/{z}/{x}/{y}.json';
-                self.geojsonTileLayer = new L.TileLayer.GeoJSON(geojsonURL, {
-                    clipTiles: true,
-                    unique: function unique(feature) {
-                        return feature.properties.shaid;
-                    }
-                }, {
-                    style: self.getStyle,
-                    onEachFeature: self.featureHandler,
-                    pointToLayer: function pointToLayer(feature, latlng) {
-                        return new L.CircleMarker(latlng, {
-                            radius: 4,
-                            fillColor: "#A3C990",
-                            color: "#000",
-                            weight: 1,
-                            opacity: 0.7,
-                            fillOpacity: 0.3
-                        });
-                    }
-                });
-                map.addLayer(self.geojsonTileLayer);
-            });
+            self.loadLayers();
+
             if (self.props.bounds) {
                 map.fitBounds([[self.props.bounds[1], self.props.bounds[0]], [self.props.bounds[3], self.props.bounds[2]]]);
             }
@@ -1007,6 +1022,8 @@ var Map = function (_React$Component) {
             };
 
             legend.addTo(map);
+        } else if (self.map && self.props.current_time && this.props.current_time != prevProps.current_time) {
+            self.reloadLayers();
         }
     };
 
@@ -1039,7 +1056,7 @@ var Map = function (_React$Component) {
                 null,
                 'Loading...'
             );
-        } else if (this.state.incomplete) {
+        } else if (this.state.data_status == 'incomplete') {
             return React.createElement(
                 'div',
                 null,
@@ -1617,7 +1634,7 @@ var SliderControl = function (_React$Component2) {
                 min: start,
                 max: stop
             },
-            start: [start, start + (stop - start) / 2, stop],
+            start: [start],
             step: /*7*/1 * 24 * 60 * 60 * 1000,
             connect: true,
             behaviour: 'drag',
@@ -1634,10 +1651,7 @@ var SliderControl = function (_React$Component2) {
         });
 
         dateSlider.noUiSlider.on('update', function (values, handle) {
-            _this4.props.changeTimeRange({
-                min: new Date(values[0]),
-                max: new Date(values[2])
-            }, new Date(values[1]));
+            _this4.props.changeTime(new Date(values[0]));
         });
     };
 
@@ -1693,6 +1707,61 @@ var VisualizationGroup = function (_React$Component4) {
 
         var _this6 = _possibleConstructorReturn(this, _React$Component4.call(this, props));
 
+        _this6.changeTime = function (current_time) {
+            console.log("VG: " + current_time);
+            _this6.setState({ current_time: current_time });
+        };
+
+        _this6.changeFeature = function (shaid) {
+            _this6.setState({ current_feature: shaid });
+        };
+
+        _this6.updateIndexes = function (indexes) {
+            _this6.child_indexes.push(indexes);
+
+            if (_this6.child_indexes.length == _this6.props.visualizations.length) {
+                var state = {};
+                var date = new Date("2000-01-01");
+                var offset = date.getTimezoneOffset() * 60 * 1000;
+
+                if (_this6.state.dimensions.indexOf('time') != -1) {
+                    var time_index = _this6.child_indexes.map(function (both) {
+                        return both['time'];
+                    });
+                    time_index = [].concat.apply([], time_index);
+
+                    time_index = time_index.map(function (str) {
+                        var date = new Date(str);
+                        date.setTime(date.getTime() + offset);
+                        return date;
+                    });
+                    time_index.sort(function (a, b) {
+                        return a - b;
+                    });
+
+                    var min = Plotly.d3.min(time_index);
+                    var max = Plotly.d3.max(time_index);
+
+                    state = {
+                        time_index: time_index,
+                        time_range: { min: min, max: max }
+                    };
+                }
+                if (_this6.state.dimensions.indexOf('space') != -1) {
+                    var space_index = _this6.child_indexes.map(function (both) {
+                        return both['space'];
+                    });
+                    space_index = [].concat.apply([], space_index);
+
+                    //var merged_features = [].concat.apply([], this.child_indexes);
+                    state = Object.assign(state, {
+                        space_index: space_index
+                    });
+                }
+                _this6.setState(state);
+            }
+        };
+
         var dimensions = {};
         for (var _iterator = _this6.props.visualizations, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
             var _ref;
@@ -1724,76 +1793,15 @@ var VisualizationGroup = function (_React$Component4) {
             space_index: null,
             time_index: null,
             time_range: null,
+            space_bounds: null,
             current_space_bounds: null,
             current_feature: null,
-            current_time_range: null,
             current_time: null
         };
 
         _this6.child_indexes = [];
         return _this6;
     }
-
-    VisualizationGroup.prototype.changeTimeRange = function changeTimeRange(range, current_time) {
-        var state = {
-            current_time_range: { min: range.min, max: range.max }
-        };
-        if (current_time) {
-            state['current_time'] = current_time;
-        }
-        this.setState(state);
-    };
-
-    VisualizationGroup.prototype.changeSpaceBounds = function changeSpaceBounds(bounds) {};
-
-    VisualizationGroup.prototype.changeFeature = function changeFeature(shaid) {
-        this.setState({
-            current_feature: shaid
-        });
-        console.log(shaid);
-    };
-
-    VisualizationGroup.prototype.updateIndexes = function updateIndexes(indexes) {
-        this.child_indexes.push(indexes);
-
-        if (this.child_indexes.length == this.props.visualizations.length) {
-            var state = {};
-            if (this.state.dimensions.indexOf('time') != -1) {
-                var time_index = this.child_indexes.map(function (both) {
-                    return both['time'];
-                });
-                time_index = [].concat.apply([], time_index);
-
-                time_index = time_index.map(function (str) {
-                    return new Date(str);
-                });
-                time_index.sort(function (a, b) {
-                    return a - b;
-                });
-
-                var min = Plotly.d3.min(time_index);
-                var max = Plotly.d3.max(time_index);
-
-                state = {
-                    time_index: time_index,
-                    time_range: { min: min, max: max },
-                    current_time_range: { min: min, max: max }
-                };
-            }
-            if (this.state.dimensions.indexOf('space') != -1) {
-                var space_index = this.child_indexes.map(function (both) {
-                    return both['space'];
-                });
-                space_index = [].concat.apply([], space_index);
-
-                //var merged_features = [].concat.apply([], this.child_indexes);
-                state = Object.assign(state, {
-                    space_index: space_index
-                });
-            }
-            this.setState(state);
-        }
-    };
 
     VisualizationGroup.prototype.render = function render() {
         var _this7 = this;
@@ -1803,18 +1811,17 @@ var VisualizationGroup = function (_React$Component4) {
             null,
             this.state.dimensions.indexOf('time') != -1 && this.state.time_range ? React.createElement(SliderControl, {
                 time_range: this.state.time_range,
-                changeTimeRange: this.changeTimeRange.bind(this)
+                changeTime: this.changeTime.bind(this)
             }) : null,
             this.props.visualizations.map(function (v) {
-                return React.createElement(Visualization, _extends({
-                    updateIndexes: _this7.updateIndexes.bind(_this7),
-                    time_range: _this7.state.current_time_range,
-                    changeTimeRange: _this7.changeTimeRange.bind(_this7),
+                return React.createElement(Visualization, _extends({}, v, {
+                    updateIndexes: _this7.updateIndexes,
+                    time_range: _this7.state.time_range,
+                    changeTime: _this7.changeTime,
                     current_time: _this7.state.current_time,
-                    changeSpaceBounds: _this7.changeSpaceBounds.bind(_this7),
                     current_feature: _this7.state.current_feature,
-                    changeFeature: _this7.changeFeature.bind(_this7)
-                }, v));
+                    changeFeature: _this7.changeFeature
+                }));
             })
         );
     };
