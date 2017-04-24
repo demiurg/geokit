@@ -12,9 +12,10 @@ from django.core import mail
 # set constants
 product_name = 'modis_fsnow_fractional-snow-cover'
 check_count, wait_time_between_checks = 10, 60 # one check per minute for ten minutes
+logger_name = 'dailydh'
 
 def failure(message):
-    logging.getLogger(__name__).error(message)
+    logging.getLogger(logger_name).error(message)
     mail.mail_admins(subject='Problem in daily geokit-datahandler joint exercise',
                      message=message, fail_silently=False)
 
@@ -24,18 +25,20 @@ def main(gips_shp_path):
     Takes as an argument the gips-side full path to the shapefile."""
     from variables.data import rpc_con
 
-    logger = logging.getLogger(__name__)
+    log = logging.getLogger(logger_name)
 
-    four_years_ago = datetime.datetime.now() - datetime.timedelta(years=4)
+    # don't need to be exact with respect to leap years ---------------vvv
+    four_years_ago = datetime.datetime.now() - datetime.timedelta(days=365*4)
 
     job_id = rpc_con().submit_job('test', product_name,
-            {'site': gips_shp_path, 'key': 'shaid'}, {'dates': 4_years_ago.strftime('%Y-%j')})
+            {'site': gips_shp_path, 'key': 'shaid'}, {'dates': four_years_ago.strftime('%Y-%j')})
 
-    logger.info('Job submitted; ID {}'.format(job_id))
+    log.info('Job submitted, starting periodic checks; ID {}'.format(job_id))
 
     # check periodically for a result
-    for _ in range(check_count):
+    for cnt in range(1, check_count + 1):
         time.sleep(wait_time_between_checks)
+        log.debug('Check {}; elapsed time {}s'.format(cnt, cnt * wait_time_between_checks))
         results = rpc_con().stats_request_results({'job': job_id})
         if results:
             log.info('Successful datahandler run: {}'.format(results))
