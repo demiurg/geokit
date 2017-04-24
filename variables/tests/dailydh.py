@@ -10,7 +10,8 @@ import django
 from django.core import mail
 
 # set constants
-product_name = 'modis_fsnow_fractional-snow-cover'
+#product_name = 'modis_fsnow_fractional-snow-cover' # didn't work; unexplaind 403s
+product_name = 'modis_indices_ndvi'
 check_count, wait_time_between_checks = 10, 60 # one check per minute for ten minutes
 logger_name = 'dailydh'
 
@@ -29,9 +30,10 @@ def main(gips_shp_path):
 
     # don't need to be exact with respect to leap years ---------------vvv
     four_years_ago = datetime.datetime.now() - datetime.timedelta(days=365*4)
-
-    job_id = rpc_con().submit_job('test', product_name,
+    args = ('test', product_name,
             {'site': gips_shp_path, 'key': 'shaid'}, {'dates': four_years_ago.strftime('%Y-%j')})
+    log.debug('submitting job, args: {}'.format(args))
+    job_id = rpc_con().submit_job(*args)
 
     log.info('Job submitted, starting periodic checks; ID {}'.format(job_id))
 
