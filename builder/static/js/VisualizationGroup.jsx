@@ -65,7 +65,7 @@ class SliderControl extends React.Component {
             }
         });
 
-        dateSlider.noUiSlider.on('update', (values, handle) => {
+        dateSlider.noUiSlider.on('end', (values, handle) => {
             this.props.changeTime(new Date(values[0]));
         });
     }
@@ -84,7 +84,7 @@ class Visualization extends React.Component {
                 return (this.props.dimensions.indexOf('space') != -1) ? (
                     <div style={{height: 400}}>
                         <Map
-                            color_ramp={[[0, "#4286f4"],[50, "#f48341"]]}
+                            color_ramp={[[0, "#4286f4"], [50, "#f48341"]]}
                             {...this.props}
                         />
                     </div>
@@ -142,7 +142,6 @@ class VisualizationGroup extends React.Component {
     }
 
     changeTime = (current_time) => {
-        console.log("VG: " + current_time);
         this.setState({current_time: current_time});
     }
 

@@ -1650,7 +1650,7 @@ var SliderControl = function (_React$Component2) {
             }
         });
 
-        dateSlider.noUiSlider.on('update', function (values, handle) {
+        dateSlider.noUiSlider.on('end', function (values, handle) {
             _this4.props.changeTime(new Date(values[0]));
         });
     };
