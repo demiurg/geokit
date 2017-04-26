@@ -174,6 +174,7 @@ class VisualizationGroup extends React.Component {
                 state = {
                     time_index: time_index,
                     time_range: {min: min, max: max},
+                    current_time: min,
                 };
             }
             if (this.state.dimensions.indexOf('space') != -1) {
@@ -182,7 +183,8 @@ class VisualizationGroup extends React.Component {
 
                 //var merged_features = [].concat.apply([], this.child_indexes);
                 state = Object.assign(state, {
-                    space_index: space_index
+                    space_index: space_index,
+                    current_feature: space_index[0]
                 });
             }
             this.setState(state);

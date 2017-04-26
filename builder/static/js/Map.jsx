@@ -20,7 +20,7 @@ class Map extends React.Component {
         $.ajax('/variables/data_'+this.props.variable_id+'.json', {
             dataType: 'json',
             success: (data, status, xhr) => {
-                console.log('status', data.statue);
+                console.log('status', data.status);
                 if (data.status == "incomplete") {
                     this.setState({
                         loading: false,
@@ -52,7 +52,7 @@ class Map extends React.Component {
                         .range(this.props.color_ramp.map((stop) => { return stop[1]; }));
 
                     this.setState(
-                        Object.assign(data, {loading: false}),
+                        Object.assign(data, {loading: false, data_status: 'complete'}),
                         () => self.props.updateIndexes({'space': shas, 'time': dates})
                     );
                 }
@@ -65,20 +65,6 @@ class Map extends React.Component {
                 });
             }
         });
-    }
-
-    shouldComponentUpdate(nextProps, nextState) {
-        if (
-            this.state.loading ||
-            (
-                this.props.dimensions &&
-                this.props.dimensions.length != nextProps.dimensions.length
-            ) ||
-            (this.props.current_time != nextProps.current_time)
-        ) {
-            return true;
-        }
-        return false;
     }
 
     loadLayers(){
@@ -124,7 +110,13 @@ class Map extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
+        console.log("updating");
         var self = this;
+
+        if (this.state.loading){
+            return;
+        }
+
         if (
             !self.map &&
             !self.state.error &&
@@ -154,12 +146,13 @@ class Map extends React.Component {
             };
 
             legend.addTo(map);
-        } else if (
-            self.map &&
-            self.props.current_time &&
-            (this.props.current_time != prevProps.current_time)
-        ) {
-            self.reloadLayers();
+        } else if (self.map){
+            if (
+                self.props.current_time &&
+                (this.props.current_time != prevProps.current_time)
+            ) {
+                self.reloadLayers();
+            }
         }
     }
 

@@ -907,7 +907,7 @@ var Map = function (_React$Component) {
         $.ajax('/variables/data_' + this.props.variable_id + '.json', {
             dataType: 'json',
             success: function success(data, status, xhr) {
-                console.log('status', data.statue);
+                console.log('status', data.status);
                 if (data.status == "incomplete") {
                     _this2.setState({
                         loading: false,
@@ -938,7 +938,7 @@ var Map = function (_React$Component) {
                         return stop[1];
                     }));
 
-                    _this2.setState(Object.assign(data, { loading: false }), function () {
+                    _this2.setState(Object.assign(data, { loading: false, data_status: 'complete' }), function () {
                         return self.props.updateIndexes({ 'space': shas, 'time': dates });
                     });
                 }
@@ -951,13 +951,6 @@ var Map = function (_React$Component) {
                 });
             }
         });
-    };
-
-    Map.prototype.shouldComponentUpdate = function shouldComponentUpdate(nextProps, nextState) {
-        if (this.state.loading || this.props.dimensions && this.props.dimensions.length != nextProps.dimensions.length || this.props.current_time != nextProps.current_time) {
-            return true;
-        }
-        return false;
     };
 
     Map.prototype.loadLayers = function loadLayers() {
@@ -1002,7 +995,13 @@ var Map = function (_React$Component) {
     };
 
     Map.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
+        console.log("updating");
         var self = this;
+
+        if (this.state.loading) {
+            return;
+        }
+
         if (!self.map && !self.state.error && self.state.data_status != 'incomplete') {
             var map = self.map = L.map('map-' + self.props.unique_id);
 
@@ -1022,8 +1021,10 @@ var Map = function (_React$Component) {
             };
 
             legend.addTo(map);
-        } else if (self.map && self.props.current_time && this.props.current_time != prevProps.current_time) {
-            self.reloadLayers();
+        } else if (self.map) {
+            if (self.props.current_time && this.props.current_time != prevProps.current_time) {
+                self.reloadLayers();
+            }
         }
     };
 
@@ -1708,7 +1709,6 @@ var VisualizationGroup = function (_React$Component4) {
         var _this6 = _possibleConstructorReturn(this, _React$Component4.call(this, props));
 
         _this6.changeTime = function (current_time) {
-            console.log("VG: " + current_time);
             _this6.setState({ current_time: current_time });
         };
 
@@ -1744,7 +1744,8 @@ var VisualizationGroup = function (_React$Component4) {
 
                     state = {
                         time_index: time_index,
-                        time_range: { min: min, max: max }
+                        time_range: { min: min, max: max },
+                        current_time: min
                     };
                 }
                 if (_this6.state.dimensions.indexOf('space') != -1) {
@@ -1755,7 +1756,8 @@ var VisualizationGroup = function (_React$Component4) {
 
                     //var merged_features = [].concat.apply([], this.child_indexes);
                     state = Object.assign(state, {
-                        space_index: space_index
+                        space_index: space_index,
+                        current_feature: space_index[0]
                     });
                 }
                 _this6.setState(state);
