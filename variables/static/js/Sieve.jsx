@@ -6,13 +6,6 @@ const {
 
 /* app */
 
-// Interface states
-const DEFAULT = 'DEFAULT';
-const ADDING_DATA_SOURCE = 'ADDING_DATA_SOURCE';
-const EDITING_TABULAR_DATA = 'EDITING_TABULAR_DATA';
-const EDITING_RASTER_DATA = 'EDITING_RASTER_DATA';
-const EDITING_EXPRESSION = 'EDITING_EXPRESSION';
-
 var initialState = Object.assign({
   errors: {"name": null, "tree": null},
   name: "",
@@ -23,7 +16,7 @@ var initialState = Object.assign({
   modified: null,
   created: null,
   changed: false,
-  interfaceState: DEFAULT,
+  node_editor: {mode: DEFAULT},
   tabularData: {},
   rasterData: {},
   expressionData: {},
@@ -79,15 +72,9 @@ function sieveApp(state=initialState, action){
       return Object.assign({}, state, {
         errors: action.errors
       });
-    case INIT_TREE:
-    case EDIT_TREE_NODE:
-      return Object.assign({}, state, {
-        changed: true,
-        tree: tree(state.tree, action)
-      });
     case ADD_INPUT_VARIABLE:
     case REMOVE_INPUT_VARIABLE:
-    case EDIT_INPUT_VARIABLE:
+    case REPLACE_INPUT_VARIABLE:
       var errors = {};
       errors[action.field] = action.error;
       return Object.assign({}, state, {
@@ -116,21 +103,9 @@ function sieveApp(state=initialState, action){
       return Object.assign({}, state, {
         created: action.time
       });
-    case CHANGE_INTERFACE_STATE:
+    case EDIT_NODE:
       return Object.assign({}, state, {
-        interfaceState: action.state
-      });
-    case EDIT_RASTER_DATA:
-      return Object.assign({}, state, {
-        rasterData: action.data
-      });
-    case EDIT_TABULAR_DATA:
-      return Object.assign({}, state, {
-        tabularData: action.data
-      });
-    case EDIT_EXPRESSION_DATA:
-      return Object.assign({}, state, {
-        expressionData: action.data
+        node_editor: node_editor(state.node_editor, action)
       });
     default:
       return state;
@@ -170,8 +145,14 @@ var mapDispatchToProps = (dispatch) => {
     onChangeOperandSelection: (id, value) => {
       dispatch(changeOperandSelection(id, value));
     },
-    onChangeInterfaceState: (newState) => {
-      dispatch(changeInterfaceState(newState));
+    onEditNothing: () => {
+      dispatch(editNothing());
+    },
+    onAddDataSource: () => {
+      dispatch(addDataSource());
+    },
+    onAddExpression: () => {
+      dispatch(onAddExpression());
     },
     onEditRasterData: (data) => {
       dispatch(editRasterData(data));
@@ -283,9 +264,9 @@ class TabularDataSource extends React.Component {
   onSave() {
     if (this.props.errors.tabularDataName)
       return; // Do not submit if there are errors
-    var name = this.props.tabularData.name;
+    var name = this.props.node_editor.tabular_data.name;
     if (name == null || name.length == 0){
-      name = this.props.tabularData.defaultName;
+      name = this.props.node_editor.tabular_data.defaultName;
     }
 
     var variable = {
@@ -293,13 +274,13 @@ class TabularDataSource extends React.Component {
       node: [
         'join',
         [
-          this.props.tabularData.source1,
-          this.props.tabularData.source2
+          this.props.node_editor.tabular_data.source1,
+          this.props.node_editor.tabular_data.source2
         ]
       ]
     };
-    var index = this.props.tabularData.index;
-    var isEditing = this.props.tabularData.isEditing;
+    var index = this.props.node_editor.tabular_data.index;
+    var isEditing = this.props.node_editor.tabular_data.isEditing;
 
     if (isEditing){
       this.props.onEditInputVariable(variable, index);
@@ -315,11 +296,11 @@ class TabularDataSource extends React.Component {
       index: -1
     });
 
-    this.props.onChangeInterfaceState(DEFAULT);
+    this.props.onEditNothing();
   }
 
   componentWillReceiveProps(newProps){
-    if (!newProps.tabularData.defaultName ||
+    if (!newProps.node_editor.tabular_data.defaultName ||
         newProps.input_variables != this.props.input_variables
       ){
       var t1 = newProps.tables.items[0];
@@ -329,13 +310,13 @@ class TabularDataSource extends React.Component {
         var name = this.generateName(source1, source2, newProps.input_variables);
         var data = Object.assign(
           {},
-          newProps.tabularData,
+          newProps.node_editor.tabular_data,
           {defaultName: name}
         );
 
-        if (!this.props.tabularData.source1)
+        if (!this.props.node_editor.tabular_data.source1)
           data.source1 = source1;
-        if (!this.props.tabularData.source2)
+        if (!this.props.node_editor.tabular_data.source2)
           data.source2 = source2;
 
 
@@ -379,7 +360,7 @@ class TabularDataSource extends React.Component {
 
     var data = Object.assign(
       {},
-      this.props.tabularData,
+      this.props.node_editor.tabular_data,
       {
         name: name,
         source1: source1,
@@ -404,7 +385,7 @@ class TabularDataSource extends React.Component {
             <FormControl
               componentClass="select"
               placeholder="select"
-              value={this.sourceToString(this.props.tabularData.source1)}
+              value={this.sourceToString(this.props.node_editor.tabular_data.source1)}
               name="table"
             >
               {
@@ -421,10 +402,11 @@ class TabularDataSource extends React.Component {
               componentClass="select"
               placeholder="select"
               name="layer"
-              value={this.sourceToString(this.props.tabularData.source2)}
+              value={this.sourceToString(this.props.node_editor.tabular_data.source2)}
             >
               {
-                this.props.tables.items.map(i2o('Table')
+                this.props.tables.items.map(
+                  i2o('Table')
                 ).concat(
                   this.props.layers.items.map(i2o('Layer'))
                 )
@@ -437,8 +419,8 @@ class TabularDataSource extends React.Component {
             <ControlLabel>Name</ControlLabel>
             <FormControl
               name="name" type="text"
-              placeholder={this.props.tabularData.defaultName}
-              value={this.props.tabularData.name}
+              placeholder={this.props.node_editor.tabular_data.defaultName}
+              value={this.props.node_editor.tabular_data.name}
             />
             <HelpBlock>
               {this.props.errors.tabularDataName ?
@@ -447,7 +429,7 @@ class TabularDataSource extends React.Component {
             </HelpBlock>
           </FormGroup>
           <Button onClick={this.onSave.bind(this)}>Add</Button>
-          <Button onClick={this.props.onChangeInterfaceState.bind(this, DEFAULT)}>Cancel</Button>
+          <Button onClick={this.props.onEditNothing}>Cancel</Button>
         </form>
       </Panel>
     );
@@ -474,9 +456,9 @@ class RasterDataSource extends React.Component {
     if (this.props.errors.rasterDataName || this.props.errors.rasterDate)
       return; // Do not submit if there are errors
 
-    var name = this.props.rasterData.name;
+    var name = this.props.node_editor.raster_data.name;
     if (name == null || name.length == 0){
-      name = this.props.rasterData.defaultName;
+      name = this.props.node_editor.raster_data.defaultName;
     }
 
     var variable = {
@@ -484,15 +466,15 @@ class RasterDataSource extends React.Component {
       node: [
         'raster',
         [
-          this.props.rasterData.raster,
+          this.props.node_editor.raster_data.raster,
           this.props.spatialDomain,
-          this.props.rasterData.temporalRangeStart + ',' +
-          this.props.rasterData.temporalRangeEnd
+          this.props.node_editor.raster_data.temporalRangeStart + ',' +
+          this.props.node_editor.raster_data.temporalRangeEnd
         ]
       ]
     };
-    var index = this.props.rasterData.index;
-    var isEditing = this.props.rasterData.isEditing;
+    var index = this.props.node_editor.raster_data.index;
+    var isEditing = this.props.node_editor.raster_data.isEditing;
 
     this.props.onEditRasterData({
       name: "",
@@ -509,7 +491,7 @@ class RasterDataSource extends React.Component {
     } else {
       this.props.onAddInputVariable(variable);
     }
-    this.props.onChangeInterfaceState(DEFAULT);
+    this.props.onEditNothing();
   }
 
   sourceToString(source) {
@@ -574,7 +556,7 @@ class RasterDataSource extends React.Component {
         newProps.rasterData,
         {defaultName: name}
       );
-      if (!this.props.rasterData.raster)
+      if (!this.props.node_editor.raster_data.raster)
         data.raster = raster;
       this.props.onEditRasterData(data);
     }
@@ -587,7 +569,7 @@ class RasterDataSource extends React.Component {
       var raster = JSON.parse(form[0]['value']);
       var data = Object.assign(
         {},
-        this.props.rasterData,
+        this.props.node_editor.raster_data,
         {defaultName: this.generateName(raster)}
       );
       this.props.onEditRasterData(data);
@@ -606,7 +588,7 @@ class RasterDataSource extends React.Component {
 
     var data = Object.assign(
       {},
-      this.props.rasterData,
+      this.props.node_editor.raster_data,
       {
         name: name,
         raster: raster,
@@ -620,6 +602,13 @@ class RasterDataSource extends React.Component {
   };
 
   render() {
+    var raster = null;
+    if (this.props.node_editor.raster_data.raster){
+      raster = this.props.node_editor.raster_data.raster;
+    }
+    if (!raster && !this.props.raster_catalog.items){
+      return <Panel header="Raster data">Temporarily unavailable</Panel>;
+    }
     return (
       <Panel header="Raster data">
         <form ref={(ref)=>{this.form=ref}} onChange={this.validate.bind(this)}>
@@ -629,16 +618,26 @@ class RasterDataSource extends React.Component {
               componentClass="select"
               placeholder="select"
               name="right"
-              value={this.sourceToString(this.props.rasterData.raster)}
+              value={this.sourceToString(raster)}
             >
               {
+                this.props.raster_catalog.items ?
                 this.props.raster_catalog.items.map((r, i) => (
                   <option key={i} value={
                     `{"name":"${r.description}","id":"${r.name}"}`
                   }>
                     {r.description + ': ' + r.band}
                   </option>
-                ))
+                )) : [
+                  raster ?
+                    <option value={
+                      `{"name":"${raster.name}", "id":"${raster.id}"}`
+                    }>
+                      {raster.name + ': ' + raster.id}
+                    </option> : null
+                  ,
+                  <option value="null">Catalog Currently Unavailable</option>
+                ]
               }
             </FormControl>
           </FormGroup>
@@ -650,13 +649,13 @@ class RasterDataSource extends React.Component {
             <input
               ref={(ref)=>{this.startpicker=ref}}
               name="temporalRangeStart" type="text" placeholder="yyyy-ddd"
-              value={this.props.rasterData.temporalRangeStart}
+              value={this.props.node_editor.raster_data.temporalRangeStart}
             />
             <span class="input-group-addon">to</span>
             <input
               ref={(ref)=>{this.endpicker=ref}}
               name="temporalRangeEnd" type="text" placeholder="yyyy-ddd"
-              value={this.props.rasterData.temporalRangeEnd}
+              value={this.props.node_editor.raster_data.temporalRangeEnd}
             />
             </div>
             <HelpBlock>
@@ -670,8 +669,8 @@ class RasterDataSource extends React.Component {
             <ControlLabel>Name</ControlLabel>
             <FormControl
               name="name" type="text"
-              placeholder={this.props.rasterData.defaultName}
-              value={this.props.rasterData.name}
+              placeholder={this.props.node_editor.raster_data.defaultName}
+              value={this.props.node_editor.raster_data.name}
             />
             <HelpBlock>
               {this.props.errors.rasterDataName ?
@@ -680,7 +679,7 @@ class RasterDataSource extends React.Component {
             </HelpBlock>
           </FormGroup>
           <Button onClick={this.onSave.bind(this)}>Add</Button>
-          <Button onClick={this.props.onChangeInterfaceState.bind(this, DEFAULT)}>Cancel</Button>
+          <Button onClick={this.props.onEditNothing}>Cancel</Button>
         </form>
       </Panel>
     );
@@ -689,14 +688,14 @@ class RasterDataSource extends React.Component {
 
 class OperandChooser extends React.Component {
   changeOperand(e) {
-    var operand_refs = this.props.expressionData.operand_refs;
+    var operand_refs = this.props.node_editor.expression_data.operand_refs;
 
     var operand_ref = e ? e.value : null;
     operand_refs[this.props.operand_index] = operand_ref;
-    
+
     var expressionData = Object.assign(
       {},
-      this.props.expressionData,
+      this.props.node_editor.expression_data,
       {operand_refs: operand_refs}
     );
     this.props.onEditExpressionData(expressionData);
@@ -705,7 +704,7 @@ class OperandChooser extends React.Component {
   options() {
     var valid_input_vars = this.props.tree.validOperands(
       this.props.input_variables,
-      this.props.expressionData.operand_refs,
+      this.props.node_editor.expression_data.operand_refs,
       this.props.operand_index
     );
 
@@ -718,7 +717,7 @@ class OperandChooser extends React.Component {
     return (
       <div style={{display: "inline-block", width: 400}}>
         <Select onChange={this.changeOperand.bind(this)}
-                value={this.props.expressionData.operand_refs[this.props.operand_index]}
+                value={this.props.node_editor.expression_data.operand_refs[this.props.operand_index]}
                 options={this.options()}
                 clearable={true} />
       </div>
@@ -748,7 +747,7 @@ class ExpressionEditor extends React.Component {
   }
 
   componentWillReceiveProps(newProps) {
-    if (!newProps.expressionData.defaultName ||
+    if (!newProps.node_editor.expression_data.defaultName ||
         newProps.input_variables != this.props.input_variables) {
       var data = {defaultName: this.generateName(newProps.input_variables)};
       this.props.onEditExpressionData(data);
@@ -775,7 +774,7 @@ class ExpressionEditor extends React.Component {
   changeName(e) {
     var expressionData = Object.assign(
       {},
-      this.props.expressionData,
+      this.props.node_editor.expression_data,
       {name: e.target.value}
     );
     this.props.onEditExpressionData(expressionData);
@@ -785,7 +784,7 @@ class ExpressionEditor extends React.Component {
     var node_object = treeToNode(op);
     var expressionData = Object.assign(
       {},
-      this.props.expressionData,
+      this.props.node_editor.expression_data,
       {node: op, operand_refs: Array(node_object.arity)}
     );
     this.props.onEditExpressionData(expressionData);
@@ -796,7 +795,7 @@ class ExpressionEditor extends React.Component {
 
     for (var i = 0; i < arity; i++) {
       var operand_tree = this.props.input_variables.filter((input_var) => {
-        return input_var.name == this.props.expressionData.operand_refs[i];
+        return input_var.name == this.props.node_editor.expression_data.operand_refs[i];
       })[0].node;
 
       operands.push(operand_tree);
@@ -806,7 +805,7 @@ class ExpressionEditor extends React.Component {
   }
 
   onSave() {
-    var expressionData = this.props.expressionData;
+    var expressionData = this.props.node_editor.expression_data;
     if (expressionData.node && expressionData.node.length == 2) {
       if (!expressionData.name || expressionData.name == "") {
         expressionData.name = expressionData.defaultName;
@@ -817,7 +816,7 @@ class ExpressionEditor extends React.Component {
 
       this.props.onEditExpressionData({name: "", node: [], operand_refs: []});
       this.props.onAddInputVariable(expressionData);
-      this.props.onChangeInterfaceState(DEFAULT);
+      this.props.onEditNothing();
     }
   }
 
@@ -826,9 +825,9 @@ class ExpressionEditor extends React.Component {
       <Panel header="Expression editor">
         <FormGroup controlId="name">
           <FormControl componentClass="input"
-            placeholder={this.props.expressionData.defaultName}
+            placeholder={this.props.node_editor.expression_data.defaultName}
             onChange={this.changeName.bind(this)}
-            value={this.props.expressionData.name} />
+            value={this.props.node_editor.expression_data.name} />
         </FormGroup>
         <Panel>
           <div className="pull-right">
@@ -843,10 +842,10 @@ class ExpressionEditor extends React.Component {
           </div>
         </Panel>
         <Panel>
-          <TreeViewer {...this.props} tree={treeToNode(this.props.expressionData.node)} />
+          <TreeViewer {...this.props} tree={treeToNode(this.props.node_editor.expression_data.node)} />
         </Panel>
         <Button onClick={this.onSave.bind(this)}>Add</Button>
-        <Button onClick={this.props.onChangeInterfaceState.bind(this, DEFAULT)}>Cancel</Button>
+        <Button onClick={this.props.onEditNothing}>Cancel</Button>
       </Panel>
     );
   }
@@ -873,11 +872,11 @@ class VariableTable extends React.Component {
       <Panel header="Variables">
         <div className="pull-right">
           <Button disabled={!this.props.spatialDomain || this.props.input_variables.length == 0}
-                  onClick={this.props.onChangeInterfaceState.bind(this, EDITING_EXPRESSION)}>
+                  onClick={this.props.onAddExpression}>
             Add Expression
           </Button>
           <Button disabled={!this.props.spatialDomain}
-                  onClick={this.props.onChangeInterfaceState.bind(this, ADDING_DATA_SOURCE)}>
+                  onClick={this.props.onAddDataSource}>
             Add Data Source
           </Button>
         </div>
@@ -927,6 +926,8 @@ class VariableTable extends React.Component {
                             isEditing: true,
                             index: i
                           });
+                        } else {
+                          console.log(item);
                         }
                       }}>
                       Edit
@@ -974,18 +975,18 @@ class AddDataSourcePanel extends React.Component {
         <ul>
           <li>
             <a href="javascript:void(0)"
-                onClick={this.props.onChangeInterfaceState.bind(this, EDITING_RASTER_DATA)}>
+                onClick={this.props.onEditRasterData}>
               Raster Data
             </a>
           </li>
           <li>
             <a href="javascript:void(0)"
-                onClick={this.props.onChangeInterfaceState.bind(this, EDITING_TABULAR_DATA)}>
+                onClick={this.props.onEditTabularData}>
               Tabular Data
             </a>
           </li>
         </ul>
-        <Button onClick={this.props.onChangeInterfaceState.bind(this, DEFAULT)}>Cancel</Button>
+        <Button onClick={this.props.onEditNothing}>Cancel</Button>
       </Panel>
     );
   }
@@ -994,7 +995,7 @@ class AddDataSourcePanel extends React.Component {
 class SieveComponent extends React.Component {
   renderMiddlePanel() {
     if (this.props.spatialDomain) {
-      switch (this.props.interfaceState) {
+      switch (this.props.node_editor.mode) {
         case EDITING_EXPRESSION:
           return <ExpressionEditor {...this.props} />;
         case EDITING_RASTER_DATA:
@@ -1032,312 +1033,6 @@ class SieveComponent extends React.Component {
   }
 }
 
-class DataNode {
-  validOperands(input_vars, operand_refs, op_index) {
-    return input_vars;
-  }
-
-  json() {
-    return JSON.encode(data);
-  }
-}
-
-class MeanOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
-
-    this.name = 'Mean';
-    this.arity = 2;
-
-    if (operands.length != this.arity) {
-        throw Error(`MeanOperator takes exactly ${this.arity} operands`);
-    }
-
-    this.left = treeToNode(operands[0]);
-    this.right = treeToNode(operands[1]);
-
-    if (this.left.dimensions != this.right.dimensions) {
-      throw Error("Operands must have the same dimensions");
-    }
-
-    this.dimensions = this.left.dimensions;
-  }
-
-  json() {
-    return ['mean', [this.left.json(), this.right.json()]];
-  }
-}
-
-class TemporalMeanOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
-
-    this.name = 'Temporal Mean';
-    this.arity = 1;
-
-    if (operands.length != this.arity) {
-      throw Error(`TemporalMeanOperator takes exactly ${this.arity} operand`);
-    }
-
-    this.operand = treeToNode(operands[0]);
-
-    this.dimensions = 'space';
-  }
-
-  validOperands(input_vars) {
-    return input_vars.filter(input_var => {
-      return treeToNode(input_var.node).dimensions.includes('time');
-    });
-  }
-
-  json() {
-    return ['tmean', [this.operand.json()]];
-  }
-}
-
-class SpatialMeanOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
-
-    this.name = 'Spatial Mean';
-    this.arity = 1;
-
-    if (operands.length != this.arity) {
-      throw Error(`SpatialMeanOperator takes exactly ${this.arity} operand`);
-    }
-
-    this.operand = treeToNode(operands[0]);
-
-    this.dimensions = 'time';
-  }
-
-  validOperands(input_vars) {
-    return input_vars.filter(input_var => {
-      return treeToNode(input_var.node).dimensions.includes('space');
-    });
-  }
-
-  json() {
-    return ['smean', [this.operand.json()]];
-  }
-}
-
-class SelectOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
-
-    this.name = 'Select';
-    this.arity = 2;
-
-    if (operands.length != this.arity) {
-      throw Error(`SelectOperator takes exactly ${this.arity} operands`);
-    }
-
-    this.left = treeToNode(operands[0]);
-    this.child_op = operands[0][0];
-    this.right = operands[1];
-
-    this.dimensions = this.left.dimensions;
-  }
-
-  json() {
-    return ['select', [this.left.json(), this.right.json()]];
-  }
-}
-
-class ExpressionOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
-
-    this.name = 'Expression';
-    this.arity = 1;
-
-    if (operands.length != this.arity) {
-      throw Error(`"ExpressionOperator takes exactly ${this.arity} operand`);
-    }
-
-    this.operand = treeToNode(operands[0]);
-
-    this.dimensions = this.operand.dimensions;
-  }
-
-  json() {
-    return ['expression', [this.operand.json()]];
-  }
-}
-
-class JoinOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
-
-    this.name = 'Join';
-    this.arity = 2
-
-    if (operands.length != this.arity) {
-      throw Error(`JoinOperator takes exactly ${this.arity} operands`);
-    }
-
-    this.left = new SourceOperator([operands[0]]);
-    this.right = new SourceOperator([operands[1]]);
-
-    var dimensions = new Set();
-    dimensions.add(this.left.dimensions);
-    dimensions.add(this.right.dimensions);
-
-    this.dimensions = '';
-    if (dimensions.has('space')) {
-      this.dimensions += 'space';
-    }
-    if (dimensions.has('time')) {
-      this.dimensions += 'time';
-    }
-  }
-
-  json() {
-    return ['join', [this.left.json(), this.right.json()]];
-  }
-}
-
-class RasterOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
-
-    this.name = 'Raster';
-    this.arity = 3;
-
-    if (operands.length != this.arity) {
-      throw Error(`RasterOperator takes exactly ${this.arity} operands`);
-    }
-
-    this.left = operands[0];
-    this.middle = operands[2];
-    this.right = treeToNode(operands[1]);
-
-    this.dimensions = 'spacetime';
-  }
-
-  json() {
-    return ['raster', [this.left, this.right.json(), this.middle]];
-  }
-}
-
-class SourceOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
-
-    this.name= 'Source';
-    this.arity = 1
-
-    if (operands.length != this.arity) {
-      throw Error(`SourceOperator takes exactly ${this.arity} operand`);
-    }
-
-    this.operand = operands[0];
-    this.source_name = this.operand.name;
-    this.type = this.operand['type'];
-    this.field = this.operand.field;
-
-    if (this.type == 'Layer') {
-      this.dimensions = 'space';
-    } else if (this.type == 'Table') {
-      this.dimensions = 'time';
-    }
-  }
-
-  json() {
-    return ['source', [{source_name: this.name, type: this.type, field: this.field}]];
-  }
-}
-
-class MathOperator extends React.Component {
-  constructor(operator, operands) {
-    super(operands);
-
-    this.operator = operator;
-    this.name = operator;
-    this.arity = 2;
-
-    if (operands.length != this.arity) {
-      throw Error(`MathOperator takes exactly ${this.arity} operands`);
-    }
-
-    this.left = treeToNode(operands[0]);
-    this.right = treeToNode(operands[1]);
-
-    if (this.left.dimensions != this.right.dimensions) {
-      throw Error("Operators must have the same dimensions");
-    }
-
-    this.dimensions = this.left.dimensions;
-  }
-
-  validOperands(input_vars, operand_refs, op_index) {
-    var other_op_index = op_index == 0 ? 1 : 0;
-    var other_op = input_vars.filter(input_var => {
-      return input_var.name == operand_refs[other_op_index];
-    })[0];
-
-    if (!other_op) {
-      return input_vars;
-    } else {
-      var other_op_node = treeToNode(other_op.node);
-      return input_vars.filter(input_var => {
-        return treeToNode(input_var.node).dimensions == other_op_node.dimensions;
-      });
-    }
-  }
-
-  json() {
-    return [this.operator, [this.left.json(), this.right.json()]];
-  }
-}
-
-class EmptyTree extends DataNode {
-  constructor(props) {
-    super(props);
-
-    this.name = 'Empty';
-    this.arity = 0;
-  }
-
-  render() {
-    return null;
-  }
-}
-
-function treeToNode(tree) {
-  var node;
-
-  if (!tree || Object.keys(tree).length == 0) {
-    return new EmptyTree();
-  }
-
-  switch (tree[0]) {
-    case 'mean':
-      return new MeanOperator(tree[1]);
-    case 'tmean':
-      return new TemporalMeanOperator(tree[1]);
-    case 'smean':
-      return new SpatialMeanOperator(tree[1]);
-    case 'select':
-      return new SelectOperator(tree[1]);
-    case 'expression':
-      return new ExpressionOperator(tree[1]);
-    case 'join':
-      return new JoinOperator(tree[1]);
-    case 'raster':
-      return new RasterOperator(tree[1]);
-    case 'source':
-      return new SourceOperator(tree[1]);
-    case '+':
-    case '-':
-    case '*':
-    case '/':
-      return new MathOperator(tree[0], tree[1]);
-    default:
-      throw Error("'" + tree[0] + "' is not a valid operator");
-  }
-}
 
 var Sieve = ReactRedux.connect(
   mapStateToProps,

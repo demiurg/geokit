@@ -22,7 +22,7 @@ const UPDATE_CREATED = 'UPDATE_CREATED';
 
 const REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
 const ADD_INPUT_VARIABLE = 'ADD_INPUT_VARIABLE';
-const EDIT_INPUT_VARIABLE = 'EDIT_INPUT_VARIABLE';
+const REPLACE_INPUT_VARIABLE = 'REPLACE_INPUT_VARIABLE';
 const ERROR_INPUT_VARIABLE = 'ERROR_INPUT_VARIABLE';
 
 const INIT_TREE = 'INIT_TREE';
@@ -34,11 +34,8 @@ const SAVE_VARIABLE = 'SAVE_VARIABLE';
 const POST_VARIABLE = 'POST_VARIABLE';
 const RECIEVE_VARIABLE = 'RECIEVE_VARIABLE';
 
-const CHANGE_INTERFACE_STATE = 'CHANGE_INTERFACE_STATE';
+const EDIT_NODE = 'EDIT_NODE';
 
-const EDIT_TABULAR_DATA = 'EDIT_TABULAR_DATA';
-const EDIT_RASTER_DATA = 'EDIT_RASTER_DATA';
-const EDIT_EXPRESSION_DATA = 'EDIT_EXPRESSION_DATA';
 
 function requestLayers() {
   return {
@@ -186,7 +183,7 @@ function addInputVariable(variable){
 
 function editInputVariable(variable, idx){
   return {
-    type: EDIT_INPUT_VARIABLE,
+    type: REPLACE_INPUT_VARIABLE,
     index: idx,
     variable
   };
@@ -327,30 +324,48 @@ function saveVariable(variable, created){
   };
 }
 
-function changeInterfaceState(newState) {
-  return {
-    type: CHANGE_INTERFACE_STATE,
-    state: newState
-  };
-}
 
 function editTabularData(data) {
   return {
-    type: EDIT_TABULAR_DATA,
+    type: EDIT_NODE,
+    mode: EDITING_TABULAR_DATA,
     data: data
   };
 }
 
 function editRasterData(data) {
   return {
-    type: EDIT_RASTER_DATA,
+    type: EDIT_NODE,
+    mode: EDITING_RASTER_DATA,
     data: data
   };
 }
 
 function editExpressionData(data) {
   return {
-    type: EDIT_EXPRESSION_DATA,
+    type: EDIT_NODE,
+    mode: EDITING_EXPRESSION,
     data: data
   };
+}
+
+function addDataSource(){
+  return {
+    type: EDIT_NODE,
+    mode: ADDING_DATA_SOURCE,
+  }
+}
+
+function addExpression(){
+  return {
+    type: EDIT_NODE,
+    mode: EDITING_EXPRESSION,
+  }
+}
+
+function editNothing(){
+  return {
+    type: EDIT_NODE,
+    mode: DEFAULT,
+  }
 }

@@ -20,13 +20,15 @@ from psycopg2.extras import DateRange
 def get_raster_catalog():
     if not hasattr(settings, 'RPC_URL'):
         print "Error: RPC_URL must be set in settings.py"
-        return None
 
-    conn = xmlrpclib.ServerProxy(settings.RPC_URL)
+    try:
+        conn = xmlrpclib.ServerProxy(settings.RPC_URL)
+        data = conn.get_datacatalog()
+        return data
+    except Exception as e:
+        print "Error getting raster catalog: {}".format(str(e))
 
-    data = conn.get_datacatalog()
-    return data
-
+    return None
 
 def index(request):
     variables = Variable.objects.all().order_by('-modified')

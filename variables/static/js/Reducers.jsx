@@ -98,7 +98,7 @@ function input_variables(state=[], action){
       ).concat(
         state.slice(action.index+1)
       );
-    case EDIT_INPUT_VARIABLE:
+    case REPLACE_INPUT_VARIABLE:
       state.splice(action.index, 1, action.variable);
       return state;
     default:
@@ -154,5 +154,44 @@ function operandSelections(state={}, action) {
       return Object.assign({}, state, {
         [action.id]: action.value
       });
+    default:
+      return state;
+  }
+}
+
+// Interface states
+const DEFAULT = 'DEFAULT';
+const ADDING_DATA_SOURCE = 'ADDING_DATA_SOURCE';
+const EDITING_TABULAR_DATA = 'EDITING_TABULAR_DATA';
+const EDITING_RASTER_DATA = 'EDITING_RASTER_DATA';
+const EDITING_EXPRESSION = 'EDITING_EXPRESSION';
+
+function node_editor(state={'mode': DEFAULT}, action){
+  switch(action.mode){
+    case ADDING_DATA_SOURCE:
+      return Object.assign({}, state, {
+        mode: action.mode,
+      });
+    case EDITING_RASTER_DATA:
+      return Object.assign({}, state, {
+        mode: action.mode,
+        raster_data: action.data
+      });
+    case EDITING_TABULAR_DATA:
+      return Object.assign({}, state, {
+        mode: action.mode,
+        tabular_data: action.data
+      });
+    case EDITING_EXPRESSION:
+      return Object.assign({}, state, {
+        mode: action.mode,
+        expression_data: action.data
+      });
+    case DEFAULT:
+      return Object.assign({}, state, {
+        mode: action.mode,
+      });
+    default:
+      return state;
   }
 }

@@ -21,7 +21,7 @@ var UPDATE_CREATED = 'UPDATE_CREATED';
 
 var REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
 var ADD_INPUT_VARIABLE = 'ADD_INPUT_VARIABLE';
-var EDIT_INPUT_VARIABLE = 'EDIT_INPUT_VARIABLE';
+var REPLACE_INPUT_VARIABLE = 'REPLACE_INPUT_VARIABLE';
 var ERROR_INPUT_VARIABLE = 'ERROR_INPUT_VARIABLE';
 
 var INIT_TREE = 'INIT_TREE';
@@ -33,9 +33,7 @@ var SAVE_VARIABLE = 'SAVE_VARIABLE';
 var POST_VARIABLE = 'POST_VARIABLE';
 var RECIEVE_VARIABLE = 'RECIEVE_VARIABLE';
 
-var EDIT_TABULAR_DATA = 'EDIT_TABULAR_DATA';
-var EDIT_RASTER_DATA = 'EDIT_RASTER_DATA';
-var EDIT_EXPRESSION_DATA = 'EDIT_EXPRESSION_DATA';
+var EDIT_NODE = 'EDIT_NODE';
 
 function requestLayers() {
   return {
@@ -180,7 +178,7 @@ function addInputVariable(variable) {
 
 function editInputVariable(variable, idx) {
   return {
-    type: EDIT_INPUT_VARIABLE,
+    type: REPLACE_INPUT_VARIABLE,
     index: idx,
     variable: variable
   };
@@ -329,22 +327,46 @@ function saveVariable(variable, created) {
 
 function editTabularData(data) {
   return {
-    type: EDIT_TABULAR_DATA,
+    type: EDIT_NODE,
+    mode: EDITING_TABULAR_DATA,
     data: data
   };
 }
 
 function editRasterData(data) {
   return {
-    type: EDIT_RASTER_DATA,
+    type: EDIT_NODE,
+    mode: EDITING_RASTER_DATA,
     data: data
   };
 }
 
 function editExpressionData(data) {
   return {
-    type: EDIT_EXPRESSION_DATA,
+    type: EDIT_NODE,
+    mode: EDITING_EXPRESSION,
     data: data
+  };
+}
+
+function addDataSource() {
+  return {
+    type: EDIT_NODE,
+    mode: ADDING_DATA_SOURCE
+  };
+}
+
+function addExpression() {
+  return {
+    type: EDIT_NODE,
+    mode: EDITING_EXPRESSION
+  };
+}
+
+function editNothing() {
+  return {
+    type: EDIT_NODE,
+    mode: DEFAULT
   };
 }
 "use strict";
@@ -1386,7 +1408,7 @@ function input_variables() {
       return [].concat(state, [action.variable]);
     case REMOVE_INPUT_VARIABLE:
       return state.slice(0, action.index).concat(state.slice(action.index + 1));
-    case EDIT_INPUT_VARIABLE:
+    case REPLACE_INPUT_VARIABLE:
       state.splice(action.index, 1, action.variable);
       return state;
     default:
@@ -1448,6 +1470,48 @@ function operandSelections() {
   switch (action.type) {
     case CHANGE_OPERAND_SELECTION:
       return Object.assign({}, state, (_Object$assign = {}, _Object$assign[action.id] = action.value, _Object$assign));
+    default:
+      return state;
+  }
+}
+
+// Interface states
+var DEFAULT = 'DEFAULT';
+var ADDING_DATA_SOURCE = 'ADDING_DATA_SOURCE';
+var EDITING_TABULAR_DATA = 'EDITING_TABULAR_DATA';
+var EDITING_RASTER_DATA = 'EDITING_RASTER_DATA';
+var EDITING_EXPRESSION = 'EDITING_EXPRESSION';
+
+function node_editor() {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { 'mode': DEFAULT };
+  var action = arguments[1];
+
+  switch (action.mode) {
+    case ADDING_DATA_SOURCE:
+      return Object.assign({}, state, {
+        mode: action.mode
+      });
+    case EDITING_RASTER_DATA:
+      return Object.assign({}, state, {
+        mode: action.mode,
+        raster_data: action.data
+      });
+    case EDITING_TABULAR_DATA:
+      return Object.assign({}, state, {
+        mode: action.mode,
+        tabular_data: action.data
+      });
+    case EDITING_EXPRESSION:
+      return Object.assign({}, state, {
+        mode: action.mode,
+        expression_data: action.data
+      });
+    case DEFAULT:
+      return Object.assign({}, state, {
+        mode: action.mode
+      });
+    default:
+      return state;
   }
 }
 "use strict";
@@ -1487,14 +1551,14 @@ var initialState = Object.assign({
   tree: {},
   description: "",
   spatialDomain: null,
-  temporalDomain: { start: null, end: null },
   input_variables: [],
   modified: null,
   created: null,
   changed: false,
-  editingTabularData: {},
-  editingRasterData: {},
-  editingExpressionData: {},
+  node_editor: { mode: DEFAULT },
+  tabularData: {},
+  rasterData: {},
+  expressionData: {},
   operandSelections: {}
 }, window.sieve_props);
 
@@ -1549,21 +1613,18 @@ function sieveApp() {
       return Object.assign({}, state, {
         errors: action.errors
       });
-    case INIT_TREE:
-    case EDIT_TREE_NODE:
-      return Object.assign({}, state, {
-        changed: true,
-        tree: tree(state.tree, action)
-      });
     case ADD_INPUT_VARIABLE:
     case REMOVE_INPUT_VARIABLE:
-    case EDIT_INPUT_VARIABLE:
+    case REPLACE_INPUT_VARIABLE:
       var errors = {};
       errors[action.field] = action.error;
       return Object.assign({}, state, {
         changed: true,
         errors: Object.assign({}, state.errors, errors),
-        input_variables: input_variables(state.input_variables, action)
+        input_variables: input_variables(state.input_variables, action),
+        editingTabularData: false,
+        editingRasterData: false,
+        editingExpressionData: false
       });
     case ERROR_INPUT_VARIABLE:
       var errors = {};
@@ -1583,17 +1644,9 @@ function sieveApp() {
       return Object.assign({}, state, {
         created: action.time
       });
-    case EDIT_RASTER_DATA:
+    case EDIT_NODE:
       return Object.assign({}, state, {
-        editingRasterData: action.data
-      });
-    case EDIT_TABULAR_DATA:
-      return Object.assign({}, state, {
-        editingTabularData: action.data
-      });
-    case EDIT_EXPRESSION_DATA:
-      return Object.assign({}, state, {
-        editingExpressionData: action.data
+        node_editor: node_editor(state.node_editor, action)
       });
     default:
       return state;
@@ -1627,15 +1680,28 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
     onEditInputVariable: function onEditInputVariable(variable, i) {
       dispatch(editInputVariable(variable, i));
     },
-    onInitTree: function onInitTree(node) {
-      dispatch(initTree(node));
-    },
-    onEditTreeNode: function onEditTreeNode(id, node) {
-      dispatch(editTreeNode(id, node));
-    },
     onChangeOperandSelection: function onChangeOperandSelection(id, value) {
       dispatch(changeOperandSelection(id, value));
     },
+    onEditNothing: function onEditNothing() {
+      dispatch(editNothing());
+    },
+    onAddDataSource: function onAddDataSource() {
+      dispatch(addDataSource());
+    },
+    onAddExpression: function (_onAddExpression) {
+      function onAddExpression() {
+        return _onAddExpression.apply(this, arguments);
+      }
+
+      onAddExpression.toString = function () {
+        return _onAddExpression.toString();
+      };
+
+      return onAddExpression;
+    }(function () {
+      dispatch(onAddExpression());
+    }),
     onEditRasterData: function onEditRasterData(data) {
       dispatch(editRasterData(data));
     },
@@ -1709,6 +1775,9 @@ var SpatialConfiguration = function (_React$Component) {
         return feature.properties.id;
       }
     }, {
+      style: {
+        weight: 1
+      },
       pointToLayer: function pointToLayer(feature, latlng) {
         return new L.CircleMarker(latlng, {
           radius: 4,
@@ -1760,17 +1829,17 @@ var TabularDataSource = function (_React$Component2) {
 
   TabularDataSource.prototype.onSave = function onSave() {
     if (this.props.errors.tabularDataName) return; // Do not submit if there are errors
-    var name = this.props.editingTabularData.name;
+    var name = this.props.node_editor.tabular_data.name;
     if (name == null || name.length == 0) {
-      name = this.props.editingTabularData.defaultName;
+      name = this.props.node_editor.tabular_data.defaultName;
     }
 
     var variable = {
       name: name,
-      node: ['join', [this.props.editingTabularData.source1, this.props.editingTabularData.source2]]
+      node: ['join', [this.props.node_editor.tabular_data.source1, this.props.node_editor.tabular_data.source2]]
     };
-    var index = this.props.editingTabularData.index;
-    var isEditing = this.props.editingTabularData.isEditing;
+    var index = this.props.node_editor.tabular_data.index;
+    var isEditing = this.props.node_editor.tabular_data.isEditing;
 
     if (isEditing) {
       this.props.onEditInputVariable(variable, index);
@@ -1785,19 +1854,21 @@ var TabularDataSource = function (_React$Component2) {
       isEditing: false,
       index: -1
     });
+
+    this.props.onEditNothing();
   };
 
   TabularDataSource.prototype.componentWillReceiveProps = function componentWillReceiveProps(newProps) {
-    if (!newProps.editingTabularData.defaultName || newProps.input_variables != this.props.input_variables) {
+    if (!newProps.node_editor.tabular_data.defaultName || newProps.input_variables != this.props.input_variables) {
       var t1 = newProps.tables.items[0];
       if (t1) {
         var source1 = { name: t1.name, field: t1.field_names[0] };
         var source2 = Object.assign({}, source1);
         var name = this.generateName(source1, source2, newProps.input_variables);
-        var data = Object.assign({}, newProps.editingTabularData, { defaultName: name });
+        var data = Object.assign({}, newProps.node_editor.tabular_data, { defaultName: name });
 
-        if (!this.props.editingTabularData.source1) data.source1 = source1;
-        if (!this.props.editingTabularData.source2) data.source2 = source2;
+        if (!this.props.node_editor.tabular_data.source1) data.source1 = source1;
+        if (!this.props.node_editor.tabular_data.source2) data.source2 = source2;
 
         this.props.onEditTabularData(data);
       }
@@ -1814,7 +1885,6 @@ var TabularDataSource = function (_React$Component2) {
     }
     name = name.replace(/_/g, "-");
     var i = 1;
-    var unique = false;
     var input_variables = [];
     if (var_list) {
       input_variables = var_list;
@@ -1839,7 +1909,7 @@ var TabularDataSource = function (_React$Component2) {
     var source2 = JSON.parse(form[1]['value']);
     var defaultName = this.generateName(source1, source2);
 
-    var data = Object.assign({}, this.props.editingTabularData, {
+    var data = Object.assign({}, this.props.node_editor.tabular_data, {
       name: name,
       source1: source1,
       source2: source2,
@@ -1877,7 +1947,7 @@ var TabularDataSource = function (_React$Component2) {
             {
               componentClass: "select",
               placeholder: "select",
-              value: this.sourceToString(this.props.editingTabularData.source1),
+              value: this.sourceToString(this.props.node_editor.tabular_data.source1),
               name: "table"
             },
             this.props.tables.items.map(i2o('Table')).concat(this.props.layers.items.map(i2o('Layer')))
@@ -1897,7 +1967,7 @@ var TabularDataSource = function (_React$Component2) {
               componentClass: "select",
               placeholder: "select",
               name: "layer",
-              value: this.sourceToString(this.props.editingTabularData.source2)
+              value: this.sourceToString(this.props.node_editor.tabular_data.source2)
             },
             this.props.tables.items.map(i2o('Table')).concat(this.props.layers.items.map(i2o('Layer')))
           )
@@ -1914,8 +1984,8 @@ var TabularDataSource = function (_React$Component2) {
           ),
           React.createElement(FormControl, {
             name: "name", type: "text",
-            placeholder: this.props.editingTabularData.defaultName,
-            value: this.props.editingTabularData.name
+            placeholder: this.props.node_editor.tabular_data.defaultName,
+            value: this.props.node_editor.tabular_data.name
           }),
           React.createElement(
             HelpBlock,
@@ -1927,6 +1997,11 @@ var TabularDataSource = function (_React$Component2) {
           Button,
           { onClick: this.onSave.bind(this) },
           "Add"
+        ),
+        React.createElement(
+          Button,
+          { onClick: this.props.onEditNothing },
+          "Cancel"
         )
       )
     );
@@ -1962,17 +2037,17 @@ var RasterDataSource = function (_React$Component3) {
   RasterDataSource.prototype.onSave = function onSave() {
     if (this.props.errors.rasterDataName || this.props.errors.rasterDate) return; // Do not submit if there are errors
 
-    var name = this.props.editingRasterData.name;
+    var name = this.props.node_editor.raster_data.name;
     if (name == null || name.length == 0) {
-      name = this.props.editingRasterData.defaultName;
+      name = this.props.node_editor.raster_data.defaultName;
     }
 
     var variable = {
       name: name,
-      node: ['raster', [this.props.editingRasterData.raster, this.props.spatialDomain, this.props.editingRasterData.temporalRangeStart + ',' + this.props.editingRasterData.temporalRangeEnd]]
+      node: ['raster', [this.props.node_editor.raster_data.raster, this.props.spatialDomain, this.props.node_editor.raster_data.temporalRangeStart + ',' + this.props.node_editor.raster_data.temporalRangeEnd]]
     };
-    var index = this.props.editingRasterData.index;
-    var isEditing = this.props.editingRasterData.isEditing;
+    var index = this.props.node_editor.raster_data.index;
+    var isEditing = this.props.node_editor.raster_data.isEditing;
 
     this.props.onEditRasterData({
       name: "",
@@ -1989,6 +2064,7 @@ var RasterDataSource = function (_React$Component3) {
     } else {
       this.props.onAddInputVariable(variable);
     }
+    this.props.onEditNothing();
   };
 
   RasterDataSource.prototype.sourceToString = function sourceToString(source) {
@@ -2001,7 +2077,6 @@ var RasterDataSource = function (_React$Component3) {
     var name = raster.id.replace(/_/g, "-");
     var i = 1;
 
-    var unique = false;
     var input_variables = [];
     if (var_list) {
       input_variables = var_list;
@@ -2047,12 +2122,12 @@ var RasterDataSource = function (_React$Component3) {
   };
 
   RasterDataSource.prototype.componentWillReceiveProps = function componentWillReceiveProps(newProps) {
-    if (!newProps.editingRasterData.defaultName || newProps.input_variables != this.props.input_variables) {
+    if (!newProps.rasterData.defaultName || newProps.input_variables != this.props.input_variables) {
       var raster = newProps.raster_catalog.items[0];
       var raster2 = Object.assign({}, raster, { id: raster.name });
       var name = this.generateName(raster2, newProps.input_variables);
-      var data = Object.assign({}, newProps.editingRasterData, { defaultName: name });
-      if (!this.props.editingRasterData.raster) data.raster = raster;
+      var data = Object.assign({}, newProps.rasterData, { defaultName: name });
+      if (!this.props.node_editor.raster_data.raster) data.raster = raster;
       this.props.onEditRasterData(data);
     }
   };
@@ -2062,7 +2137,7 @@ var RasterDataSource = function (_React$Component3) {
     var name = form[3]['value'];
     if (!name || name.length < 1) {
       var raster = JSON.parse(form[0]['value']);
-      var data = Object.assign({}, this.props.editingRasterData, { defaultName: this.generateName(raster) });
+      var data = Object.assign({}, this.props.node_editor.raster_data, { defaultName: this.generateName(raster) });
       this.props.onEditRasterData(data);
     }
   };
@@ -2076,7 +2151,7 @@ var RasterDataSource = function (_React$Component3) {
     var temporalRangeEnd = form[2]['value'];
     var defaultName = this.generateName(raster);
 
-    var data = Object.assign({}, this.props.editingRasterData, {
+    var data = Object.assign({}, this.props.node_editor.raster_data, {
       name: name,
       raster: raster,
       temporalRangeStart: temporalRangeStart,
@@ -2090,6 +2165,17 @@ var RasterDataSource = function (_React$Component3) {
   RasterDataSource.prototype.render = function render() {
     var _this7 = this;
 
+    var raster = null;
+    if (this.props.node_editor.raster_data.raster) {
+      raster = this.props.node_editor.raster_data.raster;
+    }
+    if (!raster && !this.props.raster_catalog.items) {
+      return React.createElement(
+        Panel,
+        { header: "Raster data" },
+        "Temporarily unavailable"
+      );
+    }
     return React.createElement(
       Panel,
       { header: "Raster data" },
@@ -2112,15 +2198,23 @@ var RasterDataSource = function (_React$Component3) {
               componentClass: "select",
               placeholder: "select",
               name: "right",
-              value: this.sourceToString(this.props.editingRasterData.raster)
+              value: this.sourceToString(raster)
             },
-            this.props.raster_catalog.items.map(function (r, i) {
+            this.props.raster_catalog.items ? this.props.raster_catalog.items.map(function (r, i) {
               return React.createElement(
                 "option",
                 { key: i, value: "{\"name\":\"" + r.description + "\",\"id\":\"" + r.name + "\"}" },
                 r.description + ': ' + r.band
               );
-            })
+            }) : [raster ? React.createElement(
+              "option",
+              { value: "{\"name\":\"" + raster.name + "\", \"id\":\"" + raster.id + "\"}" },
+              raster.name + ': ' + raster.id
+            ) : null, React.createElement(
+              "option",
+              { value: "null" },
+              "Catalog Currently Unavailable"
+            )]
           )
         ),
         React.createElement(
@@ -2140,7 +2234,7 @@ var RasterDataSource = function (_React$Component3) {
                 _this7.startpicker = _ref2;
               },
               name: "temporalRangeStart", type: "text", placeholder: "yyyy-ddd",
-              value: this.props.editingRasterData.temporalRangeStart
+              value: this.props.node_editor.raster_data.temporalRangeStart
             }),
             React.createElement(
               "span",
@@ -2152,7 +2246,7 @@ var RasterDataSource = function (_React$Component3) {
                 _this7.endpicker = _ref3;
               },
               name: "temporalRangeEnd", type: "text", placeholder: "yyyy-ddd",
-              value: this.props.editingRasterData.temporalRangeEnd
+              value: this.props.node_editor.raster_data.temporalRangeEnd
             })
           ),
           React.createElement(
@@ -2172,8 +2266,8 @@ var RasterDataSource = function (_React$Component3) {
           ),
           React.createElement(FormControl, {
             name: "name", type: "text",
-            placeholder: this.props.editingRasterData.defaultName,
-            value: this.props.editingRasterData.name
+            placeholder: this.props.node_editor.raster_data.defaultName,
+            value: this.props.node_editor.raster_data.name
           }),
           React.createElement(
             HelpBlock,
@@ -2185,6 +2279,11 @@ var RasterDataSource = function (_React$Component3) {
           Button,
           { onClick: this.onSave.bind(this) },
           "Add"
+        ),
+        React.createElement(
+          Button,
+          { onClick: this.props.onEditNothing },
+          "Cancel"
         )
       )
     );
@@ -2203,24 +2302,31 @@ var OperandChooser = function (_React$Component4) {
   }
 
   OperandChooser.prototype.changeOperand = function changeOperand(e) {
-    var operand_refs = this.props.editingExpressionData.operand_refs;
-    operand_refs[this.props.operand_index] = e.value;
+    var operand_refs = this.props.node_editor.expression_data.operand_refs;
 
-    var expressionData = Object.assign({}, this.props.editingExpressionData, { operand_refs: operand_refs });
+    var operand_ref = e ? e.value : null;
+    operand_refs[this.props.operand_index] = operand_ref;
+
+    var expressionData = Object.assign({}, this.props.node_editor.expression_data, { operand_refs: operand_refs });
     this.props.onEditExpressionData(expressionData);
   };
 
-  OperandChooser.prototype.render = function render() {
-    var options = this.props.input_variables.map(function (input_var) {
+  OperandChooser.prototype.options = function options() {
+    var valid_input_vars = this.props.tree.validOperands(this.props.input_variables, this.props.node_editor.expression_data.operand_refs, this.props.operand_index);
+
+    return valid_input_vars.map(function (input_var) {
       return { value: input_var.name, label: input_var.name };
     });
+  };
+
+  OperandChooser.prototype.render = function render() {
     return React.createElement(
       "div",
       { style: { display: "inline-block", width: 400 } },
       React.createElement(Select, { onChange: this.changeOperand.bind(this),
-        value: this.props.editingExpressionData.operand_refs[this.props.operand_index],
-        options: options,
-        clearable: false })
+        value: this.props.node_editor.expression_data.operand_refs[this.props.operand_index],
+        options: this.options(),
+        clearable: true })
     );
   };
 
@@ -2258,20 +2364,50 @@ var TreeViewer = function (_React$Component5) {
 var ExpressionEditor = function (_React$Component6) {
   _inherits(ExpressionEditor, _React$Component6);
 
-  function ExpressionEditor() {
+  function ExpressionEditor(props) {
     _classCallCheck(this, ExpressionEditor);
 
-    return _possibleConstructorReturn(this, _React$Component6.apply(this, arguments));
+    var _this10 = _possibleConstructorReturn(this, _React$Component6.call(this));
+
+    var data = { defaultName: _this10.generateName(props.input_variables) };
+    props.onEditExpressionData(data);
+    return _this10;
   }
 
+  ExpressionEditor.prototype.componentWillReceiveProps = function componentWillReceiveProps(newProps) {
+    if (!newProps.node_editor.expression_data.defaultName || newProps.input_variables != this.props.input_variables) {
+      var data = { defaultName: this.generateName(newProps.input_variables) };
+      this.props.onEditExpressionData(data);
+    }
+  };
+
+  ExpressionEditor.prototype.generateName = function generateName() {
+    var var_list = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+
+    var i = 1;
+    var input_variables = [];
+    if (var_list) {
+      input_variables = var_list;
+    } else {
+      input_variables = this.props.input_variables;
+    }
+
+    input_variables.forEach(function (input) {
+      if (input.name == 'expression-' + i) {
+        i++;
+      }
+    });
+    return 'expression-' + i;
+  };
+
   ExpressionEditor.prototype.changeName = function changeName(e) {
-    var expressionData = Object.assign({}, this.props.editingExpressionData, { name: e.target.value });
+    var expressionData = Object.assign({}, this.props.node_editor.expression_data, { name: e.target.value });
     this.props.onEditExpressionData(expressionData);
   };
 
   ExpressionEditor.prototype.addOp = function addOp(op) {
     var node_object = treeToNode(op);
-    var expressionData = Object.assign({}, this.props.editingExpressionData, { node: op, operand_refs: Array(node_object.arity) });
+    var expressionData = Object.assign({}, this.props.node_editor.expression_data, { node: op, operand_refs: Array(node_object.arity) });
     this.props.onEditExpressionData(expressionData);
   };
 
@@ -2282,7 +2418,7 @@ var ExpressionEditor = function (_React$Component6) {
 
     for (var i = 0; i < arity; i++) {
       var operand_tree = this.props.input_variables.filter(function (input_var) {
-        return input_var.name == _this11.props.editingExpressionData.operand_refs[i];
+        return input_var.name == _this11.props.node_editor.expression_data.operand_refs[i];
       })[0].node;
 
       operands.push(operand_tree);
@@ -2292,14 +2428,18 @@ var ExpressionEditor = function (_React$Component6) {
   };
 
   ExpressionEditor.prototype.onSave = function onSave() {
-    var expressionData = this.props.editingExpressionData;
-    if (expressionData.name && expressionData.name.length > 0 && expressionData.node && expressionData.node.length == 2) {
+    var expressionData = this.props.node_editor.expression_data;
+    if (expressionData.node && expressionData.node.length == 2) {
+      if (!expressionData.name || expressionData.name == "") {
+        expressionData.name = expressionData.defaultName;
+      }
 
       var node = treeToNode(expressionData.node);
       expressionData.node[1] = this.populateOperands(node.arity);
 
       this.props.onEditExpressionData({ name: "", node: [], operand_refs: [] });
       this.props.onAddInputVariable(expressionData);
+      this.props.onEditNothing();
     }
   };
 
@@ -2311,9 +2451,9 @@ var ExpressionEditor = function (_React$Component6) {
         FormGroup,
         { controlId: "name" },
         React.createElement(FormControl, { componentClass: "input",
-          placeholder: "Name...",
+          placeholder: this.props.node_editor.expression_data.defaultName,
           onChange: this.changeName.bind(this),
-          value: this.props.editingExpressionData.name })
+          value: this.props.node_editor.expression_data.name })
       ),
       React.createElement(
         Panel,
@@ -2360,12 +2500,17 @@ var ExpressionEditor = function (_React$Component6) {
       React.createElement(
         Panel,
         null,
-        React.createElement(TreeViewer, _extends({}, this.props, { tree: treeToNode(this.props.editingExpressionData.node) }))
+        React.createElement(TreeViewer, _extends({}, this.props, { tree: treeToNode(this.props.node_editor.expression_data.node) }))
       ),
       React.createElement(
         Button,
         { onClick: this.onSave.bind(this) },
         "Add"
+      ),
+      React.createElement(
+        Button,
+        { onClick: this.props.onEditNothing },
+        "Cancel"
       )
     );
   };
@@ -2403,6 +2548,22 @@ var VariableTable = function (_React$Component7) {
     return React.createElement(
       Panel,
       { header: "Variables" },
+      React.createElement(
+        "div",
+        { className: "pull-right" },
+        React.createElement(
+          Button,
+          { disabled: !this.props.spatialDomain || this.props.input_variables.length == 0,
+            onClick: this.props.onAddExpression },
+          "Add Expression"
+        ),
+        React.createElement(
+          Button,
+          { disabled: !this.props.spatialDomain,
+            onClick: this.props.onAddDataSource },
+          "Add Data Source"
+        )
+      ),
       React.createElement(
         Table,
         { striped: true },
@@ -2488,6 +2649,8 @@ var VariableTable = function (_React$Component7) {
                           isEditing: true,
                           index: i
                         });
+                      } else {
+                        console.log(item);
                       }
                     } },
                   "Edit"
@@ -2534,41 +2697,81 @@ var node2tree = function node2tree(node) {
   return buildTree(node, [], node[0]);
 };
 
-var SieveComponent = function (_React$Component8) {
-  _inherits(SieveComponent, _React$Component8);
+var AddDataSourcePanel = function (_React$Component8) {
+  _inherits(AddDataSourcePanel, _React$Component8);
 
-  function SieveComponent() {
-    _classCallCheck(this, SieveComponent);
+  function AddDataSourcePanel() {
+    _classCallCheck(this, AddDataSourcePanel);
 
     return _possibleConstructorReturn(this, _React$Component8.apply(this, arguments));
   }
 
-  SieveComponent.prototype.render = function render() {
-    var self = this;
+  AddDataSourcePanel.prototype.render = function render() {
+    return React.createElement(
+      Panel,
+      { header: "Add a data source" },
+      React.createElement(
+        "ul",
+        null,
+        React.createElement(
+          "li",
+          null,
+          React.createElement(
+            "a",
+            { href: "javascript:void(0)",
+              onClick: this.props.onEditRasterData },
+            "Raster Data"
+          )
+        ),
+        React.createElement(
+          "li",
+          null,
+          React.createElement(
+            "a",
+            { href: "javascript:void(0)",
+              onClick: this.props.onEditTabularData },
+            "Tabular Data"
+          )
+        )
+      ),
+      React.createElement(
+        Button,
+        { onClick: this.props.onEditNothing },
+        "Cancel"
+      )
+    );
+  };
 
-    function createMarkup() {
-      return { __html: treeToNode(self.props.tree).html(0) };
-    };
-    function returnHTML(html) {
-      return { __html: html };
-    };
+  return AddDataSourcePanel;
+}(React.Component);
 
-    var onSave = function onSave(e) {
-      e.stopPropagation();
-      if (self.props.errors.name || self.props.errors.tree) {
-        return;
+var SieveComponent = function (_React$Component9) {
+  _inherits(SieveComponent, _React$Component9);
+
+  function SieveComponent() {
+    _classCallCheck(this, SieveComponent);
+
+    return _possibleConstructorReturn(this, _React$Component9.apply(this, arguments));
+  }
+
+  SieveComponent.prototype.renderMiddlePanel = function renderMiddlePanel() {
+    if (this.props.spatialDomain) {
+      switch (this.props.node_editor.mode) {
+        case EDITING_EXPRESSION:
+          return React.createElement(ExpressionEditor, this.props);
+        case EDITING_RASTER_DATA:
+          return React.createElement(RasterDataSource, this.props);
+        case EDITING_TABULAR_DATA:
+          return React.createElement(TabularDataSource, this.props);
+        case ADDING_DATA_SOURCE:
+          return React.createElement(AddDataSourcePanel, this.props);
+        default:
+          return null;
       }
-      self.props.onSaveVariable({
-        id: self.props.id,
-        name: self.props.name,
-        tree: node2tree(self.props.tree),
-        input_variables: self.props.input_variables,
-        description: self.props.description,
-        temporal_domain: self.props.temporal_domain,
-        spatial_domain: self.props.spatial_domain
-      }, self.props.created);
-    };
+    }
+  };
 
+  SieveComponent.prototype.render = function render() {
     return React.createElement(
       "div",
       { className: "sieve" },
@@ -2586,22 +2789,8 @@ var SieveComponent = function (_React$Component8) {
         { className: "show-grid" },
         React.createElement(
           Col,
-          { xs: 5 },
-          React.createElement(TabularDataSource, this.props)
-        ),
-        React.createElement(
-          Col,
-          { xs: 5, xsOffset: 1 },
-          React.createElement(RasterDataSource, this.props)
-        )
-      ),
-      React.createElement(
-        Row,
-        { className: "show-grid" },
-        React.createElement(
-          Col,
           { xs: 11 },
-          React.createElement(ExpressionEditor, this.props)
+          this.renderMiddlePanel()
         )
       ),
       React.createElement(
@@ -2619,17 +2808,45 @@ var SieveComponent = function (_React$Component8) {
   return SieveComponent;
 }(React.Component);
 
-var tab = function tab(level) {
-  return Array(level * 4).join("&nbsp;");
-};
-var formatHtml = function formatHtml(html, level) {
-  return tab(level) + html;
-};
+var Sieve = ReactRedux.connect(mapStateToProps, mapDispatchToProps)(SieveComponent);
+
+function sieve(el) {
+  var store = Redux.createStore(sieveApp, Redux.applyMiddleware(ReduxThunk.default));
+
+  store.dispatch(fetchLayers());
+  store.dispatch(fetchTables());
+  store.dispatch(fetchVariables());
+  store.dispatch(receiveRasterCatalog(raster_catalog));
+
+  ReactDOM.render(React.createElement(ReactRedux.Provider, {
+    children: React.createElement(Sieve, sieve_props),
+    store: store
+  }), el);
+}
+
+// Since this script is pulled in as 'text/babel', other scripts will go ahead and run
+// even if this one isn't finished. This provides a reliable way to know when it has
+// finished and to access its exports.
+var sieve_defined = new CustomEvent('sievedefined', {
+  detail: { sieve: sieve }
+});
+document.dispatchEvent(sieve_defined);
+'use strict';
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var DataNode = function () {
   function DataNode() {
     _classCallCheck(this, DataNode);
   }
+
+  DataNode.prototype.validOperands = function validOperands(input_vars, operand_refs, op_index) {
+    return input_vars;
+  };
 
   DataNode.prototype.json = function json() {
     return JSON.encode(data);
@@ -2644,24 +2861,24 @@ var MeanOperator = function (_DataNode) {
   function MeanOperator(operands) {
     _classCallCheck(this, MeanOperator);
 
-    var _this15 = _possibleConstructorReturn(this, _DataNode.call(this, operands));
+    var _this = _possibleConstructorReturn(this, _DataNode.call(this, operands));
 
-    _this15.name = 'Mean';
-    _this15.arity = 2;
+    _this.name = 'Mean';
+    _this.arity = 2;
 
-    if (operands.length != _this15.arity) {
-      throw Error("MeanOperator takes exactly " + _this15.arity + " operands");
+    if (operands.length != _this.arity) {
+      throw Error('MeanOperator takes exactly ' + _this.arity + ' operands');
     }
 
-    _this15.left = treeToNode(operands[0]);
-    _this15.right = treeToNode(operands[1]);
+    _this.left = treeToNode(operands[0]);
+    _this.right = treeToNode(operands[1]);
 
-    if (_this15.left.dimensions != _this15.right.dimensions) {
+    if (_this.left.dimensions != _this.right.dimensions) {
       throw Error("Operands must have the same dimensions");
     }
 
-    _this15.dimensions = _this15.left.dimensions;
-    return _this15;
+    _this.dimensions = _this.left.dimensions;
+    return _this;
   }
 
   MeanOperator.prototype.json = function json() {
@@ -2677,20 +2894,26 @@ var TemporalMeanOperator = function (_DataNode2) {
   function TemporalMeanOperator(operands) {
     _classCallCheck(this, TemporalMeanOperator);
 
-    var _this16 = _possibleConstructorReturn(this, _DataNode2.call(this, operands));
+    var _this2 = _possibleConstructorReturn(this, _DataNode2.call(this, operands));
 
-    _this16.name = 'Temporal Mean';
-    _this16.arity = 1;
+    _this2.name = 'Temporal Mean';
+    _this2.arity = 1;
 
-    if (operands.length != _this16.arity) {
-      throw Error("TemporalMeanOperator takes exactly " + _this16.arity + " operand");
+    if (operands.length != _this2.arity) {
+      throw Error('TemporalMeanOperator takes exactly ' + _this2.arity + ' operand');
     }
 
-    _this16.operand = treeToNode(operands[0]);
+    _this2.operand = treeToNode(operands[0]);
 
-    _this16.dimensions = 'space';
-    return _this16;
+    _this2.dimensions = 'space';
+    return _this2;
   }
+
+  TemporalMeanOperator.prototype.validOperands = function validOperands(input_vars) {
+    return input_vars.filter(function (input_var) {
+      return treeToNode(input_var.node).dimensions.includes('time');
+    });
+  };
 
   TemporalMeanOperator.prototype.json = function json() {
     return ['tmean', [this.operand.json()]];
@@ -2705,20 +2928,26 @@ var SpatialMeanOperator = function (_DataNode3) {
   function SpatialMeanOperator(operands) {
     _classCallCheck(this, SpatialMeanOperator);
 
-    var _this17 = _possibleConstructorReturn(this, _DataNode3.call(this, operands));
+    var _this3 = _possibleConstructorReturn(this, _DataNode3.call(this, operands));
 
-    _this17.name = 'Spatial Mean';
-    _this17.arity = 1;
+    _this3.name = 'Spatial Mean';
+    _this3.arity = 1;
 
-    if (operands.length != _this17.arity) {
-      throw Error("SpatialMeanOperator takes exactly " + _this17.arity + " operand");
+    if (operands.length != _this3.arity) {
+      throw Error('SpatialMeanOperator takes exactly ' + _this3.arity + ' operand');
     }
 
-    _this17.operand = treeToNode(operands[0]);
+    _this3.operand = treeToNode(operands[0]);
 
-    _this17.dimensions = 'time';
-    return _this17;
+    _this3.dimensions = 'time';
+    return _this3;
   }
+
+  SpatialMeanOperator.prototype.validOperands = function validOperands(input_vars) {
+    return input_vars.filter(function (input_var) {
+      return treeToNode(input_var.node).dimensions.includes('space');
+    });
+  };
 
   SpatialMeanOperator.prototype.json = function json() {
     return ['smean', [this.operand.json()]];
@@ -2733,21 +2962,21 @@ var SelectOperator = function (_DataNode4) {
   function SelectOperator(operands) {
     _classCallCheck(this, SelectOperator);
 
-    var _this18 = _possibleConstructorReturn(this, _DataNode4.call(this, operands));
+    var _this4 = _possibleConstructorReturn(this, _DataNode4.call(this, operands));
 
-    _this18.name = 'Select';
-    _this18.arity = 2;
+    _this4.name = 'Select';
+    _this4.arity = 2;
 
-    if (operands.length != _this18.arity) {
-      throw Error("SelectOperator takes exactly " + _this18.arity + " operands");
+    if (operands.length != _this4.arity) {
+      throw Error('SelectOperator takes exactly ' + _this4.arity + ' operands');
     }
 
-    _this18.left = treeToNode(operands[0]);
-    _this18.child_op = operands[0][0];
-    _this18.right = operands[1];
+    _this4.left = treeToNode(operands[0]);
+    _this4.child_op = operands[0][0];
+    _this4.right = operands[1];
 
-    _this18.dimensions = _this18.left.dimensions;
-    return _this18;
+    _this4.dimensions = _this4.left.dimensions;
+    return _this4;
   }
 
   SelectOperator.prototype.json = function json() {
@@ -2763,19 +2992,19 @@ var ExpressionOperator = function (_DataNode5) {
   function ExpressionOperator(operands) {
     _classCallCheck(this, ExpressionOperator);
 
-    var _this19 = _possibleConstructorReturn(this, _DataNode5.call(this, operands));
+    var _this5 = _possibleConstructorReturn(this, _DataNode5.call(this, operands));
 
-    _this19.name = 'Expression';
-    _this19.arity = 1;
+    _this5.name = 'Expression';
+    _this5.arity = 1;
 
-    if (operands.length != _this19.arity) {
-      throw Error("\"ExpressionOperator takes exactly " + _this19.arity + " operand");
+    if (operands.length != _this5.arity) {
+      throw Error('"ExpressionOperator takes exactly ' + _this5.arity + ' operand');
     }
 
-    _this19.operand = treeToNode(operands[0]);
+    _this5.operand = treeToNode(operands[0]);
 
-    _this19.dimensions = _this19.operand.dimensions;
-    return _this19;
+    _this5.dimensions = _this5.operand.dimensions;
+    return _this5;
   }
 
   ExpressionOperator.prototype.json = function json() {
@@ -2791,30 +3020,30 @@ var JoinOperator = function (_DataNode6) {
   function JoinOperator(operands) {
     _classCallCheck(this, JoinOperator);
 
-    var _this20 = _possibleConstructorReturn(this, _DataNode6.call(this, operands));
+    var _this6 = _possibleConstructorReturn(this, _DataNode6.call(this, operands));
 
-    _this20.name = 'Join';
-    _this20.arity = 2;
+    _this6.name = 'Join';
+    _this6.arity = 2;
 
-    if (operands.length != _this20.arity) {
-      throw Error("JoinOperator takes exactly " + _this20.arity + " operands");
+    if (operands.length != _this6.arity) {
+      throw Error('JoinOperator takes exactly ' + _this6.arity + ' operands');
     }
 
-    _this20.left = new SourceOperator([operands[0]]);
-    _this20.right = new SourceOperator([operands[1]]);
+    _this6.left = new SourceOperator([operands[0]]);
+    _this6.right = new SourceOperator([operands[1]]);
 
     var dimensions = new Set();
-    dimensions.add(_this20.left.dimensions);
-    dimensions.add(_this20.right.dimensions);
+    dimensions.add(_this6.left.dimensions);
+    dimensions.add(_this6.right.dimensions);
 
-    _this20.dimensions = '';
+    _this6.dimensions = '';
     if (dimensions.has('space')) {
-      _this20.dimensions += 'space';
+      _this6.dimensions += 'space';
     }
     if (dimensions.has('time')) {
-      _this20.dimensions += 'time';
+      _this6.dimensions += 'time';
     }
-    return _this20;
+    return _this6;
   }
 
   JoinOperator.prototype.json = function json() {
@@ -2830,21 +3059,21 @@ var RasterOperator = function (_DataNode7) {
   function RasterOperator(operands) {
     _classCallCheck(this, RasterOperator);
 
-    var _this21 = _possibleConstructorReturn(this, _DataNode7.call(this, operands));
+    var _this7 = _possibleConstructorReturn(this, _DataNode7.call(this, operands));
 
-    _this21.name = 'Raster';
-    _this21.arity = 3;
+    _this7.name = 'Raster';
+    _this7.arity = 3;
 
-    if (operands.length != _this21.arity) {
-      throw Error("RasterOperator takes exactly " + _this21.arity + " operands");
+    if (operands.length != _this7.arity) {
+      throw Error('RasterOperator takes exactly ' + _this7.arity + ' operands');
     }
 
-    _this21.left = operands[0];
-    _this21.middle = operands[2];
-    _this21.right = treeToNode(operands[1]);
+    _this7.left = operands[0];
+    _this7.middle = operands[2];
+    _this7.right = treeToNode(operands[1]);
 
-    _this21.dimensions = 'spacetime';
-    return _this21;
+    _this7.dimensions = 'spacetime';
+    return _this7;
   }
 
   RasterOperator.prototype.json = function json() {
@@ -2860,26 +3089,26 @@ var SourceOperator = function (_DataNode8) {
   function SourceOperator(operands) {
     _classCallCheck(this, SourceOperator);
 
-    var _this22 = _possibleConstructorReturn(this, _DataNode8.call(this, operands));
+    var _this8 = _possibleConstructorReturn(this, _DataNode8.call(this, operands));
 
-    _this22.name = 'Source';
-    _this22.arity = 1;
+    _this8.name = 'Source';
+    _this8.arity = 1;
 
-    if (operands.length != _this22.arity) {
-      throw Error("SourceOperator takes exactly " + _this22.arity + " operand");
+    if (operands.length != _this8.arity) {
+      throw Error('SourceOperator takes exactly ' + _this8.arity + ' operand');
     }
 
-    _this22.operand = operands[0];
-    _this22.source_name = _this22.operand.name;
-    _this22.type = _this22.operand['type'];
-    _this22.field = _this22.operand.field;
+    _this8.operand = operands[0];
+    _this8.source_name = _this8.operand.name;
+    _this8.type = _this8.operand['type'];
+    _this8.field = _this8.operand.field;
 
-    if (_this22.type == 'Layer') {
-      _this22.dimensions = 'space';
-    } else if (_this22.type == 'Table') {
-      _this22.dimensions = 'time';
+    if (_this8.type == 'Layer') {
+      _this8.dimensions = 'space';
+    } else if (_this8.type == 'Table') {
+      _this8.dimensions = 'time';
     }
-    return _this22;
+    return _this8;
   }
 
   SourceOperator.prototype.json = function json() {
@@ -2889,32 +3118,48 @@ var SourceOperator = function (_DataNode8) {
   return SourceOperator;
 }(DataNode);
 
-var MathOperator = function (_React$Component9) {
-  _inherits(MathOperator, _React$Component9);
+var MathOperator = function (_React$Component) {
+  _inherits(MathOperator, _React$Component);
 
   function MathOperator(operator, operands) {
     _classCallCheck(this, MathOperator);
 
-    var _this23 = _possibleConstructorReturn(this, _React$Component9.call(this, operands));
+    var _this9 = _possibleConstructorReturn(this, _React$Component.call(this, operands));
 
-    _this23.operator = operator;
-    _this23.name = operator;
-    _this23.arity = 2;
+    _this9.operator = operator;
+    _this9.name = operator;
+    _this9.arity = 2;
 
-    if (operands.length != _this23.arity) {
-      throw Error("MathOperator takes exactly " + _this23.arity + " operands");
+    if (operands.length != _this9.arity) {
+      throw Error('MathOperator takes exactly ' + _this9.arity + ' operands');
     }
 
-    _this23.left = treeToNode(operands[0]);
-    _this23.right = treeToNode(operands[1]);
+    _this9.left = treeToNode(operands[0]);
+    _this9.right = treeToNode(operands[1]);
 
-    if (_this23.left.dimensions != _this23.right.dimensions) {
+    if (_this9.left.dimensions != _this9.right.dimensions) {
       throw Error("Operators must have the same dimensions");
     }
 
-    _this23.dimensions = _this23.left.dimensions;
-    return _this23;
+    _this9.dimensions = _this9.left.dimensions;
+    return _this9;
   }
+
+  MathOperator.prototype.validOperands = function validOperands(input_vars, operand_refs, op_index) {
+    var other_op_index = op_index == 0 ? 1 : 0;
+    var other_op = input_vars.filter(function (input_var) {
+      return input_var.name == operand_refs[other_op_index];
+    })[0];
+
+    if (!other_op) {
+      return input_vars;
+    } else {
+      var other_op_node = treeToNode(other_op.node);
+      return input_vars.filter(function (input_var) {
+        return treeToNode(input_var.node).dimensions == other_op_node.dimensions;
+      });
+    }
+  };
 
   MathOperator.prototype.json = function json() {
     return [this.operator, [this.left.json(), this.right.json()]];
@@ -2929,11 +3174,11 @@ var EmptyTree = function (_DataNode9) {
   function EmptyTree(props) {
     _classCallCheck(this, EmptyTree);
 
-    var _this24 = _possibleConstructorReturn(this, _DataNode9.call(this, props));
+    var _this10 = _possibleConstructorReturn(this, _DataNode9.call(this, props));
 
-    _this24.name = 'Empty';
-    _this24.arity = 0;
-    return _this24;
+    _this10.name = 'Empty';
+    _this10.arity = 0;
+    return _this10;
   }
 
   EmptyTree.prototype.render = function render() {
@@ -2976,29 +3221,5 @@ function treeToNode(tree) {
       throw Error("'" + tree[0] + "' is not a valid operator");
   }
 }
-
-var Sieve = ReactRedux.connect(mapStateToProps, mapDispatchToProps)(SieveComponent);
-
-function sieve(el) {
-  var store = Redux.createStore(sieveApp, Redux.applyMiddleware(ReduxThunk.default));
-
-  store.dispatch(fetchLayers());
-  store.dispatch(fetchTables());
-  store.dispatch(fetchVariables());
-  store.dispatch(receiveRasterCatalog(raster_catalog));
-
-  ReactDOM.render(React.createElement(ReactRedux.Provider, {
-    children: React.createElement(Sieve, sieve_props),
-    store: store
-  }), el);
-}
-
-// Since this script is pulled in as 'text/babel', other scripts will go ahead and run
-// even if this one isn't finished. This provides a reliable way to know when it has
-// finished and to access its exports.
-var sieve_defined = new CustomEvent('sievedefined', {
-  detail: { sieve: sieve }
-});
-document.dispatchEvent(sieve_defined);
 
 //# sourceMappingURL=sieve.js.map
