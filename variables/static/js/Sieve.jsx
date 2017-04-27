@@ -1,7 +1,7 @@
 const {
   Panel, ButtonGroup, ButtonToolbar, ButtonInput, Button, Row, Col,
-  Alert, Tabs, DropdownButton, MenuItem, Table,
-  Modal, FormControl, ControlLabel, FormGroup, HelpBlock
+  Alert, Tabs, Tab, DropdownButton, MenuItem, Table, Glyphicon,
+  Modal, FormControl, ControlLabel, FormGroup, HelpBlock,
 } = ReactBootstrap;
 
 /* app */
@@ -646,13 +646,13 @@ class RasterDataSource extends React.Component {
             validationState={this.props.errors.rasterDataTemporalRange ?
               'error' : null}>
             <ControlLabel>Temporal&nbsp;Range</ControlLabel>
-            <div class="input-group input-daterange">
+            <div className="input-group input-daterange">
             <input
               ref={(ref)=>{this.startpicker=ref}}
               name="temporalRangeStart" type="text" placeholder="yyyy-ddd"
               value={this.props.rasterData.temporalRangeStart}
             />
-            <span class="input-group-addon">to</span>
+            <span className="input-group-addon">to</span>
             <input
               ref={(ref)=>{this.endpicker=ref}}
               name="temporalRangeEnd" type="text" placeholder="yyyy-ddd"
@@ -971,20 +971,35 @@ class AddDataSourcePanel extends React.Component {
   render() {
     return (
       <Panel header="Add a data source">
-        <ul>
-          <li>
-            <a href="javascript:void(0)"
-                onClick={this.props.onChangeInterfaceState.bind(this, EDITING_RASTER_DATA)}>
-              Raster Data
-            </a>
-          </li>
-          <li>
-            <a href="javascript:void(0)"
-                onClick={this.props.onChangeInterfaceState.bind(this, EDITING_TABULAR_DATA)}>
-              Tabular Data
-            </a>
-          </li>
-        </ul>
+        <Row>
+          <Col md={6}>
+            <Button
+              onClick={this.props.onChangeInterfaceState.bind(this, EDITING_TABULAR_DATA)}
+              style={{width: '100%', margin: '0.83em 0'}}>
+              <Glyphicon glyph="user" /> I want to use a user-submitted table
+            </Button>
+          </Col>
+          <Col md={6}>
+            <h2>Tabular Data</h2>
+            <p>GeoKit users can provide specially formatted tabular data that GeoKit can use to render visualizations.</p>
+            <p>Do you want to create a tabular data based visualization, but haven't uploaded your data yet?</p>
+            <a href="#" className="button pull-right">Click here to get create a table</a>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
+            <Button
+              onClick={this.props.onChangeInterfaceState.bind(this, EDITING_RASTER_DATA)}
+              style={{width: '100%', margin: '0.83em 0'}}>
+              <Glyphicon glyph="cloud" /> I want to use GeoKit data
+            </Button>
+          </Col>
+          <Col md={6}>
+            <h2>Raster Data</h2>
+            <p>GeoKit provides a service for reducing vast quantities of observational data to quantities that are practical for use in web applications for visualizing information about Earth.</p>
+            <p>GeoKit raster data doesn't require any special setup beyond a small configuration step. Depending on the amount of data requested, the reduction procedure can take some time. Check the variables page to see information about the status of your variables.</p>
+          </Col>
+        </Row>
         <Button onClick={this.props.onChangeInterfaceState.bind(this, DEFAULT)}>Cancel</Button>
       </Panel>
     );

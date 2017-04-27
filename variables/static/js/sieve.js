@@ -260,7 +260,7 @@ function recieveVariable(json) {
 }
 
 function updateErrors() {
-  var errors = arguments.length <= 0 || arguments[0] === undefined ? { "name": null, "tree": null } : arguments[0];
+  var errors = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { "name": null, "tree": null };
 
   return {
     type: UPDATE_ERRORS,
@@ -269,7 +269,7 @@ function updateErrors() {
 }
 
 function updateModified() {
-  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
   return {
     type: UPDATE_MODIFIED,
@@ -278,7 +278,7 @@ function updateModified() {
 }
 
 function updateCreated() {
-  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
   return {
     type: UPDATE_CREATED,
@@ -358,7 +358,7 @@ function editExpressionData(data) {
 }
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1174,7 +1174,7 @@ var FilterListItem = function (_React$Component12) {
           {
             bsSize: "xsmall",
             onClick: this.props.removeFilter.bind(null, this.props.filter.key) },
-          " x "
+          "\xA0x\xA0"
         )
       )
     );
@@ -1289,12 +1289,12 @@ var Aggregate = function (_React$Component13) {
 'use strict';
 
 function layers() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
     name: 'Layers',
     isFetching: false,
     didInvalidate: false,
     items: []
-  } : arguments[0];
+  };
   var action = arguments[1];
 
   switch (action.type) {
@@ -1316,12 +1316,12 @@ function layers() {
 }
 
 function tables() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
     name: 'Tables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  } : arguments[0];
+  };
   var action = arguments[1];
 
   switch (action.type) {
@@ -1343,9 +1343,9 @@ function tables() {
 }
 
 function rasterCatalog() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
     items: []
-  } : arguments[0];
+  };
   var action = arguments[1];
 
   switch (action.type) {
@@ -1360,12 +1360,12 @@ function rasterCatalog() {
 }
 
 function variables() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
     name: 'Variables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  } : arguments[0];
+  };
   var action = arguments[1];
 
   switch (action.type) {
@@ -1387,7 +1387,7 @@ function variables() {
 }
 
 function input_variables() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1420,7 +1420,7 @@ function separateOperands(operands, tree) {
 }
 
 function tree() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
   var action = arguments[1];
 
   switch (action.type) {
@@ -1451,7 +1451,7 @@ function tree() {
 function operandSelections() {
   var _Object$assign;
 
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
   var action = arguments[1];
 
   switch (action.type) {
@@ -1469,24 +1469,26 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var _ReactBootstrap = ReactBootstrap;
-var Panel = _ReactBootstrap.Panel;
-var ButtonGroup = _ReactBootstrap.ButtonGroup;
-var ButtonToolbar = _ReactBootstrap.ButtonToolbar;
-var ButtonInput = _ReactBootstrap.ButtonInput;
-var Button = _ReactBootstrap.Button;
-var Row = _ReactBootstrap.Row;
-var Col = _ReactBootstrap.Col;
-var Alert = _ReactBootstrap.Alert;
-var Tabs = _ReactBootstrap.Tabs;
-var DropdownButton = _ReactBootstrap.DropdownButton;
-var MenuItem = _ReactBootstrap.MenuItem;
-var Table = _ReactBootstrap.Table;
-var Modal = _ReactBootstrap.Modal;
-var FormControl = _ReactBootstrap.FormControl;
-var ControlLabel = _ReactBootstrap.ControlLabel;
-var FormGroup = _ReactBootstrap.FormGroup;
-var HelpBlock = _ReactBootstrap.HelpBlock;
+var _ReactBootstrap = ReactBootstrap,
+    Panel = _ReactBootstrap.Panel,
+    ButtonGroup = _ReactBootstrap.ButtonGroup,
+    ButtonToolbar = _ReactBootstrap.ButtonToolbar,
+    ButtonInput = _ReactBootstrap.ButtonInput,
+    Button = _ReactBootstrap.Button,
+    Row = _ReactBootstrap.Row,
+    Col = _ReactBootstrap.Col,
+    Alert = _ReactBootstrap.Alert,
+    Tabs = _ReactBootstrap.Tabs,
+    Tab = _ReactBootstrap.Tab,
+    DropdownButton = _ReactBootstrap.DropdownButton,
+    MenuItem = _ReactBootstrap.MenuItem,
+    Table = _ReactBootstrap.Table,
+    Glyphicon = _ReactBootstrap.Glyphicon,
+    Modal = _ReactBootstrap.Modal,
+    FormControl = _ReactBootstrap.FormControl,
+    ControlLabel = _ReactBootstrap.ControlLabel,
+    FormGroup = _ReactBootstrap.FormGroup,
+    HelpBlock = _ReactBootstrap.HelpBlock;
 
 /* app */
 
@@ -1516,7 +1518,7 @@ var initialState = Object.assign({
 }, window.sieve_props);
 
 function sieveApp() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? initialState : arguments[0];
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
   var action = arguments[1];
 
   switch (action.type) {
@@ -1831,7 +1833,7 @@ var TabularDataSource = function (_React$Component2) {
   };
 
   TabularDataSource.prototype.generateName = function generateName(source1, source2) {
-    var var_list = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+    var var_list = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
     if (source1.name == source2.name) {
       var name = source1.name + '-' + source1.field + '-' + source2.field;
@@ -2027,7 +2029,7 @@ var RasterDataSource = function (_React$Component3) {
   };
 
   RasterDataSource.prototype.generateName = function generateName(raster) {
-    var var_list = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+    var var_list = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
     var name = raster.id.replace(/_/g, "-");
     var i = 1;
@@ -2160,11 +2162,11 @@ var RasterDataSource = function (_React$Component3) {
           React.createElement(
             ControlLabel,
             null,
-            'Temporal Range'
+            'Temporal\xA0Range'
           ),
           React.createElement(
             'div',
-            { 'class': 'input-group input-daterange' },
+            { className: 'input-group input-daterange' },
             React.createElement('input', {
               ref: function ref(_ref2) {
                 _this7.startpicker = _ref2;
@@ -2174,7 +2176,7 @@ var RasterDataSource = function (_React$Component3) {
             }),
             React.createElement(
               'span',
-              { 'class': 'input-group-addon' },
+              { className: 'input-group-addon' },
               'to'
             ),
             React.createElement('input', {
@@ -2318,7 +2320,7 @@ var ExpressionEditor = function (_React$Component6) {
   };
 
   ExpressionEditor.prototype.generateName = function generateName() {
-    var var_list = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+    var var_list = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
     var i = 1;
     var input_variables = [];
@@ -2645,26 +2647,77 @@ var AddDataSourcePanel = function (_React$Component8) {
       Panel,
       { header: 'Add a data source' },
       React.createElement(
-        'ul',
+        Row,
         null,
         React.createElement(
-          'li',
-          null,
+          Col,
+          { md: 6 },
           React.createElement(
-            'a',
-            { href: 'javascript:void(0)',
-              onClick: this.props.onChangeInterfaceState.bind(this, EDITING_RASTER_DATA) },
-            'Raster Data'
+            Button,
+            {
+              onClick: this.props.onChangeInterfaceState.bind(this, EDITING_TABULAR_DATA),
+              style: { width: '100%', margin: '0.83em 0' } },
+            React.createElement(Glyphicon, { glyph: 'user' }),
+            ' I want to use a user-submitted table'
           )
         ),
         React.createElement(
-          'li',
-          null,
+          Col,
+          { md: 6 },
+          React.createElement(
+            'h2',
+            null,
+            'Tabular Data'
+          ),
+          React.createElement(
+            'p',
+            null,
+            'GeoKit users can provide specially formatted tabular data that GeoKit can use to render visualizations.'
+          ),
+          React.createElement(
+            'p',
+            null,
+            'Do you want to create a tabular data based visualization, but haven\'t uploaded your data yet?'
+          ),
           React.createElement(
             'a',
-            { href: 'javascript:void(0)',
-              onClick: this.props.onChangeInterfaceState.bind(this, EDITING_TABULAR_DATA) },
-            'Tabular Data'
+            { href: '#', className: 'button pull-right' },
+            'Click here to get create a table'
+          )
+        )
+      ),
+      React.createElement(
+        Row,
+        null,
+        React.createElement(
+          Col,
+          { md: 6 },
+          React.createElement(
+            Button,
+            {
+              onClick: this.props.onChangeInterfaceState.bind(this, EDITING_RASTER_DATA),
+              style: { width: '100%', margin: '0.83em 0' } },
+            React.createElement(Glyphicon, { glyph: 'cloud' }),
+            ' I want to use GeoKit data'
+          )
+        ),
+        React.createElement(
+          Col,
+          { md: 6 },
+          React.createElement(
+            'h2',
+            null,
+            'Raster Data'
+          ),
+          React.createElement(
+            'p',
+            null,
+            'GeoKit provides a service for reducing vast quantities of observational data to quantities that are practical for use in web applications for visualizing information about Earth.'
+          ),
+          React.createElement(
+            'p',
+            null,
+            'GeoKit raster data doesn\'t require any special setup beyond a small configuration step. Depending on the amount of data requested, the reduction procedure can take some time. Check the variables page to see information about the status of your variables.'
           )
         )
       ),
