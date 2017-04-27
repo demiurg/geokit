@@ -2682,7 +2682,7 @@ var AddDataSourcePanel = function (_React$Component8) {
           React.createElement(
             'a',
             { href: '#', className: 'button pull-right' },
-            'Click here to create a table'
+            'Create some tabular data'
           )
         )
       ),

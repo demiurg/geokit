@@ -983,7 +983,7 @@ class AddDataSourcePanel extends React.Component {
             <h2>Tabular Data</h2>
             <p>GeoKit users can provide specially formatted tabular data that GeoKit can use to render visualizations.</p>
             <p>Do you want to create a tabular data based visualization, but haven't uploaded your data yet?</p>
-            <a href="#" className="button pull-right">Click here to create a table</a>
+            <a href="#" className="button pull-right">Create some tabular data</a>
           </Col>
         </Row>
         <Row>
