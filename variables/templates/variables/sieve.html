@@ -99,14 +99,9 @@ $.ajaxSetup({
     }
 });
 
-// Webpacking in browser is kind of a kludge...
-document.addEventListener('sievedefined', function(e) {
-  e.detail.sieve(
-    document.getElementById("sieve-container")
-  );
-}, false);
 </script>
-
 <script type="text/javascript" src="{% static 'js/sieve.js' %}"></script>
-
+<script>
+  sieve(document.getElementById("sieve-container"));
+</script>
 {% endblock %}

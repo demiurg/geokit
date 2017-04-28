@@ -9,7 +9,7 @@ const {
 var initialState = Object.assign({
   errors: {"name": null, "tree": null},
   name: "",
-  tree: {},
+  tree: null,
   description: "",
   spatialDomain: null,
   input_variables: [],
@@ -1028,6 +1028,13 @@ class SieveComponent extends React.Component {
             <VariableTable {...this.props} />
           </Col>
         </Row>
+        <Row className="show-grid">
+          <Col xs={11}>
+            <Panel header="Final">
+            {treeToNode(this.props.tree).render()}
+            </Panel>
+          </Col>
+        </Row>
       </div>
     );
   }
@@ -1062,14 +1069,3 @@ function sieve(el){
     el
   );
 }
-
-// Since this script is pulled in as 'text/babel', other scripts will go ahead and run
-// even if this one isn't finished. This provides a reliable way to know when it has
-// finished and to access its exports.
-var sieve_defined = new CustomEvent(
-  'sievedefined',
-  {
-    detail: { sieve }
-  }
-);
-document.dispatchEvent(sieve_defined);

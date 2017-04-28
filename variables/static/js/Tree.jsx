@@ -1,4 +1,23 @@
 class DataNode {
+  constructor(args){
+    if (!Array.isArray(args)){
+      throw Error("DataNode can only be initialized from Array.");
+    } else if (args.length != 2){
+      throw Error("DataNode needs 2 elements, operator and operand in Array.")
+    }
+    this._operation = args[0];
+    this._operands = [];
+
+    for (var i=0; i < args[1].length; i++){
+      var rand = args[1][i];
+      if (this.isDataTree(rand)){
+        this._operands.push(treeToNode(rand));
+      } else {
+        this._operands.push(rand);
+      }
+    }
+  }
+
   validOperands(input_vars, operand_refs, op_index) {
     return input_vars;
   }
@@ -6,11 +25,36 @@ class DataNode {
   json() {
     return JSON.encode(data);
   }
+
+  render(){
+    var name = this.name ? this.name : "Unnamed";
+    var arity = this.arity ? this.arity : 0;
+    return (
+      <span>
+        {name} of {this._operands.map(
+          (o) => this.isDataNode(o) ? o.render() : (o + ", ")
+        )}
+      </span>
+    );
+  }
+
+  isDataTree(arg){
+    return (
+      Array.isArray(arg) &&
+      arg.length == 2 &&
+      NODE_TYPES_IMPLEMENTED.hasOwnProperty(arg[0])
+    );
+  }
+
+  isDataNode(node){
+    return node._operation && node._operands;
+  }
 }
 
 class MeanOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
+  constructor(tree) {
+    super(tree);
+    var operands = tree[1];
 
     this.name = 'Mean';
     this.arity = 2;
@@ -19,8 +63,8 @@ class MeanOperator extends DataNode {
         throw Error(`MeanOperator takes exactly ${this.arity} operands`);
     }
 
-    this.left = treeToNode(operands[0]);
-    this.right = treeToNode(operands[1]);
+    this.left = this._operands[0];
+    this.right = this._operands[1];
 
     if (this.left.dimensions != this.right.dimensions) {
       throw Error("Operands must have the same dimensions");
@@ -35,8 +79,9 @@ class MeanOperator extends DataNode {
 }
 
 class TemporalMeanOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
+  constructor(tree) {
+    super(tree);
+    var operands = tree[1];
 
     this.name = 'Temporal Mean';
     this.arity = 1;
@@ -45,7 +90,7 @@ class TemporalMeanOperator extends DataNode {
       throw Error(`TemporalMeanOperator takes exactly ${this.arity} operand`);
     }
 
-    this.operand = treeToNode(operands[0]);
+    this.operand = this._operands[0];
 
     this.dimensions = 'space';
   }
@@ -62,8 +107,9 @@ class TemporalMeanOperator extends DataNode {
 }
 
 class SpatialMeanOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
+  constructor(tree) {
+    super(tree);
+    var operands = tree[1];
 
     this.name = 'Spatial Mean';
     this.arity = 1;
@@ -72,7 +118,7 @@ class SpatialMeanOperator extends DataNode {
       throw Error(`SpatialMeanOperator takes exactly ${this.arity} operand`);
     }
 
-    this.operand = treeToNode(operands[0]);
+    this.operand = this._operands[0];
 
     this.dimensions = 'time';
   }
@@ -89,8 +135,9 @@ class SpatialMeanOperator extends DataNode {
 }
 
 class SelectOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
+  constructor(tree) {
+    super(tree);
+    var operands = tree[1];
 
     this.name = 'Select';
     this.arity = 2;
@@ -99,7 +146,7 @@ class SelectOperator extends DataNode {
       throw Error(`SelectOperator takes exactly ${this.arity} operands`);
     }
 
-    this.left = treeToNode(operands[0]);
+    this.left = this._operands[0];
     this.child_op = operands[0][0];
     this.right = operands[1];
 
@@ -112,8 +159,9 @@ class SelectOperator extends DataNode {
 }
 
 class ExpressionOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
+  constructor(tree) {
+    super(tree);
+    var operands = tree[1];
 
     this.name = 'Expression';
     this.arity = 1;
@@ -122,7 +170,7 @@ class ExpressionOperator extends DataNode {
       throw Error(`"ExpressionOperator takes exactly ${this.arity} operand`);
     }
 
-    this.operand = treeToNode(operands[0]);
+    this.operand = this._operands[0];
 
     this.dimensions = this.operand.dimensions;
   }
@@ -133,8 +181,9 @@ class ExpressionOperator extends DataNode {
 }
 
 class JoinOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
+  constructor(tree) {
+    super(tree);
+    var operands = tree[1];
 
     this.name = 'Join';
     this.arity = 2
@@ -165,8 +214,9 @@ class JoinOperator extends DataNode {
 }
 
 class RasterOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
+  constructor(tree) {
+    super(tree);
+    var operands = tree[1];
 
     this.name = 'Raster';
     this.arity = 3;
@@ -177,7 +227,7 @@ class RasterOperator extends DataNode {
 
     this.left = operands[0];
     this.middle = operands[2];
-    this.right = treeToNode(operands[1]);
+    this.right = this._operands[1];
 
     this.dimensions = 'spacetime';
   }
@@ -188,8 +238,9 @@ class RasterOperator extends DataNode {
 }
 
 class SourceOperator extends DataNode {
-  constructor(operands) {
-    super(operands);
+  constructor(tree) {
+    super(tree);
+    var operands = tree[1];
 
     this.name= 'Source';
     this.arity = 1
@@ -216,8 +267,11 @@ class SourceOperator extends DataNode {
 }
 
 class MathOperator extends React.Component {
-  constructor(operator, operands) {
-    super(operands);
+  constructor(tree) {
+    super(tree);
+
+    var operator = this.operator;
+    var operands = tree[1];
 
     this.operator = operator;
     this.name = operator;
@@ -227,8 +281,8 @@ class MathOperator extends React.Component {
       throw Error(`MathOperator takes exactly ${this.arity} operands`);
     }
 
-    this.left = treeToNode(operands[0]);
-    this.right = treeToNode(operands[1]);
+    this.left = this._operands[0];
+    this.right = this._operands[1];
 
     if (this.left.dimensions != this.right.dimensions) {
       throw Error("Operators must have the same dimensions");
@@ -258,6 +312,7 @@ class MathOperator extends React.Component {
   }
 }
 
+
 class EmptyTree extends DataNode {
   constructor(props) {
     super(props);
@@ -271,36 +326,31 @@ class EmptyTree extends DataNode {
   }
 }
 
-function treeToNode(tree) {
-  var node;
 
+var NODE_TYPES_IMPLEMENTED = {
+  'mean': MeanOperator,
+  'tmean': TemporalMeanOperator,
+  'smean': SpatialMeanOperator,
+  'select': SelectOperator,
+  'expression': ExpressionOperator,
+  'join': JoinOperator,
+  'raster': RasterOperator,
+  'source': SourceOperator,
+  '+': MathOperator,
+  '-': MathOperator,
+  '*': MathOperator,
+  '/': MathOperator,
+};
+
+function treeToNode(tree){
   if (!tree || Object.keys(tree).length == 0) {
     return new EmptyTree();
-  }
-
-  switch (tree[0]) {
-    case 'mean':
-      return new MeanOperator(tree[1]);
-    case 'tmean':
-      return new TemporalMeanOperator(tree[1]);
-    case 'smean':
-      return new SpatialMeanOperator(tree[1]);
-    case 'select':
-      return new SelectOperator(tree[1]);
-    case 'expression':
-      return new ExpressionOperator(tree[1]);
-    case 'join':
-      return new JoinOperator(tree[1]);
-    case 'raster':
-      return new RasterOperator(tree[1]);
-    case 'source':
-      return new SourceOperator(tree[1]);
-    case '+':
-    case '-':
-    case '*':
-    case '/':
-      return new MathOperator(tree[0], tree[1]);
-    default:
+  } else {
+    if (!NODE_TYPES_IMPLEMENTED.hasOwnProperty(tree[0])){
       throw Error("'" + tree[0] + "' is not a valid operator");
+    } else {
+      var Operator = NODE_TYPES_IMPLEMENTED[tree[0]];
+      return new Operator(tree);
+    }
   }
 }

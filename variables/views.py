@@ -10,11 +10,14 @@ from rest_framework.response import Response
 from layers.models import Feature, Layer
 from variables.models import Variable, RasterRequest
 from variables.serializers import VariableSerializer, RasterRequestSerializer
-from variables.data import NODE_TYPES, JobIncompleteException
+from variables.data import NODE_TYPES, JobIncompleteException, rpc_con
 
+from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.functional import curry
 import json
-import xmlrpclib
 from psycopg2.extras import DateRange
+
+json.dumps = curry(json.dumps, cls=DjangoJSONEncoder)
 
 
 def get_raster_catalog():
@@ -22,13 +25,14 @@ def get_raster_catalog():
         print "Error: RPC_URL must be set in settings.py"
 
     try:
-        conn = xmlrpclib.ServerProxy(settings.RPC_URL)
+        conn = rpc_con()
         data = conn.get_datacatalog()
         return data
     except Exception as e:
         print "Error getting raster catalog: {}".format(str(e))
 
     return None
+
 
 def index(request):
     variables = Variable.objects.all().order_by('-modified')
