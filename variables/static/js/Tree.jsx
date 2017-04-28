@@ -232,6 +232,16 @@ class RasterOperator extends DataNode {
     this.dimensions = 'spacetime';
   }
 
+  render() {
+    return (
+      <span>
+        Raster product {this.left.name}
+        using layer {this.right.json}
+        in the time span of {this.middle}
+      </span>
+    );
+  }
+
   json() {
     return ['raster', [this.left, this.right.json(), this.middle]];
   }
