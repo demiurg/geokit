@@ -56,7 +56,7 @@ def test_example_0_5_select(set_schema):
     ]]
 
     t_norm_summer = Variable(tree=['tmean', [t_summer]])
-
+    print t_norm_summer.data()
     assert np.allclose(
         t_norm_summer.data().values, [
             14.188587, 22.986413
@@ -110,7 +110,7 @@ def test_join_two_sources(set_schema):
 
 
 @pytest.mark.django_db
-def test_get_source_layers(set_schema):
+def test_get_layers(set_schema):
     tmin = Variable(tree=[
         'select', [
             ['join', [
@@ -121,7 +121,7 @@ def test_get_source_layers(set_schema):
         ]
     ])
 
-    assert [l.pk for l in tmin.get_source_layers()] == [26]
+    assert tmin.get_layers() == set([26])
 
 
 @pytest.mark.django_db
@@ -134,7 +134,7 @@ def test_dimensions(set_schema):
             'tmin'
         ]
     ])
-    assert tmin.dimensions() == 'time'
+    assert tmin.dimensions == 'time'
 
     counties = Variable(tree=[
         'select', [
@@ -145,7 +145,7 @@ def test_dimensions(set_schema):
         ]
     ])
 
-    assert counties.dimensions() == 'space'
+    assert counties.dimensions == 'space'
 
     tmin = Variable(tree=[
         'select', [
@@ -157,7 +157,7 @@ def test_dimensions(set_schema):
         ]
     ])
 
-    assert tmin.dimensions() == 'spacetime'
+    assert tmin.dimensions == 'spacetime'
 
 @pytest.mark.django_db
 def test_raster(set_schema):
@@ -173,5 +173,5 @@ def test_raster(set_schema):
     ]]
 
     mean = Variable(tree=tree)
-    len(mean.get_source_layers()) == 1
+    len(mean.get_layers()) == 1
     len(mean.get_rasters()) == 1

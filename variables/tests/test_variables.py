@@ -193,7 +193,7 @@ def test_select_join_operator(set_schema, monkeypatch):
     with mock.patch('django.db.connection') as connection:
         connection.schema_name = 'test'
         connection.cursor.return_value.description.__iter__.return_value = (
-            ('feature_id', 23, None, 4, None, None, None),
+            ('shaid', 23, None, 4, None, None, None),
             ('record_id', 23, None, 4, None, None, None),
             ('date_range', 1082, None, 4, None, None, None),
             ('tmin', 25, None, -1, None, None, None)
