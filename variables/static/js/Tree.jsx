@@ -335,7 +335,7 @@ class MathOperator extends DataNode {
 class NamedTree extends DataNode {
   constructor(args) {
     if (args.name && args.node){
-      super(['named', [args.name, args.node]);
+      super(['named', [args.name, args.node]]);
     }else{
       super(args);
     }

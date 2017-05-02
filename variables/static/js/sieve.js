@@ -1534,9 +1534,11 @@ var _ReactBootstrap = ReactBootstrap,
     Col = _ReactBootstrap.Col,
     Alert = _ReactBootstrap.Alert,
     Tabs = _ReactBootstrap.Tabs,
+    Tab = _ReactBootstrap.Tab,
     DropdownButton = _ReactBootstrap.DropdownButton,
     MenuItem = _ReactBootstrap.MenuItem,
     Table = _ReactBootstrap.Table,
+    Glyphicon = _ReactBootstrap.Glyphicon,
     Modal = _ReactBootstrap.Modal,
     FormControl = _ReactBootstrap.FormControl,
     ControlLabel = _ReactBootstrap.ControlLabel,
@@ -2231,7 +2233,7 @@ var RasterDataSource = function (_React$Component3) {
           ),
           React.createElement(
             "div",
-            { "class": "input-group input-daterange" },
+            { className: "input-group input-daterange" },
             React.createElement("input", {
               ref: function ref(_ref2) {
                 _this7.startpicker = _ref2;
@@ -2241,7 +2243,7 @@ var RasterDataSource = function (_React$Component3) {
             }),
             React.createElement(
               "span",
-              { "class": "input-group-addon" },
+              { className: "input-group-addon" },
               "to"
             ),
             React.createElement("input", {
@@ -2715,26 +2717,77 @@ var AddDataSourcePanel = function (_React$Component8) {
       Panel,
       { header: "Add a data source" },
       React.createElement(
-        "ul",
+        Row,
         null,
         React.createElement(
-          "li",
-          null,
+          Col,
+          { md: 6 },
           React.createElement(
-            "a",
-            { href: "javascript:void(0)",
-              onClick: this.props.onEditRasterData },
-            "Raster Data"
+            Button,
+            {
+              onClick: this.props.onEditTabularData,
+              style: { width: '100%', margin: '0.83em 0' } },
+            React.createElement(Glyphicon, { glyph: "user" }),
+            " I want to use a user-submitted table"
           )
         ),
         React.createElement(
-          "li",
-          null,
+          Col,
+          { md: 6 },
+          React.createElement(
+            "h2",
+            null,
+            "Tabular Data"
+          ),
+          React.createElement(
+            "p",
+            null,
+            "GeoKit users can provide specially formatted tabular data that GeoKit can use to render visualizations."
+          ),
+          React.createElement(
+            "p",
+            null,
+            "Do you want to create a tabular data based visualization, but haven't uploaded your data yet?"
+          ),
           React.createElement(
             "a",
-            { href: "javascript:void(0)",
-              onClick: this.props.onEditTabularData },
-            "Tabular Data"
+            { href: "#", className: "button pull-right" },
+            "Create some tabular data"
+          )
+        )
+      ),
+      React.createElement(
+        Row,
+        null,
+        React.createElement(
+          Col,
+          { md: 6 },
+          React.createElement(
+            Button,
+            {
+              onClick: this.props.onEditRasterData,
+              style: { width: '100%', margin: '0.83em 0' } },
+            React.createElement(Glyphicon, { glyph: "cloud" }),
+            " I want to use GeoKit data"
+          )
+        ),
+        React.createElement(
+          Col,
+          { md: 6 },
+          React.createElement(
+            "h2",
+            null,
+            "Raster Data"
+          ),
+          React.createElement(
+            "p",
+            null,
+            "GeoKit provides a service for reducing vast quantities of observational data to quantities that are practical for use in web applications for visualizing information about Earth."
+          ),
+          React.createElement(
+            "p",
+            null,
+            "GeoKit raster data doesn't require any special setup beyond a small configuration step. Depending on the amount of data requested, the reduction procedure can take some time. Check the variables page to see information about the status of your variables."
           )
         )
       ),
@@ -3228,19 +3281,20 @@ var SourceOperator = function (_DataNode8) {
   return SourceOperator;
 }(DataNode);
 
-var MathOperator = function (_React$Component) {
-  _inherits(MathOperator, _React$Component);
+var MathOperator = function (_DataNode9) {
+  _inherits(MathOperator, _DataNode9);
 
   function MathOperator(tree) {
     _classCallCheck(this, MathOperator);
 
-    var _this10 = _possibleConstructorReturn(this, _React$Component.call(this, tree));
+    var _this10 = _possibleConstructorReturn(this, _DataNode9.call(this, tree));
 
     var operator = _this10.operator;
     var operands = _this10._operands;
 
     _this10.operator = operator;
     _this10.name = operator;
+    _this10.arity = 2;
 
     if (operands.length != _this10.arity) {
       throw Error("MathOperator takes exactly " + _this10.arity + " operands");
@@ -3278,23 +3332,19 @@ var MathOperator = function (_React$Component) {
   };
 
   return MathOperator;
-}(React.Component);
+}(DataNode);
 
-MathOperator.arity = 2;
-
-var NamedTree = function (_DataNode9) {
-  _inherits(NamedTree, _DataNode9);
+var NamedTree = function (_DataNode10) {
+  _inherits(NamedTree, _DataNode10);
 
   function NamedTree(args) {
     _classCallCheck(this, NamedTree);
 
     if (args.name && args.node) {
-      var _this11 = _possibleConstructorReturn(this, _DataNode9.call(this, ['named']));
+      var _this11 = _possibleConstructorReturn(this, _DataNode10.call(this, ['named', [args.name, args.node]]));
+    } else {
+      var _this11 = _possibleConstructorReturn(this, _DataNode10.call(this, args));
     }
-
-    var _this11 = _possibleConstructorReturn(this, _DataNode9.call(this, args));
-
-    _this11.name = 'named';
     _this11.arity = 1;
     return _possibleConstructorReturn(_this11);
   }
@@ -3306,13 +3356,13 @@ var NamedTree = function (_DataNode9) {
   return NamedTree;
 }(DataNode);
 
-var EmptyTree = function (_DataNode10) {
-  _inherits(EmptyTree, _DataNode10);
+var EmptyTree = function (_DataNode11) {
+  _inherits(EmptyTree, _DataNode11);
 
   function EmptyTree(props) {
     _classCallCheck(this, EmptyTree);
 
-    var _this12 = _possibleConstructorReturn(this, _DataNode10.call(this, ['noop', []]));
+    var _this12 = _possibleConstructorReturn(this, _DataNode11.call(this, ['noop', []]));
 
     _this12.name = 'Empty';
     _this12.arity = 0;
