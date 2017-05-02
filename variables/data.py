@@ -516,6 +516,14 @@ class DataFrameSource(DataNode):
         return self.operands[0]
 
 
+class NamedNode(DataNode):
+    def execute(self):
+        return self.operands[1].execute()
+
+    def name(self):
+        return self.operands[0]
+
+
 NODE_TYPES = {
     '+': getattrOperator('__add__'),
     '-': getattrOperator('__sub__'),
@@ -535,4 +543,6 @@ NODE_TYPES = {
     'raster': RasterSource,
     'join': DataSource,
     'select': SelectOperator,
+
+    'named': NamedNode,
 }

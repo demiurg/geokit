@@ -156,6 +156,24 @@ def test_mean_operator():
         v.data()
 
 
+def test_named_nodes():
+    v = Variable(tree=['named', ['TestName', ['mean', [
+        _matrix_val({
+            'values': np.array([[1, 2], [3, 4]]),
+            'spatial_key': spatial_key,
+            'temporal_key': temporal_key
+        }),
+        _matrix_val({
+            'values': np.array([[5, 6], [7, 8]]),
+            'spatial_key': spatial_key,
+            'temporal_key': temporal_key
+        })
+    ]]]])
+    np.testing.assert_array_equal(v.data().values, np.array([[3, 4], [5, 6]]))
+
+    assert v.root.name() == 'TestName'
+
+
 def test_spatial_mean_operator():
     v = Variable(tree=['smean', [
         _matrix_val({
