@@ -9,9 +9,9 @@ const {
 var initialState = Object.assign({
   errors: {"name": null, "tree": null},
   name: "",
-  tree: null,
+  tree: [],
   description: "",
-  spatialDomain: null,
+  spatial_domain: null,
   input_variables: [],
   modified: null,
   created: null,
@@ -60,7 +60,7 @@ function sieveApp(state=initialState, action){
       });
     case UPDATE_SPATIAL_DOMAIN:
       return Object.assign({}, state, {
-        spatialDomain: action.layer_id
+        spatial_domain: action.layer_id
       });
     case UPDATE_TREE:
       return Object.assign({}, state, {
@@ -192,23 +192,24 @@ class SpatialConfiguration extends React.Component {
         accessToken: 'pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
     }).addTo(map);
 
-    if (this.props.spatialDomain) {
-      this.updateMap(this.props.spatialDomain);
+    if (this.props.spatial_domain) {
+      this.updateMap(this.props.spatial_domain);
     }
   }
 
   componentDidUpdate(prevProps) {
-    if (prevProps.spatialDomain != this.props.spatialDomain) {
+    if (prevProps.spatial_domain != this.props.spatial_domain) {
       if (this.geoJsonTileLayer)
         this.map.removeLayer(this.geoJsonTileLayer);
 
-      if (this.props.spatialDomain) {
-        this.updateMap(this.props.spatialDomain);
+      if (this.props.spatial_domain) {
+        this.updateMap(this.props.spatial_domain);
       }
     }
   }
 
   updateMap(layer_id) {
+    console.log(layer_id);
     var geoJsonURL = '/layers/' + layer_id + '/{z}/{x}/{y}.json';
     this.geoJsonTileLayer = new L.TileLayer.GeoJSON(geoJsonURL, {
       clipTiles: true,
@@ -252,7 +253,7 @@ class SpatialConfiguration extends React.Component {
 
     return (
       <Panel header="Spatial configuration">
-        <Select value={this.props.spatialDomain} options={layer_options}
+        <Select value={this.props.spatial_domain} options={layer_options}
                 onChange={this.props.onSpatialDomainChange} />
         <div id="spatial-config-map" style={{height: 400, marginTop: 10}}></div>
       </Panel>
@@ -467,7 +468,7 @@ class RasterDataSource extends React.Component {
         'raster',
         [
           this.props.node_editor.raster_data.raster,
-          this.props.spatialDomain,
+          this.props.spatial_domain,
           this.props.node_editor.raster_data.temporalRangeStart + ',' +
           this.props.node_editor.raster_data.temporalRangeEnd
         ]
@@ -556,8 +557,9 @@ class RasterDataSource extends React.Component {
         newProps.rasterData,
         {defaultName: name}
       );
-      if (!this.props.node_editor.raster_data.raster)
+      if (!this.props.node_editor.raster_data.raster){
         data.raster = raster;
+      }
       this.props.onEditRasterData(data);
     }
   }
@@ -624,7 +626,7 @@ class RasterDataSource extends React.Component {
                 this.props.raster_catalog.items ?
                 this.props.raster_catalog.items.map((r, i) => (
                   <option key={i} value={
-                    `{"name":"${r.description}","id":"${r.name}"}`
+                    `{"name":"${r.description}", "id":"${r.name}"}`
                   }>
                     {r.description + ': ' + r.band}
                   </option>
@@ -858,28 +860,13 @@ class VariableTable extends React.Component {
       name: variable.name,
       tree: variable.node,
       input_variables: this.props.input_variables,
-      description: this.props.description,
-      temporal_domain: this.props.temporal_domain,
-      spatial_domain: this.props.spatialDomain
+      description: this.props.description
     }, this.props.created);
   }
 
   render() {
     if (this.props.input_variables.length > 0){
-      var item = this.props.input_variables[0];
-    }
-    return (
-      <Panel header="Variables">
-        <div className="pull-right">
-          <Button disabled={!this.props.spatialDomain || this.props.input_variables.length == 0}
-                  onClick={this.props.onAddExpression}>
-            Add Expression
-          </Button>
-          <Button disabled={!this.props.spatialDomain}
-                  onClick={this.props.onAddDataSource}>
-            Add Data Source
-          </Button>
-        </div>
+      var table = (
         <Table striped>
           <thead>
             <tr>
@@ -914,9 +901,9 @@ class VariableTable extends React.Component {
                         } else if (item.node[0] == "raster"){
                           var raster = item.node[1][0];
                           var temporalRange = item.node[1][2].split(",");
-
+                          console.log(item.node);
                           this.props.onSpatialDomainChange(
-                            {value: item.node[1][1]}
+                            {value: item.node[1][1].id}
                           );
                           this.props.onEditRasterData({
                             name: item.name,
@@ -935,8 +922,9 @@ class VariableTable extends React.Component {
                   </td>
                   <td>
                     <Button
-                        onClick={() => {this.props.onRemoveInputVariable(i)}}>
-                        Delete
+                        onClick={() => {this.props.onRemoveInputVariable(i)}}
+                    >
+                      Delete
                     </Button>
                   </td>
                 </tr>
@@ -944,6 +932,23 @@ class VariableTable extends React.Component {
             })}
           </tbody>
         </Table>
+      );
+    } else {
+      table = <p></p>;
+    }
+    return (
+      <Panel header="Variables">
+        <div className="pull-right">
+          <Button disabled={!this.props.spatial_domain || this.props.input_variables.length == 0}
+                  onClick={this.props.onAddExpression}>
+            Add Expression
+          </Button>
+          <Button disabled={!this.props.spatial_domain}
+                  onClick={this.props.onAddDataSource}>
+            Add Data Source
+          </Button>
+        </div>
+        {table}
       </Panel>
     );
   }
@@ -994,7 +999,7 @@ class AddDataSourcePanel extends React.Component {
 
 class SieveComponent extends React.Component {
   renderMiddlePanel() {
-    if (this.props.spatialDomain) {
+    if (this.props.spatial_domain) {
       switch (this.props.node_editor.mode) {
         case EDITING_EXPRESSION:
           return <ExpressionEditor {...this.props} />;
@@ -1011,6 +1016,13 @@ class SieveComponent extends React.Component {
   }
 
   render() {
+    var final = treeToNode(this.props.tree);
+    var final_render = null;
+    if (this.props.tree.length && final) {
+      final_render = final.render();
+    } else {
+      final_render = <p>Use controls to build and use the variable</p>;
+    }
     return (
       <div className="sieve">
         <Row className="show-grid">
@@ -1030,8 +1042,8 @@ class SieveComponent extends React.Component {
         </Row>
         <Row className="show-grid">
           <Col xs={11}>
-            <Panel header="Final">
-            {treeToNode(this.props.tree).render()}
+            <Panel header={<h3>Final {final.dimensions} variable</h3>}>
+              {final_render}
             </Panel>
           </Col>
         </Row>

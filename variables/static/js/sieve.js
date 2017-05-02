@@ -1548,9 +1548,9 @@ var _ReactBootstrap = ReactBootstrap,
 var initialState = Object.assign({
   errors: { "name": null, "tree": null },
   name: "",
-  tree: null,
+  tree: [],
   description: "",
-  spatialDomain: null,
+  spatial_domain: null,
   input_variables: [],
   modified: null,
   created: null,
@@ -1601,7 +1601,7 @@ function sieveApp() {
       });
     case UPDATE_SPATIAL_DOMAIN:
       return Object.assign({}, state, {
-        spatialDomain: action.layer_id
+        spatial_domain: action.layer_id
       });
     case UPDATE_TREE:
       return Object.assign({}, state, {
@@ -1750,17 +1750,17 @@ var SpatialConfiguration = function (_React$Component) {
       accessToken: 'pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
     }).addTo(map);
 
-    if (this.props.spatialDomain) {
-      this.updateMap(this.props.spatialDomain);
+    if (this.props.spatial_domain) {
+      this.updateMap(this.props.spatial_domain);
     }
   };
 
   SpatialConfiguration.prototype.componentDidUpdate = function componentDidUpdate(prevProps) {
-    if (prevProps.spatialDomain != this.props.spatialDomain) {
+    if (prevProps.spatial_domain != this.props.spatial_domain) {
       if (this.geoJsonTileLayer) this.map.removeLayer(this.geoJsonTileLayer);
 
-      if (this.props.spatialDomain) {
-        this.updateMap(this.props.spatialDomain);
+      if (this.props.spatial_domain) {
+        this.updateMap(this.props.spatial_domain);
       }
     }
   };
@@ -1768,6 +1768,7 @@ var SpatialConfiguration = function (_React$Component) {
   SpatialConfiguration.prototype.updateMap = function updateMap(layer_id) {
     var _this2 = this;
 
+    console.log(layer_id);
     var geoJsonURL = '/layers/' + layer_id + '/{z}/{x}/{y}.json';
     this.geoJsonTileLayer = new L.TileLayer.GeoJSON(geoJsonURL, {
       clipTiles: true,
@@ -1809,7 +1810,7 @@ var SpatialConfiguration = function (_React$Component) {
     return React.createElement(
       Panel,
       { header: "Spatial configuration" },
-      React.createElement(Select, { value: this.props.spatialDomain, options: layer_options,
+      React.createElement(Select, { value: this.props.spatial_domain, options: layer_options,
         onChange: this.props.onSpatialDomainChange }),
       React.createElement("div", { id: "spatial-config-map", style: { height: 400, marginTop: 10 } })
     );
@@ -2044,7 +2045,7 @@ var RasterDataSource = function (_React$Component3) {
 
     var variable = {
       name: name,
-      node: ['raster', [this.props.node_editor.raster_data.raster, this.props.spatialDomain, this.props.node_editor.raster_data.temporalRangeStart + ',' + this.props.node_editor.raster_data.temporalRangeEnd]]
+      node: ['raster', [this.props.node_editor.raster_data.raster, this.props.spatial_domain, this.props.node_editor.raster_data.temporalRangeStart + ',' + this.props.node_editor.raster_data.temporalRangeEnd]]
     };
     var index = this.props.node_editor.raster_data.index;
     var isEditing = this.props.node_editor.raster_data.isEditing;
@@ -2127,7 +2128,9 @@ var RasterDataSource = function (_React$Component3) {
       var raster2 = Object.assign({}, raster, { id: raster.name });
       var name = this.generateName(raster2, newProps.input_variables);
       var data = Object.assign({}, newProps.rasterData, { defaultName: name });
-      if (!this.props.node_editor.raster_data.raster) data.raster = raster;
+      if (!this.props.node_editor.raster_data.raster) {
+        data.raster = raster;
+      }
       this.props.onEditRasterData(data);
     }
   };
@@ -2203,7 +2206,7 @@ var RasterDataSource = function (_React$Component3) {
             this.props.raster_catalog.items ? this.props.raster_catalog.items.map(function (r, i) {
               return React.createElement(
                 "option",
-                { key: i, value: "{\"name\":\"" + r.description + "\",\"id\":\"" + r.name + "\"}" },
+                { key: i, value: "{\"name\":\"" + r.description + "\", \"id\":\"" + r.name + "\"}" },
                 r.description + ': ' + r.band
               );
             }) : [raster ? React.createElement(
@@ -2533,9 +2536,7 @@ var VariableTable = function (_React$Component7) {
       name: variable.name,
       tree: variable.node,
       input_variables: this.props.input_variables,
-      description: this.props.description,
-      temporal_domain: this.props.temporal_domain,
-      spatial_domain: this.props.spatialDomain
+      description: this.props.description
     }, this.props.created);
   };
 
@@ -2543,28 +2544,7 @@ var VariableTable = function (_React$Component7) {
     var _this13 = this;
 
     if (this.props.input_variables.length > 0) {
-      var item = this.props.input_variables[0];
-    }
-    return React.createElement(
-      Panel,
-      { header: "Variables" },
-      React.createElement(
-        "div",
-        { className: "pull-right" },
-        React.createElement(
-          Button,
-          { disabled: !this.props.spatialDomain || this.props.input_variables.length == 0,
-            onClick: this.props.onAddExpression },
-          "Add Expression"
-        ),
-        React.createElement(
-          Button,
-          { disabled: !this.props.spatialDomain,
-            onClick: this.props.onAddDataSource },
-          "Add Data Source"
-        )
-      ),
-      React.createElement(
+      var table = React.createElement(
         Table,
         { striped: true },
         React.createElement(
@@ -2639,8 +2619,8 @@ var VariableTable = function (_React$Component7) {
                       } else if (item.node[0] == "raster") {
                         var raster = item.node[1][0];
                         var temporalRange = item.node[1][2].split(",");
-
-                        _this13.props.onSpatialDomainChange({ value: item.node[1][1] });
+                        console.log(item.node);
+                        _this13.props.onSpatialDomainChange({ value: item.node[1][1].id });
                         _this13.props.onEditRasterData({
                           name: item.name,
                           raster: raster,
@@ -2664,14 +2644,38 @@ var VariableTable = function (_React$Component7) {
                   {
                     onClick: function onClick() {
                       _this13.props.onRemoveInputVariable(i);
-                    } },
+                    }
+                  },
                   "Delete"
                 )
               )
             );
           })
         )
-      )
+      );
+    } else {
+      table = React.createElement("p", null);
+    }
+    return React.createElement(
+      Panel,
+      { header: "Variables" },
+      React.createElement(
+        "div",
+        { className: "pull-right" },
+        React.createElement(
+          Button,
+          { disabled: !this.props.spatial_domain || this.props.input_variables.length == 0,
+            onClick: this.props.onAddExpression },
+          "Add Expression"
+        ),
+        React.createElement(
+          Button,
+          { disabled: !this.props.spatial_domain,
+            onClick: this.props.onAddDataSource },
+          "Add Data Source"
+        )
+      ),
+      table
     );
   };
 
@@ -2755,7 +2759,7 @@ var SieveComponent = function (_React$Component9) {
   }
 
   SieveComponent.prototype.renderMiddlePanel = function renderMiddlePanel() {
-    if (this.props.spatialDomain) {
+    if (this.props.spatial_domain) {
       switch (this.props.node_editor.mode) {
         case EDITING_EXPRESSION:
           return React.createElement(ExpressionEditor, this.props);
@@ -2772,6 +2776,17 @@ var SieveComponent = function (_React$Component9) {
   };
 
   SieveComponent.prototype.render = function render() {
+    var final = treeToNode(this.props.tree);
+    var final_render = null;
+    if (this.props.tree.length && final) {
+      final_render = final.render();
+    } else {
+      final_render = React.createElement(
+        "p",
+        null,
+        "Use controls to build and use the variable"
+      );
+    }
     return React.createElement(
       "div",
       { className: "sieve" },
@@ -2810,8 +2825,14 @@ var SieveComponent = function (_React$Component9) {
           { xs: 11 },
           React.createElement(
             Panel,
-            { header: "Final" },
-            treeToNode(this.props.tree).render()
+            { header: React.createElement(
+                "h3",
+                null,
+                "Final ",
+                final.dimensions,
+                " variable"
+              ) },
+            final_render
           )
         )
       )
@@ -2879,14 +2900,28 @@ var DataNode = function () {
 
     var name = this.name ? this.name : "Unnamed";
     var arity = this.arity ? this.arity : 0;
+    var rands = null;
+    if (this._operands.length) {
+      rands = this._operands.map(function (o, i) {
+        if (_this.isDataNode(o)) {
+          return o.render();
+        } else {
+          return o + ", ";
+        }
+      });
+    }
     return React.createElement(
       "span",
       null,
       name,
-      " of ",
-      this._operands.map(function (o) {
-        return _this.isDataNode(o) ? o.render() : o + ", ";
-      })
+      " ",
+      rands ? React.createElement(
+        "span",
+        null,
+        " of ",
+        rands,
+        " "
+      ) : ''
     );
   };
 
@@ -2909,7 +2944,7 @@ var MeanOperator = function (_DataNode) {
 
     var _this2 = _possibleConstructorReturn(this, _DataNode.call(this, tree));
 
-    var operands = tree[1];
+    var operands = _this2._operands;
 
     _this2.name = 'Mean';
     _this2.arity = 2;
@@ -2944,7 +2979,7 @@ var TemporalMeanOperator = function (_DataNode2) {
 
     var _this3 = _possibleConstructorReturn(this, _DataNode2.call(this, tree));
 
-    var operands = tree[1];
+    var operands = _this3._operands;
 
     _this3.name = 'Temporal Mean';
     _this3.arity = 1;
@@ -2980,7 +3015,7 @@ var SpatialMeanOperator = function (_DataNode3) {
 
     var _this4 = _possibleConstructorReturn(this, _DataNode3.call(this, tree));
 
-    var operands = tree[1];
+    var operands = _this4._operands;
 
     _this4.name = 'Spatial Mean';
     _this4.arity = 1;
@@ -3016,7 +3051,7 @@ var SelectOperator = function (_DataNode4) {
 
     var _this5 = _possibleConstructorReturn(this, _DataNode4.call(this, tree));
 
-    var operands = tree[1];
+    var operands = _this5._operands;
 
     _this5.name = 'Select';
     _this5.arity = 2;
@@ -3048,7 +3083,7 @@ var ExpressionOperator = function (_DataNode5) {
 
     var _this6 = _possibleConstructorReturn(this, _DataNode5.call(this, tree));
 
-    var operands = tree[1];
+    var operands = _this6._operands;
 
     _this6.name = 'Expression';
     _this6.arity = 1;
@@ -3078,7 +3113,7 @@ var JoinOperator = function (_DataNode6) {
 
     var _this7 = _possibleConstructorReturn(this, _DataNode6.call(this, tree));
 
-    var operands = tree[1];
+    var operands = _this7._operands;
 
     _this7.name = 'Join';
     _this7.arity = 2;
@@ -3119,7 +3154,7 @@ var RasterOperator = function (_DataNode7) {
 
     var _this8 = _possibleConstructorReturn(this, _DataNode7.call(this, tree));
 
-    var operands = tree[1];
+    var operands = _this8._operands;
 
     _this8.name = 'Raster';
     _this8.arity = 3;
@@ -3136,6 +3171,19 @@ var RasterOperator = function (_DataNode7) {
     return _this8;
   }
 
+  RasterOperator.prototype.render = function render() {
+    return React.createElement(
+      "span",
+      null,
+      "Raster product ",
+      this.left.name,
+      "\xA0 using layer ",
+      this.right.json,
+      "in the time span of ",
+      this.middle
+    );
+  };
+
   RasterOperator.prototype.json = function json() {
     return ['raster', [this.left, this.right.json(), this.middle]];
   };
@@ -3151,7 +3199,7 @@ var SourceOperator = function (_DataNode8) {
 
     var _this9 = _possibleConstructorReturn(this, _DataNode8.call(this, tree));
 
-    var operands = tree[1];
+    var operands = _this9._operands;
 
     _this9.name = 'Source';
     _this9.arity = 1;
@@ -3189,11 +3237,10 @@ var MathOperator = function (_React$Component) {
     var _this10 = _possibleConstructorReturn(this, _React$Component.call(this, tree));
 
     var operator = _this10.operator;
-    var operands = tree[1];
+    var operands = _this10._operands;
 
     _this10.operator = operator;
     _this10.name = operator;
-    _this10.arity = 2;
 
     if (operands.length != _this10.arity) {
       throw Error("MathOperator takes exactly " + _this10.arity + " operands");
@@ -3233,21 +3280,47 @@ var MathOperator = function (_React$Component) {
   return MathOperator;
 }(React.Component);
 
-var EmptyTree = function (_DataNode9) {
-  _inherits(EmptyTree, _DataNode9);
+MathOperator.arity = 2;
+
+var NamedTree = function (_DataNode9) {
+  _inherits(NamedTree, _DataNode9);
+
+  function NamedTree(args) {
+    _classCallCheck(this, NamedTree);
+
+    if (args.name && args.node) {
+      var _this11 = _possibleConstructorReturn(this, _DataNode9.call(this, ['named']));
+    }
+
+    var _this11 = _possibleConstructorReturn(this, _DataNode9.call(this, args));
+
+    _this11.name = 'named';
+    _this11.arity = 1;
+    return _possibleConstructorReturn(_this11);
+  }
+
+  NamedTree.prototype.render = function render() {
+    return React.createElement("span", null);
+  };
+
+  return NamedTree;
+}(DataNode);
+
+var EmptyTree = function (_DataNode10) {
+  _inherits(EmptyTree, _DataNode10);
 
   function EmptyTree(props) {
     _classCallCheck(this, EmptyTree);
 
-    var _this11 = _possibleConstructorReturn(this, _DataNode9.call(this, props));
+    var _this12 = _possibleConstructorReturn(this, _DataNode10.call(this, ['noop', []]));
 
-    _this11.name = 'Empty';
-    _this11.arity = 0;
-    return _this11;
+    _this12.name = 'Empty';
+    _this12.arity = 0;
+    return _this12;
   }
 
   EmptyTree.prototype.render = function render() {
-    return null;
+    return React.createElement("span", null);
   };
 
   return EmptyTree;

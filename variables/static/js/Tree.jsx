@@ -29,11 +29,21 @@ class DataNode {
   render(){
     var name = this.name ? this.name : "Unnamed";
     var arity = this.arity ? this.arity : 0;
+    var rands = null;
+    if (this._operands.length){
+      rands = this._operands.map(
+        (o, i) => {
+          if(this.isDataNode(o)){
+            return o.render();
+          } else {
+            return (o + ", ");
+          }
+        }
+      );
+    }
     return (
       <span>
-        {name} of {this._operands.map(
-          (o) => this.isDataNode(o) ? o.render() : (o + ", ")
-        )}
+        {name} {rands ? <span> of {rands} </span> : '' }
       </span>
     );
   }
@@ -54,7 +64,7 @@ class DataNode {
 class MeanOperator extends DataNode {
   constructor(tree) {
     super(tree);
-    var operands = tree[1];
+    var operands = this._operands;
 
     this.name = 'Mean';
     this.arity = 2;
@@ -81,7 +91,7 @@ class MeanOperator extends DataNode {
 class TemporalMeanOperator extends DataNode {
   constructor(tree) {
     super(tree);
-    var operands = tree[1];
+    var operands = this._operands;
 
     this.name = 'Temporal Mean';
     this.arity = 1;
@@ -109,7 +119,7 @@ class TemporalMeanOperator extends DataNode {
 class SpatialMeanOperator extends DataNode {
   constructor(tree) {
     super(tree);
-    var operands = tree[1];
+    var operands = this._operands;
 
     this.name = 'Spatial Mean';
     this.arity = 1;
@@ -137,7 +147,7 @@ class SpatialMeanOperator extends DataNode {
 class SelectOperator extends DataNode {
   constructor(tree) {
     super(tree);
-    var operands = tree[1];
+    var operands = this._operands;
 
     this.name = 'Select';
     this.arity = 2;
@@ -161,7 +171,7 @@ class SelectOperator extends DataNode {
 class ExpressionOperator extends DataNode {
   constructor(tree) {
     super(tree);
-    var operands = tree[1];
+    var operands = this._operands;
 
     this.name = 'Expression';
     this.arity = 1;
@@ -183,7 +193,7 @@ class ExpressionOperator extends DataNode {
 class JoinOperator extends DataNode {
   constructor(tree) {
     super(tree);
-    var operands = tree[1];
+    var operands = this._operands;
 
     this.name = 'Join';
     this.arity = 2
@@ -216,7 +226,7 @@ class JoinOperator extends DataNode {
 class RasterOperator extends DataNode {
   constructor(tree) {
     super(tree);
-    var operands = tree[1];
+    var operands = this._operands;
 
     this.name = 'Raster';
     this.arity = 3;
@@ -235,7 +245,7 @@ class RasterOperator extends DataNode {
   render() {
     return (
       <span>
-        Raster product {this.left.name}
+        Raster product {this.left.name}&nbsp;
         using layer {this.right.json}
         in the time span of {this.middle}
       </span>
@@ -250,7 +260,7 @@ class RasterOperator extends DataNode {
 class SourceOperator extends DataNode {
   constructor(tree) {
     super(tree);
-    var operands = tree[1];
+    var operands = this._operands;
 
     this.name= 'Source';
     this.arity = 1
@@ -276,12 +286,12 @@ class SourceOperator extends DataNode {
   }
 }
 
-class MathOperator extends React.Component {
+class MathOperator extends DataNode {
   constructor(tree) {
     super(tree);
 
     var operator = this.operator;
-    var operands = tree[1];
+    var operands = this._operands;
 
     this.operator = operator;
     this.name = operator;
@@ -322,17 +332,30 @@ class MathOperator extends React.Component {
   }
 }
 
+class NamedTree extends DataNode {
+  constructor(args) {
+    if (args.name && args.node){
+      super(['named', [args.name, args.node]);
+    }else{
+      super(args);
+    }
+    this.arity = 1;
+  }
+
+  render() {
+    return <span></span>;
+  }
+}
 
 class EmptyTree extends DataNode {
   constructor(props) {
-    super(props);
-
+    super(['noop', []]);
     this.name = 'Empty';
     this.arity = 0;
   }
 
   render() {
-    return null;
+    return <span></span>;
   }
 }
 
