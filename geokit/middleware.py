@@ -43,6 +43,8 @@ class TenantMiddleware(object):
 
         try:
             request.tenant = TenantModel.objects.get(schema_name=subdomain)
+            if request.tenant.status == 'disabled':
+                raise TenantModel.DoesNotExist
             connection.set_tenant(request.tenant)
         except TenantModel.DoesNotExist:
             raise self.TENANT_NOT_FOUND_EXCEPTION(

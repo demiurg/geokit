@@ -1,0 +1,25 @@
+{% extends 'account/index.html' %}
+
+{% load static %}
+
+{% block content %}
+<header class="nice-padding">
+  <div class="row">
+    <div class="left">
+      <div class="col">
+        <h1 class="icon icon-site">Delete Site <em>{{ site.schema_name}}</em></h1>
+      </div>
+    </div>
+  </div>
+</header>
+<div class="nice-padding">
+  <p>
+    Are you sure you want to delete the site <em>{{ site.schema_name }}</em>
+  </p>
+  <form action="{% url 'site_delete' site.schema_name %}" method="POST">
+    {% csrf_token %}
+    <input class="button serious" type="submit" value="Delete" />
+    <a href="{% url 'home' %}" class="button button-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

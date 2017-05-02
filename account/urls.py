@@ -10,6 +10,7 @@ urlpatterns = [
     url(r'^availability/(\w+)/', views.availability, name='availability'),
     url(r'^site/create/', views.site_create, name='site_create'),
     url(r'^site/edit/(\w+)/', views.site_edit, name='site_edit'),
+    url(r'^site/delete/(\w+)/', views.site_delete, name='site_delete'),
 
     url(r'^login/$', views.login, name='login'),
     url(r'^logout/$', auth_views.logout_then_login, name="logout"),

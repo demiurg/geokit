@@ -1,3 +1,4 @@
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, Http404
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_protect
@@ -85,6 +86,21 @@ def site_edit(request, schema_name):
         'title': 'Edit Site',
         'form': form
     })
+
+
+@login_required
+def site_delete(request, schema_name):
+    site = get_object_or_404(GeoKitSite, schema_name=schema_name)
+    if site.user != request.user:
+        raise PermissionDenied
+
+    if request.method == 'POST':
+        site.status = 'disabled'
+        site.save()
+
+        return redirect('home')
+
+    return render(request, 'account/confirm_delete.html', {'site': site})
 
 
 def signup(request):

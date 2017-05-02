@@ -38,15 +38,18 @@
           </td>
           <td></td>
           <td></td>
+          <td></td>
         </tr>
         <tr class="table-headers">
           <th>Title</th>
+          <th></th>
           <th></th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         {% for site in sites %}
+        {% if not site.status == 'disabled' %}
         <tr>
           <td valign="top">
             <h2>
@@ -63,7 +66,13 @@
               Build Site
             </a>
           </td>
+          <td valign="top">
+            <a href="{% url 'site_delete' site.schema_name %}" class="status-tag primary">
+              Delete Site
+            </a>
+          </td>
         </tr>
+        {% endif %}
         {% endfor %}
       </tbody>
     </table>

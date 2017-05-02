@@ -11,6 +11,12 @@ ACCESS_TYPES = (
 )
 
 
+SITE_STATUS = (
+    ('active', 'Active'),
+    ('disabled', 'Disabled'),
+)
+
+
 class Membership(models.Model):
     user = models.ForeignKey(User)
     access = models.CharField(max_length=10, choices=ACCESS_TYPES)
@@ -26,6 +32,8 @@ class GeoKitSite(TenantMixin):
     name = models.CharField(max_length=100, null=True)
     created = models.DateTimeField(auto_now_add=True, editable=False)
     modified = models.DateTimeField(auto_now=True)
+
+    status = models.CharField(max_length=15, choices=SITE_STATUS, default='active')
 
     auto_create_schema = False
 
