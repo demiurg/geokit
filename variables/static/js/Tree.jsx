@@ -43,7 +43,20 @@ class DataNode {
   }
 
   json() {
-    return JSON.encode(data);
+    var rands = [];
+    for (var i = 0; i < this._operands.length; i++){
+      var rand = this._operands[i];
+      if (this.isDataTree(rand)){
+        rands.push(rand.json());
+      } else {
+        rands.push(rand);
+      }
+    }
+    return [this._operation, rands];
+  }
+
+  jsonText(){
+    JSON.encode(this.json());
   }
 
   render(){
@@ -96,10 +109,6 @@ class MeanOperator extends DataNode {
 
     this.dimensions = this.left.dimensions;
   }
-
-  json() {
-    return ['mean', [this.left.json(), this.right.json()]];
-  }
 }
 
 class TemporalMeanOperator extends DataNode {
@@ -115,10 +124,6 @@ class TemporalMeanOperator extends DataNode {
       return treeToNode(input_var.node).dimensions.includes('time');
     });
   }
-
-  json() {
-    return ['tmean', [this.operand.json()]];
-  }
 }
 
 class SpatialMeanOperator extends DataNode {
@@ -133,10 +138,6 @@ class SpatialMeanOperator extends DataNode {
       return treeToNode(input_var.node).dimensions.includes('space');
     });
   }
-
-  json() {
-    return ['smean', [this.operand.json()]];
-  }
 }
 
 class SelectOperator extends DataNode {
@@ -147,10 +148,6 @@ class SelectOperator extends DataNode {
     this.child_op = operands[0][0];
     this.dimensions = this.left.dimensions;
   }
-
-  json() {
-    return ['select', [this.left.json(), this.right.json()]];
-  }
 }
 
 class ExpressionOperator extends DataNode {
@@ -159,10 +156,6 @@ class ExpressionOperator extends DataNode {
     var operands = this._operands;
     this.name = 'Expression';
     this.dimensions = this.operand.dimensions;
-  }
-
-  json() {
-    return ['expression', [this.operand.json()]];
   }
 }
 
@@ -188,10 +181,6 @@ class JoinOperator extends DataNode {
       this.dimensions += 'time';
     }
   }
-
-  json() {
-    return ['join', [this.left.json(), this.right.json()]];
-  }
 }
 
 class RasterOperator extends DataNode {
@@ -212,10 +201,6 @@ class RasterOperator extends DataNode {
       </span>
     );
   }
-
-  json() {
-    return ['raster', [this.left, this.right.json(), this.middle]];
-  }
 }
 
 class SourceOperator extends DataNode {
@@ -232,10 +217,6 @@ class SourceOperator extends DataNode {
     } else if (this.type == 'Table') {
       this.dimensions = 'time';
     }
-  }
-
-  json() {
-    return ['source', this.operand];
   }
 }
 
@@ -270,10 +251,6 @@ class MathOperator extends DataNode {
         return treeToNode(input_var.node).dimensions == other_op_node.dimensions;
       });
     }
-  }
-
-  json() {
-    return [this.operator, [this.left.json(), this.right.json()]];
   }
 }
 

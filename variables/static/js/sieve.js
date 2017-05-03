@@ -2965,7 +2965,20 @@ var DataNode = function () {
   };
 
   DataNode.prototype.json = function json() {
-    return JSON.encode(data);
+    var rands = [];
+    for (var i = 0; i < this._operands.length; i++) {
+      var rand = this._operands[i];
+      if (this.isDataTree(rand)) {
+        rands.push(rand.json());
+      } else {
+        rands.push(rand);
+      }
+    }
+    return [this._operation, rands];
+  };
+
+  DataNode.prototype.jsonText = function jsonText() {
+    JSON.encode(this.json());
   };
 
   DataNode.prototype.render = function render() {
@@ -3028,10 +3041,6 @@ var MeanOperator = function (_DataNode) {
     return _this2;
   }
 
-  MeanOperator.prototype.json = function json() {
-    return ['mean', [this.left.json(), this.right.json()]];
-  };
-
   return MeanOperator;
 }(DataNode);
 
@@ -3053,10 +3062,6 @@ var TemporalMeanOperator = function (_DataNode2) {
     return input_vars.filter(function (input_var) {
       return treeToNode(input_var.node).dimensions.includes('time');
     });
-  };
-
-  TemporalMeanOperator.prototype.json = function json() {
-    return ['tmean', [this.operand.json()]];
   };
 
   return TemporalMeanOperator;
@@ -3081,10 +3086,6 @@ var SpatialMeanOperator = function (_DataNode3) {
     });
   };
 
-  SpatialMeanOperator.prototype.json = function json() {
-    return ['smean', [this.operand.json()]];
-  };
-
   return SpatialMeanOperator;
 }(DataNode);
 
@@ -3103,10 +3104,6 @@ var SelectOperator = function (_DataNode4) {
     return _this5;
   }
 
-  SelectOperator.prototype.json = function json() {
-    return ['select', [this.left.json(), this.right.json()]];
-  };
-
   return SelectOperator;
 }(DataNode);
 
@@ -3123,10 +3120,6 @@ var ExpressionOperator = function (_DataNode5) {
     _this6.dimensions = _this6.operand.dimensions;
     return _this6;
   }
-
-  ExpressionOperator.prototype.json = function json() {
-    return ['expression', [this.operand.json()]];
-  };
 
   return ExpressionOperator;
 }(DataNode);
@@ -3161,10 +3154,6 @@ var JoinOperator = function (_DataNode6) {
     return _this7;
   }
 
-  JoinOperator.prototype.json = function json() {
-    return ['join', [this.left.json(), this.right.json()]];
-  };
-
   return JoinOperator;
 }(DataNode);
 
@@ -3196,10 +3185,6 @@ var RasterOperator = function (_DataNode7) {
     );
   };
 
-  RasterOperator.prototype.json = function json() {
-    return ['raster', [this.left, this.right.json(), this.middle]];
-  };
-
   return RasterOperator;
 }(DataNode);
 
@@ -3223,10 +3208,6 @@ var SourceOperator = function (_DataNode8) {
     }
     return _this9;
   }
-
-  SourceOperator.prototype.json = function json() {
-    return ['source', this.operand];
-  };
 
   return SourceOperator;
 }(DataNode);
@@ -3267,10 +3248,6 @@ var MathOperator = function (_DataNode9) {
         return treeToNode(input_var.node).dimensions == other_op_node.dimensions;
       });
     }
-  };
-
-  MathOperator.prototype.json = function json() {
-    return [this.operator, [this.left.json(), this.right.json()]];
   };
 
   return MathOperator;
