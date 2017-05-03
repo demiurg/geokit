@@ -28,6 +28,8 @@ from models import Layer, Feature
 from forms import LayerForm, LayerEditForm
 from serializers import FeatureSerializer, LayerSerializer
 
+from variables.models import Variable
+
 import fiona
 from fiona.crs import to_string
 from shapely.geometry import shape
@@ -571,10 +573,26 @@ def edit(request, layer_name):
 def delete(request, layer_name):
     layer = get_object_or_404(Layer, pk=layer_name)
 
-    layer.delete()
+    variables_to_delete = []
 
-    messages.success(request, _("Layer '{0}' deleted").format(layer_name))
-    return redirect('layers:index')
+    for v in Variable.objects.all():
+        if layer.pk in v.get_layers():
+            variables_to_delete.append(v)
+
+    if request.method == 'POST':
+        with transaction.atomic():
+            for v in variables_to_delete:
+                v.delete()
+
+            layer.delete()
+
+        messages.success(request, _("Layer '{0}' deleted").format(layer_name))
+        return redirect('layers:index')
+
+    return render(request, "layers/confirm_delete.html", {
+        'layer': layer,
+        'variables_to_delete': variables_to_delete
+    })
 
 
 def generate_download(request, layer_id):

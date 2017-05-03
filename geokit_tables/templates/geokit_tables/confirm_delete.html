@@ -1,0 +1,26 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% block titletag %}Delete Table{% endblock %}
+
+{% block content %}
+
+{% include "wagtailadmin/shared/header.html" with title="Tables" add_link="geokit_tables:add" add_text="Add Table" icon="placeholder" %}
+
+<div class="nice-padding">
+    <p>Are you sure you want to delete this table?</p>
+
+    <p>The following variables depend on this table and will also be deleted:</p>
+
+    <ul>
+        {% for v in variables_to_delete %}
+        <li><a href="{% url 'variables:edit' v.pk %}">{{ v.name }}</a></li>
+        {% endfor %}
+    </ul>
+
+    <form action="{% url 'geokit_tables:delete' table.pk %}" method="POST">
+        {% csrf_token %}
+        <input type="submit" value="Delete" class="button serious" />
+        <a href="{% url 'geokit_tables:index' %}" class="button button-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

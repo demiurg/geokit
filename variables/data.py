@@ -51,6 +51,7 @@ class DataNode(object):
         self._dimensions = None
         self._dimensions_str = ''
         self.source_layers = None
+        self.source_tables = None
         self.source_rasters = None
 
     def __unicode__(self):
@@ -122,6 +123,24 @@ class DataNode(object):
             self.source_layers = walk_nodes(self)
 
         return self.source_layers
+
+    def get_tables(self):
+        def walk_nodes(node):
+            if type(node) == DataSource:
+                node.execute()
+                return set([t['id'] for t in node.tables])
+            elif hasattr(node, 'operands'):
+                source_tables = set()
+                for operand in node.operands:
+                    source_tables = source_tables.union(walk_nodes(operand))
+                return source_tables
+            else:
+                return set()
+
+        if self.source_tables is None:
+            self.source_tables = walk_nodes(self)
+
+        return self.source_tables
 
     def get_rasters(self):
         def walk_nodes(node):
@@ -398,11 +417,6 @@ class SelectOperator(DataNode):
 
 
 class DataSource(DataNode):
-    '''
-        For now only implement table and layer joining
-        TODO: Allow joins and selects of any tables/layers combos
-    '''
-
     def get_dimensions(self):
         dimensions = {}
         for source in self.operands:

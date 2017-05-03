@@ -1,0 +1,26 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% block titletag %}Delete Layer{% endblock %}
+
+{% block content %}
+
+{%include "wagtailadmin/shared/header.html" with title="Layers" add_link="layers:add" add_text="Add Layer" icon="site" %}
+
+<div class="nice-padding">
+    <p>Are you sure you want to delete this layer?</p>
+
+    <p>The following variables depend on this layer and will also be deleted:</p>
+
+    <ul>
+        {% for v in variables_to_delete %}
+        <li><a href="{% url 'variables:edit' v.pk %}">{{ v.name }}</a></li>
+        {% endfor %}
+    </ul>
+
+    <form action="{% url 'layers:delete' layer.pk %}" method="POST">
+        {% csrf_token %}
+        <input type="submit" value="Delete" class="button serious" />
+        <a href="{% url 'layers:index' %}" class="button button-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}
