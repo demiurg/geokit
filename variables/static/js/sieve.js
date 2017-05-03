@@ -2919,7 +2919,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var DataNode = function () {
-  function DataNode(args) {
+  function DataNode(args, names, arity) {
     _classCallCheck(this, DataNode);
 
     if (!Array.isArray(args)) {
@@ -2930,6 +2930,16 @@ var DataNode = function () {
     this._operation = args[0];
     this._operands = [];
 
+    if (names) {
+      this.operand_names = names;
+    }
+
+    if (arity) {
+      this.arity = arity;
+    } else {
+      this.arity = 0;
+    }
+
     for (var i = 0; i < args[1].length; i++) {
       var rand = args[1][i];
       if (this.isDataTree(rand)) {
@@ -2937,6 +2947,16 @@ var DataNode = function () {
       } else {
         this._operands.push(rand);
       }
+    }
+
+    if (this.operand_names) {
+      for (var i = 0; i < this.operand_names.length; i++) {
+        this[this.operand_names[i]] = this._operands[i];
+      }
+    }
+
+    if (this._operands.length != this.arity) {
+      throw Error(this._operation + " node takes exactly " + this.arity + " operands");
     }
   }
 
@@ -2952,10 +2972,10 @@ var DataNode = function () {
     var _this = this;
 
     var name = this.name ? this.name : "Unnamed";
-    var arity = this.arity ? this.arity : 0;
     var rands = null;
     if (this._operands.length) {
       rands = this._operands.map(function (o, i) {
+        console.log('>', o, _this.isDataNode(o), '<');
         if (_this.isDataNode(o)) {
           return o.render();
         } else {
@@ -2983,7 +3003,7 @@ var DataNode = function () {
   };
 
   DataNode.prototype.isDataNode = function isDataNode(node) {
-    return node._operation && node._operands;
+    return node._operation && NODE_TYPES_IMPLEMENTED.hasOwnProperty(node._operation) && node._operands != undefined;
   };
 
   return DataNode;
@@ -2995,19 +3015,10 @@ var MeanOperator = function (_DataNode) {
   function MeanOperator(tree) {
     _classCallCheck(this, MeanOperator);
 
-    var _this2 = _possibleConstructorReturn(this, _DataNode.call(this, tree));
-
-    var operands = _this2._operands;
+    var _this2 = _possibleConstructorReturn(this, _DataNode.call(this, tree, ['left', 'right'], 2));
 
     _this2.name = 'Mean';
-    _this2.arity = 2;
 
-    if (operands.length != _this2.arity) {
-      throw Error("MeanOperator takes exactly " + _this2.arity + " operands");
-    }
-
-    _this2.left = _this2._operands[0];
-    _this2.right = _this2._operands[1];
 
     if (_this2.left.dimensions != _this2.right.dimensions) {
       throw Error("Operands must have the same dimensions");
@@ -3030,19 +3041,10 @@ var TemporalMeanOperator = function (_DataNode2) {
   function TemporalMeanOperator(tree) {
     _classCallCheck(this, TemporalMeanOperator);
 
-    var _this3 = _possibleConstructorReturn(this, _DataNode2.call(this, tree));
+    var _this3 = _possibleConstructorReturn(this, _DataNode2.call(this, tree, ['operand'], 1));
 
     var operands = _this3._operands;
-
     _this3.name = 'Temporal Mean';
-    _this3.arity = 1;
-
-    if (operands.length != _this3.arity) {
-      throw Error("TemporalMeanOperator takes exactly " + _this3.arity + " operand");
-    }
-
-    _this3.operand = _this3._operands[0];
-
     _this3.dimensions = 'space';
     return _this3;
   }
@@ -3066,19 +3068,9 @@ var SpatialMeanOperator = function (_DataNode3) {
   function SpatialMeanOperator(tree) {
     _classCallCheck(this, SpatialMeanOperator);
 
-    var _this4 = _possibleConstructorReturn(this, _DataNode3.call(this, tree));
-
-    var operands = _this4._operands;
+    var _this4 = _possibleConstructorReturn(this, _DataNode3.call(this, tree, ['operand'], 1));
 
     _this4.name = 'Spatial Mean';
-    _this4.arity = 1;
-
-    if (operands.length != _this4.arity) {
-      throw Error("SpatialMeanOperator takes exactly " + _this4.arity + " operand");
-    }
-
-    _this4.operand = _this4._operands[0];
-
     _this4.dimensions = 'time';
     return _this4;
   }
@@ -3102,21 +3094,11 @@ var SelectOperator = function (_DataNode4) {
   function SelectOperator(tree) {
     _classCallCheck(this, SelectOperator);
 
-    var _this5 = _possibleConstructorReturn(this, _DataNode4.call(this, tree));
+    var _this5 = _possibleConstructorReturn(this, _DataNode4.call(this, tree, ['left', 'right'], 2));
 
     var operands = _this5._operands;
-
     _this5.name = 'Select';
-    _this5.arity = 2;
-
-    if (operands.length != _this5.arity) {
-      throw Error("SelectOperator takes exactly " + _this5.arity + " operands");
-    }
-
-    _this5.left = _this5._operands[0];
     _this5.child_op = operands[0][0];
-    _this5.right = operands[1];
-
     _this5.dimensions = _this5.left.dimensions;
     return _this5;
   }
@@ -3134,19 +3116,10 @@ var ExpressionOperator = function (_DataNode5) {
   function ExpressionOperator(tree) {
     _classCallCheck(this, ExpressionOperator);
 
-    var _this6 = _possibleConstructorReturn(this, _DataNode5.call(this, tree));
+    var _this6 = _possibleConstructorReturn(this, _DataNode5.call(this, tree, ['operand'], 1));
 
     var operands = _this6._operands;
-
     _this6.name = 'Expression';
-    _this6.arity = 1;
-
-    if (operands.length != _this6.arity) {
-      throw Error("\"ExpressionOperator takes exactly " + _this6.arity + " operand");
-    }
-
-    _this6.operand = _this6._operands[0];
-
     _this6.dimensions = _this6.operand.dimensions;
     return _this6;
   }
@@ -3164,19 +3137,15 @@ var JoinOperator = function (_DataNode6) {
   function JoinOperator(tree) {
     _classCallCheck(this, JoinOperator);
 
-    var _this7 = _possibleConstructorReturn(this, _DataNode6.call(this, tree));
-
-    var operands = _this7._operands;
+    var _this7 = _possibleConstructorReturn(this, _DataNode6.call(this, tree, ['left', 'right'], 2));
 
     _this7.name = 'Join';
-    _this7.arity = 2;
+
+    var operands = _this7._operands;
 
     if (operands.length != _this7.arity) {
       throw Error("JoinOperator takes exactly " + _this7.arity + " operands");
     }
-
-    _this7.left = new SourceOperator([operands[0]]);
-    _this7.right = new SourceOperator([operands[1]]);
 
     var dimensions = new Set();
     dimensions.add(_this7.left.dimensions);
@@ -3205,21 +3174,11 @@ var RasterOperator = function (_DataNode7) {
   function RasterOperator(tree) {
     _classCallCheck(this, RasterOperator);
 
-    var _this8 = _possibleConstructorReturn(this, _DataNode7.call(this, tree));
+    var _this8 = _possibleConstructorReturn(this, _DataNode7.call(this, tree, ['left', 'right', 'middle'], 3));
 
     var operands = _this8._operands;
 
     _this8.name = 'Raster';
-    _this8.arity = 3;
-
-    if (operands.length != _this8.arity) {
-      throw Error("RasterOperator takes exactly " + _this8.arity + " operands");
-    }
-
-    _this8.left = operands[0];
-    _this8.middle = operands[2];
-    _this8.right = _this8._operands[1];
-
     _this8.dimensions = 'spacetime';
     return _this8;
   }
@@ -3250,21 +3209,12 @@ var SourceOperator = function (_DataNode8) {
   function SourceOperator(tree) {
     _classCallCheck(this, SourceOperator);
 
-    var _this9 = _possibleConstructorReturn(this, _DataNode8.call(this, tree));
-
-    var operands = _this9._operands;
+    var _this9 = _possibleConstructorReturn(this, _DataNode8.call(this, tree, ['operand'], 1));
 
     _this9.name = 'Source';
-    _this9.arity = 1;
-
-    if (operands.length != _this9.arity) {
-      throw Error("SourceOperator takes exactly " + _this9.arity + " operand");
+    if (!(_this9.operand.id && _this9.operand.type && _this9.operand.field)) {
+      throw Error("Source node is missing some property (id, type, or field");
     }
-
-    _this9.operand = operands[0];
-    _this9.source_name = _this9.operand.name;
-    _this9.type = _this9.operand['type'];
-    _this9.field = _this9.operand.field;
 
     if (_this9.type == 'Layer') {
       _this9.dimensions = 'space';
@@ -3275,7 +3225,7 @@ var SourceOperator = function (_DataNode8) {
   }
 
   SourceOperator.prototype.json = function json() {
-    return ['source', [{ source_name: this.name, type: this.type, field: this.field }]];
+    return ['source', this.operand];
   };
 
   return SourceOperator;
@@ -3287,21 +3237,13 @@ var MathOperator = function (_DataNode9) {
   function MathOperator(tree) {
     _classCallCheck(this, MathOperator);
 
-    var _this10 = _possibleConstructorReturn(this, _DataNode9.call(this, tree));
+    var _this10 = _possibleConstructorReturn(this, _DataNode9.call(this, tree, ['left', 'right'], 2));
 
-    var operator = _this10.operator;
+    var operator = _this10._operator;
     var operands = _this10._operands;
 
     _this10.operator = operator;
     _this10.name = operator;
-    _this10.arity = 2;
-
-    if (operands.length != _this10.arity) {
-      throw Error("MathOperator takes exactly " + _this10.arity + " operands");
-    }
-
-    _this10.left = _this10._operands[0];
-    _this10.right = _this10._operands[1];
 
     if (_this10.left.dimensions != _this10.right.dimensions) {
       throw Error("Operators must have the same dimensions");
@@ -3341,16 +3283,21 @@ var NamedTree = function (_DataNode10) {
     _classCallCheck(this, NamedTree);
 
     if (args.name && args.node) {
-      var _this11 = _possibleConstructorReturn(this, _DataNode10.call(this, ['named', [args.name, args.node]]));
+      var _this11 = _possibleConstructorReturn(this, _DataNode10.call(this, ['named', [args.name, args.node]], ['operand'], 1));
     } else {
       var _this11 = _possibleConstructorReturn(this, _DataNode10.call(this, args));
     }
-    _this11.arity = 1;
     return _possibleConstructorReturn(_this11);
   }
 
   NamedTree.prototype.render = function render() {
-    return React.createElement("span", null);
+    return React.createElement(
+      "span",
+      null,
+      this.operation,
+      ": ",
+      this.operand.render()
+    );
   };
 
   return NamedTree;
@@ -3362,10 +3309,9 @@ var EmptyTree = function (_DataNode11) {
   function EmptyTree(props) {
     _classCallCheck(this, EmptyTree);
 
-    var _this12 = _possibleConstructorReturn(this, _DataNode11.call(this, ['noop', []]));
+    var _this12 = _possibleConstructorReturn(this, _DataNode11.call(this, ['noop', []], [], 0));
 
     _this12.name = 'Empty';
-    _this12.arity = 0;
     return _this12;
   }
 
@@ -3388,7 +3334,9 @@ var NODE_TYPES_IMPLEMENTED = {
   '+': MathOperator,
   '-': MathOperator,
   '*': MathOperator,
-  '/': MathOperator
+  '/': MathOperator,
+  'named': NamedTree,
+  'noop': EmptyTree
 };
 
 function treeToNode(tree) {
