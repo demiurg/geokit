@@ -67,6 +67,9 @@ class Variable(models.Model):
     def get_layers(self):
         return self.root.get_layers()
 
+    def get_tables(self):
+        return self.root.get_tables()
+
     def get_rasters(self):
         return self.root.get_rasters()
 

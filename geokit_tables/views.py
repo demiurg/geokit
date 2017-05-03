@@ -18,6 +18,8 @@ from .forms import GeoKitTableForm, GeoKitTableEditForm
 from .models import GeoKitTable, Record
 from .serializers import GeoKitTableSerializer
 
+from variables.models import Variable
+
 from csvkit import table as csvtable
 
 NoneType = type(None)
@@ -230,8 +232,24 @@ def generate_download(request, table_id):
 
 def delete(request, table_name):
     table = get_object_or_404(GeoKitTable, pk=table_name)
-    table.delete()
 
-    messages.success(request, "Table '{0}' deleted".format(table_name))
+    variables_to_delete = []
 
-    return redirect('geokit_tables:index')
+    for v in Variable.objects.all():
+        if table.pk in v.get_tables():
+            variables_to_delete.append(v)
+
+    if request.method == 'POST':
+        with transaction.atomic():
+            for v in variables_to_delete:
+                v.delete()
+            table.delete()
+
+        messages.success(request, "Table '{0}' deleted".format(table_name))
+
+        return redirect('geokit_tables:index')
+
+    return render(request, 'geokit_tables/confirm_delete.html', {
+        'table': table,
+        'variables_to_delete': variables_to_delete
+    })
