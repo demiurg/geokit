@@ -234,22 +234,37 @@ def delete(request, table_name):
     table = get_object_or_404(GeoKitTable, pk=table_name)
 
     variables_to_delete = []
+    pages_to_delete = set()
 
     for v in Variable.objects.all():
         if table.pk in v.get_tables():
             variables_to_delete.append(v)
 
+    for v in variables_to_delete:
+        for page in v.get_pages():
+            pages_to_delete.add(page)
+
     if request.method == 'POST':
         with transaction.atomic():
             for v in variables_to_delete:
                 v.delete()
+
+            for p in pages_to_delete:
+                p.delete()
+
             table.delete()
 
-        messages.success(request, "Table '{0}' deleted".format(table_name))
+        message = "Table {0} deleted.".format(table_name)
+        if variables_to_delete:
+            message = message + " Variables {0} deleted.".format(', '.join([v.name for v in variables_to_delete]))
+        if pages_to_delete:
+            message = message + " Pages {0} deleted.".format(', '.join([p.title for p in pages_to_delete]))
+        messages.success(request, message)
 
         return redirect('geokit_tables:index')
 
     return render(request, 'geokit_tables/confirm_delete.html', {
         'table': table,
-        'variables_to_delete': variables_to_delete
+        'variables_to_delete': variables_to_delete,
+        'pages_to_delete': pages_to_delete,
     })

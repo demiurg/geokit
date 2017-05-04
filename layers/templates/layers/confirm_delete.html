@@ -9,6 +9,7 @@
 <div class="nice-padding">
     <p>Are you sure you want to delete this layer?</p>
 
+    {% if variables_to_delete %}
     <p>The following variables depend on this layer and will also be deleted:</p>
 
     <ul>
@@ -16,6 +17,17 @@
         <li><a href="{% url 'variables:edit' v.pk %}">{{ v.name }}</a></li>
         {% endfor %}
     </ul>
+    {% endif %}
+
+    {% if pages_to_delete %}
+    <p>The following pages have visualizations that depend on the above variables and will also be deleted:</p>
+
+    <ul>
+        {% for p in pages_to_delete %}
+        <li><a href="{% url 'wagtailadmin_pages:edit' p.pk %}">{{ p.title }}</a></li>
+        {% endfor %}
+    </ul>
+    {% endif %}
 
     <form action="{% url 'layers:delete' layer.pk %}" method="POST">
         {% csrf_token %}

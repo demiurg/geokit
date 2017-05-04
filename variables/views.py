@@ -1,11 +1,13 @@
-from django.core.serializers import serialize
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
 from django.conf import settings
+from django.db import transaction
 from django.http import HttpResponse
 
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
+from wagtail.wagtailadmin import messages
+from wagtail.wagtailcore.models import Page
 
 from layers.models import Feature, Layer
 from variables.models import Variable, RasterRequest
@@ -55,6 +57,28 @@ def edit(request, variable_id):
         'variable': variable,
         'raster_catalog': json.dumps(raster_catalog),
         'node_types': json.dumps(NODE_TYPES.keys())
+    })
+
+
+def delete(request, variable_id):
+    variable = get_object_or_404(Variable, pk=variable_id)
+    variable_name = variable.name
+
+    pages_to_delete = variable.get_pages()
+
+    if request.method == 'POST':
+        with transaction.atomic():
+            variable.delete()
+
+            for page in pages_to_delete:
+                page.delete()
+
+        messages.success(request, "Variable '{0}' deleted".format(variable_name))
+        return redirect('variables:index')
+
+    return render(request, 'variables/confirm_delete.html', {
+        'variable': variable,
+        'pages_to_delete': pages_to_delete
     })
 
 
