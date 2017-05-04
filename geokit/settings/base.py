@@ -95,6 +95,8 @@ REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',)
 }
 
+DEFAULT_FILE_STORAGE = 'tenant_schemas.storage.TenantFileSystemStorage'
+
 MIDDLEWARE_CLASSES = [
     # implement tenant_schemas logic as well as wagtail sites middleware
     'geokit.middleware.TenantMiddleware',
