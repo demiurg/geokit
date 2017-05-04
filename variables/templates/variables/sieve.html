@@ -22,7 +22,12 @@
 </style>
 {% endblock %}
 
-{% block titletag %}Add new variable{% endblock %}
+{% block titletag %}
+{% if variable.name %}Edit {{ variable.name }} variable
+{% else %}
+Add new variable
+{% endif %}
+{% endblock %}
 {% block bodyclass %}menu-sieve{% endblock %}
 
 {% block extra_js %}

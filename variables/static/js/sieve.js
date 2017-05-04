@@ -2576,8 +2576,7 @@ var VariableTable = function (_React$Component7) {
           "tbody",
           null,
           this.props.input_variables.map(function (item, i) {
-            var type = item.node[0];
-            var operator = treeToNode(item.node);
+            var tree = treeToNode(item.node);
             return React.createElement(
               "tr",
               null,
@@ -2589,12 +2588,12 @@ var VariableTable = function (_React$Component7) {
               React.createElement(
                 "td",
                 null,
-                item.node[0]
+                tree.type
               ),
               React.createElement(
                 "td",
                 null,
-                operator.dimensions
+                tree.dimensions
               ),
               React.createElement(
                 "td",
@@ -2912,6 +2911,8 @@ function sieve(el) {
 }
 "use strict";
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
@@ -2944,6 +2945,8 @@ var DataNode = function () {
       var rand = args[1][i];
       if (this.isDataTree(rand)) {
         this._operands.push(treeToNode(rand));
+      } else if (this._operation != 'source' && this.isSource(rand)) {
+        this._operands.push(treeToNode(['source', [rand]]));
       } else {
         this._operands.push(rand);
       }
@@ -2988,10 +2991,10 @@ var DataNode = function () {
     var rands = null;
     if (this._operands.length) {
       rands = this._operands.map(function (o, i) {
-        console.log('>', o, _this.isDataNode(o), '<');
         if (_this.isDataNode(o)) {
           return o.render();
         } else {
+          console.log(o, _this);
           return o + ", ";
         }
       });
@@ -3019,6 +3022,22 @@ var DataNode = function () {
     return node._operation && NODE_TYPES_IMPLEMENTED.hasOwnProperty(node._operation) && node._operands != undefined;
   };
 
+  DataNode.prototype.isSource = function isSource(obj) {
+    return obj.id && obj.type;
+  };
+
+  _createClass(DataNode, [{
+    key: "type",
+    get: function get() {
+      return this.name;
+    }
+  }, {
+    key: "dimensions",
+    get: function get() {
+      return this._dimensions;
+    }
+  }]);
+
   return DataNode;
 }();
 
@@ -3037,7 +3056,7 @@ var MeanOperator = function (_DataNode) {
       throw Error("Operands must have the same dimensions");
     }
 
-    _this2.dimensions = _this2.left.dimensions;
+    _this2._dimensions = _this2.left.dimensions;
     return _this2;
   }
 
@@ -3054,7 +3073,7 @@ var TemporalMeanOperator = function (_DataNode2) {
 
     var operands = _this3._operands;
     _this3.name = 'Temporal Mean';
-    _this3.dimensions = 'space';
+    _this3._dimensions = 'space';
     return _this3;
   }
 
@@ -3076,7 +3095,7 @@ var SpatialMeanOperator = function (_DataNode3) {
     var _this4 = _possibleConstructorReturn(this, _DataNode3.call(this, tree, ['operand'], 1));
 
     _this4.name = 'Spatial Mean';
-    _this4.dimensions = 'time';
+    _this4._dimensions = 'time';
     return _this4;
   }
 
@@ -3097,10 +3116,9 @@ var SelectOperator = function (_DataNode4) {
 
     var _this5 = _possibleConstructorReturn(this, _DataNode4.call(this, tree, ['left', 'right'], 2));
 
-    var operands = _this5._operands;
     _this5.name = 'Select';
-    _this5.child_op = operands[0][0];
-    _this5.dimensions = _this5.left.dimensions;
+    _this5.child_op = _this5._operands[0][0];
+    _this5._dimensions = _this5.left.dimensions;
     return _this5;
   }
 
@@ -3117,7 +3135,7 @@ var ExpressionOperator = function (_DataNode5) {
 
     var operands = _this6._operands;
     _this6.name = 'Expression';
-    _this6.dimensions = _this6.operand.dimensions;
+    _this6._dimensions = _this6.operand.dimensions;
     return _this6;
   }
 
@@ -3134,22 +3152,17 @@ var JoinOperator = function (_DataNode6) {
 
     _this7.name = 'Join';
 
-    var operands = _this7._operands;
-
-    if (operands.length != _this7.arity) {
-      throw Error("JoinOperator takes exactly " + _this7.arity + " operands");
-    }
 
     var dimensions = new Set();
     dimensions.add(_this7.left.dimensions);
     dimensions.add(_this7.right.dimensions);
 
-    _this7.dimensions = '';
+    _this7._dimensions = '';
     if (dimensions.has('space')) {
-      _this7.dimensions += 'space';
+      _this7._dimensions += 'space';
     }
     if (dimensions.has('time')) {
-      _this7.dimensions += 'time';
+      _this7._dimensions += 'time';
     }
     return _this7;
   }
@@ -3168,7 +3181,7 @@ var RasterOperator = function (_DataNode7) {
     var operands = _this8._operands;
 
     _this8.name = 'Raster';
-    _this8.dimensions = 'spacetime';
+    _this8._dimensions = 'spacetime';
     return _this8;
   }
 
@@ -3178,8 +3191,8 @@ var RasterOperator = function (_DataNode7) {
       null,
       "Raster product ",
       this.left.name,
-      "\xA0 using layer ",
-      this.right.json,
+      "\xA0 using ",
+      this.right.render(),
       "in the time span of ",
       this.middle
     );
@@ -3197,17 +3210,29 @@ var SourceOperator = function (_DataNode8) {
     var _this9 = _possibleConstructorReturn(this, _DataNode8.call(this, tree, ['operand'], 1));
 
     _this9.name = 'Source';
-    if (!(_this9.operand.id && _this9.operand.type && _this9.operand.field)) {
+    if (!(_this9.isSource(_this9.operand) && _this9.operand.field)) {
       throw Error("Source node is missing some property (id, type, or field");
     }
 
-    if (_this9.type == 'Layer') {
-      _this9.dimensions = 'space';
-    } else if (_this9.type == 'Table') {
-      _this9.dimensions = 'time';
+    if (_this9.operand.type == 'Layer') {
+      _this9._dimensions = 'space';
+    } else if (_this9.operand.type == 'Table') {
+      _this9._dimensions = 'time';
+    } else {
+      throw Error("Source type unknown");
     }
     return _this9;
   }
+
+  SourceOperator.prototype.render = function render() {
+    var o = this.operand;
+    return React.createElement(
+      "span",
+      null,
+      o.type + "/" + o.name + (o.field ? "/" + o.field : ""),
+      "\xA0"
+    );
+  };
 
   return SourceOperator;
 }(DataNode);
@@ -3230,7 +3255,7 @@ var MathOperator = function (_DataNode9) {
       throw Error("Operators must have the same dimensions");
     }
 
-    _this10.dimensions = _this10.left.dimensions;
+    _this10._dimensions = _this10.left.dimensions;
     return _this10;
   }
 
@@ -3299,6 +3324,18 @@ var EmptyTree = function (_DataNode11) {
   return EmptyTree;
 }(DataNode);
 
+var ErrorNode = function (_DataNode12) {
+  _inherits(ErrorNode, _DataNode12);
+
+  function ErrorNode(args, error) {
+    _classCallCheck(this, ErrorNode);
+
+    return _possibleConstructorReturn(this, _DataNode12.call(this, ['error', [args, error]], ['data', 'error'], 2));
+  }
+
+  return ErrorNode;
+}(DataNode);
+
 var NODE_TYPES_IMPLEMENTED = {
   'mean': MeanOperator,
   'tmean': TemporalMeanOperator,
@@ -3313,7 +3350,8 @@ var NODE_TYPES_IMPLEMENTED = {
   '*': MathOperator,
   '/': MathOperator,
   'named': NamedTree,
-  'noop': EmptyTree
+  'noop': EmptyTree,
+  'error': ErrorNode
 };
 
 function treeToNode(tree) {

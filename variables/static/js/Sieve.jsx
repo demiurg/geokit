@@ -877,13 +877,12 @@ class VariableTable extends React.Component {
           </thead>
           <tbody>
             {this.props.input_variables.map( (item, i) => {
-              var type = item.node[0];
-              var operator = treeToNode(item.node);
+              var tree = treeToNode(item.node);
               return(
                 <tr>
                   <td>{item.name}</td>
-                  <td>{item.node[0]}</td>
-                  <td>{operator.dimensions}</td>
+                  <td>{tree.type}</td>
+                  <td>{tree.dimensions}</td>
                   <td>
                     <Button onClick={this.onUseVariable.bind(this, item)}>Use</Button>
                     <Button
