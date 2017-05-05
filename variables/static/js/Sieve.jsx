@@ -1084,9 +1084,14 @@ class SieveComponent extends React.Component {
           value={this.props.name}
         />
         <p>{final.render()}</p>
-        {this.props.changed ?
-          <p><Button onClick={this.saveVariable}>Save Changes</Button></p>
-        : null}
+        <p>
+          {this.props.changed ?
+            <button className='button button-secondary' onClick={this.saveVariable}>Save Changes</button>
+          : null}
+          {this.props.id ?
+            <a href={`/admin/variables/delete/${this.props.id}`} className='button serious'>Delete</a>
+          : null}
+        </p>
       </div>;
     } else {
       final_render = <p>Use controls to build and use the variable</p>;
