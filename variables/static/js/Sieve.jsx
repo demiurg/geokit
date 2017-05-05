@@ -500,6 +500,22 @@ class RasterTable extends React.Component {
 }
 
 class RasterDataSource extends React.Component {
+
+  constructor(){
+    super();
+    this.cal_format = {
+      toDisplay: function (date, format, language){
+        var userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        var d = new Date(date.getTime() + userTimezoneOffset);
+        return dateToDOY(d);
+      },
+      toValue: function (date, format, language){
+        var d = new Date(date);
+        return d;
+      }
+    }
+  }
+
   onSave() {
     if (this.props.errors.rasterDataName || this.props.errors.rasterDate)
       return; // Do not submit if there are errors
@@ -567,26 +583,16 @@ class RasterDataSource extends React.Component {
   }
 
   componentDidMount(){
-    var format = {
-      toDisplay: function (date, format, language){
-        var userTimezoneOffset = date.getTimezoneOffset() * 60000;
-        var d = new Date(date.getTime() + userTimezoneOffset);
-        return dateToDOY(d);
-      },
-      toValue: function (date, format, language){
-        var d = new Date(date);
-        return d;
-      }
-    }
-
     $(this.startpicker).datepicker({
-      format: format
+      format: this.cal_format,
+      endDate: new Date()
      }).on("changeDate", (e) => {
       this.validate();
      });
 
     $(this.endpicker).datepicker({
-      format: format
+      format: this.cal_format,
+      endDate: new Date()
      }).on("changeDate", (e) => {
       this.validate();
      });
@@ -633,6 +639,23 @@ class RasterDataSource extends React.Component {
       "end_date": r.end_date,
     };
     var defaultName = this.generateName(raster);
+
+    // $(this.startpicker).datepicker({
+    //   format: this.cal_format,
+    //   startDate: r.start_date,
+    //   endDate: r.end_date,
+    //  }).on("changeDate", (e) => {
+    //   this.validate();
+    //  });
+
+    // $(this.endpicker).datepicker({
+    //   format: this.cal_format,
+    //   startDate: r.start_date,
+    //   endDate: r.end_date,
+    //  }).on("changeDate", (e) => {
+    //   this.validate();
+    //  });
+
     var data = Object.assign(
       {},
       this.props.node_editor.raster_data,
