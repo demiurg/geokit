@@ -75,17 +75,24 @@ function getCookie(name) {
 <script>
 
 window.redirect_after_save = "{% url 'variables:index' %}";
-var csrf_token = "{{ csrf_token }}";
-var raster_catalog = {{ raster_catalog|safe }};
-var sieve_props = {};
-var NODE_TYPES = {{ node_types|safe }};
+window.csrf_token = "{{ csrf_token }}";
+window.raster_catalog = {{ raster_catalog|safe }};
+window.sieve_props = {};
+window.NODE_TYPES = {{ node_types|safe }};
 {% if variable %}
-sieve_props = {
+window.input_variables = {{ variable.input_variables_json|safe }};
+window.sieve_props = {
   description: "{{ variable.description }}",
   created: "{{ variable.created }}",
   modified: "{{ variable.modified }}",
   //spatialDomain: {{ variable.spatial_domain.pk|default_if_none:"" }},
-  input_variables: {{ variable.input_variables_json|safe }} ,
+  input_variables: input_variables.map(function(item, i){
+    if(item[0] == 'named'){
+      return item;
+    }else{
+      return ['named', [item['name'], item['node']]];
+    }
+  }),
   id: "{{ variable.pk }}",
   name: "{{ variable.name }}",
   tree: {{ variable.tree_json|safe }}

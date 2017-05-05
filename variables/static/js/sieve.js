@@ -150,6 +150,10 @@ function validateRaster(raster) {
   return null;
 }
 
+function receiveInputVariables(input_variables) {
+  return function (dispatch) {};
+}
+
 function addInputVariable(variable) {
   var node = variable.node;
   var inputType = node[0];
@@ -176,11 +180,11 @@ function addInputVariable(variable) {
   }
 }
 
-function editInputVariable(variable, node, i) {
+function editInputVariable(node, i) {
   return function (dispatch) {
     if (node.type == "join") {
       dispatch(editTabularData({
-        name: variable.name,
+        name: node.name,
         source1: node.left,
         source2: node.right,
         isEditing: true,
@@ -189,7 +193,7 @@ function editInputVariable(variable, node, i) {
     } else if (node.type == "raster") {
       dispatch(updateSpatialDomain(node.layer.id));
       dispatch(editRasterData({
-        name: variable.name,
+        name: node.name,
         raster: node.product,
         temporalRangeStart: node.start,
         temporalRangeEnd: node.end,
@@ -198,10 +202,10 @@ function editInputVariable(variable, node, i) {
       }));
     } else {
       dispatch(editExpressionData({
-        name: variable.name,
+        name: node.name,
         index: i,
         isEditing: true,
-        node: variable.node
+        node: node
       }));
     }
   };
@@ -1662,10 +1666,7 @@ function sieveApp() {
       return Object.assign({}, state, {
         changed: true,
         errors: Object.assign({}, state.errors, errors),
-        input_variables: input_variables(state.input_variables, action),
-        editingTabularData: false,
-        editingRasterData: false,
-        editingExpressionData: false
+        input_variables: input_variables(state.input_variables, action)
       });
     case ERROR_INPUT_VARIABLE:
       var errors = {};
@@ -2580,11 +2581,11 @@ var VariableTable = function (_React$Component7) {
       args[_key] = arguments[_key];
     }
 
-    return _ret = (_temp = (_this12 = _possibleConstructorReturn(this, _React$Component7.call.apply(_React$Component7, [this].concat(args))), _this12), _this12.useInputVariable = function (item) {
+    return _ret = (_temp = (_this12 = _possibleConstructorReturn(this, _React$Component7.call.apply(_React$Component7, [this].concat(args))), _this12), _this12.useInputVariable = function (item, name) {
       if (!_this12.props.name) {
-        _this12.props.updateName(item.name);
+        _this12.props.updateName(name);
       }
-      _this12.props.onUpdateTree(item.node);
+      _this12.props.onUpdateTree(item);
     }, _temp), _possibleConstructorReturn(_this12, _ret);
   }
 
@@ -2622,24 +2623,24 @@ var VariableTable = function (_React$Component7) {
           "tbody",
           null,
           this.props.input_variables.map(function (item, i) {
-            var node_object = treeToNode(item.node);
+            var node = treeToNode(item);
             return React.createElement(
               "tr",
               null,
               React.createElement(
                 "td",
                 null,
-                item.name
+                node.name
               ),
               React.createElement(
                 "td",
                 null,
-                node_object.name
+                node.type
               ),
               React.createElement(
                 "td",
                 null,
-                node_object.dimensions
+                node.dimensions
               ),
               React.createElement(
                 "td",
@@ -2647,14 +2648,14 @@ var VariableTable = function (_React$Component7) {
                 React.createElement(
                   Button,
                   { onClick: function onClick() {
-                      return _this13.useInputVariable(item);
+                      return _this13.useInputVariable(item, node.name);
                     } },
                   "Use"
                 ),
                 React.createElement(
                   Button,
                   { onClick: function onClick() {
-                      return _this13.props.onEditInputVariable(item, node_object, i);
+                      return _this13.props.onEditInputVariable(node, i);
                     } },
                   "Edit"
                 )
@@ -2964,7 +2965,8 @@ function sieve(el) {
   store.dispatch(fetchLayers());
   store.dispatch(fetchTables());
   store.dispatch(fetchVariables());
-  store.dispatch(receiveRasterCatalog(raster_catalog));
+  store.dispatch(receiveRasterCatalog(window.raster_catalog));
+  store.dispatch(receiveInputVariables(window.sieve_props.input_variables));
 
   ReactDOM.render(React.createElement(ReactRedux.Provider, {
     children: React.createElement(Sieve, sieve_props),
@@ -3056,7 +3058,6 @@ var DataNode = function () {
         if (_this.isDataNode(o)) {
           return o.render();
         } else {
-          console.log(o, _this);
           return o + ", ";
         }
       });
@@ -3352,13 +3353,10 @@ var NamedTree = function (_DataNode10) {
   function NamedTree(args) {
     _classCallCheck(this, NamedTree);
 
-    if (args.name && args.node) {
-      var _this11 = _possibleConstructorReturn(this, _DataNode10.call(this, ['named', [args.name, args.node]], ['operand'], 1));
-    } else {
-      var _this11 = _possibleConstructorReturn(this, _DataNode10.call(this, args, ['operand'], 1));
-    }
-    _this11._name = _this11.operand[0];
-    return _possibleConstructorReturn(_this11);
+    var _this11 = _possibleConstructorReturn(this, _DataNode10.call(this, args, ['name_operand', 'operand'], 2));
+
+    _this11._name = _this11.name_operand;
+    return _this11;
   }
 
   NamedTree.prototype.render = function render() {
@@ -3376,6 +3374,11 @@ var NamedTree = function (_DataNode10) {
     get: function get() {
       var type = this.operand.type;
       return type ? type : "named";
+    }
+  }, {
+    key: "dimensions",
+    get: function get() {
+      return this.operand.dimensions;
     }
   }]);
 

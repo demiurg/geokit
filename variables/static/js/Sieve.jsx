@@ -82,9 +82,6 @@ function sieveApp(state=initialState, action){
         changed: true,
         errors: Object.assign({}, state.errors, errors),
         input_variables: input_variables(state.input_variables, action),
-        editingTabularData: false,
-        editingRasterData: false,
-        editingExpressionData: false
       });
     case ERROR_INPUT_VARIABLE:
       var errors = {};
@@ -861,11 +858,11 @@ class ExpressionEditor extends React.Component {
 }
 
 class VariableTable extends React.Component {
-  useInputVariable = (item) => {
+  useInputVariable = (item, name) => {
     if (!this.props.name){
-      this.props.updateName(item.name)
+      this.props.updateName(name)
     }
-    this.props.onUpdateTree(item.node);
+    this.props.onUpdateTree(item);
   }
 
   render() {
@@ -880,19 +877,19 @@ class VariableTable extends React.Component {
             </tr>
           </thead>
           <tbody>
-            {this.props.input_variables.map( (item, i) => {
-              var node_object = treeToNode(item.node);
+            {this.props.input_variables.map((item, i) => {
+              var node = treeToNode(item);
               return (
                 <tr>
-                  <td>{item.name}</td>
-                  <td>{node_object.name}</td>
-                  <td>{node_object.dimensions}</td>
+                  <td>{node.name}</td>
+                  <td>{node.type}</td>
+                  <td>{node.dimensions}</td>
                   <td>
                     <Button onClick={
-                      () => this.useInputVariable(item)
+                      () => this.useInputVariable(item, node.name)
                     }>Use</Button>
                     <Button onClick={
-                      () => this.props.onEditInputVariable(item, node_object, i)
+                      () => this.props.onEditInputVariable(node, i)
                     }>Edit</Button>
                   </td>
                   <td>
@@ -1078,7 +1075,8 @@ function sieve(el){
   store.dispatch(fetchLayers());
   store.dispatch(fetchTables());
   store.dispatch(fetchVariables());
-  store.dispatch(receiveRasterCatalog(raster_catalog));
+  store.dispatch(receiveRasterCatalog(window.raster_catalog));
+  store.dispatch(receiveInputVariables(window.sieve_props.input_variables));
 
   ReactDOM.render(
     React.createElement(
