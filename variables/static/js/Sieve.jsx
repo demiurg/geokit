@@ -888,9 +888,11 @@ class VariableTable extends React.Component {
                   <td>{node_object.name}</td>
                   <td>{node_object.dimensions}</td>
                   <td>
-                    <Button onClick={this.useInputVariable}>Use</Button>
                     <Button onClick={
-                      this.props.onEditInputVariable.bind(this, item, node_object, i)
+                      () => this.useInputVariable(item)
+                    }>Use</Button>
+                    <Button onClick={
+                      () => this.props.onEditInputVariable(item, node_object, i)
                     }>Edit</Button>
                   </td>
                   <td>
@@ -1014,18 +1016,18 @@ class SieveComponent extends React.Component {
   }
 
   render() {
-    var final = treeToNode(this.props.tree);
     var final_render = null;
-    if (this.props.tree.length && final) {
+    if (this.props.tree) {
+      var final = treeToNode(this.props.tree);
       final_render = <div>
         <input
           ref={(ref)=>{this.endpicker=ref}}
           name="name" type="text"
           value={this.props.name}
         />
-        {final.render()}
+        <p>{final.render()}</p>
         {this.props.changed ?
-          <button onClick={this.saveVariable}>Save Changes</button>
+          <p><Button onClick={this.saveVariable}>Save Changes</Button></p>
         : null}
       </div>;
     } else {
@@ -1050,7 +1052,7 @@ class SieveComponent extends React.Component {
         </Row>
         <Row className="show-grid">
           <Col xs={11}>
-            <Panel header={<h3>Final {final.dimensions} variable</h3>}>
+            <Panel header={<h3>Final {final ? final.dimensions : ''} variable</h3>}>
               {final_render}
             </Panel>
           </Col>
