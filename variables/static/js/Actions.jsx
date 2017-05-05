@@ -184,6 +184,12 @@ function validateRaster(raster){
   return null;
 }
 
+function receiveInputVariables(input_variables) {
+  return function(dispatch){
+
+  }
+}
+
 function addInputVariable(variable){
   var node= variable.node;
   var inputType = node[0];
@@ -210,11 +216,11 @@ function addInputVariable(variable){
   }
 }
 
-function editInputVariable(variable, node, i){
+function editInputVariable(node, i){
   return function(dispatch){
     if (node.type == "join"){
       dispatch(editTabularData({
-        name: variable.name,
+        name: node.name,
         source1: node.left,
         source2: node.right,
         isEditing: true,
@@ -223,7 +229,7 @@ function editInputVariable(variable, node, i){
     } else if (node.type == "raster"){
       dispatch(updateSpatialDomain(node.layer.id));
       dispatch(editRasterData({
-        name: variable.name,
+        name: node.name,
         raster: node.product,
         temporalRangeStart: node.start,
         temporalRangeEnd: node.end,
@@ -232,10 +238,10 @@ function editInputVariable(variable, node, i){
       }));
     } else {
       dispatch(editExpressionData({
-        name: variable.name,
+        name: node.name,
         index: i,
         isEditing: true,
-        node: variable.node
+        node: node
       }));
     }
   }

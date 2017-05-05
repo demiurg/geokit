@@ -180,6 +180,10 @@ function validateRaster(raster) {
   return null;
 }
 
+function receiveInputVariables(input_variables) {
+  return function (dispatch) {};
+}
+
 function addInputVariable(variable) {
   var node = variable.node;
   var inputType = node[0];
@@ -206,11 +210,11 @@ function addInputVariable(variable) {
   }
 }
 
-function editInputVariable(variable, node, i) {
+function editInputVariable(node, i) {
   return function (dispatch) {
     if (node.type == "join") {
       dispatch(editTabularData({
-        name: variable.name,
+        name: node.name,
         source1: node.left,
         source2: node.right,
         isEditing: true,
@@ -219,7 +223,7 @@ function editInputVariable(variable, node, i) {
     } else if (node.type == "raster") {
       dispatch(updateSpatialDomain(node.layer.id));
       dispatch(editRasterData({
-        name: variable.name,
+        name: node.name,
         raster: node.product,
         temporalRangeStart: node.start,
         temporalRangeEnd: node.end,
@@ -228,10 +232,10 @@ function editInputVariable(variable, node, i) {
       }));
     } else {
       dispatch(editExpressionData({
-        name: variable.name,
+        name: node.name,
         index: i,
         isEditing: true,
-        node: variable.node
+        node: node
       }));
     }
   };
@@ -317,7 +321,7 @@ function recieveVariable(json) {
 }
 
 function updateErrors() {
-  var errors = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { "name": null, "tree": null };
+  var errors = arguments.length <= 0 || arguments[0] === undefined ? { "name": null, "tree": null } : arguments[0];
 
   return {
     type: UPDATE_ERRORS,
@@ -326,7 +330,7 @@ function updateErrors() {
 }
 
 function updateModified() {
-  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
   return {
     type: UPDATE_MODIFIED,
@@ -335,7 +339,7 @@ function updateModified() {
 }
 
 function updateCreated() {
-  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
   return {
     type: UPDATE_CREATED,
@@ -439,7 +443,7 @@ function editNothing() {
 }
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1255,7 +1259,7 @@ var FilterListItem = function (_React$Component12) {
           {
             bsSize: "xsmall",
             onClick: this.props.removeFilter.bind(null, this.props.filter.key) },
-          "\xA0x\xA0"
+          " x "
         )
       )
     );
@@ -1370,12 +1374,12 @@ var Aggregate = function (_React$Component13) {
 'use strict';
 
 function layers() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     name: 'Layers',
     isFetching: false,
     didInvalidate: false,
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1397,12 +1401,12 @@ function layers() {
 }
 
 function tables() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     name: 'Tables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1424,9 +1428,9 @@ function tables() {
 }
 
 function rasterCatalog() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1441,12 +1445,12 @@ function rasterCatalog() {
 }
 
 function variables() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     name: 'Variables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1468,7 +1472,7 @@ function variables() {
 }
 
 function input_variables() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  var state = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1501,7 +1505,7 @@ function separateOperands(operands, tree) {
 }
 
 function tree() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1532,7 +1536,7 @@ function tree() {
 function operandSelections() {
   var _Object$assign;
 
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1551,7 +1555,7 @@ var EDITING_RASTER_DATA = 'EDITING_RASTER_DATA';
 var EDITING_EXPRESSION = 'EDITING_EXPRESSION';
 
 function node_editor() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { 'mode': DEFAULT };
+  var state = arguments.length <= 0 || arguments[0] === undefined ? { 'mode': DEFAULT } : arguments[0];
   var action = arguments[1];
 
   switch (action.mode) {
@@ -1592,26 +1596,26 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var _ReactBootstrap = ReactBootstrap,
-    Panel = _ReactBootstrap.Panel,
-    ButtonGroup = _ReactBootstrap.ButtonGroup,
-    ButtonToolbar = _ReactBootstrap.ButtonToolbar,
-    ButtonInput = _ReactBootstrap.ButtonInput,
-    Button = _ReactBootstrap.Button,
-    Row = _ReactBootstrap.Row,
-    Col = _ReactBootstrap.Col,
-    Alert = _ReactBootstrap.Alert,
-    Tabs = _ReactBootstrap.Tabs,
-    Tab = _ReactBootstrap.Tab,
-    DropdownButton = _ReactBootstrap.DropdownButton,
-    MenuItem = _ReactBootstrap.MenuItem,
-    Table = _ReactBootstrap.Table,
-    Glyphicon = _ReactBootstrap.Glyphicon,
-    Modal = _ReactBootstrap.Modal,
-    FormControl = _ReactBootstrap.FormControl,
-    ControlLabel = _ReactBootstrap.ControlLabel,
-    FormGroup = _ReactBootstrap.FormGroup,
-    HelpBlock = _ReactBootstrap.HelpBlock;
+var _ReactBootstrap = ReactBootstrap;
+var Panel = _ReactBootstrap.Panel;
+var ButtonGroup = _ReactBootstrap.ButtonGroup;
+var ButtonToolbar = _ReactBootstrap.ButtonToolbar;
+var ButtonInput = _ReactBootstrap.ButtonInput;
+var Button = _ReactBootstrap.Button;
+var Row = _ReactBootstrap.Row;
+var Col = _ReactBootstrap.Col;
+var Alert = _ReactBootstrap.Alert;
+var Tabs = _ReactBootstrap.Tabs;
+var Tab = _ReactBootstrap.Tab;
+var DropdownButton = _ReactBootstrap.DropdownButton;
+var MenuItem = _ReactBootstrap.MenuItem;
+var Table = _ReactBootstrap.Table;
+var Glyphicon = _ReactBootstrap.Glyphicon;
+var Modal = _ReactBootstrap.Modal;
+var FormControl = _ReactBootstrap.FormControl;
+var ControlLabel = _ReactBootstrap.ControlLabel;
+var FormGroup = _ReactBootstrap.FormGroup;
+var HelpBlock = _ReactBootstrap.HelpBlock;
 
 /* app */
 
@@ -1634,7 +1638,7 @@ var initialState = Object.assign({
 }, window.sieve_props);
 
 function sieveApp() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
+  var state = arguments.length <= 0 || arguments[0] === undefined ? initialState : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1692,10 +1696,7 @@ function sieveApp() {
       return Object.assign({}, state, {
         changed: true,
         errors: Object.assign({}, state.errors, errors),
-        input_variables: input_variables(state.input_variables, action),
-        editingTabularData: false,
-        editingRasterData: false,
-        editingExpressionData: false
+        input_variables: input_variables(state.input_variables, action)
       });
     case ERROR_INPUT_VARIABLE:
       var errors = {};
@@ -1954,7 +1955,7 @@ var TabularDataSource = function (_React$Component2) {
   };
 
   TabularDataSource.prototype.generateName = function generateName(source1, source2) {
-    var var_list = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+    var var_list = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
 
     if (source1.name == source2.name) {
       var name = source1.name + '-' + source1.field + '-' + source2.field;
@@ -2266,7 +2267,7 @@ var RasterDataSource = function (_React$Component4) {
   };
 
   RasterDataSource.prototype.generateName = function generateName(raster) {
-    var var_list = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+    var var_list = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
 
     var name = raster.id.replace(/_/g, "-");
     var i = 1;
@@ -2415,7 +2416,7 @@ var RasterDataSource = function (_React$Component4) {
           React.createElement(
             ControlLabel,
             null,
-            "Temporal\xA0Range"
+            "Temporal Range"
           ),
           React.createElement(
             "div",
@@ -2573,7 +2574,7 @@ var ExpressionEditor = function (_React$Component7) {
   };
 
   ExpressionEditor.prototype.generateName = function generateName() {
-    var var_list = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+    var var_list = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
     var i = 1;
     var input_variables = [];
@@ -2721,11 +2722,11 @@ var VariableTable = function (_React$Component8) {
       args[_key] = arguments[_key];
     }
 
-    return _ret = (_temp = (_this14 = _possibleConstructorReturn(this, _React$Component8.call.apply(_React$Component8, [this].concat(args))), _this14), _this14.useInputVariable = function (item) {
+    return _ret = (_temp = (_this14 = _possibleConstructorReturn(this, _React$Component8.call.apply(_React$Component8, [this].concat(args))), _this14), _this14.useInputVariable = function (item, name) {
       if (!_this14.props.name) {
-        _this14.props.updateName(item.name);
+        _this14.props.updateName(name);
       }
-      _this14.props.onUpdateTree(item.node);
+      _this14.props.onUpdateTree(item);
     }, _temp), _possibleConstructorReturn(_this14, _ret);
   }
 
@@ -2763,24 +2764,24 @@ var VariableTable = function (_React$Component8) {
           "tbody",
           null,
           this.props.input_variables.map(function (item, i) {
-            var node_object = treeToNode(item.node);
+            var node = treeToNode(item);
             return React.createElement(
               "tr",
               null,
               React.createElement(
                 "td",
                 null,
-                item.name
+                node.name
               ),
               React.createElement(
                 "td",
                 null,
-                node_object.name
+                node.type
               ),
               React.createElement(
                 "td",
                 null,
-                node_object.dimensions
+                node.dimensions
               ),
               React.createElement(
                 "td",
@@ -2788,14 +2789,14 @@ var VariableTable = function (_React$Component8) {
                 React.createElement(
                   Button,
                   { onClick: function onClick() {
-                      return _this15.useInputVariable(item);
+                      return _this15.useInputVariable(item, node.name);
                     } },
                   "Use"
                 ),
                 React.createElement(
                   Button,
                   { onClick: function onClick() {
-                      return _this15.props.onEditInputVariable(item, node_object, i);
+                      return _this15.props.onEditInputVariable(node, i);
                     } },
                   "Edit"
                 )
@@ -3025,15 +3026,20 @@ var SieveComponent = function (_React$Component10) {
           null,
           final.render()
         ),
-        this.props.changed ? React.createElement(
+        React.createElement(
           "p",
           null,
-          React.createElement(
-            Button,
-            { onClick: this.saveVariable },
+          this.props.changed ? React.createElement(
+            "button",
+            { className: "button button-secondary", onClick: this.saveVariable },
             "Save Changes"
-          )
-        ) : null
+          ) : null,
+          this.props.id ? React.createElement(
+            "a",
+            { href: "/admin/variables/delete/" + this.props.id, className: "button serious" },
+            "Delete"
+          ) : null
+        )
       );
     } else {
       final_render = React.createElement(
@@ -3105,7 +3111,8 @@ function sieve(el) {
   store.dispatch(fetchLayers());
   store.dispatch(fetchTables());
   store.dispatch(fetchVariables());
-  store.dispatch(receiveRasterCatalog(raster_catalog));
+  store.dispatch(receiveRasterCatalog(window.raster_catalog));
+  store.dispatch(receiveInputVariables(window.sieve_props.input_variables));
 
   ReactDOM.render(React.createElement(ReactRedux.Provider, {
     children: React.createElement(Sieve, sieve_props),
@@ -3197,7 +3204,6 @@ var DataNode = function () {
         if (_this.isDataNode(o)) {
           return o.render();
         } else {
-          console.log(o, _this);
           return o + ", ";
         }
       });
@@ -3400,7 +3406,7 @@ var RasterOperator = function (_DataNode7) {
       null,
       "Raster product ",
       this.product.name,
-      "\xA0 using ",
+      "  using ",
       this.layer.render(),
       "in the time span of ",
       this.range
@@ -3439,7 +3445,7 @@ var SourceOperator = function (_DataNode8) {
       "span",
       null,
       o.type + "/" + o.name + (o.field ? "/" + o.field : ""),
-      "\xA0"
+      " "
     );
   };
 
@@ -3493,13 +3499,10 @@ var NamedTree = function (_DataNode10) {
   function NamedTree(args) {
     _classCallCheck(this, NamedTree);
 
-    if (args.name && args.node) {
-      var _this11 = _possibleConstructorReturn(this, _DataNode10.call(this, ['named', [args.name, args.node]], ['operand'], 1));
-    } else {
-      var _this11 = _possibleConstructorReturn(this, _DataNode10.call(this, args, ['operand'], 1));
-    }
-    _this11._name = _this11.operand[0];
-    return _possibleConstructorReturn(_this11);
+    var _this11 = _possibleConstructorReturn(this, _DataNode10.call(this, args, ['name_operand', 'operand'], 2));
+
+    _this11._name = _this11.name_operand;
+    return _this11;
   }
 
   NamedTree.prototype.render = function render() {
@@ -3517,6 +3520,11 @@ var NamedTree = function (_DataNode10) {
     get: function get() {
       var type = this.operand.type;
       return type ? type : "named";
+    }
+  }, {
+    key: "dimensions",
+    get: function get() {
+      return this.operand.dimensions;
     }
   }]);
 
