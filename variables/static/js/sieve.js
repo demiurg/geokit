@@ -2651,7 +2651,7 @@ var VariableTable = function (_React$Component7) {
                 ),
                 React.createElement(
                   Button,
-                  { onClick: _this13.props.onEditInputVariable(_this13, item, node_object, i) },
+                  { onClick: _this13.props.onEditInputVariable.bind(_this13, item, node_object, i) },
                   "Edit"
                 )
               ),

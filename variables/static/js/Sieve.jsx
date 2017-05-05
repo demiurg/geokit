@@ -890,7 +890,7 @@ class VariableTable extends React.Component {
                   <td>
                     <Button onClick={this.useInputVariable}>Use</Button>
                     <Button onClick={
-                      this.props.onEditInputVariable(this, item, node_object, i)
+                      this.props.onEditInputVariable.bind(this, item, node_object, i)
                     }>Edit</Button>
                   </td>
                   <td>
