@@ -574,24 +574,38 @@ def delete(request, layer_name):
     layer = get_object_or_404(Layer, pk=layer_name)
 
     variables_to_delete = []
+    pages_to_delete = set()
 
     for v in Variable.objects.all():
         if layer.pk in v.get_layers():
             variables_to_delete.append(v)
+
+    for v in variables_to_delete:
+        for page in v.get_pages():
+            pages_to_delete.add(page)
 
     if request.method == 'POST':
         with transaction.atomic():
             for v in variables_to_delete:
                 v.delete()
 
+            for p in pages_to_delete:
+                p.delete()
+
             layer.delete()
 
-        messages.success(request, _("Layer '{0}' deleted").format(layer_name))
+        message = "Layer {0} deleted.".format(layer_name)
+        if variables_to_delete:
+            message = message + " Variables {0} deleted.".format(', '.join([v.name for v in variables_to_delete]))
+        if pages_to_delete:
+            message = message + " Pages {0} deleted.".format(', '.join([p.title for p in pages_to_delete]))
+        messages.success(request, message)
         return redirect('layers:index')
 
     return render(request, "layers/confirm_delete.html", {
         'layer': layer,
-        'variables_to_delete': variables_to_delete
+        'variables_to_delete': variables_to_delete,
+        'pages_to_delete': pages_to_delete,
     })
 
 

@@ -1,0 +1,26 @@
+{% extends "wagtailadmin/base.html" %}
+
+{% block titletag %}Delete Variable{% endblock %}
+
+{% block content %}
+
+{% include "wagtailadmin/shared/header.html" with title="Variables" add_link="variables:add" add_text="Add Variable" icon="placeholder" %}
+
+<div class="nice-padding">
+    <p>Are you sure you want to delete this variable?</p>
+
+    <p>The following pages have visualizations that depend on this variable and will also be deleted:</p>
+
+    <ul>
+        {% for p in pages_to_delete %}
+        <li><a href="{% url 'wagtailadmin_pages:edit' p.pk %}">{{ p.title }}</a></li>
+        {% endfor %}
+    </ul>
+
+    <form action="{% url 'variables:delete' variable.pk %}" method="POST">
+        {% csrf_token %}
+        <input type="submit" value="Delete" class="button serious" />
+        <a href="{% url 'variables:index' %}" class="button button-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

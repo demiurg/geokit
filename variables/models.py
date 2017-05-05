@@ -3,6 +3,9 @@ from __future__ import unicode_literals
 from django.db import models
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.utils.functional import cached_property
+
+from wagtail.wagtailcore.models import Page
+
 from layers.models import Layer
 from data import treeToNode
 import json
@@ -72,6 +75,24 @@ class Variable(models.Model):
 
     def get_rasters(self):
         return self.root.get_rasters()
+
+    def get_pages(self):
+        dependent_pages = set()
+
+        for page in Page.objects.all():
+            if page not in dependent_pages:
+                page_revision = page.get_latest_revision()
+                if page_revision:
+                    page_content = json.loads(page_revision.content_json)
+                    page_body = json.loads(page_content['body'])
+
+                    for block in page_body:
+                        if block['type'] == 'visualization':
+                            for vis in block['value']['visualizations']:
+                                if vis['variable'] == self.pk:
+                                    dependent_pages.add(page)
+
+        return dependent_pages
 
     @cached_property
     def bounds(self):
