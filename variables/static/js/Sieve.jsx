@@ -640,21 +640,11 @@ class RasterDataSource extends React.Component {
     };
     var defaultName = this.generateName(raster);
 
-    // $(this.startpicker).datepicker({
-    //   format: this.cal_format,
-    //   startDate: r.start_date,
-    //   endDate: r.end_date,
-    //  }).on("changeDate", (e) => {
-    //   this.validate();
-    //  });
+    $(this.startpicker).datepicker('setStartDate', r.start_date);
+    $(this.startpicker).datepicker('setEndDate', r.end_date);
 
-    // $(this.endpicker).datepicker({
-    //   format: this.cal_format,
-    //   startDate: r.start_date,
-    //   endDate: r.end_date,
-    //  }).on("changeDate", (e) => {
-    //   this.validate();
-    //  });
+    $(this.endpicker).datepicker('setStartDate', r.start_date);
+    $(this.endpicker).datepicker('setEndDate', r.end_date);
 
     var data = Object.assign(
       {},

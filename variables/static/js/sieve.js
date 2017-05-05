@@ -2351,21 +2351,11 @@ var RasterDataSource = function (_React$Component4) {
     };
     var defaultName = this.generateName(raster);
 
-    // $(this.startpicker).datepicker({
-    //   format: this.cal_format,
-    //   startDate: r.start_date,
-    //   endDate: r.end_date,
-    //  }).on("changeDate", (e) => {
-    //   this.validate();
-    //  });
+    $(this.startpicker).datepicker('setStartDate', r.start_date);
+    $(this.startpicker).datepicker('setEndDate', r.end_date);
 
-    // $(this.endpicker).datepicker({
-    //   format: this.cal_format,
-    //   startDate: r.start_date,
-    //   endDate: r.end_date,
-    //  }).on("changeDate", (e) => {
-    //   this.validate();
-    //  });
+    $(this.endpicker).datepicker('setStartDate', r.start_date);
+    $(this.endpicker).datepicker('setEndDate', r.end_date);
 
     var data = Object.assign({}, this.props.node_editor.raster_data, {
       raster: raster,
