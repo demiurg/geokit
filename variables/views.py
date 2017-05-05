@@ -16,6 +16,7 @@ from variables.data import NODE_TYPES, JobIncompleteException, rpc_con
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.functional import curry
+from datetime import date, timedelta
 import json
 from psycopg2.extras import DateRange
 
@@ -43,6 +44,10 @@ def index(request):
 
 def add(request):
     raster_catalog = get_raster_catalog()
+    for r in raster_catalog:
+        r['start_date'] = r['start_date'].date();
+        r['end_date'] = date.today() - timedelta(days=r['latency']);
+        print(r)
     return render(request, 'variables/sieve.html', {
         'raster_catalog': json.dumps(raster_catalog),
         'node_types': json.dumps(NODE_TYPES.keys())

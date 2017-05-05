@@ -2074,13 +2074,129 @@ var dateToDOY = function dateToDOY(date) {
   return year.toString() + "-" + doyStr;
 };
 
-var RasterDataSource = function (_React$Component3) {
-  _inherits(RasterDataSource, _React$Component3);
+var RasterTable = function (_React$Component3) {
+  _inherits(RasterTable, _React$Component3);
+
+  function RasterTable() {
+    _classCallCheck(this, RasterTable);
+
+    return _possibleConstructorReturn(this, _React$Component3.apply(this, arguments));
+  }
+
+  RasterTable.prototype.selectRaster = function selectRaster(event, raster) {
+    event.persist();
+    $(event.target).text("Selected");
+    $(event.target).text("Selected");
+    var tr = event.target.closest('tr');
+    $(tr).addClass('active');
+    $(tr).siblings().find($("button")).text("Select");
+
+    this.props.updateRaster(raster);
+  };
+
+  RasterTable.prototype.render = function render() {
+    var _this6 = this;
+
+    return React.createElement(
+      Table,
+      { striped: true },
+      React.createElement(
+        "thead",
+        null,
+        React.createElement(
+          "tr",
+          null,
+          React.createElement(
+            "th",
+            null,
+            "Description"
+          ),
+          React.createElement(
+            "th",
+            null,
+            "Driver"
+          ),
+          React.createElement(
+            "th",
+            null,
+            "Product"
+          ),
+          React.createElement(
+            "th",
+            null,
+            "Available From"
+          ),
+          React.createElement(
+            "th",
+            null,
+            "Available To"
+          ),
+          React.createElement(
+            "th",
+            null,
+            "Select"
+          )
+        )
+      ),
+      React.createElement(
+        "tbody",
+        null,
+        this.props.raster_catalog.items.map(function (r, i) {
+          return React.createElement(
+            "tr",
+            { key: i },
+            React.createElement(
+              "td",
+              null,
+              r.description
+            ),
+            React.createElement(
+              "td",
+              null,
+              r.driver
+            ),
+            React.createElement(
+              "td",
+              null,
+              r.product
+            ),
+            React.createElement(
+              "td",
+              null,
+              r.start_date
+            ),
+            React.createElement(
+              "td",
+              null,
+              r.end_date
+            ),
+            React.createElement(
+              "td",
+              null,
+              React.createElement(
+                Button,
+                { onClick: function onClick(event) {
+                    return _this6.selectRaster(event, r);
+                  } },
+                "Select"
+              )
+            )
+          );
+        })
+      )
+    );
+  };
+
+  return RasterTable;
+}(React.Component);
+
+var RasterDataSource = function (_React$Component4) {
+  _inherits(RasterDataSource, _React$Component4);
 
   function RasterDataSource() {
     _classCallCheck(this, RasterDataSource);
 
-    return _possibleConstructorReturn(this, _React$Component3.apply(this, arguments));
+    return _possibleConstructorReturn(this, _React$Component4.apply(this, arguments));
   }
 
   RasterDataSource.prototype.onSave = function onSave() {
@@ -2143,7 +2259,7 @@ var RasterDataSource = function (_React$Component3) {
   };
 
   RasterDataSource.prototype.componentDidMount = function componentDidMount() {
-    var _this6 = this;
+    var _this8 = this;
 
     var format = {
       toDisplay: function toDisplay(date, format, language) {
@@ -2160,22 +2276,22 @@ var RasterDataSource = function (_React$Component3) {
     $(this.startpicker).datepicker({
       format: format
     }).on("changeDate", function (e) {
-      _this6.validate();
+      _this8.validate();
     });
 
     $(this.endpicker).datepicker({
       format: format
     }).on("changeDate", function (e) {
-      _this6.validate();
+      _this8.validate();
     });
   };
 
-  RasterDataSource.prototype.componentWillReceiveProps = function componentWillReceiveProps(newProps) {
-    if (!newProps.rasterData.defaultName || newProps.input_variables != this.props.input_variables) {
-      var raster = newProps.raster_catalog.items[0];
+  RasterDataSource.prototype.componentWillReceiveProps = function componentWillReceiveProps(new_props) {
+    if (!new_props.node_editor.raster_data.defaultName || new_props.input_variables != this.props.input_variables) {
+      var raster = new_props.raster_catalog.items[0];
       var raster2 = Object.assign({}, raster, { id: raster.name });
-      var name = this.generateName(raster2, newProps.input_variables);
-      var data = Object.assign({}, newProps.rasterData, { defaultName: name });
+      var name = this.generateName(raster2, new_props.input_variables);
+      var data = Object.assign({}, new_props.node_editor.raster_data, { defaultName: name });
       if (!this.props.node_editor.raster_data.raster) {
         data.raster = raster;
       }
@@ -2193,28 +2309,35 @@ var RasterDataSource = function (_React$Component3) {
     }
   };
 
-  RasterDataSource.prototype.validate = function validate() {
-    var form = $(this.form).serializeArray();
-    var name = form[3]['value'];
-    if (name.length > 0) this.props.onNameChange(name, "rasterDataName");
-    var raster = JSON.parse(form[0]['value']);
-    var temporalRangeStart = form[1]['value'];
-    var temporalRangeEnd = form[2]['value'];
+  RasterDataSource.prototype.updateRaster = function updateRaster(r) {
+    var raster = { "name": r.description, "id": r.name };
     var defaultName = this.generateName(raster);
-
     var data = Object.assign({}, this.props.node_editor.raster_data, {
-      name: name,
       raster: raster,
-      temporalRangeStart: temporalRangeStart,
-      temporalRangeEnd: temporalRangeEnd,
       defaultName: defaultName
     });
 
     this.props.onEditRasterData(data);
   };
 
+  RasterDataSource.prototype.validate = function validate() {
+    var form = $(this.form).serializeArray();
+    var name = form[2]['value'];
+    if (name.length > 0) this.props.onNameChange(name, "rasterDataName");
+    var temporalRangeStart = form[0]['value'];
+    var temporalRangeEnd = form[1]['value'];
+
+    var data = Object.assign({}, this.props.node_editor.raster_data, {
+      name: name,
+      temporalRangeStart: temporalRangeStart,
+      temporalRangeEnd: temporalRangeEnd
+    });
+
+    this.props.onEditRasterData(data);
+  };
+
   RasterDataSource.prototype.render = function render() {
-    var _this7 = this;
+    var _this9 = this;
 
     var raster = null;
     if (this.props.node_editor.raster_data.raster) {
@@ -2233,7 +2356,7 @@ var RasterDataSource = function (_React$Component3) {
       React.createElement(
         "form",
         { ref: function ref(_ref4) {
-            _this7.form = _ref4;
+            _this9.form = _ref4;
           }, onChange: this.validate.bind(this) },
         React.createElement(
           FormGroup,
@@ -2243,30 +2366,13 @@ var RasterDataSource = function (_React$Component3) {
             null,
             "Raster"
           ),
-          React.createElement(
-            FormControl,
-            {
-              componentClass: "select",
-              placeholder: "select",
-              name: "right",
-              value: this.sourceToString(raster)
-            },
-            this.props.raster_catalog.items ? this.props.raster_catalog.items.map(function (r, i) {
-              return React.createElement(
-                "option",
-                { key: i, value: "{\"name\":\"" + r.description + "\", \"id\":\"" + r.name + "\"}" },
-                r.description + ': ' + r.band
-              );
-            }) : [raster ? React.createElement(
-              "option",
-              { value: "{\"name\":\"" + raster.name + "\", \"id\":\"" + raster.id + "\"}" },
-              raster.name + ': ' + raster.id
-            ) : null, React.createElement(
-              "option",
-              { value: "null" },
-              "Catalog Currently Unavailable"
-            )]
-          )
+          React.createElement(RasterTable, { raster_catalog: this.props.raster_catalog,
+            updateRaster: this.updateRaster.bind(this) }),
+          React.createElement(FormControl, {
+            name: "raster", type: "hidden", disabled: true,
+            placeholder: "",
+            value: raster ? "{raster.name + ': ' + rasterband}" : null
+          })
         ),
         React.createElement(
           FormGroup,
@@ -2282,7 +2388,7 @@ var RasterDataSource = function (_React$Component3) {
             { className: "input-group input-daterange" },
             React.createElement("input", {
               ref: function ref(_ref2) {
-                _this7.startpicker = _ref2;
+                _this9.startpicker = _ref2;
               },
               name: "temporalRangeStart", type: "text", placeholder: "yyyy-ddd",
               value: this.props.node_editor.raster_data.temporalRangeStart
@@ -2294,7 +2400,7 @@ var RasterDataSource = function (_React$Component3) {
             ),
             React.createElement("input", {
               ref: function ref(_ref3) {
-                _this7.endpicker = _ref3;
+                _this9.endpicker = _ref3;
               },
               name: "temporalRangeEnd", type: "text", placeholder: "yyyy-ddd",
               value: this.props.node_editor.raster_data.temporalRangeEnd
@@ -2343,13 +2449,13 @@ var RasterDataSource = function (_React$Component3) {
   return RasterDataSource;
 }(React.Component);
 
-var OperandChooser = function (_React$Component4) {
-  _inherits(OperandChooser, _React$Component4);
+var OperandChooser = function (_React$Component5) {
+  _inherits(OperandChooser, _React$Component5);
 
   function OperandChooser() {
     _classCallCheck(this, OperandChooser);
 
-    return _possibleConstructorReturn(this, _React$Component4.apply(this, arguments));
+    return _possibleConstructorReturn(this, _React$Component5.apply(this, arguments));
   }
 
   OperandChooser.prototype.changeOperand = function changeOperand(e) {
@@ -2384,13 +2490,13 @@ var OperandChooser = function (_React$Component4) {
   return OperandChooser;
 }(React.Component);
 
-var TreeViewer = function (_React$Component5) {
-  _inherits(TreeViewer, _React$Component5);
+var TreeViewer = function (_React$Component6) {
+  _inherits(TreeViewer, _React$Component6);
 
   function TreeViewer() {
     _classCallCheck(this, TreeViewer);
 
-    return _possibleConstructorReturn(this, _React$Component5.apply(this, arguments));
+    return _possibleConstructorReturn(this, _React$Component6.apply(this, arguments));
   }
 
   TreeViewer.prototype.render = function render() {
@@ -2412,17 +2518,17 @@ var TreeViewer = function (_React$Component5) {
   return TreeViewer;
 }(React.Component);
 
-var ExpressionEditor = function (_React$Component6) {
-  _inherits(ExpressionEditor, _React$Component6);
+var ExpressionEditor = function (_React$Component7) {
+  _inherits(ExpressionEditor, _React$Component7);
 
   function ExpressionEditor(props) {
     _classCallCheck(this, ExpressionEditor);
 
-    var _this10 = _possibleConstructorReturn(this, _React$Component6.call(this, props));
+    var _this12 = _possibleConstructorReturn(this, _React$Component7.call(this, props));
 
-    var data = { defaultName: _this10.generateName(props.input_variables) };
+    var data = { defaultName: _this12.generateName(props.input_variables) };
     props.onEditExpressionData(data);
-    return _this10;
+    return _this12;
   }
 
   ExpressionEditor.prototype.componentWillReceiveProps = function componentWillReceiveProps(newProps) {
@@ -2463,13 +2569,13 @@ var ExpressionEditor = function (_React$Component6) {
   };
 
   ExpressionEditor.prototype.populateOperands = function populateOperands(arity) {
-    var _this11 = this;
+    var _this13 = this;
 
     var operands = [];
 
     for (var i = 0; i < arity; i++) {
       var operand_tree = this.props.input_variables.filter(function (input_var) {
-        return input_var.name == _this11.props.node_editor.expression_data.operand_refs[i];
+        return input_var.name == _this13.props.node_editor.expression_data.operand_refs[i];
       })[0].node;
 
       operands.push(operand_tree);
@@ -2569,11 +2675,11 @@ var ExpressionEditor = function (_React$Component6) {
   return ExpressionEditor;
 }(React.Component);
 
-var VariableTable = function (_React$Component7) {
-  _inherits(VariableTable, _React$Component7);
+var VariableTable = function (_React$Component8) {
+  _inherits(VariableTable, _React$Component8);
 
   function VariableTable() {
-    var _temp, _this12, _ret;
+    var _temp, _this14, _ret;
 
     _classCallCheck(this, VariableTable);
 
@@ -2581,16 +2687,16 @@ var VariableTable = function (_React$Component7) {
       args[_key] = arguments[_key];
     }
 
-    return _ret = (_temp = (_this12 = _possibleConstructorReturn(this, _React$Component7.call.apply(_React$Component7, [this].concat(args))), _this12), _this12.useInputVariable = function (item, name) {
-      if (!_this12.props.name) {
-        _this12.props.updateName(name);
+    return _ret = (_temp = (_this14 = _possibleConstructorReturn(this, _React$Component8.call.apply(_React$Component8, [this].concat(args))), _this14), _this14.useInputVariable = function (item, name) {
+      if (!_this14.props.name) {
+        _this14.props.updateName(name);
       }
-      _this12.props.onUpdateTree(item);
-    }, _temp), _possibleConstructorReturn(_this12, _ret);
+      _this14.props.onUpdateTree(item);
+    }, _temp), _possibleConstructorReturn(_this14, _ret);
   }
 
   VariableTable.prototype.render = function render() {
-    var _this13 = this;
+    var _this15 = this;
 
     if (this.props.input_variables.length > 0) {
       var table = React.createElement(
@@ -2648,14 +2754,14 @@ var VariableTable = function (_React$Component7) {
                 React.createElement(
                   Button,
                   { onClick: function onClick() {
-                      return _this13.useInputVariable(item, node.name);
+                      return _this15.useInputVariable(item, node.name);
                     } },
                   "Use"
                 ),
                 React.createElement(
                   Button,
                   { onClick: function onClick() {
-                      return _this13.props.onEditInputVariable(node, i);
+                      return _this15.props.onEditInputVariable(node, i);
                     } },
                   "Edit"
                 )
@@ -2667,7 +2773,7 @@ var VariableTable = function (_React$Component7) {
                   Button,
                   {
                     onClick: function onClick() {
-                      _this13.props.onRemoveInputVariable(i);
+                      _this15.props.onRemoveInputVariable(i);
                     }
                   },
                   "Delete"
@@ -2725,13 +2831,13 @@ var node2tree = function node2tree(node) {
   return buildTree(node, [], node[0]);
 };
 
-var AddDataSourcePanel = function (_React$Component8) {
-  _inherits(AddDataSourcePanel, _React$Component8);
+var AddDataSourcePanel = function (_React$Component9) {
+  _inherits(AddDataSourcePanel, _React$Component9);
 
   function AddDataSourcePanel() {
     _classCallCheck(this, AddDataSourcePanel);
 
-    return _possibleConstructorReturn(this, _React$Component8.apply(this, arguments));
+    return _possibleConstructorReturn(this, _React$Component9.apply(this, arguments));
   }
 
   AddDataSourcePanel.prototype.render = function render() {
@@ -2824,11 +2930,11 @@ var AddDataSourcePanel = function (_React$Component8) {
   return AddDataSourcePanel;
 }(React.Component);
 
-var SieveComponent = function (_React$Component9) {
-  _inherits(SieveComponent, _React$Component9);
+var SieveComponent = function (_React$Component10) {
+  _inherits(SieveComponent, _React$Component10);
 
   function SieveComponent() {
-    var _temp2, _this15, _ret2;
+    var _temp2, _this17, _ret2;
 
     _classCallCheck(this, SieveComponent);
 
@@ -2836,15 +2942,15 @@ var SieveComponent = function (_React$Component9) {
       args[_key2] = arguments[_key2];
     }
 
-    return _ret2 = (_temp2 = (_this15 = _possibleConstructorReturn(this, _React$Component9.call.apply(_React$Component9, [this].concat(args))), _this15), _this15.saveVariable = function () {
-      _this15.props.onSaveVariable({
-        id: _this15.props.id,
-        name: _this15.props.name,
-        tree: _this15.props.tree,
-        input_variables: _this15.props.input_variables,
-        description: _this15.props.description
-      }, _this15.props.created);
-    }, _temp2), _possibleConstructorReturn(_this15, _ret2);
+    return _ret2 = (_temp2 = (_this17 = _possibleConstructorReturn(this, _React$Component10.call.apply(_React$Component10, [this].concat(args))), _this17), _this17.saveVariable = function () {
+      _this17.props.onSaveVariable({
+        id: _this17.props.id,
+        name: _this17.props.name,
+        tree: _this17.props.tree,
+        input_variables: _this17.props.input_variables,
+        description: _this17.props.description
+      }, _this17.props.created);
+    }, _temp2), _possibleConstructorReturn(_this17, _ret2);
   }
 
   SieveComponent.prototype.renderMiddlePanel = function renderMiddlePanel() {
@@ -2865,7 +2971,7 @@ var SieveComponent = function (_React$Component9) {
   };
 
   SieveComponent.prototype.render = function render() {
-    var _this16 = this;
+    var _this18 = this;
 
     var final_render = null;
     if (this.props.tree) {
@@ -2875,7 +2981,7 @@ var SieveComponent = function (_React$Component9) {
         null,
         React.createElement("input", {
           ref: function ref(_ref5) {
-            _this16.endpicker = _ref5;
+            _this18.endpicker = _ref5;
           },
           name: "name", type: "text",
           value: this.props.name

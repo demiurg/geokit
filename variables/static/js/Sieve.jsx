@@ -456,6 +456,49 @@ var dateToDOY = (date) => {
   return year.toString() + "-" + doyStr;
 }
 
+class RasterTable extends React.Component {
+
+  selectRaster(event, raster){
+    event.persist();
+    $(event.target).text("Selected");
+    $(event.target).text("Selected");
+    var tr = event.target.closest('tr');
+    $(tr).addClass('active');
+    $(tr).siblings().find($("button")).text("Select");
+
+    this.props.updateRaster(raster);
+  }
+
+  render() {
+    return (
+      <Table striped>
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Driver</th>
+            <th>Product</th>
+            <th>Available From</th>
+            <th>Available To</th>
+            <th>Select</th>
+          </tr>
+        </thead>
+        <tbody>
+          {this.props.raster_catalog.items.map((r, i) => (
+            <tr key={i}>
+              <td>{r.description}</td>
+              <td>{r.driver}</td>
+              <td>{r.product}</td>
+              <td>{r.start_date}</td>
+              <td>{r.end_date}</td>
+              <td><Button onClick={(event) => this.selectRaster(event, r)}>Select</Button></td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    )
+  }
+}
+
 class RasterDataSource extends React.Component {
   onSave() {
     if (this.props.errors.rasterDataName || this.props.errors.rasterDate)
@@ -549,16 +592,16 @@ class RasterDataSource extends React.Component {
      });
   }
 
-  componentWillReceiveProps(newProps){
-    if (!newProps.rasterData.defaultName ||
-        newProps.input_variables != this.props.input_variables
+  componentWillReceiveProps(new_props){
+    if (!new_props.node_editor.raster_data.defaultName ||
+        new_props.input_variables != this.props.input_variables
       ){
-      var raster = newProps.raster_catalog.items[0];
+      var raster = new_props.raster_catalog.items[0];
       var raster2 = Object.assign({}, raster, {id: raster.name});
-      var name = this.generateName(raster2, newProps.input_variables);
+      var name = this.generateName(raster2, new_props.input_variables);
       var data = Object.assign(
         {},
-        newProps.rasterData,
+        new_props.node_editor.raster_data,
         {defaultName: name}
       );
       if (!this.props.node_editor.raster_data.raster){
@@ -582,25 +625,36 @@ class RasterDataSource extends React.Component {
     }
   }
 
+  updateRaster(r){
+    var raster = {"name":r.description, "id":r.name};
+    var defaultName = this.generateName(raster);
+    var data = Object.assign(
+      {},
+      this.props.node_editor.raster_data,
+      {
+        raster: raster,
+        defaultName: defaultName
+      }
+    );
+
+    this.props.onEditRasterData(data);
+  }
+
   validate() {
     var form = $(this.form).serializeArray();
-    var name = form[3]['value'];
+    var name = form[2]['value'];
     if( name.length > 0)
       this.props.onNameChange(name, "rasterDataName");
-    var raster = JSON.parse(form[0]['value']);
-    var temporalRangeStart = form[1]['value'];
-    var temporalRangeEnd = form[2]['value'];
-    var defaultName = this.generateName(raster);
+    var temporalRangeStart = form[0]['value'];
+    var temporalRangeEnd = form[1]['value'];
 
     var data = Object.assign(
       {},
       this.props.node_editor.raster_data,
       {
         name: name,
-        raster: raster,
         temporalRangeStart: temporalRangeStart,
         temporalRangeEnd: temporalRangeEnd,
-        defaultName: defaultName
       }
     );
 
@@ -620,7 +674,9 @@ class RasterDataSource extends React.Component {
         <form ref={(ref)=>{this.form=ref}} onChange={this.validate.bind(this)}>
           <FormGroup controlId="rightSelect">
             <ControlLabel>Raster</ControlLabel>
-            <FormControl
+            <RasterTable raster_catalog={this.props.raster_catalog}
+              updateRaster={this.updateRaster.bind(this)}/>
+            {/*<FormControl
               componentClass="select"
               placeholder="select"
               name="right"
@@ -645,7 +701,12 @@ class RasterDataSource extends React.Component {
                   <option value="null">Catalog Currently Unavailable</option>
                 ]
               }
-            </FormControl>
+            </FormControl>*/}
+            <FormControl
+              name="raster" type="hidden" disabled={true}
+              placeholder=""
+              value={raster ? `{raster.name + ': ' + rasterband}` : null}
+            />
           </FormGroup>
           <FormGroup controlId="range"
             validationState={this.props.errors.rasterDataTemporalRange ?
