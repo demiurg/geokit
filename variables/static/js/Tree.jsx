@@ -177,7 +177,7 @@ class ExpressionOperator extends DataNode {
 }
 
 class JoinOperator extends DataNode {
-  name = 'Join';
+  _name = 'Join';
   constructor(tree) {
     super(tree, ['left', 'right'], 2);
 
