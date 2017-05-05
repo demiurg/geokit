@@ -520,7 +520,7 @@ class RasterDataSource extends React.Component {
           this.props.node_editor.raster_data.raster,
           this.props.spatial_domain,
           this.props.node_editor.raster_data.temporalRangeStart + ',' +
-          this.props.node_editor.raster_data.temporalRangeEnd
+            this.props.node_editor.raster_data.temporalRangeEnd
         ]
       ]
     };
@@ -629,7 +629,12 @@ class RasterDataSource extends React.Component {
   }
 
   updateRaster(r){
-    var raster = {"name":r.description, "id":r.name};
+    var raster = {
+      "name":r.description,
+      "id":r.name,
+      "start_date": r.start_date,
+      "end_date": r.end_date,
+    };
     var defaultName = this.generateName(raster);
     var data = Object.assign(
       {},

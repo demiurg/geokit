@@ -146,11 +146,40 @@ let nextVariableId = 0;
 
 function validateRaster(raster){
   var range = raster[1][2];
+  var raster = raster[1][0];
 
-  if (range.includes("undefined"))
+  // Date conversion hell
+  var d1 = new Date(raster.start_date);
+  var d2 = new Date(raster.end_date);
+  var userTimezoneOffset = d1.getTimezoneOffset() * 60000;
+  var raster_start_date = new Date(d1.getTime() + userTimezoneOffset);
+  var raster_end_date = new Date(d2.getTime() + userTimezoneOffset);
+
+  if (range.includes("undefined")){
     return "Start and end date must be specified.";
-  if (!range.match(/\d{4}-\d{3},\d{4}-\d{3}/g))
-    return "Date must be entered in the form yyyy-ddd."
+  } else if (!range.match(/\d{4}-\d{3},\d{4}-\d{3}/g)){
+    return "Date must be entered in the form yyyy-ddd.";
+  }
+
+  var range_start = range.split(',')[0];
+  var range_end = range.split(',')[1];
+
+  var doy_start = parseInt(range_start.split('-')[1]);
+  var year_start = parseInt(range_start.split('-')[0]);
+  var range_start_date = new Date(year_start, 0);
+  range_start_date.setDate(doy_start);
+
+  var doy_end = parseInt(range_end.split('-')[1]);
+  var year_end = parseInt(range_end.split('-')[0]);
+  var range_end_date = new Date(year_end, 0);
+  range_end_date.setDate(doy_end);
+
+  if (range_start_date < raster_start_date){
+    return "Start date must be after " + raster_start_date.toDateString();
+  } else if (range_end_date > raster_end_date){
+    return "End date must be before " + raster_end_date.toDateString();
+  }
+
 
   return null;
 }
