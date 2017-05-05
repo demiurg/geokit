@@ -143,14 +143,48 @@ var nextVariableId = 0;
 
 function validateRaster(raster) {
   var range = raster[1][2];
+  var raster = raster[1][0];
 
-  if (range.includes("undefined")) return "Start and end date must be specified.";
-  if (!range.match(/\d{4}-\d{3},\d{4}-\d{3}/g)) return "Date must be entered in the form yyyy-ddd.";
+  // Date conversion hell
+  var d1 = new Date(raster.start_date);
+  var d2 = new Date(raster.end_date);
+  var userTimezoneOffset = d1.getTimezoneOffset() * 60000;
+  var raster_start_date = new Date(d1.getTime() + userTimezoneOffset);
+  var raster_end_date = new Date(d2.getTime() + userTimezoneOffset);
+
+  if (range.includes("undefined")) {
+    return "Start and end date must be specified.";
+  } else if (!range.match(/\d{4}-\d{3},\d{4}-\d{3}/g)) {
+    return "Date must be entered in the form yyyy-ddd.";
+  }
+
+  var range_start = range.split(',')[0];
+  var range_end = range.split(',')[1];
+
+  var doy_start = parseInt(range_start.split('-')[1]);
+  var year_start = parseInt(range_start.split('-')[0]);
+  var range_start_date = new Date(year_start, 0);
+  range_start_date.setDate(doy_start);
+
+  var doy_end = parseInt(range_end.split('-')[1]);
+  var year_end = parseInt(range_end.split('-')[0]);
+  var range_end_date = new Date(year_end, 0);
+  range_end_date.setDate(doy_end);
+
+  if (range_start_date < raster_start_date) {
+    return "Start date must be after " + raster_start_date.toDateString();
+  } else if (range_end_date > raster_end_date) {
+    return "End date must be before " + raster_end_date.toDateString();
+  }
 
   return null;
 }
 
-function addInputVariable(variable) {
+function receiveInputVariables(input_variables) {
+  return function (dispatch) {};
+}
+
+function addInputVariable(node) {
   var node = variable.node;
   var inputType = node[0];
   var error = null;
@@ -171,16 +205,16 @@ function addInputVariable(variable) {
       error: error,
       field: "rasterDataTemporalRange",
       id: nextVariableId++,
-      variable: variable
+      variable: node
     };
   }
 }
 
-function editInputVariable(variable, node, i) {
+function editInputVariable(node, i) {
   return function (dispatch) {
     if (node.type == "join") {
       dispatch(editTabularData({
-        name: variable.name,
+        name: node.name,
         source1: node.left,
         source2: node.right,
         isEditing: true,
@@ -189,7 +223,7 @@ function editInputVariable(variable, node, i) {
     } else if (node.type == "raster") {
       dispatch(updateSpatialDomain(node.layer.id));
       dispatch(editRasterData({
-        name: variable.name,
+        name: node.name,
         raster: node.product,
         temporalRangeStart: node.start,
         temporalRangeEnd: node.end,
@@ -198,10 +232,10 @@ function editInputVariable(variable, node, i) {
       }));
     } else {
       dispatch(editExpressionData({
-        name: variable.name,
+        name: node.name,
         index: i,
         isEditing: true,
-        node: variable.node
+        node: node
       }));
     }
   };
@@ -287,7 +321,7 @@ function recieveVariable(json) {
 }
 
 function updateErrors() {
-  var errors = arguments.length <= 0 || arguments[0] === undefined ? { "name": null, "tree": null } : arguments[0];
+  var errors = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { "name": null, "tree": null };
 
   return {
     type: UPDATE_ERRORS,
@@ -296,7 +330,7 @@ function updateErrors() {
 }
 
 function updateModified() {
-  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
   return {
     type: UPDATE_MODIFIED,
@@ -305,7 +339,7 @@ function updateModified() {
 }
 
 function updateCreated() {
-  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
   return {
     type: UPDATE_CREATED,
@@ -409,7 +443,7 @@ function editNothing() {
 }
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1225,7 +1259,7 @@ var FilterListItem = function (_React$Component12) {
           {
             bsSize: "xsmall",
             onClick: this.props.removeFilter.bind(null, this.props.filter.key) },
-          " x "
+          "\xA0x\xA0"
         )
       )
     );
@@ -1340,12 +1374,12 @@ var Aggregate = function (_React$Component13) {
 'use strict';
 
 function layers() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
     name: 'Layers',
     isFetching: false,
     didInvalidate: false,
     items: []
-  } : arguments[0];
+  };
   var action = arguments[1];
 
   switch (action.type) {
@@ -1367,12 +1401,12 @@ function layers() {
 }
 
 function tables() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
     name: 'Tables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  } : arguments[0];
+  };
   var action = arguments[1];
 
   switch (action.type) {
@@ -1394,9 +1428,9 @@ function tables() {
 }
 
 function rasterCatalog() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
     items: []
-  } : arguments[0];
+  };
   var action = arguments[1];
 
   switch (action.type) {
@@ -1411,12 +1445,12 @@ function rasterCatalog() {
 }
 
 function variables() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
     name: 'Variables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  } : arguments[0];
+  };
   var action = arguments[1];
 
   switch (action.type) {
@@ -1438,7 +1472,7 @@ function variables() {
 }
 
 function input_variables() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1471,7 +1505,7 @@ function separateOperands(operands, tree) {
 }
 
 function tree() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
   var action = arguments[1];
 
   switch (action.type) {
@@ -1502,7 +1536,7 @@ function tree() {
 function operandSelections() {
   var _Object$assign;
 
-  var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
   var action = arguments[1];
 
   switch (action.type) {
@@ -1521,7 +1555,7 @@ var EDITING_RASTER_DATA = 'EDITING_RASTER_DATA';
 var EDITING_EXPRESSION = 'EDITING_EXPRESSION';
 
 function node_editor() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? { 'mode': DEFAULT } : arguments[0];
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { 'mode': DEFAULT };
   var action = arguments[1];
 
   switch (action.mode) {
@@ -1562,26 +1596,26 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var _ReactBootstrap = ReactBootstrap;
-var Panel = _ReactBootstrap.Panel;
-var ButtonGroup = _ReactBootstrap.ButtonGroup;
-var ButtonToolbar = _ReactBootstrap.ButtonToolbar;
-var ButtonInput = _ReactBootstrap.ButtonInput;
-var Button = _ReactBootstrap.Button;
-var Row = _ReactBootstrap.Row;
-var Col = _ReactBootstrap.Col;
-var Alert = _ReactBootstrap.Alert;
-var Tabs = _ReactBootstrap.Tabs;
-var Tab = _ReactBootstrap.Tab;
-var DropdownButton = _ReactBootstrap.DropdownButton;
-var MenuItem = _ReactBootstrap.MenuItem;
-var Table = _ReactBootstrap.Table;
-var Glyphicon = _ReactBootstrap.Glyphicon;
-var Modal = _ReactBootstrap.Modal;
-var FormControl = _ReactBootstrap.FormControl;
-var ControlLabel = _ReactBootstrap.ControlLabel;
-var FormGroup = _ReactBootstrap.FormGroup;
-var HelpBlock = _ReactBootstrap.HelpBlock;
+var _ReactBootstrap = ReactBootstrap,
+    Panel = _ReactBootstrap.Panel,
+    ButtonGroup = _ReactBootstrap.ButtonGroup,
+    ButtonToolbar = _ReactBootstrap.ButtonToolbar,
+    ButtonInput = _ReactBootstrap.ButtonInput,
+    Button = _ReactBootstrap.Button,
+    Row = _ReactBootstrap.Row,
+    Col = _ReactBootstrap.Col,
+    Alert = _ReactBootstrap.Alert,
+    Tabs = _ReactBootstrap.Tabs,
+    Tab = _ReactBootstrap.Tab,
+    DropdownButton = _ReactBootstrap.DropdownButton,
+    MenuItem = _ReactBootstrap.MenuItem,
+    Table = _ReactBootstrap.Table,
+    Glyphicon = _ReactBootstrap.Glyphicon,
+    Modal = _ReactBootstrap.Modal,
+    FormControl = _ReactBootstrap.FormControl,
+    ControlLabel = _ReactBootstrap.ControlLabel,
+    FormGroup = _ReactBootstrap.FormGroup,
+    HelpBlock = _ReactBootstrap.HelpBlock;
 
 /* app */
 
@@ -1604,7 +1638,7 @@ var initialState = Object.assign({
 }, window.sieve_props);
 
 function sieveApp() {
-  var state = arguments.length <= 0 || arguments[0] === undefined ? initialState : arguments[0];
+  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
   var action = arguments[1];
 
   switch (action.type) {
@@ -1662,10 +1696,7 @@ function sieveApp() {
       return Object.assign({}, state, {
         changed: true,
         errors: Object.assign({}, state.errors, errors),
-        input_variables: input_variables(state.input_variables, action),
-        editingTabularData: false,
-        editingRasterData: false,
-        editingExpressionData: false
+        input_variables: input_variables(state.input_variables, action)
       });
     case ERROR_INPUT_VARIABLE:
       var errors = {};
@@ -1882,10 +1913,7 @@ var TabularDataSource = function (_React$Component2) {
       name = this.props.node_editor.tabular_data.defaultName;
     }
 
-    var variable = {
-      name: name,
-      node: ['join', [this.props.node_editor.tabular_data.source1, this.props.node_editor.tabular_data.source2]]
-    };
+    var variable = ['named', [name, ['join', [this.props.node_editor.tabular_data.source1, this.props.node_editor.tabular_data.source2]]]];
     var index = this.props.node_editor.tabular_data.index;
     var isEditing = this.props.node_editor.tabular_data.isEditing;
 
@@ -1915,16 +1943,19 @@ var TabularDataSource = function (_React$Component2) {
         var name = this.generateName(source1, source2, newProps.input_variables);
         var data = Object.assign({}, newProps.node_editor.tabular_data, { defaultName: name });
 
-        if (!this.props.node_editor.tabular_data.source1) data.source1 = source1;
-        if (!this.props.node_editor.tabular_data.source2) data.source2 = source2;
-
+        if (!this.props.node_editor.tabular_data.source1) {
+          data.source1 = source1;
+        }
+        if (!this.props.node_editor.tabular_data.source2) {
+          data.source2 = source2;
+        }
         this.props.onEditTabularData(data);
       }
     }
   };
 
   TabularDataSource.prototype.generateName = function generateName(source1, source2) {
-    var var_list = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+    var var_list = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
     if (source1.name == source2.name) {
       var name = source1.name + '-' + source1.field + '-' + source2.field;
@@ -1952,7 +1983,9 @@ var TabularDataSource = function (_React$Component2) {
   TabularDataSource.prototype.validate = function validate() {
     var form = $(this.form).serializeArray();
     var name = form[2]['value'];
-    if (name.length > 0) this.props.onNameChange(name, "tabularDataName");
+    if (name.length > 0) {
+      this.props.onNameChange(name, "tabularDataName");
+    }
     var source1 = JSON.parse(form[0]['value']);
     var source2 = JSON.parse(form[1]['value']);
     var defaultName = this.generateName(source1, source2);
@@ -2195,7 +2228,20 @@ var RasterDataSource = function (_React$Component4) {
   function RasterDataSource() {
     _classCallCheck(this, RasterDataSource);
 
-    return _possibleConstructorReturn(this, _React$Component4.apply(this, arguments));
+    var _this7 = _possibleConstructorReturn(this, _React$Component4.call(this));
+
+    _this7.cal_format = {
+      toDisplay: function toDisplay(date, format, language) {
+        var userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        var d = new Date(date.getTime() + userTimezoneOffset);
+        return dateToDOY(d);
+      },
+      toValue: function toValue(date, format, language) {
+        var d = new Date(date);
+        return d;
+      }
+    };
+    return _this7;
   }
 
   RasterDataSource.prototype.onSave = function onSave() {
@@ -2206,10 +2252,7 @@ var RasterDataSource = function (_React$Component4) {
       name = this.props.node_editor.raster_data.defaultName;
     }
 
-    var variable = {
-      name: name,
-      node: ['raster', [this.props.node_editor.raster_data.raster, this.props.spatial_domain, this.props.node_editor.raster_data.temporalRangeStart + ',' + this.props.node_editor.raster_data.temporalRangeEnd]]
-    };
+    var variable = ['named', [name, ['raster', [this.props.node_editor.raster_data.raster, this.props.spatial_domain, this.props.node_editor.raster_data.temporalRangeStart + ',' + this.props.node_editor.raster_data.temporalRangeEnd]]]];
     var index = this.props.node_editor.raster_data.index;
     var isEditing = this.props.node_editor.raster_data.isEditing;
 
@@ -2236,7 +2279,7 @@ var RasterDataSource = function (_React$Component4) {
   };
 
   RasterDataSource.prototype.generateName = function generateName(raster) {
-    var var_list = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+    var var_list = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
     var name = raster.id.replace(/_/g, "-");
     var i = 1;
@@ -2260,26 +2303,16 @@ var RasterDataSource = function (_React$Component4) {
   RasterDataSource.prototype.componentDidMount = function componentDidMount() {
     var _this8 = this;
 
-    var format = {
-      toDisplay: function toDisplay(date, format, language) {
-        var userTimezoneOffset = date.getTimezoneOffset() * 60000;
-        var d = new Date(date.getTime() + userTimezoneOffset);
-        return dateToDOY(d);
-      },
-      toValue: function toValue(date, format, language) {
-        var d = new Date(date);
-        return d;
-      }
-    };
-
     $(this.startpicker).datepicker({
-      format: format
+      format: this.cal_format,
+      endDate: new Date()
     }).on("changeDate", function (e) {
       _this8.validate();
     });
 
     $(this.endpicker).datepicker({
-      format: format
+      format: this.cal_format,
+      endDate: new Date()
     }).on("changeDate", function (e) {
       _this8.validate();
     });
@@ -2309,8 +2342,22 @@ var RasterDataSource = function (_React$Component4) {
   };
 
   RasterDataSource.prototype.updateRaster = function updateRaster(r) {
-    var raster = { "name": r.description, "id": r.name };
+
+    var raster = {
+      "name": r.description,
+      "id": r.name,
+      "start_date": r.start_date,
+      "end_date": r.end_date
+    };
+
     var defaultName = this.generateName(raster);
+
+    $(this.startpicker).datepicker('setStartDate', r.start_date);
+    $(this.startpicker).datepicker('setEndDate', r.end_date);
+
+    $(this.endpicker).datepicker('setStartDate', r.start_date);
+    $(this.endpicker).datepicker('setEndDate', r.end_date);
+
     var data = Object.assign({}, this.props.node_editor.raster_data, {
       raster: raster,
       defaultName: defaultName
@@ -2380,7 +2427,7 @@ var RasterDataSource = function (_React$Component4) {
           React.createElement(
             ControlLabel,
             null,
-            "Temporal Range"
+            "Temporal\xA0Range"
           ),
           React.createElement(
             "div",
@@ -2538,7 +2585,7 @@ var ExpressionEditor = function (_React$Component7) {
   };
 
   ExpressionEditor.prototype.generateName = function generateName() {
-    var var_list = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+    var var_list = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
     var i = 1;
     var input_variables = [];
@@ -2686,11 +2733,11 @@ var VariableTable = function (_React$Component8) {
       args[_key] = arguments[_key];
     }
 
-    return _ret = (_temp = (_this14 = _possibleConstructorReturn(this, _React$Component8.call.apply(_React$Component8, [this].concat(args))), _this14), _this14.useInputVariable = function (item) {
+    return _ret = (_temp = (_this14 = _possibleConstructorReturn(this, _React$Component8.call.apply(_React$Component8, [this].concat(args))), _this14), _this14.useInputVariable = function (item, name) {
       if (!_this14.props.name) {
-        _this14.props.updateName(item.name);
+        _this14.props.updateName(name);
       }
-      _this14.props.onUpdateTree(item.node);
+      _this14.props.onUpdateTree(item);
     }, _temp), _possibleConstructorReturn(_this14, _ret);
   }
 
@@ -2728,24 +2775,24 @@ var VariableTable = function (_React$Component8) {
           "tbody",
           null,
           this.props.input_variables.map(function (item, i) {
-            var node_object = treeToNode(item.node);
+            var node = treeToNode(item);
             return React.createElement(
               "tr",
               null,
               React.createElement(
                 "td",
                 null,
-                item.name
+                node.name
               ),
               React.createElement(
                 "td",
                 null,
-                node_object.name
+                node.type
               ),
               React.createElement(
                 "td",
                 null,
-                node_object.dimensions
+                node.dimensions
               ),
               React.createElement(
                 "td",
@@ -2753,14 +2800,14 @@ var VariableTable = function (_React$Component8) {
                 React.createElement(
                   Button,
                   { onClick: function onClick() {
-                      return _this15.useInputVariable(item);
+                      return _this15.useInputVariable(item, node.name);
                     } },
                   "Use"
                 ),
                 React.createElement(
                   Button,
                   { onClick: function onClick() {
-                      return _this15.props.onEditInputVariable(item, node_object, i);
+                      return _this15.props.onEditInputVariable(node, i);
                     } },
                   "Edit"
                 )
@@ -3075,7 +3122,8 @@ function sieve(el) {
   store.dispatch(fetchLayers());
   store.dispatch(fetchTables());
   store.dispatch(fetchVariables());
-  store.dispatch(receiveRasterCatalog(raster_catalog));
+  store.dispatch(receiveRasterCatalog(window.raster_catalog));
+  store.dispatch(receiveInputVariables(window.sieve_props.input_variables));
 
   ReactDOM.render(React.createElement(ReactRedux.Provider, {
     children: React.createElement(Sieve, sieve_props),
@@ -3167,7 +3215,6 @@ var DataNode = function () {
         if (_this.isDataNode(o)) {
           return o.render();
         } else {
-          console.log(o, _this);
           return o + ", ";
         }
       });
@@ -3370,7 +3417,7 @@ var RasterOperator = function (_DataNode7) {
       null,
       "Raster product ",
       this.product.name,
-      "  using ",
+      "\xA0 using ",
       this.layer.render(),
       "in the time span of ",
       this.range
@@ -3409,7 +3456,7 @@ var SourceOperator = function (_DataNode8) {
       "span",
       null,
       o.type + "/" + o.name + (o.field ? "/" + o.field : ""),
-      " "
+      "\xA0"
     );
   };
 
@@ -3463,13 +3510,10 @@ var NamedTree = function (_DataNode10) {
   function NamedTree(args) {
     _classCallCheck(this, NamedTree);
 
-    if (args.name && args.node) {
-      var _this11 = _possibleConstructorReturn(this, _DataNode10.call(this, ['named', [args.name, args.node]], ['operand'], 1));
-    } else {
-      var _this11 = _possibleConstructorReturn(this, _DataNode10.call(this, args, ['operand'], 1));
-    }
-    _this11._name = _this11.operand[0];
-    return _possibleConstructorReturn(_this11);
+    var _this11 = _possibleConstructorReturn(this, _DataNode10.call(this, args, ['name_operand', 'operand'], 2));
+
+    _this11._name = _this11.name_operand;
+    return _this11;
   }
 
   NamedTree.prototype.render = function render() {
@@ -3487,6 +3531,11 @@ var NamedTree = function (_DataNode10) {
     get: function get() {
       var type = this.operand.type;
       return type ? type : "named";
+    }
+  }, {
+    key: "dimensions",
+    get: function get() {
+      return this.operand.dimensions;
     }
   }]);
 

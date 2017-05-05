@@ -82,7 +82,6 @@ class DataNode {
           if(this.isDataNode(o)){
             return o.render();
           } else {
-            console.log(o, this);
             return (o + ", ");
           }
         }
@@ -279,17 +278,17 @@ class MathOperator extends DataNode {
 
 class NamedTree extends DataNode {
   constructor(args) {
-    if (args.name && args.node){
-      super(['named', [args.name, args.node]], ['operand'], 1);
-    }else{
-      super(args, ['operand'], 1);
-    }
-    this._name = this.operand[0];
+    super(args, ['name_operand', 'operand'], 2);
+    this._name = this.name_operand;
   }
 
   get type(){
     var type = this.operand.type;
     return type ? type : "named";
+  }
+
+  get dimensions(){
+    return this.operand.dimensions;
   }
 
   render() {

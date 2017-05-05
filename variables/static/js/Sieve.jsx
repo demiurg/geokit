@@ -82,9 +82,6 @@ function sieveApp(state=initialState, action){
         changed: true,
         errors: Object.assign({}, state.errors, errors),
         input_variables: input_variables(state.input_variables, action),
-        editingTabularData: false,
-        editingRasterData: false,
-        editingExpressionData: false
       });
     case ERROR_INPUT_VARIABLE:
       var errors = {};
@@ -277,16 +274,16 @@ class TabularDataSource extends React.Component {
       name = this.props.node_editor.tabular_data.defaultName;
     }
 
-    var variable = {
-      name: name,
-      node: [
+    var variable = ['named', [
+      name,
+      [
         'join',
         [
           this.props.node_editor.tabular_data.source1,
           this.props.node_editor.tabular_data.source2
         ]
-      ]
-    };
+      ]]
+    ];
     var index = this.props.node_editor.tabular_data.index;
     var isEditing = this.props.node_editor.tabular_data.isEditing;
 
@@ -322,13 +319,13 @@ class TabularDataSource extends React.Component {
           {defaultName: name}
         );
 
-        if (!this.props.node_editor.tabular_data.source1)
+        if (!this.props.node_editor.tabular_data.source1){
           data.source1 = source1;
-        if (!this.props.node_editor.tabular_data.source2)
+        }
+        if (!this.props.node_editor.tabular_data.source2){
           data.source2 = source2;
-
-
-         this.props.onEditTabularData(data);
+        }
+        this.props.onEditTabularData(data);
       }
     }
   }
@@ -349,9 +346,9 @@ class TabularDataSource extends React.Component {
     }
 
     input_variables.forEach((input) => {
-        if ((name + '-' + i) == input.name ){
-          i++;
-        }
+      if ((name + '-' + i) == input.name ){
+        i++;
+      }
     });
 
     return name + '-' + i;
@@ -360,8 +357,9 @@ class TabularDataSource extends React.Component {
   validate() {
     var form = $(this.form).serializeArray();
     var name = form[2]['value'];
-    if (name.length > 0)
+    if (name.length > 0){
       this.props.onNameChange(name, "tabularDataName");
+    }
     var source1 = JSON.parse(form[0]['value']);
     var source2 = JSON.parse(form[1]['value']);
     var defaultName = this.generateName(source1, source2);
@@ -503,6 +501,22 @@ class RasterTable extends React.Component {
 }
 
 class RasterDataSource extends React.Component {
+
+  constructor(){
+    super();
+    this.cal_format = {
+      toDisplay: function (date, format, language){
+        var userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        var d = new Date(date.getTime() + userTimezoneOffset);
+        return dateToDOY(d);
+      },
+      toValue: function (date, format, language){
+        var d = new Date(date);
+        return d;
+      }
+    }
+  }
+
   onSave() {
     if (this.props.errors.rasterDataName || this.props.errors.rasterDate)
       return; // Do not submit if there are errors
@@ -512,18 +526,18 @@ class RasterDataSource extends React.Component {
       name = this.props.node_editor.raster_data.defaultName;
     }
 
-    var variable = {
-      name: name,
-      node: [
+    var variable = ['named', [
+      name,
+      [
         'raster',
         [
           this.props.node_editor.raster_data.raster,
           this.props.spatial_domain,
           this.props.node_editor.raster_data.temporalRangeStart + ',' +
-          this.props.node_editor.raster_data.temporalRangeEnd
+            this.props.node_editor.raster_data.temporalRangeEnd
         ]
       ]
-    };
+    ]];
     var index = this.props.node_editor.raster_data.index;
     var isEditing = this.props.node_editor.raster_data.isEditing;
 
@@ -561,35 +575,25 @@ class RasterDataSource extends React.Component {
     }
 
     input_variables.forEach((input) => {
-        if ((name + '-' + i) == input.name ){
-          i++;
-        }
+      if ((name + '-' + i) == input.name ){
+        i++;
+      }
     });
 
     return name + '-' + i;
   }
 
   componentDidMount(){
-    var format = {
-      toDisplay: function (date, format, language){
-        var userTimezoneOffset = date.getTimezoneOffset() * 60000;
-        var d = new Date(date.getTime() + userTimezoneOffset);
-        return dateToDOY(d);
-      },
-      toValue: function (date, format, language){
-        var d = new Date(date);
-        return d;
-      }
-    }
-
     $(this.startpicker).datepicker({
-      format: format
+      format: this.cal_format,
+      endDate: new Date()
      }).on("changeDate", (e) => {
       this.validate();
      });
 
     $(this.endpicker).datepicker({
-      format: format
+      format: this.cal_format,
+      endDate: new Date()
      }).on("changeDate", (e) => {
       this.validate();
      });
@@ -629,8 +633,22 @@ class RasterDataSource extends React.Component {
   }
 
   updateRaster(r){
-    var raster = {"name":r.description, "id":r.name};
+
+    var raster = {
+      "name": r.description,
+      "id": r.name,
+      "start_date": r.start_date,
+      "end_date": r.end_date,
+    };
+
     var defaultName = this.generateName(raster);
+
+    $(this.startpicker).datepicker('setStartDate', r.start_date);
+    $(this.startpicker).datepicker('setEndDate', r.end_date);
+
+    $(this.endpicker).datepicker('setStartDate', r.start_date);
+    $(this.endpicker).datepicker('setEndDate', r.end_date);
+
     var data = Object.assign(
       {},
       this.props.node_editor.raster_data,
@@ -817,8 +835,10 @@ class ExpressionEditor extends React.Component {
   }
 
   componentWillReceiveProps(newProps) {
-    if (!newProps.node_editor.expression_data.defaultName ||
-        newProps.input_variables != this.props.input_variables) {
+    if (
+      !newProps.node_editor.expression_data.defaultName ||
+        newProps.input_variables != this.props.input_variables
+    ) {
       var data = {defaultName: this.generateName(newProps.input_variables)};
       this.props.onEditExpressionData(data);
     }
@@ -922,11 +942,11 @@ class ExpressionEditor extends React.Component {
 }
 
 class VariableTable extends React.Component {
-  useInputVariable = (item) => {
+  useInputVariable = (item, name) => {
     if (!this.props.name){
-      this.props.updateName(item.name)
+      this.props.updateName(name)
     }
-    this.props.onUpdateTree(item.node);
+    this.props.onUpdateTree(item);
   }
 
   render() {
@@ -941,19 +961,19 @@ class VariableTable extends React.Component {
             </tr>
           </thead>
           <tbody>
-            {this.props.input_variables.map( (item, i) => {
-              var node_object = treeToNode(item.node);
+            {this.props.input_variables.map((item, i) => {
+              var node = treeToNode(item);
               return (
                 <tr>
-                  <td>{item.name}</td>
-                  <td>{node_object.name}</td>
-                  <td>{node_object.dimensions}</td>
+                  <td>{node.name}</td>
+                  <td>{node.type}</td>
+                  <td>{node.dimensions}</td>
                   <td>
                     <Button onClick={
-                      () => this.useInputVariable(item)
+                      () => this.useInputVariable(item, node.name)
                     }>Use</Button>
                     <Button onClick={
-                      () => this.props.onEditInputVariable(item, node_object, i)
+                      () => this.props.onEditInputVariable(node, i)
                     }>Edit</Button>
                   </td>
                   <td>
@@ -1144,7 +1164,8 @@ function sieve(el){
   store.dispatch(fetchLayers());
   store.dispatch(fetchTables());
   store.dispatch(fetchVariables());
-  store.dispatch(receiveRasterCatalog(raster_catalog));
+  store.dispatch(receiveRasterCatalog(window.raster_catalog));
+  store.dispatch(receiveInputVariables(window.sieve_props.input_variables));
 
   ReactDOM.render(
     React.createElement(
