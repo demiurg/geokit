@@ -98,7 +98,7 @@ function input_variables(state=[], action){
       ).concat(
         state.slice(action.index+1)
       );
-    case REPLACE_INPUT_VARIABLE:
+    case UPDATE_INPUT_VARIABLE:
       state.splice(action.index, 1, action.variable);
       return state;
     default:

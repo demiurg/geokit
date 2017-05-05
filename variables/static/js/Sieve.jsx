@@ -7,6 +7,7 @@ const {
 /* app */
 
 var initialState = Object.assign({
+  id: null,
   errors: {"name": null, "tree": null},
   name: "",
   tree: [],
@@ -74,7 +75,7 @@ function sieveApp(state=initialState, action){
       });
     case ADD_INPUT_VARIABLE:
     case REMOVE_INPUT_VARIABLE:
-    case REPLACE_INPUT_VARIABLE:
+    case UPDATE_INPUT_VARIABLE:
       var errors = {};
       errors[action.field] = action.error;
       return Object.assign({}, state, {
@@ -133,14 +134,20 @@ var mapDispatchToProps = (dispatch) => {
       else
         dispatch(updateSpatialDomain(e.value));
     },
+    onUpdateTree: (tree) => {
+      dispatch(updateTree(tree));
+    },
     onAddInputVariable: (variable) => {
       dispatch(addInputVariable(variable));
     },
     onRemoveInputVariable: (i) => {
       dispatch(removeInputVariable(i));
     },
-    onEditInputVariable: (variable, i) => {
-      dispatch(editInputVariable(variable, i));
+    onEditInputVariable: (variable, node, i) => {
+      dispatch(editInputVariable(variable, node, i));
+    },
+    onUpdateInputVariable: (variable, i) => {
+      dispatch(updateInputVariable(variable, i));
     },
     onChangeOperandSelection: (id, value) => {
       dispatch(changeOperandSelection(id, value));
@@ -284,7 +291,7 @@ class TabularDataSource extends React.Component {
     var isEditing = this.props.node_editor.tabular_data.isEditing;
 
     if (isEditing){
-      this.props.onEditInputVariable(variable, index);
+      this.props.onUpdateInputVariable(variable, index);
     } else {
       this.props.onAddInputVariable(variable);
     }
@@ -488,7 +495,7 @@ class RasterDataSource extends React.Component {
     });
 
     if (isEditing){
-      this.props.onEditInputVariable(variable, index);
+      this.props.onUpdateInputVariable(variable, index);
     } else {
       this.props.onAddInputVariable(variable);
     }
@@ -742,7 +749,7 @@ class TreeViewer extends React.Component {
 
 class ExpressionEditor extends React.Component {
   constructor(props) {
-    super();
+    super(props);
 
     var data = {defaultName: this.generateName(props.input_variables)};
     props.onEditExpressionData(data);
@@ -854,14 +861,11 @@ class ExpressionEditor extends React.Component {
 }
 
 class VariableTable extends React.Component {
-  onUseVariable(variable) {
-    this.props.onSaveVariable({
-      id: this.props.id,
-      name: variable.name,
-      tree: variable.node,
-      input_variables: this.props.input_variables,
-      description: this.props.description
-    }, this.props.created);
+  useInputVariable = (item) => {
+    if (!this.props.name){
+      this.props.updateName(item.name)
+    }
+    this.props.onUpdateTree(item.node);
   }
 
   render() {
@@ -877,47 +881,17 @@ class VariableTable extends React.Component {
           </thead>
           <tbody>
             {this.props.input_variables.map( (item, i) => {
-              var tree = treeToNode(item.node);
-              return(
+              var node_object = treeToNode(item.node);
+              return (
                 <tr>
                   <td>{item.name}</td>
-                  <td>{tree.type}</td>
-                  <td>{tree.dimensions}</td>
+                  <td>{node_object.name}</td>
+                  <td>{node_object.dimensions}</td>
                   <td>
-                    <Button onClick={this.onUseVariable.bind(this, item)}>Use</Button>
-                    <Button
-                      onClick={ () => {
-                        if (item.node[0] == "join"){
-                          var source1 = item.node[1][0]
-                          var source2 = item.node[1][1]
-                          this.props.onEditTabularData({
-                            name: item.name,
-                            source1: source1,
-                            source2: source2,
-                            isEditing: true,
-                            index: i
-                          });
-                        } else if (item.node[0] == "raster"){
-                          var raster = item.node[1][0];
-                          var temporalRange = item.node[1][2].split(",");
-                          console.log(item.node);
-                          this.props.onSpatialDomainChange(
-                            {value: item.node[1][1].id}
-                          );
-                          this.props.onEditRasterData({
-                            name: item.name,
-                            raster: raster,
-                            temporalRangeStart: temporalRange[0],
-                            temporalRangeEnd: temporalRange[1],
-                            isEditing: true,
-                            index: i
-                          });
-                        } else {
-                          console.log(item);
-                        }
-                      }}>
-                      Edit
-                    </Button>
+                    <Button onClick={this.useInputVariable}>Use</Button>
+                    <Button onClick={
+                      this.props.onEditInputVariable(this, item, node_object, i)
+                    }>Edit</Button>
                   </td>
                   <td>
                     <Button
@@ -1012,6 +986,16 @@ class AddDataSourcePanel extends React.Component {
 }
 
 class SieveComponent extends React.Component {
+  saveVariable = () => {
+    this.props.onSaveVariable({
+      id: this.props.id,
+      name: this.props.name,
+      tree: this.props.tree,
+      input_variables: this.props.input_variables,
+      description: this.props.description
+    }, this.props.created);
+  };
+
   renderMiddlePanel() {
     if (this.props.spatial_domain) {
       switch (this.props.node_editor.mode) {
@@ -1033,7 +1017,17 @@ class SieveComponent extends React.Component {
     var final = treeToNode(this.props.tree);
     var final_render = null;
     if (this.props.tree.length && final) {
-      final_render = final.render();
+      final_render = <div>
+        <input
+          ref={(ref)=>{this.endpicker=ref}}
+          name="name" type="text"
+          value={this.props.name}
+        />
+        {final.render()}
+        {this.props.changed ?
+          <button onClick={this.saveVariable}>Save Changes</button>
+        : null}
+      </div>;
     } else {
       final_render = <p>Use controls to build and use the variable</p>;
     }

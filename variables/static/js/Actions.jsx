@@ -22,7 +22,7 @@ const UPDATE_CREATED = 'UPDATE_CREATED';
 
 const REMOVE_INPUT_VARIABLE = 'REMOVE_INPUT_VARIABLE';
 const ADD_INPUT_VARIABLE = 'ADD_INPUT_VARIABLE';
-const REPLACE_INPUT_VARIABLE = 'REPLACE_INPUT_VARIABLE';
+const UPDATE_INPUT_VARIABLE = 'UPDATE_INPUT_VARIABLE';
 const ERROR_INPUT_VARIABLE = 'ERROR_INPUT_VARIABLE';
 
 const INIT_TREE = 'INIT_TREE';
@@ -181,9 +181,40 @@ function addInputVariable(variable){
   }
 }
 
-function editInputVariable(variable, idx){
+function editInputVariable(variable, node, i){
+  return function(dispatch){
+    if (node.type == "join"){
+      dispatch(editTabularData({
+        name: variable.name,
+        source1: node.left,
+        source2: node.right,
+        isEditing: true,
+        index: i
+      }));
+    } else if (node.type == "raster"){
+      dispatch(updateSpatialDomain(node.layer.id));
+      dispatch(editRasterData({
+        name: variable.name,
+        raster: node.product,
+        temporalRangeStart: node.start,
+        temporalRangeEnd: node.end,
+        isEditing: true,
+        index: i
+      }));
+    } else {
+      dispatch(editExpressionData({
+        name: variable.name,
+        index: i,
+        isEditing: true,
+        node: variable.node
+      }));
+    }
+  }
+}
+
+function updateInputVariable(variable, idx){
   return {
-    type: REPLACE_INPUT_VARIABLE,
+    type: UPDATE_INPUT_VARIABLE,
     index: idx,
     variable
   };
@@ -279,6 +310,13 @@ function updateCreated(time=null){
     type: UPDATE_CREATED,
     time
   };
+}
+
+function updateTree(tree){
+  return {
+    type: UPDATE_TREE,
+    tree: tree
+  }
 }
 
 function saveVariable(variable, created){
