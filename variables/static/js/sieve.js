@@ -143,9 +143,39 @@ var nextVariableId = 0;
 
 function validateRaster(raster) {
   var range = raster[1][2];
+  var raster = raster[1][0];
 
-  if (range.includes("undefined")) return "Start and end date must be specified.";
-  if (!range.match(/\d{4}-\d{3},\d{4}-\d{3}/g)) return "Date must be entered in the form yyyy-ddd.";
+  // Date conversion hell
+  var d1 = new Date(raster.start_date);
+  var d2 = new Date(raster.end_date);
+  var userTimezoneOffset = d1.getTimezoneOffset() * 60000;
+  var raster_start_date = new Date(d1.getTime() + userTimezoneOffset);
+  var raster_end_date = new Date(d2.getTime() + userTimezoneOffset);
+
+  if (range.includes("undefined")) {
+    return "Start and end date must be specified.";
+  } else if (!range.match(/\d{4}-\d{3},\d{4}-\d{3}/g)) {
+    return "Date must be entered in the form yyyy-ddd.";
+  }
+
+  var range_start = range.split(',')[0];
+  var range_end = range.split(',')[1];
+
+  var doy_start = parseInt(range_start.split('-')[1]);
+  var year_start = parseInt(range_start.split('-')[0]);
+  var range_start_date = new Date(year_start, 0);
+  range_start_date.setDate(doy_start);
+
+  var doy_end = parseInt(range_end.split('-')[1]);
+  var year_end = parseInt(range_end.split('-')[0]);
+  var range_end_date = new Date(year_end, 0);
+  range_end_date.setDate(doy_end);
+
+  if (range_start_date < raster_start_date) {
+    return "Start date must be after " + raster_start_date.toDateString();
+  } else if (range_end_date > raster_end_date) {
+    return "End date must be before " + raster_end_date.toDateString();
+  }
 
   return null;
 }
@@ -2198,7 +2228,20 @@ var RasterDataSource = function (_React$Component4) {
   function RasterDataSource() {
     _classCallCheck(this, RasterDataSource);
 
-    return _possibleConstructorReturn(this, _React$Component4.apply(this, arguments));
+    var _this7 = _possibleConstructorReturn(this, _React$Component4.call(this));
+
+    _this7.cal_format = {
+      toDisplay: function toDisplay(date, format, language) {
+        var userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        var d = new Date(date.getTime() + userTimezoneOffset);
+        return dateToDOY(d);
+      },
+      toValue: function toValue(date, format, language) {
+        var d = new Date(date);
+        return d;
+      }
+    };
+    return _this7;
   }
 
   RasterDataSource.prototype.onSave = function onSave() {
@@ -2260,26 +2303,16 @@ var RasterDataSource = function (_React$Component4) {
   RasterDataSource.prototype.componentDidMount = function componentDidMount() {
     var _this8 = this;
 
-    var format = {
-      toDisplay: function toDisplay(date, format, language) {
-        var userTimezoneOffset = date.getTimezoneOffset() * 60000;
-        var d = new Date(date.getTime() + userTimezoneOffset);
-        return dateToDOY(d);
-      },
-      toValue: function toValue(date, format, language) {
-        var d = new Date(date);
-        return d;
-      }
-    };
-
     $(this.startpicker).datepicker({
-      format: format
+      format: this.cal_format,
+      endDate: new Date()
     }).on("changeDate", function (e) {
       _this8.validate();
     });
 
     $(this.endpicker).datepicker({
-      format: format
+      format: this.cal_format,
+      endDate: new Date()
     }).on("changeDate", function (e) {
       _this8.validate();
     });
@@ -2309,8 +2342,22 @@ var RasterDataSource = function (_React$Component4) {
   };
 
   RasterDataSource.prototype.updateRaster = function updateRaster(r) {
-    var raster = { "name": r.description, "id": r.name };
+
+    var raster = {
+      "name": r.description,
+      "id": r.name,
+      "start_date": r.start_date,
+      "end_date": r.end_date
+    };
+
     var defaultName = this.generateName(raster);
+
+    $(this.startpicker).datepicker('setStartDate', r.start_date);
+    $(this.startpicker).datepicker('setEndDate', r.end_date);
+
+    $(this.endpicker).datepicker('setStartDate', r.start_date);
+    $(this.endpicker).datepicker('setEndDate', r.end_date);
+
     var data = Object.assign({}, this.props.node_editor.raster_data, {
       raster: raster,
       defaultName: defaultName

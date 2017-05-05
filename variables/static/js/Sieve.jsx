@@ -501,6 +501,22 @@ class RasterTable extends React.Component {
 }
 
 class RasterDataSource extends React.Component {
+
+  constructor(){
+    super();
+    this.cal_format = {
+      toDisplay: function (date, format, language){
+        var userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        var d = new Date(date.getTime() + userTimezoneOffset);
+        return dateToDOY(d);
+      },
+      toValue: function (date, format, language){
+        var d = new Date(date);
+        return d;
+      }
+    }
+  }
+
   onSave() {
     if (this.props.errors.rasterDataName || this.props.errors.rasterDate)
       return; // Do not submit if there are errors
@@ -518,7 +534,7 @@ class RasterDataSource extends React.Component {
           this.props.node_editor.raster_data.raster,
           this.props.spatial_domain,
           this.props.node_editor.raster_data.temporalRangeStart + ',' +
-          this.props.node_editor.raster_data.temporalRangeEnd
+            this.props.node_editor.raster_data.temporalRangeEnd
         ]
       ]
     ]];
@@ -568,26 +584,16 @@ class RasterDataSource extends React.Component {
   }
 
   componentDidMount(){
-    var format = {
-      toDisplay: function (date, format, language){
-        var userTimezoneOffset = date.getTimezoneOffset() * 60000;
-        var d = new Date(date.getTime() + userTimezoneOffset);
-        return dateToDOY(d);
-      },
-      toValue: function (date, format, language){
-        var d = new Date(date);
-        return d;
-      }
-    }
-
     $(this.startpicker).datepicker({
-      format: format
+      format: this.cal_format,
+      endDate: new Date()
      }).on("changeDate", (e) => {
       this.validate();
      });
 
     $(this.endpicker).datepicker({
-      format: format
+      format: this.cal_format,
+      endDate: new Date()
      }).on("changeDate", (e) => {
       this.validate();
      });
@@ -627,8 +633,22 @@ class RasterDataSource extends React.Component {
   }
 
   updateRaster(r){
-    var raster = {"name": r.description, "id": r.name};
+
+    var raster = {
+      "name": r.description,
+      "id": r.name,
+      "start_date": r.start_date,
+      "end_date": r.end_date,
+    };
+
     var defaultName = this.generateName(raster);
+
+    $(this.startpicker).datepicker('setStartDate', r.start_date);
+    $(this.startpicker).datepicker('setEndDate', r.end_date);
+
+    $(this.endpicker).datepicker('setStartDate', r.start_date);
+    $(this.endpicker).datepicker('setEndDate', r.end_date);
+
     var data = Object.assign(
       {},
       this.props.node_editor.raster_data,
