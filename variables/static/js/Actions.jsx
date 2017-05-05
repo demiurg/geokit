@@ -161,8 +161,8 @@ function receiveInputVariables(input_variables) {
   }
 }
 
-function addInputVariable(variable){
-  var node= variable.node;
+function addInputVariable(node){
+  var node = variable.node;
   var inputType = node[0];
   var error = null;
 
@@ -182,7 +182,7 @@ function addInputVariable(variable){
       error: error,
       field: "rasterDataTemporalRange",
       id: nextVariableId++,
-      variable
+      variable: node
     };
   }
 }

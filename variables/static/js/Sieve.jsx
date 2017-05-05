@@ -274,16 +274,16 @@ class TabularDataSource extends React.Component {
       name = this.props.node_editor.tabular_data.defaultName;
     }
 
-    var variable = {
-      name: name,
-      node: [
+    var variable = ['named', [
+      name,
+      [
         'join',
         [
           this.props.node_editor.tabular_data.source1,
           this.props.node_editor.tabular_data.source2
         ]
-      ]
-    };
+      ]]
+    ];
     var index = this.props.node_editor.tabular_data.index;
     var isEditing = this.props.node_editor.tabular_data.isEditing;
 
@@ -319,13 +319,13 @@ class TabularDataSource extends React.Component {
           {defaultName: name}
         );
 
-        if (!this.props.node_editor.tabular_data.source1)
+        if (!this.props.node_editor.tabular_data.source1){
           data.source1 = source1;
-        if (!this.props.node_editor.tabular_data.source2)
+        }
+        if (!this.props.node_editor.tabular_data.source2){
           data.source2 = source2;
-
-
-         this.props.onEditTabularData(data);
+        }
+        this.props.onEditTabularData(data);
       }
     }
   }
@@ -346,9 +346,9 @@ class TabularDataSource extends React.Component {
     }
 
     input_variables.forEach((input) => {
-        if ((name + '-' + i) == input.name ){
-          i++;
-        }
+      if ((name + '-' + i) == input.name ){
+        i++;
+      }
     });
 
     return name + '-' + i;
@@ -357,8 +357,9 @@ class TabularDataSource extends React.Component {
   validate() {
     var form = $(this.form).serializeArray();
     var name = form[2]['value'];
-    if (name.length > 0)
+    if (name.length > 0){
       this.props.onNameChange(name, "tabularDataName");
+    }
     var source1 = JSON.parse(form[0]['value']);
     var source2 = JSON.parse(form[1]['value']);
     var defaultName = this.generateName(source1, source2);
@@ -509,9 +510,9 @@ class RasterDataSource extends React.Component {
       name = this.props.node_editor.raster_data.defaultName;
     }
 
-    var variable = {
-      name: name,
-      node: [
+    var variable = ['named', [
+      name,
+      [
         'raster',
         [
           this.props.node_editor.raster_data.raster,
@@ -520,7 +521,7 @@ class RasterDataSource extends React.Component {
           this.props.node_editor.raster_data.temporalRangeEnd
         ]
       ]
-    };
+    ]];
     var index = this.props.node_editor.raster_data.index;
     var isEditing = this.props.node_editor.raster_data.isEditing;
 
@@ -558,9 +559,9 @@ class RasterDataSource extends React.Component {
     }
 
     input_variables.forEach((input) => {
-        if ((name + '-' + i) == input.name ){
-          i++;
-        }
+      if ((name + '-' + i) == input.name ){
+        i++;
+      }
     });
 
     return name + '-' + i;
@@ -626,7 +627,7 @@ class RasterDataSource extends React.Component {
   }
 
   updateRaster(r){
-    var raster = {"name":r.description, "id":r.name};
+    var raster = {"name": r.description, "id": r.name};
     var defaultName = this.generateName(raster);
     var data = Object.assign(
       {},
@@ -814,8 +815,10 @@ class ExpressionEditor extends React.Component {
   }
 
   componentWillReceiveProps(newProps) {
-    if (!newProps.node_editor.expression_data.defaultName ||
-        newProps.input_variables != this.props.input_variables) {
+    if (
+      !newProps.node_editor.expression_data.defaultName ||
+        newProps.input_variables != this.props.input_variables
+    ) {
       var data = {defaultName: this.generateName(newProps.input_variables)};
       this.props.onEditExpressionData(data);
     }
