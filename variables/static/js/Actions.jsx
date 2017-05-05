@@ -426,6 +426,7 @@ function addDataSource(){
   return {
     type: EDIT_NODE,
     mode: ADDING_DATA_SOURCE,
+    data: {},
   }
 }
 
@@ -433,6 +434,7 @@ function addExpression(){
   return {
     type: EDIT_NODE,
     mode: EDITING_EXPRESSION,
+    data: {},
   }
 }
 
@@ -440,5 +442,6 @@ function editNothing(){
   return {
     type: EDIT_NODE,
     mode: DEFAULT,
+    data: {},
   }
 }

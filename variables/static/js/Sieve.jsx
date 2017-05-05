@@ -156,7 +156,7 @@ var mapDispatchToProps = (dispatch) => {
       dispatch(addDataSource());
     },
     onAddExpression: () => {
-      dispatch(onAddExpression());
+      dispatch(addExpression());
     },
     onEditRasterData: (data) => {
       dispatch(editRasterData(data));
@@ -904,7 +904,9 @@ class ExpressionEditor extends React.Component {
       var node = treeToNode(expressionData.node);
       expressionData.node[1] = this.populateOperands(node.arity);
 
-      this.props.onEditExpressionData({name: "", node: [], operand_refs: []});
+      this.props.onEditExpressionData(
+        {node: ['named', [name, []]], operand_refs: []}
+      );
       this.props.onAddInputVariable(expressionData);
       this.props.onEditNothing();
     }
@@ -996,11 +998,11 @@ class VariableTable extends React.Component {
       <Panel header="Variables">
         <div className="pull-right">
           <Button disabled={!this.props.spatial_domain || this.props.input_variables.length == 0}
-                  onClick={this.props.onAddExpression}>
+                  onClick={() => this.props.onAddExpression()}>
             Add Expression
           </Button>
           <Button disabled={!this.props.spatial_domain}
-                  onClick={this.props.onAddDataSource}>
+                  onClick={() => this.props.onAddDataSource()}>
             Add Data Source
           </Button>
         </div>

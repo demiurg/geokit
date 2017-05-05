@@ -424,21 +424,24 @@ function editExpressionData(data) {
 function addDataSource() {
   return {
     type: EDIT_NODE,
-    mode: ADDING_DATA_SOURCE
+    mode: ADDING_DATA_SOURCE,
+    data: {}
   };
 }
 
 function addExpression() {
   return {
     type: EDIT_NODE,
-    mode: EDITING_EXPRESSION
+    mode: EDITING_EXPRESSION,
+    data: {}
   };
 }
 
 function editNothing() {
   return {
     type: EDIT_NODE,
-    mode: DEFAULT
+    mode: DEFAULT,
+    data: {}
   };
 }
 "use strict";
@@ -1767,19 +1770,9 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
     onAddDataSource: function onAddDataSource() {
       dispatch(addDataSource());
     },
-    onAddExpression: function (_onAddExpression) {
-      function onAddExpression() {
-        return _onAddExpression.apply(this, arguments);
-      }
-
-      onAddExpression.toString = function () {
-        return _onAddExpression.toString();
-      };
-
-      return onAddExpression;
-    }(function () {
-      dispatch(onAddExpression());
-    }),
+    onAddExpression: function onAddExpression() {
+      dispatch(addExpression());
+    },
     onEditRasterData: function onEditRasterData(data) {
       dispatch(editRasterData(data));
     },
@@ -2640,7 +2633,7 @@ var ExpressionEditor = function (_React$Component7) {
       var node = treeToNode(expressionData.node);
       expressionData.node[1] = this.populateOperands(node.arity);
 
-      this.props.onEditExpressionData({ name: "", node: [], operand_refs: [] });
+      this.props.onEditExpressionData({ node: ['named', [name, []]], operand_refs: [] });
       this.props.onAddInputVariable(expressionData);
       this.props.onEditNothing();
     }
@@ -2841,13 +2834,17 @@ var VariableTable = function (_React$Component8) {
         React.createElement(
           Button,
           { disabled: !this.props.spatial_domain || this.props.input_variables.length == 0,
-            onClick: this.props.onAddExpression },
+            onClick: function onClick() {
+              return _this15.props.onAddExpression();
+            } },
           "Add Expression"
         ),
         React.createElement(
           Button,
           { disabled: !this.props.spatial_domain,
-            onClick: this.props.onAddDataSource },
+            onClick: function onClick() {
+              return _this15.props.onAddDataSource();
+            } },
           "Add Data Source"
         )
       ),
@@ -3243,7 +3240,7 @@ var DataNode = function () {
   };
 
   DataNode.prototype.isSource = function isSource(obj) {
-    return obj.id && obj.type;
+    return obj && obj.id && obj.type;
   };
 
   _createClass(DataNode, [{
@@ -3471,17 +3468,13 @@ var MathOperator = function (_DataNode9) {
 
     var _this10 = _possibleConstructorReturn(this, _DataNode9.call(this, tree, ['left', 'right'], 2));
 
-    var operator = _this10._operator;
-    var operands = _this10._operands;
-
-    _this10.operator = operator;
-    _this10._name = operator;
+    _this10._name = _this10._operator;
 
     if (_this10.left.dimensions != _this10.right.dimensions) {
       throw Error("Operators must have the same dimensions");
     }
 
-    _this10._dimensions = _this10.left.dimensions;
+    _this10._dimensions = _this10.left ? _this10.left.dimensions : null;
     return _this10;
   }
 

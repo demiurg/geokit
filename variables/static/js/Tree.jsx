@@ -111,7 +111,7 @@ class DataNode {
   }
 
   isSource(obj){
-    return (obj.id && obj.type);
+    return (obj && (obj.id && obj.type));
   }
 }
 
@@ -245,18 +245,13 @@ class SourceOperator extends DataNode {
 class MathOperator extends DataNode {
   constructor(tree) {
     super(tree, ['left', 'right'], 2);
-
-    var operator = this._operator;
-    var operands = this._operands;
-
-    this.operator = operator;
-    this._name = operator;
+    this._name = this._operator;
 
     if (this.left.dimensions != this.right.dimensions) {
       throw Error("Operators must have the same dimensions");
     }
 
-    this._dimensions = this.left.dimensions;
+    this._dimensions = this.left ? this.left.dimensions : null;
   }
 
   validOperands(input_vars, operand_refs, op_index) {
