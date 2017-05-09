@@ -6,10 +6,12 @@ const RECEIVE_LAYERS = 'RECEIVE_LAYERS';
 const REQUEST_TABLES = 'REQUEST_TABLES';
 const RECEIVE_TABLES = 'RECEIVE_TABLES';
 
-const RECEIVE_RASTER_CATALOG = 'RECEIVE_RASTE_CATALOG';
+const RECEIVE_RASTER_CATALOG = 'RECEIVE_RASTER_CATALOG';
 
 const RECEIVE_VARIABLES = 'RECEIVE_VARIABLES';
 const REQUEST_VARIABLES = 'REQUEST_VARIABLES';
+
+const RECEIVE_INPUT_VARIABLES = 'RECEIVE_INPUT_VARIABLES';
 
 const UPDATE_NAME = 'UPDATE_NAME';
 const UPDATE_DESCRIPTION = 'UPDATE_DESCRIPTION';
@@ -185,13 +187,30 @@ function validateRaster(raster){
 }
 
 function receiveInputVariables(input_variables) {
-  return function(dispatch){
+  if (!input_variables) {
+    return {
+      type: RECEIVE_INPUT_VARIABLES,
+      input_variables: [],
+      spatial_domain: null
+    };
+  } else {
+    var last_input_var = input_variables[input_variables.length - 1];
 
+    var input_var_layers = treeToNode(last_input_var).layers,
+        spatial_domain = null;
+    if (input_var_layers) {
+      spatial_domain = input_var_layers[input_var_layers.length - 1].operand.id;
+    }
+    
+    return {
+      type: RECEIVE_INPUT_VARIABLES,
+      input_variables: input_variables,
+      spatial_domain: spatial_domain
+    };
   }
 }
 
 function addInputVariable(node){
-  var node = variable.node;
   var inputType = node[0];
   var error = null;
 
