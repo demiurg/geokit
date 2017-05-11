@@ -498,7 +498,7 @@ class RasterSource(DataNode):
 
         # print job_id
 
-        results = conn.stats_request_results({'job': job_id})
+        results = conn.get_results(job_id)
         if not results:
             raise JobIncompleteException()
         print "requesting job {}".format(job_id)

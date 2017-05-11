@@ -222,7 +222,7 @@ function addInputVariable(node){
       type: ERROR_INPUT_VARIABLE,
       error: error,
       field: "rasterDataTemporalRange",
-      variable
+      variable: node
     };
   } else {
     return {

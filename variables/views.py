@@ -29,7 +29,14 @@ def get_raster_catalog():
 
     try:
         conn = rpc_con()
-        data = conn.get_datacatalog()
+        data = conn.get_catalog()
+
+        if not data:
+            return []
+
+        for r in data:
+            r['start_date'] = r['start_date'].date()
+            r['end_date'] = date.today() - timedelta(days=r['latency'])
         return data
     except Exception as e:
         print "Error getting raster catalog: {}".format(str(e))
@@ -44,10 +51,7 @@ def index(request):
 
 def add(request):
     raster_catalog = get_raster_catalog()
-    for r in raster_catalog:
-        r['start_date'] = r['start_date'].date();
-        r['end_date'] = date.today() - timedelta(days=r['latency']);
-        print(r)
+
     return render(request, 'variables/sieve.html', {
         'raster_catalog': json.dumps(raster_catalog),
         'node_types': json.dumps(NODE_TYPES.keys())

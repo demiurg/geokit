@@ -41,7 +41,7 @@ def main(gips_shp_path):
     for cnt in range(1, check_count + 1):
         time.sleep(wait_time_between_checks)
         log.debug('Check {}; elapsed time {}s'.format(cnt, cnt * wait_time_between_checks))
-        results = rpc_con().stats_request_results({'job': job_id})
+        results = rpc_con().get_results(job_id)
         if results:
             log.info('Successful datahandler run: {}'.format(results))
             return

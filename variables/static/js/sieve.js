@@ -218,7 +218,7 @@ function addInputVariable(node) {
       type: ERROR_INPUT_VARIABLE,
       error: error,
       field: "rasterDataTemporalRange",
-      variable: variable
+      variable: node
     };
   } else {
     return {
@@ -1657,7 +1657,7 @@ var initialState = Object.assign({
   node_editor: { mode: DEFAULT },
   tabularData: {},
   rasterData: {},
-  expressionData: {},
+  expression_data: {},
   operandSelections: {}
 }, window.sieve_props);
 
@@ -1693,6 +1693,7 @@ function sieveApp() {
     case UPDATE_NAME:
       var errors = {};
       errors[action.field] = action.error;
+      console.log(action.name);
       return Object.assign({}, state, {
         changed: true,
         name: action.name,
@@ -1763,7 +1764,7 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
     onSaveVariable: function onSaveVariable(v, c) {
       dispatch(saveVariable(v, c));
     },
-    onNameChange: function onNameChange(name, field) {
+    onUpdateName: function onUpdateName(name, field) {
       dispatch(updateName(name, field));
     },
     onDescriptionChange: function onDescriptionChange(e) {
@@ -2003,7 +2004,7 @@ var TabularDataSource = function (_React$Component2) {
     var form = $(this.form).serializeArray();
     var name = form[2]['value'];
     if (name.length > 0) {
-      this.props.onNameChange(name, "tabularDataName");
+      this.props.onUpdateName(name, "tabularDataName");
     }
     var source1 = JSON.parse(form[0]['value']);
     var source2 = JSON.parse(form[1]['value']);
@@ -2388,7 +2389,7 @@ var RasterDataSource = function (_React$Component4) {
   RasterDataSource.prototype.validate = function validate() {
     var form = $(this.form).serializeArray();
     var name = form[2]['value'];
-    if (name.length > 0) this.props.onNameChange(name, "rasterDataName");
+    if (name.length > 0) this.props.onUpdateName(name, "rasterDataName");
     var temporalRangeStart = form[0]['value'];
     var temporalRangeEnd = form[1]['value'];
 
@@ -2623,14 +2624,14 @@ var ExpressionEditor = function (_React$Component7) {
   };
 
   ExpressionEditor.prototype.changeName = function changeName(e) {
-    var expressionData = Object.assign({}, this.props.node_editor.expression_data, { name: e.target.value });
-    this.props.onEditExpressionData(expressionData);
+    var expression_data = Object.assign({}, this.props.node_editor.expression_data, { name: e.target.value });
+    this.props.onEditExpressionData(expression_data);
   };
 
   ExpressionEditor.prototype.addOp = function addOp(op) {
     var node_object = treeToNode(op);
-    var expressionData = Object.assign({}, this.props.node_editor.expression_data, { node: op, operand_refs: Array(node_object.arity) });
-    this.props.onEditExpressionData(expressionData);
+    var expression_data = Object.assign({}, this.props.node_editor.expression_data, { node: op, operand_refs: Array(node_object.arity) });
+    this.props.onEditExpressionData(expression_data);
   };
 
   ExpressionEditor.prototype.populateOperands = function populateOperands(arity) {
@@ -2650,17 +2651,25 @@ var ExpressionEditor = function (_React$Component7) {
   };
 
   ExpressionEditor.prototype.onSave = function onSave() {
-    var expressionData = this.props.node_editor.expression_data;
-    if (expressionData.node && expressionData.node.length == 2) {
-      if (!expressionData.name || expressionData.name == "") {
-        expressionData.name = expressionData.defaultName;
+    var expression_data = this.props.node_editor.expression_data;
+    if (DataNode.isNode(expression_data.node)) {
+      if (!expression_data.name || expression_data.name == "") {
+        expression_data.name = expression_data.defaultName;
       }
 
-      var node = treeToNode(expressionData.node);
-      expressionData.node[1] = this.populateOperands(node.arity);
+      var node = treeToNode(expression_data.node);
+      if (node.type == 'named') {
+        node.name = expression_data.name;
+      } else {
+        node = DataNode.namedNode(expression_data.name, node);
+      }
+      expression_data.node[1] = this.populateOperands(node.arity);
 
-      this.props.onEditExpressionData({ node: ['named', [name, []]], operand_refs: [] });
-      this.props.onAddInputVariable(expressionData);
+      this.props.onEditExpressionData({
+        node: node,
+        operand_refs: []
+      });
+      this.props.onAddInputVariable(expression_data);
       this.props.onEditNothing();
     }
   };
@@ -2754,7 +2763,7 @@ var VariableTable = function (_React$Component8) {
 
     return _ret = (_temp = (_this14 = _possibleConstructorReturn(this, _React$Component8.call.apply(_React$Component8, [this].concat(args))), _this14), _this14.useInputVariable = function (item, name) {
       if (!_this14.props.name) {
-        _this14.props.updateName(name);
+        _this14.props.onUpdateName(name);
       }
       _this14.props.onUpdateTree(item);
     }, _temp), _possibleConstructorReturn(_this14, _ret);
@@ -2795,6 +2804,7 @@ var VariableTable = function (_React$Component8) {
           null,
           this.props.input_variables.map(function (item, i) {
             var node = treeToNode(item);
+
             return React.createElement(
               "tr",
               null,
@@ -3043,7 +3053,8 @@ var SieveComponent = function (_React$Component10) {
     var _this18 = this;
 
     var final_render = null;
-    if (this.props.tree) {
+    this.props.name;
+    if (this.props.tree && this.props.tree.length) {
       var final = treeToNode(this.props.tree);
       final_render = React.createElement(
         "div",
@@ -3267,6 +3278,10 @@ var DataNode = function () {
 
   DataNode.prototype.isSource = function isSource(obj) {
     return obj && obj.id && obj.type;
+  };
+
+  DataNode.nameNode = function nameNode(name, node) {
+    return NamedTree(['named', [name, node]]);
   };
 
   _createClass(DataNode, [{
@@ -3552,6 +3567,10 @@ var NamedTree = function (_DataNode10) {
     return _this11;
   }
 
+  NamedTree.prototype.json = function json() {
+    return ['named', [this.name_operand, this.operand]];
+  };
+
   NamedTree.prototype.render = function render() {
     return React.createElement(
       "span",
@@ -3567,6 +3586,14 @@ var NamedTree = function (_DataNode10) {
     get: function get() {
       var type = this.operand.type;
       return type ? type : "named";
+    }
+  }, {
+    key: "name",
+    get: function get() {
+      return this.name_operand;
+    },
+    set: function set(str) {
+      this.name_operand = str;
     }
   }, {
     key: "dimensions",
@@ -3591,22 +3618,26 @@ var EmptyTree = function (_DataNode11) {
   }
 
   EmptyTree.prototype.render = function render() {
-    return React.createElement("span", null);
+    return React.createElement(
+      "span",
+      null,
+      "Empty"
+    );
   };
 
   return EmptyTree;
 }(DataNode);
 
-var ErrorNode = function (_DataNode12) {
-  _inherits(ErrorNode, _DataNode12);
+var ErrorTree = function (_DataNode12) {
+  _inherits(ErrorTree, _DataNode12);
 
-  function ErrorNode(args, error) {
-    _classCallCheck(this, ErrorNode);
+  function ErrorTree(args, error) {
+    _classCallCheck(this, ErrorTree);
 
     return _possibleConstructorReturn(this, _DataNode12.call(this, ['error', [args, error]], ['data', 'error'], 2));
   }
 
-  return ErrorNode;
+  return ErrorTree;
 }(DataNode);
 
 var NODE_TYPES_IMPLEMENTED = {
@@ -3624,7 +3655,7 @@ var NODE_TYPES_IMPLEMENTED = {
   '/': MathOperator,
   'named': NamedTree,
   'noop': EmptyTree,
-  'error': ErrorNode
+  'error': ErrorTree
 };
 
 function treeToNode(tree) {
