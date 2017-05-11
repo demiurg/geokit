@@ -52,6 +52,22 @@ class DataNode {
     return this._dimensions;
   }
 
+  get layers() {
+    var layers = [];
+
+    if (this._name == "Source") {
+      if (this.operand.type == "Layer") {
+        layers = [this];
+      }
+    } else {
+      this._operands.forEach((operand) => {
+        layers = layers.concat(operand.layers);
+      });
+    }
+
+    return layers;
+  }
+
   validOperands(input_vars, operand_refs, op_index) {
     return input_vars;
   }

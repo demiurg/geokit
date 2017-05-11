@@ -6,10 +6,12 @@ var RECEIVE_LAYERS = 'RECEIVE_LAYERS';
 var REQUEST_TABLES = 'REQUEST_TABLES';
 var RECEIVE_TABLES = 'RECEIVE_TABLES';
 
-var RECEIVE_RASTER_CATALOG = 'RECEIVE_RASTE_CATALOG';
+var RECEIVE_RASTER_CATALOG = 'RECEIVE_RASTER_CATALOG';
 
 var RECEIVE_VARIABLES = 'RECEIVE_VARIABLES';
 var REQUEST_VARIABLES = 'REQUEST_VARIABLES';
+
+var RECEIVE_INPUT_VARIABLES = 'RECEIVE_INPUT_VARIABLES';
 
 var UPDATE_NAME = 'UPDATE_NAME';
 var UPDATE_DESCRIPTION = 'UPDATE_DESCRIPTION';
@@ -181,7 +183,27 @@ function validateRaster(raster) {
 }
 
 function receiveInputVariables(input_variables) {
-  return function (dispatch) {};
+  if (!input_variables) {
+    return {
+      type: RECEIVE_INPUT_VARIABLES,
+      input_variables: [],
+      spatial_domain: null
+    };
+  } else {
+    var last_input_var = input_variables[input_variables.length - 1];
+
+    var input_var_layers = treeToNode(last_input_var).layers,
+        spatial_domain = null;
+    if (input_var_layers) {
+      spatial_domain = input_var_layers[input_var_layers.length - 1].operand.id;
+    }
+
+    return {
+      type: RECEIVE_INPUT_VARIABLES,
+      input_variables: input_variables,
+      spatial_domain: spatial_domain
+    };
+  }
 }
 
 function addInputVariable(node) {
@@ -320,7 +342,7 @@ function recieveVariable(json) {
 }
 
 function updateErrors() {
-  var errors = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { "name": null, "tree": null };
+  var errors = arguments.length <= 0 || arguments[0] === undefined ? { "name": null, "tree": null } : arguments[0];
 
   return {
     type: UPDATE_ERRORS,
@@ -329,7 +351,7 @@ function updateErrors() {
 }
 
 function updateModified() {
-  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
   return {
     type: UPDATE_MODIFIED,
@@ -338,7 +360,7 @@ function updateModified() {
 }
 
 function updateCreated() {
-  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
   return {
     type: UPDATE_CREATED,
@@ -445,7 +467,7 @@ function editNothing() {
 }
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1261,7 +1283,7 @@ var FilterListItem = function (_React$Component12) {
           {
             bsSize: "xsmall",
             onClick: this.props.removeFilter.bind(null, this.props.filter.key) },
-          "\xA0x\xA0"
+          " x "
         )
       )
     );
@@ -1376,12 +1398,12 @@ var Aggregate = function (_React$Component13) {
 'use strict';
 
 function layers() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     name: 'Layers',
     isFetching: false,
     didInvalidate: false,
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1403,12 +1425,12 @@ function layers() {
 }
 
 function tables() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     name: 'Tables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1430,9 +1452,9 @@ function tables() {
 }
 
 function rasterCatalog() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1447,12 +1469,12 @@ function rasterCatalog() {
 }
 
 function variables() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     name: 'Variables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1474,7 +1496,7 @@ function variables() {
 }
 
 function input_variables() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  var state = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1507,7 +1529,7 @@ function separateOperands(operands, tree) {
 }
 
 function tree() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1538,7 +1560,7 @@ function tree() {
 function operandSelections() {
   var _Object$assign;
 
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1557,7 +1579,7 @@ var EDITING_RASTER_DATA = 'EDITING_RASTER_DATA';
 var EDITING_EXPRESSION = 'EDITING_EXPRESSION';
 
 function node_editor() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { 'mode': DEFAULT };
+  var state = arguments.length <= 0 || arguments[0] === undefined ? { 'mode': DEFAULT } : arguments[0];
   var action = arguments[1];
 
   switch (action.mode) {
@@ -1598,26 +1620,26 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var _ReactBootstrap = ReactBootstrap,
-    Panel = _ReactBootstrap.Panel,
-    ButtonGroup = _ReactBootstrap.ButtonGroup,
-    ButtonToolbar = _ReactBootstrap.ButtonToolbar,
-    ButtonInput = _ReactBootstrap.ButtonInput,
-    Button = _ReactBootstrap.Button,
-    Row = _ReactBootstrap.Row,
-    Col = _ReactBootstrap.Col,
-    Alert = _ReactBootstrap.Alert,
-    Tabs = _ReactBootstrap.Tabs,
-    Tab = _ReactBootstrap.Tab,
-    DropdownButton = _ReactBootstrap.DropdownButton,
-    MenuItem = _ReactBootstrap.MenuItem,
-    Table = _ReactBootstrap.Table,
-    Glyphicon = _ReactBootstrap.Glyphicon,
-    Modal = _ReactBootstrap.Modal,
-    FormControl = _ReactBootstrap.FormControl,
-    ControlLabel = _ReactBootstrap.ControlLabel,
-    FormGroup = _ReactBootstrap.FormGroup,
-    HelpBlock = _ReactBootstrap.HelpBlock;
+var _ReactBootstrap = ReactBootstrap;
+var Panel = _ReactBootstrap.Panel;
+var ButtonGroup = _ReactBootstrap.ButtonGroup;
+var ButtonToolbar = _ReactBootstrap.ButtonToolbar;
+var ButtonInput = _ReactBootstrap.ButtonInput;
+var Button = _ReactBootstrap.Button;
+var Row = _ReactBootstrap.Row;
+var Col = _ReactBootstrap.Col;
+var Alert = _ReactBootstrap.Alert;
+var Tabs = _ReactBootstrap.Tabs;
+var Tab = _ReactBootstrap.Tab;
+var DropdownButton = _ReactBootstrap.DropdownButton;
+var MenuItem = _ReactBootstrap.MenuItem;
+var Table = _ReactBootstrap.Table;
+var Glyphicon = _ReactBootstrap.Glyphicon;
+var Modal = _ReactBootstrap.Modal;
+var FormControl = _ReactBootstrap.FormControl;
+var ControlLabel = _ReactBootstrap.ControlLabel;
+var FormGroup = _ReactBootstrap.FormGroup;
+var HelpBlock = _ReactBootstrap.HelpBlock;
 
 /* app */
 
@@ -1640,7 +1662,7 @@ var initialState = Object.assign({
 }, window.sieve_props);
 
 function sieveApp() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
+  var state = arguments.length <= 0 || arguments[0] === undefined ? initialState : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -1658,6 +1680,11 @@ function sieveApp() {
     case RECEIVE_VARIABLES:
       return Object.assign({}, state, {
         variables: variables(state.variables, action)
+      });
+    case RECEIVE_INPUT_VARIABLES:
+      return Object.assign({}, state, {
+        input_variables: action.input_variables,
+        spatial_domain: action.spatial_domain
       });
     case RECEIVE_RASTER_CATALOG:
       return Object.assign({}, state, {
@@ -1948,7 +1975,7 @@ var TabularDataSource = function (_React$Component2) {
   };
 
   TabularDataSource.prototype.generateName = function generateName(source1, source2) {
-    var var_list = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+    var var_list = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
 
     if (source1.name == source2.name) {
       var name = source1.name + '-' + source1.field + '-' + source2.field;
@@ -2272,7 +2299,7 @@ var RasterDataSource = function (_React$Component4) {
   };
 
   RasterDataSource.prototype.generateName = function generateName(raster) {
-    var var_list = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+    var var_list = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
 
     var name = raster.id.replace(/_/g, "-");
     var i = 1;
@@ -2420,7 +2447,7 @@ var RasterDataSource = function (_React$Component4) {
           React.createElement(
             ControlLabel,
             null,
-            "Temporal\xA0Range"
+            "Temporal Range"
           ),
           React.createElement(
             "div",
@@ -2578,7 +2605,7 @@ var ExpressionEditor = function (_React$Component7) {
   };
 
   ExpressionEditor.prototype.generateName = function generateName() {
-    var var_list = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+    var var_list = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
     var i = 1;
     var input_variables = [];
@@ -3272,6 +3299,23 @@ var DataNode = function () {
     get: function get() {
       return this._dimensions;
     }
+  }, {
+    key: "layers",
+    get: function get() {
+      var layers = [];
+
+      if (this._name == "Source") {
+        if (this.operand.type == "Layer") {
+          layers = [this];
+        }
+      } else {
+        this._operands.forEach(function (operand) {
+          layers = layers.concat(operand.layers);
+        });
+      }
+
+      return layers;
+    }
   }]);
 
   return DataNode;
@@ -3428,7 +3472,7 @@ var RasterOperator = function (_DataNode7) {
       null,
       "Raster product ",
       this.product.name,
-      "\xA0 using ",
+      "  using ",
       this.layer.render(),
       "in the time span of ",
       this.range
@@ -3467,7 +3511,7 @@ var SourceOperator = function (_DataNode8) {
       "span",
       null,
       o.type + "/" + o.name + (o.field ? "/" + o.field : ""),
-      "\xA0"
+      " "
     );
   };
 

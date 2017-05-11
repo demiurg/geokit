@@ -42,6 +42,11 @@ function sieveApp(state=initialState, action){
       return Object.assign({}, state, {
         variables: variables(state.variables, action)
       });
+    case RECEIVE_INPUT_VARIABLES:
+      return Object.assign({}, state, {
+        input_variables: action.input_variables,
+        spatial_domain: action.spatial_domain
+      });
     case RECEIVE_RASTER_CATALOG:
       return Object.assign({}, state, {
         raster_catalog: rasterCatalog(state.raster_catalog, action)
