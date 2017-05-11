@@ -229,7 +229,7 @@ class RasterOperator extends DataNode {
       <span>
         Raster product {this.product.name}&nbsp;
         using {this.layer.render()}
-        in the time span of {this.range}
+        in the time span of {this.start} - {this.end}
       </span>
     );
   }

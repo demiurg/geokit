@@ -29,7 +29,7 @@ def get_raster_catalog():
 
     try:
         conn = rpc_con()
-        data = conn.get_datacatalog()
+        data = conn.get_catalog()
 
         if not data:
             return []
