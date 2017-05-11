@@ -7,15 +7,74 @@
 </div>
 
 <script>
-  bindMap({
-      name: "{{ self.variable }}",
-      id: {{ self.variable.pk }}
-    },
-    [
-      //{% for color in self.color_ramp %}
-      [{{ color.value }}, "{{ color.color }}"]{% if not forloop.last %},{% endif %}
-      //{% endfor %}
-    ],
-    document.getElementById("map-{{ self.id }}")
-  );
+var map = L.map('map-{{ self.id }}');
+
+L.tileLayer(
+  'https://api.mapbox.com/v4/ags.map-g13j9y5m/'+
+  '{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiYWdzIiwiYSI6IjgtUzZQc0EifQ.POMKf3yBYLNl0vz1YjQFZQ'
+).addTo(map);
+
+var default_style = {
+  clickable: true,
+  color: "#00D",
+  weight: 1,
+  fillColor: "#00D",
+  opacity: 0.3,
+  fillOpacity: 0.2
+};
+
+var active_style = {
+  clickable: true,
+  color: "#76F",
+  fillColor: "#76F",
+  weight: 2,
+  opacity: 0.8,
+  fillOpacity: 0.7
+};
+
+var geojsonTileLayer = new L.TileLayer.GeoJSON('/layers/'+{{ self.layer.pk }}+'/{z}/{x}/{y}.json', {
+  clipTiles: true,
+  unique: function(feature) {
+    return feature.properties.shaid;
+  }
+}, {
+  style: default_style,
+  onEachFeature: function (feature, layer) {
+    layer.on({
+      mouseover: function() {
+        layer.setStyle(active_style);
+      },
+      mouseout: function() {
+        layer.setStyle(default_style);
+      },
+      click: function(e) {
+        var feature = e.target.feature;
+        if (feature.properties) {
+          var popupString = '<div class="popup">';
+          for (var k in feature.properties) {
+            var v = feature.properties[k];
+            popupString += k + ': ' + v + '<br />';
+          }
+          popupString += '</div>';
+          layer.bindPopup(popupString).openPopup();
+        }
+      }
+    });
+  },
+  pointToLayer: function(feature, latlng) {
+    return new L.CircleMarker(latlng, {
+      radius: 4,
+      fillCOlor: "#A3C990",
+      color: "#000",
+      weight: 1,
+      opacity: 0.7,
+      fillOpacity: 0.3
+    });
+  }
+}).addTo(map);
+
+map.fitBounds([
+  [{{ self.layer.bounds.1 }}, {{ self.layer.bounds.0 }}],
+  [{{ self.layer.bounds.3 }}, {{ self.layer.bounds.2 }}]
+]);
 </script>

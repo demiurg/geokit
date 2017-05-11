@@ -16,7 +16,7 @@ from wagtail.wagtailembeds.blocks import EmbedBlock
 from wagtail.wagtailforms.models import AbstractFormField, FORM_FIELD_CHOICES
 from wagtail.wagtailimages.blocks import ImageChooserBlock
 
-from builder.blocks import VisualizationGroupBlock
+from builder.blocks import VisualizationGroupBlock, MapBlock, TableBlock
 from builder.forms import GeoKitFormBuilder
 import re
 
@@ -49,10 +49,9 @@ class CustomPage(Page):
         ('paragraph', blocks.RichTextBlock()),
         ('image', ImageChooserBlock()),
         ('embed', EmbedBlock()),
-        #('graph', GraphBlock()),
-        #('map', MapBlock()),
-        #('table', TableBlock()),
         ('visualization', VisualizationGroupBlock()),
+        ('map', MapBlock()),
+        ('table', TableBlock()),
     ])
 
     content_panels = [

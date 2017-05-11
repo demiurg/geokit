@@ -4,11 +4,11 @@ from django.utils.functional import cached_property
 from wagtail.wagtailcore.blocks import ChooserBlock
 
 
-class LayerChooserBlock(ChooserBlock):
+class TableChooserBlock(ChooserBlock):
     @cached_property
     def target_model(self):
-        from layers.models import Layer
-        return Layer
+        from geokit_tables.models import GeoKitTable
+        return GeoKitTable
 
     @cached_property
     def widget(self):

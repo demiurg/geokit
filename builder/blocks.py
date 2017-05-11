@@ -1,3 +1,4 @@
+import json
 import uuid
 
 from django.forms import CharField
@@ -7,6 +8,8 @@ from wagtail.wagtailcore.blocks import (
 )
 
 from builder.widgets import ColorWidget
+from geokit_tables.blocks import TableChooserBlock
+from layers.blocks import LayerChooserBlock
 from variables.blocks import VariableChooserBlock
 
 
@@ -36,8 +39,7 @@ class ColorStopBlock(StructBlock):
 
 
 class MapBlock(StructBlock):
-    variable = VariableChooserBlock()
-    color_ramp = ListBlock(ColorStopBlock())
+    layer = LayerChooserBlock()
 
     class Meta:
         template = 'builder/blocks/map.html'
@@ -50,7 +52,7 @@ class MapBlock(StructBlock):
 
 
 class TableBlock(StructBlock):
-    variable = VariableChooserBlock()
+    table = TableChooserBlock()
 
     class Meta:
         template = 'builder/blocks/table.html'
@@ -58,6 +60,7 @@ class TableBlock(StructBlock):
 
     def render(self, value, user):
         value['id'] = uuid.uuid4()
+        value['data'] = json.dumps([r.properties for r in value['table'].record_set.all()])
 
         return super(TableBlock, self).render(value)
 

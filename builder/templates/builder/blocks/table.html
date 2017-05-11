@@ -2,16 +2,17 @@
 
 <div class="panel panel-default">
   <div class="panel-body">
-    <div id="table-{{ self.id }}"></div>
+    <table id="table-{{ self.id }}"></div>
   </div>
 </div>
 
 <script>
-  window.bindTable(
-      {
-        id: {{ self.variable.id }},
-        name: "{{ self.variable.name }}",
-      },
-      document.getElementById("table-{{ self.id }}")
-  );
+$("#table-{{ self.id }}").DataTable({
+  data: {{ self.data|safe }},
+  columns: [
+    {% for field in self.table.field_names %}
+    { data: '{{ field }}', title: '{{ field }}'}{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+});
 </script>
