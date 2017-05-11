@@ -113,6 +113,10 @@ class DataNode {
   isSource(obj){
     return (obj && (obj.id && obj.type));
   }
+
+  static nameNode(name, node){
+    return NamedTree(['named', [name, node]]);
+  }
 }
 
 class MeanOperator extends DataNode {
@@ -282,8 +286,20 @@ class NamedTree extends DataNode {
     return type ? type : "named";
   }
 
+  get name(){
+    return this.name_operand;
+  }
+
+  set name(str){
+    this.name_operand = str;
+  }
+
   get dimensions(){
     return this.operand.dimensions;
+  }
+
+  json() {
+    return ['named', [this.name_operand, this.operand]];
   }
 
   render() {
@@ -298,11 +314,11 @@ class EmptyTree extends DataNode {
   }
 
   render() {
-    return <span></span>;
+    return <span>Empty</span>;
   }
 }
 
-class ErrorNode extends DataNode {
+class ErrorTree extends DataNode {
   constructor(args, error){
     super(
       ['error', [args, error]],
@@ -327,7 +343,7 @@ var NODE_TYPES_IMPLEMENTED = {
   '/': MathOperator,
   'named': NamedTree,
   'noop': EmptyTree,
-  'error': ErrorNode
+  'error': ErrorTree
 };
 
 function treeToNode(tree){
