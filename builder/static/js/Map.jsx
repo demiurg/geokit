@@ -20,7 +20,6 @@ class Map extends React.Component {
         $.ajax('/variables/data_'+this.props.variable_id+'.json', {
             dataType: 'json',
             success: (data, status, xhr) => {
-                console.log('status', data.status);
                 if (data.status == "incomplete") {
                     this.setState({
                         loading: false,
@@ -82,7 +81,7 @@ class Map extends React.Component {
                     return feature.properties.shaid;
                 }
             }, {
-                style: self.getStyle,
+                style: self.getStyle.bind(this, false),
                 onEachFeature: self.featureHandler,
                 pointToLayer: function (feature, latlng) {
                     return new L.CircleMarker(latlng, {
@@ -110,7 +109,6 @@ class Map extends React.Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        console.log("updating");
         var self = this;
 
         if (this.state.loading){
@@ -156,11 +154,12 @@ class Map extends React.Component {
         }
     }
 
-    getStyle = (feature) => {
+    getStyle = (active, feature) => {
         var self = this;
         let fdata = self.state.data[feature.properties.shaid];
         var color = "#000";
         var opacity = 0.1;
+        var weight = 1;
 
         if (fdata){
             var value;
@@ -176,9 +175,14 @@ class Map extends React.Component {
         } else {
             console.log('no ' + feature.properties.shaid);
         }
+
+        if (active) {
+            opacity = 0.9;
+        }
+
         return {
             color: "#000",
-            weight: 1,
+            weight: weight,
             fillColor: color,
             fillOpacity: opacity
         };
@@ -188,13 +192,15 @@ class Map extends React.Component {
         self = this;
         layer.on({
             mouseover: function() {
-                layer.setStyle(self.activeStyle);
+                layer.setStyle(self.getStyle(true, feature));
             },
             mouseout: function() {
-                layer.setStyle(self.defaultStyle);
+                layer.setStyle(self.getStyle(false, feature));
             },
             click: function(e) {
                 var feature = e.target.feature;
+                console.log(layer);
+                layer.setStyle(self.getStyle(true, feature));
                 if (feature.properties) {
                     self.props.changeFeature(feature.properties.shaid);
                     var popupString = '<div class="popup">';

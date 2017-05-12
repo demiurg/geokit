@@ -834,11 +834,12 @@ var Map = function (_React$Component) {
 
         var _this = _possibleConstructorReturn(this, _React$Component.call(this, props));
 
-        _this.getStyle = function (feature) {
+        _this.getStyle = function (active, feature) {
             var self = _this;
             var fdata = self.state.data[feature.properties.shaid];
             var color = "#000";
             var opacity = 0.1;
+            var weight = 1;
 
             if (fdata) {
                 var value;
@@ -854,9 +855,14 @@ var Map = function (_React$Component) {
             } else {
                 console.log('no ' + feature.properties.shaid);
             }
+
+            if (active) {
+                opacity = 0.9;
+            }
+
             return {
                 color: "#000",
-                weight: 1,
+                weight: weight,
                 fillColor: color,
                 fillOpacity: opacity
             };
@@ -866,13 +872,15 @@ var Map = function (_React$Component) {
             self = _this;
             layer.on({
                 mouseover: function mouseover() {
-                    layer.setStyle(self.activeStyle);
+                    layer.setStyle(self.getStyle(true, feature));
                 },
                 mouseout: function mouseout() {
-                    layer.setStyle(self.defaultStyle);
+                    layer.setStyle(self.getStyle(false, feature));
                 },
                 click: function click(e) {
                     var feature = e.target.feature;
+                    console.log(layer);
+                    layer.setStyle(self.getStyle(true, feature));
                     if (feature.properties) {
                         self.props.changeFeature(feature.properties.shaid);
                         var popupString = '<div class="popup">';
@@ -907,7 +915,6 @@ var Map = function (_React$Component) {
         $.ajax('/variables/data_' + this.props.variable_id + '.json', {
             dataType: 'json',
             success: function success(data, status, xhr) {
-                console.log('status', data.status);
                 if (data.status == "incomplete") {
                     _this2.setState({
                         loading: false,
@@ -954,6 +961,8 @@ var Map = function (_React$Component) {
     };
 
     Map.prototype.loadLayers = function loadLayers() {
+        var _this3 = this;
+
         var self = this;
         if (!self.map) {
             return;
@@ -968,7 +977,7 @@ var Map = function (_React$Component) {
                     return feature.properties.shaid;
                 }
             }, {
-                style: self.getStyle,
+                style: self.getStyle.bind(_this3, false),
                 onEachFeature: self.featureHandler,
                 pointToLayer: function pointToLayer(feature, latlng) {
                     return new L.CircleMarker(latlng, {
@@ -995,7 +1004,6 @@ var Map = function (_React$Component) {
     };
 
     Map.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
-        console.log("updating");
         var self = this;
 
         if (this.state.loading) {
