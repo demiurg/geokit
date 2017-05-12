@@ -22,6 +22,7 @@
                     <th>Dimensions</th>
                     <th>Bounds</th>
                     <th>Last Modified</th>
+                    <th>Rasters</th>
                 </tr>
             </thead>
             <tbody>
@@ -43,6 +44,16 @@
                     </td>
                     <td>
                         {{ variable.modified }}
+                    </td>
+                    <td>
+                        {% for raster in variable.get_rasters %}
+                            {% if forloop.first %}
+                                {{raster.get_string}}
+                            {% else %}
+                                , {{raster.get_string}}
+                            {% endif %}
+                        {% endfor %}
+
                     </td>
                 </tr>
                 {% endfor %}

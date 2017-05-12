@@ -480,8 +480,14 @@ class RasterSource(DataNode):
         super(RasterSource, self).__init__(*args, **kwargs)
         self.raster, self.vector, self.dates = self.operands
 
+    def __str__(self):
+        return self.raster['name'] +  ' ' + self.raster['id'] + ' ' + self.dates
+
     def get_dimensions(self):
         return {'space': True, 'time': True}
+
+    def get_string(self):
+        return self.__str__()
 
     def execute(self):
         conn = new_rpc_con()
