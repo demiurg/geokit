@@ -482,27 +482,27 @@ class RasterProductTable extends React.Component {
     return (
       <Table className="table-fixed" stripped>
         <thead>
-          <tr>
-            <th>Description</th>
-            <th>Driver</th>
-            <th>Product</th>
-            <th>Available From</th>
-            <th>Available To</th>
-            <th>Select</th>
+          <tr className='row'>
+            <th className="col-xs-3">Description</th>
+            <th className="col-xs-1">Driver</th>
+            <th className="col-xs-2">Product</th>
+            <th className="col-xs-2">Available From</th>
+            <th className="col-xs-2">Available To</th>
+            <th className="col-xs-2">Select</th>
           </tr>
         </thead>
         <tbody>
           {this.props.raster_catalog.items.map((r, i) => (
             <tr
               key={i}
-              class={(raster && raster.id == r.id) ? 'active' : ''}
+              className={(raster && raster.id == r.id) ? 'active row' : 'row'}
             >
-              <td>{r.description}</td>
-              <td>{r.driver}</td>
-              <td>{r.product}</td>
-              <td>{r.start_date}</td>
-              <td>{r.end_date}</td>
-              <td><Button
+              <td className="col-xs-3">{r.description}</td>
+              <td className="col-xs-1">{r.driver}</td>
+              <td className="col-xs-2">{r.product}</td>
+              <td className="col-xs-2">{r.start_date}</td>
+              <td className="col-xs-2">{r.end_date}</td>
+              <td className="col-xs-2"><Button
                 onClick={(event) => this.selectRaster(event, r)}>
                   {(raster && raster.id == r.id)  ? 'Selected' : 'Select'}
                 </Button></td>

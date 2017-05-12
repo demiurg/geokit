@@ -2161,35 +2161,35 @@ var RasterProductTable = function (_React$Component3) {
         null,
         React.createElement(
           "tr",
-          null,
+          { className: "row" },
           React.createElement(
             "th",
-            null,
+            { className: "col-xs-3" },
             "Description"
           ),
           React.createElement(
             "th",
-            null,
+            { className: "col-xs-1" },
             "Driver"
           ),
           React.createElement(
             "th",
-            null,
+            { className: "col-xs-2" },
             "Product"
           ),
           React.createElement(
             "th",
-            null,
+            { className: "col-xs-2" },
             "Available From"
           ),
           React.createElement(
             "th",
-            null,
+            { className: "col-xs-2" },
             "Available To"
           ),
           React.createElement(
             "th",
-            null,
+            { className: "col-xs-2" },
             "Select"
           )
         )
@@ -2202,36 +2202,36 @@ var RasterProductTable = function (_React$Component3) {
             "tr",
             {
               key: i,
-              "class": raster && raster.id == r.id ? 'active' : ''
+              className: raster && raster.id == r.id ? 'active row' : 'row'
             },
             React.createElement(
               "td",
-              null,
+              { className: "col-xs-3" },
               r.description
             ),
             React.createElement(
               "td",
-              null,
+              { className: "col-xs-1" },
               r.driver
             ),
             React.createElement(
               "td",
-              null,
+              { className: "col-xs-2" },
               r.product
             ),
             React.createElement(
               "td",
-              null,
+              { className: "col-xs-2" },
               r.start_date
             ),
             React.createElement(
               "td",
-              null,
+              { className: "col-xs-2" },
               r.end_date
             ),
             React.createElement(
               "td",
-              null,
+              { className: "col-xs-2" },
               React.createElement(
                 Button,
                 {
