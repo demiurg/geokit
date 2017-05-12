@@ -51,7 +51,6 @@ def index(request):
 
 def add(request):
     raster_catalog = get_raster_catalog()
-
     return render(request, 'variables/sieve.html', {
         'raster_catalog': json.dumps(raster_catalog),
         'node_types': json.dumps(NODE_TYPES.keys())

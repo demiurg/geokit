@@ -238,7 +238,7 @@ function addInputVariable(node){
 function editInputVariable(node, i){
   return function(dispatch){
     if (node.type == "join"){
-      dispatch(editTabularData({
+      dispatch(updateTabularData({
         name: node.name,
         source1: node.left,
         source2: node.right,
@@ -247,7 +247,7 @@ function editInputVariable(node, i){
       }));
     } else if (node.type == "raster"){
       dispatch(updateSpatialDomain(node.layer.id));
-      dispatch(editRasterData({
+      dispatch(updateRasterData({
         name: node.name,
         raster: node.product,
         temporalRangeStart: node.start,
@@ -256,7 +256,7 @@ function editInputVariable(node, i){
         index: i
       }));
     } else {
-      dispatch(editExpressionData({
+      dispatch(updateExpressionData({
         name: node.name,
         index: i,
         isEditing: true,
@@ -417,7 +417,7 @@ function saveVariable(variable, created){
 }
 
 
-function editTabularData(data) {
+function updateTabularData(data) {
   return {
     type: EDIT_NODE,
     mode: EDITING_TABULAR_DATA,
@@ -425,7 +425,7 @@ function editTabularData(data) {
   };
 }
 
-function editRasterData(data) {
+function updateRasterData(data) {
   return {
     type: EDIT_NODE,
     mode: EDITING_RASTER_DATA,
@@ -433,7 +433,7 @@ function editRasterData(data) {
   };
 }
 
-function editExpressionData(data) {
+function updateExpressionData(data) {
   return {
     type: EDIT_NODE,
     mode: EDITING_EXPRESSION,
