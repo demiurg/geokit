@@ -2155,13 +2155,13 @@ var RasterProductTable = function (_React$Component3) {
 
     return React.createElement(
       Table,
-      { className: "table-fixed", stripped: true },
+      { className: "table-fixed", striped: true },
       React.createElement(
         "thead",
         null,
         React.createElement(
           "tr",
-          { className: "row" },
+          null,
           React.createElement(
             "th",
             { className: "col-xs-3" },
@@ -2202,7 +2202,7 @@ var RasterProductTable = function (_React$Component3) {
             "tr",
             {
               key: i,
-              className: raster && raster.id == r.id ? 'active row' : 'row'
+              className: raster && raster.id == r.id ? 'active' : ''
             },
             React.createElement(
               "td",

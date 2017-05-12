@@ -480,9 +480,9 @@ class RasterProductTable extends React.Component {
     }
 
     return (
-      <Table className="table-fixed" stripped>
+      <Table className="table-fixed" striped>
         <thead>
-          <tr className='row'>
+          <tr>
             <th className="col-xs-3">Description</th>
             <th className="col-xs-1">Driver</th>
             <th className="col-xs-2">Product</th>
@@ -495,7 +495,7 @@ class RasterProductTable extends React.Component {
           {this.props.raster_catalog.items.map((r, i) => (
             <tr
               key={i}
-              className={(raster && raster.id == r.id) ? 'active row' : 'row'}
+              className={(raster && raster.id == r.id) ? 'active' : ''}
             >
               <td className="col-xs-3">{r.description}</td>
               <td className="col-xs-1">{r.driver}</td>
