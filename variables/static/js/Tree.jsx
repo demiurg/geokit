@@ -365,6 +365,8 @@ var NODE_TYPES_IMPLEMENTED = {
 function treeToNode(tree){
   if (!tree || Object.keys(tree).length == 0) {
     return new EmptyTree();
+  } else if (DataNode.isDataNode(tree)){
+    return tree;
   } else {
     if (!NODE_TYPES_IMPLEMENTED.hasOwnProperty(tree[0])){
       throw Error("'" + tree[0] + "' is not a valid operator");
