@@ -2154,95 +2154,99 @@ var RasterProductTable = function (_React$Component3) {
     }
 
     return React.createElement(
-      Table,
-      { className: "table-fixed", striped: true },
+      "div",
+      { className: "row" },
       React.createElement(
-        "thead",
-        null,
+        Table,
+        { className: "table-fixed", striped: true },
         React.createElement(
-          "tr",
+          "thead",
           null,
           React.createElement(
-            "th",
-            { className: "col-xs-3" },
-            "Description"
-          ),
-          React.createElement(
-            "th",
-            { className: "col-xs-1" },
-            "Driver"
-          ),
-          React.createElement(
-            "th",
-            { className: "col-xs-2" },
-            "Product"
-          ),
-          React.createElement(
-            "th",
-            { className: "col-xs-2" },
-            "Available From"
-          ),
-          React.createElement(
-            "th",
-            { className: "col-xs-2" },
-            "Available To"
-          ),
-          React.createElement(
-            "th",
-            { className: "col-xs-2" },
-            "Select"
-          )
-        )
-      ),
-      React.createElement(
-        "tbody",
-        null,
-        this.props.raster_catalog.items.map(function (r, i) {
-          return React.createElement(
             "tr",
-            {
-              key: i,
-              className: raster && raster.id == r.id ? 'active' : ''
-            },
+            null,
             React.createElement(
-              "td",
+              "th",
               { className: "col-xs-3" },
-              r.description
+              "Description"
             ),
             React.createElement(
-              "td",
+              "th",
               { className: "col-xs-1" },
-              r.driver
+              "Driver"
             ),
             React.createElement(
-              "td",
+              "th",
               { className: "col-xs-2" },
-              r.product
+              "Product"
             ),
             React.createElement(
-              "td",
+              "th",
               { className: "col-xs-2" },
-              r.start_date
+              "Available From"
             ),
             React.createElement(
-              "td",
+              "th",
               { className: "col-xs-2" },
-              r.end_date
+              "Available To"
             ),
             React.createElement(
-              "td",
+              "th",
               { className: "col-xs-2" },
-              React.createElement(
-                Button,
-                {
-                  onClick: function onClick(event) {
-                    return _this6.selectRaster(event, r);
-                  } },
-                raster && raster.id == r.id ? 'Selected' : 'Select'
-              )
+              "Select"
             )
-          );
-        })
+          )
+        ),
+        React.createElement(
+          "tbody",
+          null,
+          this.props.raster_catalog.items.map(function (r, i) {
+            return React.createElement(
+              "tr",
+              {
+                key: i,
+                className: raster && raster.id == r.id ? 'active' : ''
+              },
+              React.createElement(
+                "td",
+                { className: "col-xs-3", style: { 'clear': 'both' } },
+                r.description
+              ),
+              React.createElement(
+                "td",
+                { className: "col-xs-1" },
+                r.driver
+              ),
+              React.createElement(
+                "td",
+                { className: "col-xs-2" },
+                r.product
+              ),
+              React.createElement(
+                "td",
+                { className: "col-xs-2" },
+                r.start_date
+              ),
+              React.createElement(
+                "td",
+                { className: "col-xs-2" },
+                r.end_date
+              ),
+              React.createElement(
+                "td",
+                { className: "col-xs-2" },
+                React.createElement(
+                  Button,
+                  {
+                    onClick: function onClick(event) {
+                      return _this6.selectRaster(event, r);
+                    } },
+                  raster && raster.id == r.id ? 'Selected' : 'Select'
+                )
+              )
+            );
+          })
+        )
       )
     );
   };
