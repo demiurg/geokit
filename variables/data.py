@@ -32,6 +32,34 @@ def treeToNode(tree):
     return NODE_TYPES[tree[0]](tree[0], tree[1])
 
 
+def wrapJoins(tree, parent=None):
+    if tree[0] == 'join' and parent != 'select':
+        join_node = treeToNode(tree)
+        field_name = None
+
+        if len(join_node.get_layers()) != 0:
+            first_layer = Layer.objects.get(pk=list(join_node.get_layers())[0])
+            field_name = first_layer.field_names[0]
+        else:
+            first_table = GeoKitTable.objects.get(pk=list(join_node.get_tables())[0])
+            field_name = first_table.field_names[0]
+
+        return ['select', [tree, field_name]]
+    elif tree[0] in ['source', 'dfsource', 'raster', 'join', 'select']:
+        return tree
+    else:
+        return [tree[0], [wrapJoins(op) for op in tree[1]]]
+
+
+def wrapRasters(tree, parent=None):
+    if tree[0] == 'raster' and parent != 'select':
+        return ['select', [tree, 'mean']]
+    elif tree[0] in ['source', 'dfsource', 'raster', 'join', 'select']:
+        return tree
+    else:
+        return [tree[0], [wrapRasters(op) for op in tree[1]]]
+
+
 class DataNode(object):
     ''' The DataNode object stores information about
         * operation, which is a list defined strings
