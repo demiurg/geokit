@@ -430,6 +430,12 @@ var Graph = function (_React$Component) {
                     xaxis: xaxis,
                     yaxis: { title: this.props.variable_name }
                 });
+
+                var plot = document.getElementById('graph-' + this.props.unique_id);
+                plot.on('plotly_click', function (data) {
+                    console.log(data.points[0].x);
+                    _this3.props.changeTime(new Date(data.points[0].x));
+                });
             } else if (this.props.time_range && prevProps.time_range) {
                 if (this.props.time_range.min.getTime() != prevProps.time_range.min.getTime() || this.props.time_range.max.getTime() != prevProps.time_range.max.getTime()) {
                     var update = {
@@ -1638,7 +1644,7 @@ var SliderControl = function (_React$Component2) {
         var dateSlider = document.getElementById('date-slider-control');
         var start = new Date(this.props.time_range.min).getTime();
         var stop = new Date(this.props.time_range.max).getTime();
-        noUiSlider.create(dateSlider, {
+        this.slider = noUiSlider.create(dateSlider, {
             range: {
                 min: start,
                 max: stop
@@ -1662,6 +1668,10 @@ var SliderControl = function (_React$Component2) {
         dateSlider.noUiSlider.on('end', function (values, handle) {
             _this4.props.changeTime(new Date(values[0]));
         });
+    };
+
+    SliderControl.prototype.componentDidUpdate = function componentDidUpdate() {
+        this.slider.set(this.props.currentTime);
     };
 
     SliderControl.prototype.render = function render() {
@@ -1821,7 +1831,8 @@ var VisualizationGroup = function (_React$Component4) {
             null,
             this.state.dimensions.indexOf('time') != -1 && this.state.time_range ? React.createElement(SliderControl, {
                 time_range: this.state.time_range,
-                changeTime: this.changeTime.bind(this)
+                changeTime: this.changeTime.bind(this),
+                currentTime: this.state.current_time
             }) : null,
             this.props.visualizations.map(function (v) {
                 return React.createElement(Visualization, _extends({}, v, {

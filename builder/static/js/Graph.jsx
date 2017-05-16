@@ -94,6 +94,11 @@ class Graph extends React.Component {
                         yaxis: {title: this.props.variable_name}
                     }
                 );
+
+                var plot = document.getElementById('graph-'+this.props.unique_id);
+                plot.on('plotly_click', (data) => {
+                    this.props.changeTime(new Date(data.points[0].x));
+                });
             } else if (this.props.time_range && prevProps.time_range) {
                 if (this.props.time_range.min.getTime() != prevProps.time_range.min.getTime() ||
                         this.props.time_range.max.getTime() != prevProps.time_range.max.getTime()) {
