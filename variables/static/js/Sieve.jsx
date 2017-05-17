@@ -219,7 +219,6 @@ class SpatialConfiguration extends React.Component {
   }
 
   updateMap(layer_id) {
-    console.log(layer_id);
     var geoJsonURL = '/layers/' + layer_id + '/{z}/{x}/{y}.json';
     this.geoJsonTileLayer = new L.TileLayer.GeoJSON(geoJsonURL, {
       clipTiles: true,
@@ -299,14 +298,7 @@ class TabularDataSource extends React.Component {
       this.props.onAddInputVariable(variable);
     }
 
-    this.props.onUpdateTabularData({
-      name: "",
-      source1: "",
-      source2: "",
-      isEditing: false,
-      index: -1
-    });
-
+    this.props.onUpdateTabularData(null);
     this.props.onEditNothing();
   }
 
@@ -464,14 +456,40 @@ var dateToDOY = (date) => {
 }
 
 class RasterProductTable extends React.Component {
-  selectRaster(event, raster){
+  generateName(id, var_list=null) {
+    var name = id.replace(/_/g, "-");
+    var i = 1;
+
+    var input_variables = [];
+    if (var_list){
+      input_variables = var_list;
+    } else {
+      input_variables = this.props.input_variables;
+    }
+
+    input_variables.forEach((input) => {
+      if ((name + '-' + i) == input.name ){
+        i++;
+      }
+    });
+
+    return name + '-' + i;
+  }
+
+  selectRaster(raster){
+    var dname = this.generateName(raster.name, this.props.input_variables);
     var data = Object.assign(
       {},
       this.props.node_editor.raster_data,
-      {raster: raster}
+      {
+        default_name: dname,
+        raster: raster,
+        product: {id: raster.name, name: raster.description}
+      }
     );
     this.props.onUpdateRasterData(data);
   }
+
   render() {
     var raster = this.props.node_editor.raster_data.raster ? raster : false;
 
@@ -504,7 +522,7 @@ class RasterProductTable extends React.Component {
                 <td className="col-xs-2">{r.start_date}</td>
                 <td className="col-xs-2">{r.end_date}</td>
                 <td className="col-xs-2"><Button
-                  onClick={(event) => this.selectRaster(event, r)}>
+                  onClick={(e) => this.selectRaster(r)}>
                     {(raster && raster.id == r.id)  ? 'Selected' : 'Select'}
                   </Button></td>
               </tr>
@@ -517,20 +535,8 @@ class RasterProductTable extends React.Component {
 }
 
 class RasterDataSource extends React.Component {
-  static cal_format = {
-    toDisplay: function (date, format, language){
-      var userTimezoneOffset = date.getTimezoneOffset() * 60000;
-      var d = new Date(date.getTime() + userTimezoneOffset);
-      return dateToDOY(d);
-    },
-    toValue: function (date, format, language){
-      var d = new Date(date);
-      return d;
-    }
-  }
-
   onSave() {
-    if (this.props.errors.raster_data_name || this.props.errors.raster_date){
+    if (!this.props.node_editor.raster_data.valid){
       return; // Do not submit if there are errors
     }
     var data = this.props.node_editor.raster_data;
@@ -540,19 +546,14 @@ class RasterDataSource extends React.Component {
       name = data.default_name;
     }
 
-    var product = {
-      id: data.raster.id,
-      name: data.raster.description
-    };
-
     var variable = ['named', [
       name,
       [
         'raster',
         [
-          product,
+          data.product,
           this.props.spatial_domain,
-          data.temporalRangeStart + ',' + data.temporalRangeEnd
+          data.date_range
         ]
       ]
     ]];
@@ -563,16 +564,7 @@ class RasterDataSource extends React.Component {
       this.props.onAddInputVariable(variable);
     }
 
-    this.props.onUpdateRasterData({
-      name: "",
-      raster: "",
-      temporalRangeStart: "",
-      temporalRangeEnd: "",
-      editing: false,
-      index: -1,
-      defaultName: null
-    });
-
+    this.props.onUpdateRasterData();
     this.props.onEditNothing();
   }
 
@@ -580,117 +572,113 @@ class RasterDataSource extends React.Component {
     return JSON.stringify(source);
   }
 
-  generateName(id, var_list=null) {
-    var name = id.replace(/_/g, "-");
-    var i = 1;
-
-    var input_variables = [];
-    if (var_list){
-      input_variables = var_list;
-    } else {
-      input_variables = this.props.input_variables;
-    }
-
-    input_variables.forEach((input) => {
-      if ((name + '-' + i) == input.name ){
-        i++;
+  componentDidUpdate(prevProps, prevState){
+    // If raster is set and if new raster is different than previous raster
+    var self = this;
+    var cal_format = {
+      toDisplay: function (date, format, language){
+        var userTimezoneOffset = date.getTimezoneOffset() * 60000;
+        var d = new Date(date.getTime() + userTimezoneOffset);
+        return dateToDOY(d);
+      },
+      toValue: function (date, format, language){
+        var d = new Date(date);
+        return d;
       }
-    });
-
-    return name + '-' + i;
-  }
-
-  componentDidMount(){
-    $(this.startpicker).datepicker({
-      format: this.cal_format,
-      endDate: new Date()
-     }).on("changeDate", (e) => {
-      this.validate();
-     });
-
-    $(this.endpicker).datepicker({
-      format: this.cal_format,
-      endDate: new Date()
-     }).on("changeDate", (e) => {
-      this.validate();
-     });
-  }
-
-  componentWillReceiveProps(new_props){
-    if (
-      !new_props.node_editor.raster_data.default_name ||
-      new_props.input_variables != this.props.input_variables
+    };
+    if(
+      self.props.node_editor.raster_data.raster &&
+      (
+        !prevProps.node_editor.raster_data.raster ||
+        (
+          prevProps.node_editor.raster_data.raster.name !=
+          self.props.node_editor.raster_data.raster.name
+        )
+      )
     ){
-      var product = new_props.raster_catalog.items[0];
-      var name = this.generateName(product.id, new_props.input_variables);
-      var data = Object.assign(
-        {},
-        new_props.node_editor.raster_data,
-        {default_name: name}
-      );
-      if (!this.props.node_editor.raster_data.product){
-        data.product = {id: product.name, };
-      }
-      this.props.onUpdateRasterData(data);
+      var r = self.props.node_editor.raster_data.raster;
+      // console.log('update', r.start_date, r.end_date);
+
+      $(self.startpicker).datepicker({
+        'format': cal_format,
+        'startDate': new Date(r.start_date),
+        'endDate': new Date(r.end_date)
+      }).on("changeDate", (e) => {
+        self.onChange();
+      });
+
+      $(self.endpicker).datepicker({
+        'format': cal_format,
+        'startDate': new Date(r.start_date),
+        'endDate': new Date(r.end_date)
+      }).on("changeDate", (e) => {
+        self.onChange();
+      });
     }
   }
 
-  updateDefaultName(){
+  onChange() {
     var form = $(this.form).serializeArray();
     var name = form[3]['value'];
-    if (!name || name.length < 1){
-      var raster = JSON.parse(form[0]['value']);
-      var data = Object.assign(
-        {},
-        this.props.node_editor.raster_data,
-        {defaultName: this.generateName(raster)}
-      );
-      this.props.onUpdateRasterData(data);
-    }
-  }
+    var date_start = form[1]['value'];
+    var date_end = form[2]['value'];
+    var range = date_start + ',' + date_end;
 
-  updateRaster(r){
+    var data = this.props.node_editor.raster_data;
+    var raster_start_date = new Date(data.raster.start_date);
+    var raster_end_date = new Date(data.raster.end_date);
 
-    var raster = {
-      "name": r.description,
-      "id": r.name,
-      "start_date": r.start_date,
-      "end_date": r.end_date,
-    };
+    var errors = {};
 
-    var defaultName = this.generateName(raster);
-
-    $(this.startpicker).datepicker('setStartDate', r.start_date);
-    $(this.startpicker).datepicker('setEndDate', r.end_date);
-
-    $(this.endpicker).datepicker('setStartDate', r.start_date);
-    $(this.endpicker).datepicker('setEndDate', r.end_date);
-
-    var data = Object.assign(
-      {},
-      this.props.node_editor.raster_data,
-      {
-        raster: raster,
-        default_name: defaultName
+    if (!date_start){
+      errors['date_start'] = "Start date is required. ";
+    }else{
+      if(!date_start.match(/\d{4}-\d{3}/g)){
+        errors['date_start'] = "Start date must be entered in the form yyyy-ddd. ";
+      }else{
+        var doy_start = parseInt(date_start.split('-')[1]);
+        var year_start = parseInt(date_start.split('-')[0]);
+        var date_start_date = new Date(year_start, 0);
+        date_start_date.setDate(doy_start);
+        if (date_start_date < raster_start_date){
+          errors['date_start'] = (
+            "Start date must be after " + raster_start_date.toDateString() + ". "
+          );
+        }
       }
-    );
+    }
 
-    this.props.onUpdateRasterData(data);
-  }
+    if (!date_end){
+      errors['date_end'] = "End date is required. ";
+    }else{
+      if(!date_end.match(/\d{4}-\d{3}/g)){
+        errors['date_start'] = "End date must be entered in the form yyyy-ddd. ";
+      }else{
+        var doy_end = parseInt(date_end.split('-')[1]);
+        var year_end = parseInt(date_end.split('-')[0]);
+        var date_end_date = new Date(year_end, 0);
+        date_end_date.setDate(doy_end);
 
-  validate() {
-    var form = $(this.form).serializeArray();
-    var name = form[2]['value'];
-    var temporalRangeStart = form[0]['value'];
-    var temporalRangeEnd = form[1]['value'];
+        if (date_end_date > raster_end_date){
+          errors['date_end'] = (
+            "End date must be before " + raster_end_date.toDateString() + ". "
+          );
+        }
+      }
+    }
+
+    // TODO: name checking too
 
     var data = Object.assign(
       {},
       this.props.node_editor.raster_data,
       {
         name: name,
-        temporalRangeStart: temporalRangeStart,
-        temporalRangeEnd: temporalRangeEnd,
+        date_start: date_start,
+        date_end: date_end,
+        date_range: range,
+        errors: errors,
+        valid: Object.keys(errors) == 0
       }
     );
 
@@ -699,64 +687,73 @@ class RasterDataSource extends React.Component {
 
   render() {
     var data = this.props.node_editor.raster_data;
-    var raster = data.raster ? data.raster : null;
+    var product = data.product ? data.product : null;
 
-    if (!raster && !this.props.raster_catalog.items){
+    if (!product && !this.props.raster_catalog.items){
       return <Panel header="Raster data">Temporarily unavailable</Panel>;
     }
 
+    var date_error = (
+      (data.errors.date_range ? data.errors.date_range : "") +
+      (data.errors.date_start ? data.errors.date_start : "") +
+      (data.errors.date_end ? data.errors.date_end : "")
+    );
+
     return (
       <Panel header="Raster data">
-        <form ref={(ref) => this.form=ref} onChange={() => this.validate()}>
+        <form ref={(ref) => this.form=ref} onChange={() => this.onChange()}>
           <FormGroup controlId="rightSelect">
             <ControlLabel>Raster</ControlLabel>
             <RasterProductTable {...this.props}/>
             <FormControl
-              name="raster" type="hidden" disabled={true}
-              placeholder=""
-              value={raster ? (raster.name + ': ' + raster.band) : null}
+              name="raster" type="text" readOnly={true}
+              placeholder="Select raster product to use."
+              value={product ? product.name : null}
             />
           </FormGroup>
-          <FormGroup controlId="range"
-            validationState={this.props.errors.rasterDataTemporalRange ?
-              'error' : null}>
-            <ControlLabel>Temporal&nbsp;Range</ControlLabel>
-            <div className="input-group input-daterange">
-              <input
-                ref={(ref)=>{this.startpicker=ref}}
-                name="temporalRangeStart" type="text" placeholder="yyyy-ddd"
-                value={data.temporalRangeStart}
-              />
-              <span className="input-group-addon">to</span>
-              <input
-                ref={(ref)=>{this.endpicker=ref}}
-                name="temporalRangeEnd" type="text" placeholder="yyyy-ddd"
-                value={data.temporalRangeEnd}
-              />
-            </div>
-            <HelpBlock>
-              {this.props.errors.rasterDataTemporalRange ?
-                this.props.errors.rasterDataTemporalRange :
-                "Date must be entered in the form yyyy-ddd."}
-            </HelpBlock>
-          </FormGroup>
+          {
+            product ? (
+              <FormGroup controlId="range"
+                validationState={date_error ? 'error' : null}>
+                <ControlLabel>Temporal&nbsp;Range</ControlLabel>
+                <div className="input-group input-daterange">
+                  <input
+                    ref={(ref)=>{this.startpicker=ref}}
+                    name="date_start" type="text" placeholder="yyyy-ddd"
+                    value={data.date_start}
+                  />
+                  <span className="input-group-addon">to</span>
+                  <input
+                    ref={(ref)=>{this.endpicker=ref}}
+                    name="date_end" type="text" placeholder="yyyy-ddd"
+                    value={data.date_end}
+                  />
+                </div>
+                <HelpBlock>{
+                  date_error ? date_error : "Date must be entered in the form yyyy-ddd."
+                }</HelpBlock>
+              </FormGroup>
+            ) : null
+          }
           <FormGroup controlId="name"
-            validationState={this.props.errors.raster_data_name ? 'error' : null}>
+            validationState={this.props.errors.name ? 'error' : null}>
             <ControlLabel>Name</ControlLabel>
             <FormControl
               name="name" type="text"
-              placeholder={data.defaultName}
-              value={data.name}
+              placeholder={data.default_name}
+              value={(data.name && data.name.length > 0) ? data.name : null}
             />
             <HelpBlock>
-              {this.props.errors.raster_data_name ?
-                this.props.errors.raster_data_name :
-                  "Name must be alphanumeric, without spaces."}
+              { data.errors.name ? data.errors.name : "Name must be alphanumeric, without spaces." }
             </HelpBlock>
           </FormGroup>
-          <Button onClick={() => this.onSave()}>
-            {this.props.node_editor.editing ? "Save" : "Add"}
-          </Button>
+          {
+            data.valid ? (
+              <Button onClick={() => this.onSave()}>
+                {data.editing ? "Save" : "Add"}
+              </Button>
+            ) : null
+          }
           <Button onClick={() => this.props.onEditNothing()}>Cancel</Button>
         </form>
       </Panel>
@@ -899,12 +896,7 @@ class ExpressionEditor extends React.Component {
       }
       expression_data.node[1] = this.populateOperands(node.arity);
 
-      this.props.onUpdateExpressionData(
-        {
-          node: node,
-          operand_refs: []
-        }
-      );
+      this.props.onUpdateExpressionData(node);
       this.props.onAddInputVariable(expression_data);
       this.props.onEditNothing();
     }
@@ -1037,7 +1029,7 @@ class AddDataSourcePanel extends React.Component {
         <Row>
           <Col md={6}>
             <Button
-              onClick={this.props.onUpdateTabularData}
+              onClick={() => this.props.onUpdateTabularData(null)}
               style={{width: '100%', margin: '0.83em 0'}}>
               <Glyphicon glyph="user" /> I want to use a user-submitted table
             </Button>
@@ -1052,7 +1044,7 @@ class AddDataSourcePanel extends React.Component {
         <Row>
           <Col md={6}>
             <Button
-              onClick={this.props.onUpdateRasterData}
+              onClick={() => this.props.onUpdateRasterData(null)}
               style={{width: '100%', margin: '0.83em 0'}}>
               <Glyphicon glyph="cloud" /> I want to use GeoKit data
             </Button>
@@ -1063,7 +1055,7 @@ class AddDataSourcePanel extends React.Component {
             <p>GeoKit raster data doesn't require any special setup beyond a small configuration step. Depending on the amount of data requested, the reduction procedure can take some time. Check the variables page to see information about the status of your variables.</p>
           </Col>
         </Row>
-        <Button onClick={this.props.onEditNothing}>Cancel</Button>
+        <Button onClick={() => this.props.onEditNothing()}>Cancel</Button>
       </Panel>
     );
   }
