@@ -1725,7 +1725,29 @@ var RasterDataSource = function (_React$Component2) {
       name = data.default_name;
     }
 
-    var variable = ['named', [name, ['raster', [data.product, this.props.spatial_domain, data.date_range]]]];
+    var layer = { type: 'Layer', id: this.props.spatial_domain, field: 'fid' };
+    for (var _iterator = this.props.layers.items, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+      var _ref;
+
+      if (_isArray) {
+        if (_i >= _iterator.length) break;
+        _ref = _iterator[_i++];
+      } else {
+        _i = _iterator.next();
+        if (_i.done) break;
+        _ref = _i.value;
+      }
+
+      var input_layer = _ref;
+
+      console.log(input_layer);
+      if (input_layer.id == layer.id) {
+        layer['name'] = input_layer['name'];
+        break;
+      }
+    }
+
+    var variable = ['named', [name, ['raster', [data.product, ['source', [layer]], data.date_range]]]];
 
     if (data.editing) {
       this.props.onUpdateInputVariable(variable, data.index);
@@ -1858,8 +1880,8 @@ var RasterDataSource = function (_React$Component2) {
       { header: "Raster data" },
       React.createElement(
         "form",
-        { ref: function ref(_ref3) {
-            return _this4.form = _ref3;
+        { ref: function ref(_ref4) {
+            return _this4.form = _ref4;
           }, onChange: function onChange() {
             return _this4.onChange();
           } },
@@ -1891,8 +1913,8 @@ var RasterDataSource = function (_React$Component2) {
             "div",
             { className: "input-group input-daterange" },
             React.createElement("input", {
-              ref: function ref(_ref) {
-                _this4.startpicker = _ref;
+              ref: function ref(_ref2) {
+                _this4.startpicker = _ref2;
               },
               name: "date_start", type: "text", placeholder: "yyyy-ddd",
               value: data.date_start
@@ -1903,8 +1925,8 @@ var RasterDataSource = function (_React$Component2) {
               "to"
             ),
             React.createElement("input", {
-              ref: function ref(_ref2) {
-                _this4.endpicker = _ref2;
+              ref: function ref(_ref3) {
+                _this4.endpicker = _ref3;
               },
               name: "date_end", type: "text", placeholder: "yyyy-ddd",
               value: data.date_end

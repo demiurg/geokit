@@ -105,13 +105,22 @@ class RasterDataSource extends React.Component {
       name = data.default_name;
     }
 
+    var layer = {type: 'Layer', id: this.props.spatial_domain, field: 'fid'};
+    for (let input_layer of this.props.layers.items){
+      console.log(input_layer);
+      if (input_layer.id == layer.id){
+        layer['name'] = input_layer['name'];
+        break;
+      }
+    }
+
     var variable = ['named', [
       name,
       [
         'raster',
         [
           data.product,
-          this.props.spatial_domain,
+          ['source', [layer]],
           data.date_range
         ]
       ]
