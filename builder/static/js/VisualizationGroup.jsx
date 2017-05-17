@@ -44,7 +44,7 @@ class SliderControl extends React.Component {
         var dateSlider = document.getElementById('date-slider-control');
         var start = new Date(this.props.time_range.min).getTime();
         var stop = new Date(this.props.time_range.max).getTime();
-        noUiSlider.create(dateSlider, {
+        this.slider = noUiSlider.create(dateSlider, {
             range: {
                 min: start,
                 max: stop
@@ -68,6 +68,10 @@ class SliderControl extends React.Component {
         dateSlider.noUiSlider.on('end', (values, handle) => {
             this.props.changeTime(new Date(values[0]));
         });
+    }
+
+    componentDidUpdate() {
+        this.slider.set(this.props.currentTime);
     }
 
     render() {
@@ -198,6 +202,7 @@ class VisualizationGroup extends React.Component {
                     <SliderControl
                         time_range={this.state.time_range}
                         changeTime={this.changeTime.bind(this)}
+                        currentTime={this.state.current_time}
                     />
                 :
                     null

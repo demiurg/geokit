@@ -7,7 +7,7 @@ from django.utils.functional import cached_property
 from wagtail.wagtailcore.models import Page
 
 from layers.models import Layer
-from data import treeToNode
+from data import treeToNode, wrapJoins, wrapRasters
 import json
 
 
@@ -40,6 +40,8 @@ class Variable(models.Model):
 
     def save(self, *args, **kwargs):
         if self.tree:
+            self.tree = wrapJoins(self.tree)
+            self.tree = wrapRasters(self.tree)
             try:
                 self.saved_dimensions = self.root.dimensions
             except Exception as e:
