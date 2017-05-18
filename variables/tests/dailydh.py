@@ -33,7 +33,7 @@ def main(gips_shp_path):
     args = ('test', product_name,
             {'site': gips_shp_path, 'key': 'shaid'}, {'dates': four_years_ago.strftime('%Y-%j')})
     log.debug('submitting job, args: {}'.format(args))
-    job_id = rpc_con().submit_job(*args)
+    job_id = rpc_con().submit_request(*args)
 
     log.info('Job submitted, starting periodic checks; ID {}'.format(job_id))
 

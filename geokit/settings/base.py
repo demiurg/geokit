@@ -167,6 +167,8 @@ DATABASE_ROUTERS = (
 ORIGINAL_BACKEND = 'django.contrib.gis.db.backends.postgis'
 POSTGIS_VERSION = (2, 1, 8)
 
+RPC_URL = 'http://localhost:8001'
+
 RQ_QUEUES = {
     'default': {
         'HOST': 'localhost',
