@@ -173,7 +173,7 @@ class Map extends React.Component {
             }
             color = self.color_scale(value);
         } else {
-            console.log('no ' + feature.properties.shaid);
+            //console.log('no ' + feature.properties.shaid);
         }
 
         if (active) {
