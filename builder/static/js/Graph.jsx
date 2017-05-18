@@ -1,3 +1,5 @@
+var d3 = Plotly.d3;
+
 class Graph extends React.Component {
     constructor(props) {
         super(props);
@@ -86,19 +88,91 @@ class Graph extends React.Component {
                     }
                 }
 
-                Plotly.newPlot(
-                    'graph-'+this.props.unique_id,
-                    [data],
-                    {
-                        xaxis: xaxis,
-                        yaxis: {title: this.props.variable_name}
-                    }
-                );
+                if (data.x.length) {
+                    var plot = document.getElementById('graph-'+this.props.unique_id);
 
-                var plot = document.getElementById('graph-'+this.props.unique_id);
-                plot.on('plotly_click', (data) => {
-                    this.props.changeTime(new Date(data.points[0].x));
-                });
+                    Plotly.newPlot(
+                        'graph-'+this.props.unique_id,
+                        [
+                            data,
+                            {
+                                type: 'scatter',
+                                y: [data.y[0]],
+                                x: [data.x[0]],
+                                marker: {
+                                    size: 12,
+                                    fillcolor: "#f49542"
+                                },
+                                hoverinfo: 'none'
+                            },
+                            {
+                                type: 'scatter',
+                                y: [data.y[0]],
+                                x: [data.x[0]],
+                                marker: {
+                                    symbol: 'circle-open',
+                                    size: 12,
+                                    color: "#f49542",
+                                    line: {
+                                        width: 2
+                                    }
+                                },
+                                hoverinfo: 'none'
+                            }
+                        ],
+                        {
+                            xaxis: xaxis,
+                            yaxis: {title: this.props.variable_name},
+                            hovermode: 'x',
+                            showlegend: false,
+                        }
+                    );
+
+                    plot.on('plotly_hover', (new_data) => {
+                        var point = new_data.points[0];
+
+                        Plotly.deleteTraces('graph-'+this.props.unique_id, -1);
+                        Plotly.addTraces(
+                            'graph-'+this.props.unique_id,
+                            [{
+                                type:'scatter',
+                                y: [point.y],
+                                x: [point.x],
+                                marker: {
+                                    symbol: 'circle-open',
+                                    size: 12,
+                                    color: "#f49542",
+                                    line: {
+                                        width: 2
+                                    }
+                                },
+                                hoverinfo: 'none'
+                            }]
+                        );
+                    });
+
+                    plot.on('plotly_click', (new_data) => {
+                        this.props.changeTime(new Date(new_data.points[0].x));
+
+                        var point = new_data.points[0];
+
+                        Plotly.deleteTraces('graph-'+this.props.unique_id, -2);
+                        Plotly.addTraces(
+                            'graph-'+this.props.unique_id,
+                            [{
+                                type: 'scatter',
+                                y: [point.y],
+                                x: [point.x],
+                                marker: {
+                                    size: 12,
+                                    fillcolor: "#f49542"
+                                },
+                                hoverinfo: 'none'
+                            }]
+                        );
+                        Plotly.moveTraces('graph-'+this.props.unique_id, -1, 1);
+                    });
+                }
             } else if (this.props.time_range && prevProps.time_range) {
                 if (this.props.time_range.min.getTime() != prevProps.time_range.min.getTime() ||
                         this.props.time_range.max.getTime() != prevProps.time_range.max.getTime()) {

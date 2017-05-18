@@ -107,7 +107,6 @@ class RasterDataSource extends React.Component {
 
     var layer = {type: 'Layer', id: this.props.spatial_domain, field: 'fid'};
     for (let input_layer of this.props.layers.items){
-      console.log(input_layer);
       if (input_layer.id == layer.id){
         layer['name'] = input_layer['name'];
         break;
@@ -235,7 +234,9 @@ class RasterDataSource extends React.Component {
       }
     }
 
-    // TODO: name checking too
+    if((name && name.length > 0) && !name.match(/^[a-zA-Z0-9-]+$/)){
+      errors['name'] = "Name must be alphanumeric, without spaces.";
+    }
 
     var data = Object.assign(
       {},
