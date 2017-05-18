@@ -47,6 +47,8 @@ def wrapJoins(tree, parent=None):
         return ['select', [tree, field_name]]
     elif tree[0] in ['source', 'dfsource', 'raster', 'join', 'select']:
         return tree
+    elif tree[0] == 'named':
+        return ['named', [tree[1][0], wrapJoins(tree[1][1])]]
     else:
         return [tree[0], [wrapJoins(op) for op in tree[1]]]
 
@@ -56,6 +58,8 @@ def wrapRasters(tree, parent=None):
         return ['select', [tree, 'mean']]
     elif tree[0] in ['source', 'dfsource', 'raster', 'join', 'select']:
         return tree
+    elif tree[0] == 'named':
+        return ['named', [tree[1][0], wrapRasters(tree[1][1])]]
     else:
         return [tree[0], [wrapRasters(op) for op in tree[1]]]
 
