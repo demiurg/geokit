@@ -175,17 +175,37 @@ function node_editor(state={'mode': DEFAULT}, action){
     case EDITING_RASTER_DATA:
       return Object.assign({}, state, {
         mode: action.mode,
-        raster_data: action.data
+        raster_data: action.data ? action.data : {
+          name: "",
+          raster: false,
+          date_start: "",
+          data_end: "",
+          editing: false,
+          index: -1,
+          default_name: null,
+          valid: false,
+          errors: {}
+        }
       });
     case EDITING_TABULAR_DATA:
       return Object.assign({}, state, {
         mode: action.mode,
-        tabular_data: action.data
+        tabular_data: action.data ? action.data : {
+          name: "",
+          source1: "",
+          source2: "",
+          isEditing: false,
+          index: -1
+        }
       });
     case EDITING_EXPRESSION:
       return Object.assign({}, state, {
         mode: action.mode,
-        expression_data: action.data
+        expression_data: action.data ? action.data : {
+          name: "",
+          node: null,
+          operand_refs: []
+        }
       });
     case DEFAULT:
       return Object.assign({}, state, {

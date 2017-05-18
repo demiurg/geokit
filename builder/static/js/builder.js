@@ -433,7 +433,6 @@ var Graph = function (_React$Component) {
 
                 var plot = document.getElementById('graph-' + this.props.unique_id);
                 plot.on('plotly_click', function (data) {
-                    console.log(data.points[0].x);
                     _this3.props.changeTime(new Date(data.points[0].x));
                 });
             } else if (this.props.time_range && prevProps.time_range) {

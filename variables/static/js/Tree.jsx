@@ -20,7 +20,7 @@ class DataNode {
 
     for (var i=0; i < args[1].length; i++){
       var rand = args[1][i];
-      if (this.isDataTree(rand)){
+      if (DataNode.isDataTree(rand)){
         this._operands.push(treeToNode(rand));
       } else if (this._operation != 'source' && this.isSource(rand)){
         this._operands.push(treeToNode(['source', [rand]]));
@@ -76,7 +76,7 @@ class DataNode {
     var rands = [];
     for (var i = 0; i < this._operands.length; i++){
       var rand = this._operands[i];
-      if (this.isDataTree(rand)){
+      if (DataNode.isDataTree(rand)){
         rands.push(rand.json());
       } else {
         rands.push(rand);
@@ -95,7 +95,7 @@ class DataNode {
     if (this._operands.length){
       rands = this._operands.map(
         (o, i) => {
-          if(this.isDataNode(o)){
+          if(DataNode.isDataNode(o)){
             return o.render();
           } else {
             return (o + ", ");
@@ -110,7 +110,7 @@ class DataNode {
     );
   }
 
-  isDataTree(arg){
+  static isDataTree(arg){
     return (
       Array.isArray(arg) &&
       arg.length == 2 &&
@@ -118,7 +118,7 @@ class DataNode {
     );
   }
 
-  isDataNode(node){
+  static isDataNode(node){
     return (
       node._operation &&
       NODE_TYPES_IMPLEMENTED.hasOwnProperty(node._operation) &&
@@ -126,8 +126,12 @@ class DataNode {
     );
   }
 
-  isSource(obj){
+  static isSource(obj){
     return (obj && (obj.id && obj.type));
+  }
+
+  isSource(obj){
+    return DataNode.isSource(obj);
   }
 
   static nameNode(name, node){
