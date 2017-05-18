@@ -3,12 +3,28 @@
 {% block titletag %}Variables{% endblock %}
 {% block bodyclass %}menu-variables{% endblock %}
 
+{% block extra_css %}
+<style>
+.raster-status.done {
+    color: #148744;
+}
+
+.raster-status.working {
+    color: #b7a500;
+}
+
+.raster-status.bad {
+    color: #840d00;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 {% include "wagtailadmin/shared/header.html" with title="Variables" icon="placeholder" add_link="variables:add" add_text="Create Variable" %}
 
 <div class="nice-padding">
     <div id="variables-results" class="variables">
-        {% if variables.exists %}
+        {% if variables_and_statuses %}
         <table class="listing">
             <col />
             <col />
@@ -26,7 +42,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for variable in variables %}
+                {% for variable, statuses in variables_and_statuses %}
                 <tr>
                     <td class="title">
                         <a href="{% url 'variables:edit' variable.pk %}">
@@ -50,12 +66,14 @@
                             <tr>
                                 <th>Rasters</th>
                                 <td>
-                                    {% for raster in variable.get_rasters %}
+                                    {% for raster, status in statuses.iteritems %}
+                                    <span class="raster-status {% if status == 0 %}done{% elif status == 1 %}working{% else %}bad{% endif %}">
                                         {% if forloop.first %}
-                                            {{raster.get_string}}
+                                            {{ raster }}
                                         {% else %}
-                                            , {{raster.get_string}}
+                                            , {{ raster }} {% if not status %}&#10003;{% else %}&#128473;{% endif %}
                                         {% endif %}
+                                    </span>
                                     {% endfor %}
                                 </td>
                             </tr>
