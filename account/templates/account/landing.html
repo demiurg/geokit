@@ -111,22 +111,23 @@
     font-size: .75em;
     margin: 0 25px 25px 25px;
   }
+  .carousel {
+    height: 100vh;
+    overflow: hidden;
+    width: 100%;
+  }
+  .carousel img {
+    min-width: 100%;
+    min-height: 100vh;
+  }
   .cover {
-    background-color: rgba(112,87,91,.76);
+    background-color: rgba(112,87,91,.55);
     display: table;
     height: 100vh;
     width: 100%;
-  }
-  div.cover:before {
-    background-image: url({% static 'img/istockphoto-coal-geologist-46975590.jpg' %});
-    background-size: cover;
-    background-repeat: no-repeat;
-    content: "";
-    display: block;
-    height: 100vh;
     position: absolute;
-    width: 100%;
-    z-index: -1;
+    top: 0;
+    left: 0;
   }
   .get-started {
     display: table-cell;
@@ -332,6 +333,25 @@
 {% endblock %}
 {% block body %}
 {% include 'account/header.html' %}
+  <div id="carousel-example-generic" class="carousel slide" data-ride="carousel" data-interval="8500">
+    <!-- Indicators -->
+
+    <!-- Wrapper for slides -->
+    <div class="carousel-inner" role="listbox">
+      <div class="item active">
+        <img src="{% static 'account/img/carousel-2.jpg' %}">
+      </div>
+      <div class="item">
+        <img src="{% static 'account/img/carousel-1.jpg' %}" />
+      </div>
+      <div class="item">
+        <img src="{% static 'account/img/carousel-3.jpg' %}" />
+      </div>
+      <div class="item">
+        <img src="{% static 'account/img/carousel-4.jpg' %}" />
+      </div>
+    </div>
+  </div>
   <div id="search" class="cover">
     <div class="get-started">
       <h1>Get started with site creation.</h1>
