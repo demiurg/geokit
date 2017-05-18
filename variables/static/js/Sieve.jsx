@@ -54,7 +54,6 @@ function sieveApp(state=initialState, action){
     case UPDATE_NAME:
       var errors = {};
       errors[action.field] = action.error;
-      console.log(action.name);
       return Object.assign({}, state, {
         changed: true,
         name: action.name,
@@ -481,18 +480,32 @@ class SieveComponent extends React.Component {
 
   render() {
     var final_render = null;
+    var valid = !this.props.errors.name && !this.props.errors.tree;
+
     this.props.name;
     if (this.props.tree && this.props.tree.length) {
       var final = treeToNode(this.props.tree);
       final_render = <div>
-        <input
-          ref={(ref)=>{this.endpicker=ref}}
-          name="name" type="text"
-          value={this.props.name}
-        />
+        <form>
+          <FormGroup controlId="range"
+            validationState={this.props.errors.name ? "error" : null}
+          >
+            <FormControl
+              name="name" type="text"
+              placeholder="Use alphanumeric name without spaces."
+              value={this.props.name ? this.props.name : null}
+              onChange={(e) => {
+                this.props.onUpdateName(e.target.value, 'name');
+              }}
+            />
+            <HelpBlock>
+              {this.props.errors.name ? this.props.errors.name : ""}
+            </HelpBlock>
+          </FormGroup>
+        </form>
         <p>{final.render()}</p>
         <p>
-          {this.props.changed ?
+          {(this.props.changed && valid) ?
             <button className='button button-secondary' onClick={this.saveVariable}>Save Changes</button>
           : null}
           {this.props.id ?

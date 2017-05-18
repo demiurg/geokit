@@ -1740,7 +1740,6 @@ var RasterDataSource = function (_React$Component2) {
 
       var input_layer = _ref;
 
-      console.log(input_layer);
       if (input_layer.id == layer.id) {
         layer['name'] = input_layer['name'];
         break;
@@ -1845,7 +1844,9 @@ var RasterDataSource = function (_React$Component2) {
       }
     }
 
-    // TODO: name checking too
+    if (name && name.length > 0 && !name.match(/^[a-zA-Z0-9-]+$/)) {
+      errors['name'] = "Name must be alphanumeric, without spaces.";
+    }
 
     var data = Object.assign({}, this.props.node_editor.raster_data, {
       name: name,
@@ -2490,7 +2491,6 @@ function sieveApp() {
     case UPDATE_NAME:
       var errors = {};
       errors[action.field] = action.error;
-      console.log(action.name);
       return Object.assign({}, state, {
         changed: true,
         name: action.name,
@@ -3094,19 +3094,37 @@ var SieveComponent = function (_React$Component6) {
     var _this10 = this;
 
     var final_render = null;
+    var valid = !this.props.errors.name && !this.props.errors.tree;
+
     this.props.name;
     if (this.props.tree && this.props.tree.length) {
       var final = treeToNode(this.props.tree);
       final_render = React.createElement(
         "div",
         null,
-        React.createElement("input", {
-          ref: function ref(_ref) {
-            _this10.endpicker = _ref;
-          },
-          name: "name", type: "text",
-          value: this.props.name
-        }),
+        React.createElement(
+          "form",
+          null,
+          React.createElement(
+            FormGroup,
+            { controlId: "range",
+              validationState: this.props.errors.name ? "error" : null
+            },
+            React.createElement(FormControl, {
+              name: "name", type: "text",
+              placeholder: "Use alphanumeric name without spaces.",
+              value: this.props.name ? this.props.name : null,
+              onChange: function onChange(e) {
+                _this10.props.onUpdateName(e.target.value, 'name');
+              }
+            }),
+            React.createElement(
+              HelpBlock,
+              null,
+              this.props.errors.name ? this.props.errors.name : ""
+            )
+          )
+        ),
         React.createElement(
           "p",
           null,
@@ -3115,7 +3133,7 @@ var SieveComponent = function (_React$Component6) {
         React.createElement(
           "p",
           null,
-          this.props.changed ? React.createElement(
+          this.props.changed && valid ? React.createElement(
             "button",
             { className: "button button-secondary", onClick: this.saveVariable },
             "Save Changes"
