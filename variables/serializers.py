@@ -86,7 +86,7 @@ def process_rasters(variable_pk, schema_name):
                 layer_file.status in ('finished', None)
                 and os.path.isfile(shp_file)
             ):
-                job_id = rpc_con().submit_job(
+                job_id = rpc_con().submit_request(
                     schema_name,
                     r.raster['id'],
                     {"site": shp_file, "key": "shaid"},
