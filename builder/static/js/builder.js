@@ -436,8 +436,23 @@ var Graph = function (_React$Component) {
                         y: [data.y[0]],
                         x: [data.x[0]],
                         marker: {
-                            size: 12
-                        }
+                            size: 12,
+                            fillcolor: "#f49542"
+                        },
+                        hoverinfo: 'none'
+                    }, {
+                        type: 'scatter',
+                        y: [data.y[0]],
+                        x: [data.x[0]],
+                        marker: {
+                            symbol: 'circle-open',
+                            size: 12,
+                            color: "#f49542",
+                            line: {
+                                width: 2
+                            }
+                        },
+                        hoverinfo: 'none'
                     }], {
                         xaxis: xaxis,
                         yaxis: { title: this.props.variable_name },
@@ -445,20 +460,43 @@ var Graph = function (_React$Component) {
                         showlegend: false
                     });
 
-                    plot.on('plotly_click', function (new_data) {
-                        _this3.props.changeTime(new Date(new_data.points[0].x));
-
+                    plot.on('plotly_hover', function (new_data) {
                         var point = new_data.points[0];
 
-                        Plotly.deleteTraces('graph-' + _this3.props.unique_id, 1);
+                        Plotly.deleteTraces('graph-' + _this3.props.unique_id, -1);
                         Plotly.addTraces('graph-' + _this3.props.unique_id, [{
                             type: 'scatter',
                             y: [point.y],
                             x: [point.x],
                             marker: {
-                                size: 12
-                            }
+                                symbol: 'circle-open',
+                                size: 12,
+                                color: "#f49542",
+                                line: {
+                                    width: 2
+                                }
+                            },
+                            hoverinfo: 'none'
                         }]);
+                    });
+
+                    plot.on('plotly_click', function (new_data) {
+                        _this3.props.changeTime(new Date(new_data.points[0].x));
+
+                        var point = new_data.points[0];
+
+                        Plotly.deleteTraces('graph-' + _this3.props.unique_id, -2);
+                        Plotly.addTraces('graph-' + _this3.props.unique_id, [{
+                            type: 'scatter',
+                            y: [point.y],
+                            x: [point.x],
+                            marker: {
+                                size: 12,
+                                fillcolor: "#f49542"
+                            },
+                            hoverinfo: 'none'
+                        }]);
+                        Plotly.moveTraces('graph-' + _this3.props.unique_id, -1, 1);
                     });
                 }
             } else if (this.props.time_range && prevProps.time_range) {
