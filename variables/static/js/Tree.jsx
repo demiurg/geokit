@@ -36,7 +36,7 @@ class DataNode {
     }
 
     if (this._operands.length != this.arity) {
-      throw Error(`${this._operation} node takes exactly ${this.arity} operands`);
+      throw Error(`${this.type} node takes exactly ${this.arity} operands`);
     }
   }
 
@@ -54,18 +54,38 @@ class DataNode {
 
   get layers() {
     var layers = [];
-
-    if (this._name == "Source") {
+    console.log(this);
+    if (this.type == "source") {
       if (this.operand.type == "Layer") {
         layers = [this];
       }
     } else {
       this._operands.forEach((operand) => {
-        layers = layers.concat(operand.layers);
+        let rand_layers = operand.layers;
+        if(rand_layers && rand_layers.length > 0){
+          layers = layers.concat(rand_layers);
+        }
       });
     }
 
     return layers;
+  }
+
+  get products() {
+    var products = [];
+
+    if (this.type == "raster") {
+      products = [this];
+    } else {
+      this._operands.forEach((operand) => {
+        let rand_products = operand.products;
+        if(rand_products && rand_products.length > 0){
+          products = products.concat(rand_products);
+        }
+      });
+    }
+
+    return products;
   }
 
   validOperands(input_vars, operand_refs, op_index) {
