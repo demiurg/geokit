@@ -106,7 +106,6 @@ def data_json(request, variable_id):
 
     if "space" in variable.dimensions:
         layers = variable.get_layers()
-        layers = Layer.objects.filter(pk__in=layers)
         text += '"layers": [' + ','.join(map(lambda l: str(l.pk), layers)) + '], '
         text += '"bounds": [' + ','.join(map(lambda l: str(l.bounds), layers)) + '], '
         text += '"data": {'

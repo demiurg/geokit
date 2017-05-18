@@ -22,7 +22,7 @@
                     <th>Dimensions</th>
                     <th>Bounds</th>
                     <th>Last Modified</th>
-                    <th>Rasters</th>
+                    <th>Inputs</th>
                 </tr>
             </thead>
             <tbody>
@@ -46,14 +46,44 @@
                         {{ variable.modified }}
                     </td>
                     <td>
-                        {% for raster in variable.get_rasters %}
-                            {% if forloop.first %}
-                                {{raster.get_string}}
-                            {% else %}
-                                , {{raster.get_string}}
-                            {% endif %}
-                        {% endfor %}
-
+                        <table>
+                            <tr>
+                                <th>Rasters</th>
+                                <td>
+                                    {% for raster in variable.get_rasters %}
+                                        {% if forloop.first %}
+                                            {{raster.get_string}}
+                                        {% else %}
+                                            , {{raster.get_string}}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Layers</th>
+                                <td>
+                                    {% for layer in variable.get_layers %}
+                                        {% if forloop.first %}
+                                            {{ layer.name }}
+                                        {% else %}
+                                            , {{ layer.name }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Tables</th>
+                                <td>
+                                    {% for table in variable.get_tables %}
+                                        {% if forloop.first %}
+                                            {{ table.name }}
+                                        {% else %}
+                                            {{ table.name }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
                 {% endfor %}
