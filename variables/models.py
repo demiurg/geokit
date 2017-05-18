@@ -6,6 +6,7 @@ from django.utils.functional import cached_property
 
 from wagtail.wagtailcore.models import Page
 
+from geokit_tables.models import GeoKitTable
 from layers.models import Layer
 from data import treeToNode, wrapJoins, wrapRasters
 import json
@@ -70,10 +71,10 @@ class Variable(models.Model):
         return json.dumps(self.input_variables)
 
     def get_layers(self):
-        return self.root.get_layers()
+        return Layer.objects.filter(pk__in=self.root.get_layers())
 
     def get_tables(self):
-        return self.root.get_tables()
+        return GeoKitTable.objects.filter(pk__in=self.root.get_tables())
 
     def get_rasters(self):
         return self.root.get_rasters()
