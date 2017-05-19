@@ -70,9 +70,9 @@ Unzip them to the geokit directory
 
 Import the files into your databases
 
-`psql -U geokit geokits < geokits_deploy.psql -h localhost`
+`psql -U geokit geokits < geokits_deploy.pgsql -h localhost`
 
-`psql -U geokit geodata < geodata.psql -h localhost`
+`psql -U geokit geodata < geodata.pgsql -h localhost`
 
 # Django
 
