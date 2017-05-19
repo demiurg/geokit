@@ -37,6 +37,13 @@ class GeoKitSite(TenantMixin):
 
     auto_create_schema = False
 
+    def print_domain_url(self):
+        url_parts = self.domain_url.split('.')
+        if url_parts[-1] == 'localhost':
+            url_parts.insert(1, 'geokit')
+
+        return '.'.join(url_parts)
+
     @classmethod
     def is_allowed(cls, name):
         m = re.match(r'^[a-z0-9]+$', name)

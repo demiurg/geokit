@@ -42,7 +42,7 @@
         <tr>
           <td valign="top">
             <h2>
-              <a href="http://{{ site.schema_name}}.{{ request.domain }}" title="View this page">{{ site.name }}</a>
+              <a href="http://{{ site.print_domain_url }}:{% if request.META.SERVER_PORT != 80 %}{{ request.META.SERVER_PORT }}{% endif %}" title="View this page">{{ site.name }}</a>
             </h2>
           </td>
           <td valign="top">
@@ -51,7 +51,7 @@
             </a>
           </td>
           <td valign="top">
-            <a href="http://{{ site.schema_name}}.{{ request.domain }}/admin/" class="status-tag primary">
+            <a href="http://{{ site.print_domain_url }}:{% if request.META.SERVER_PORT != 80 %}{{ request.META.SERVER_PORT }}{% endif %}/admin/" class="status-tag primary">
               Build Site
             </a>
           </td>
