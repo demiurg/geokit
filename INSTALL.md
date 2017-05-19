@@ -26,7 +26,7 @@ Install uqsgi
 `sudo pip install uwsgi`
 
 Clone the GeoKit repositiory from Bitbucket
-`git clone https://bitbucket.org/appliedgeosolutions/geokit.git`
+`git clone https://github.com/Applied-GeoSolutions/geokit.git`
 
 # Create a virtual env in the project directory
 `virtualenv venv`
