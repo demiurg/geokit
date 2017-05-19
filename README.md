@@ -1,4 +1,4 @@
-# Geokit
+# GeoKit
 
 The Geospatial Decision Support Toolkit is an open source web based application
 that allows stakeholders and customers to build on-line geospatial decision
