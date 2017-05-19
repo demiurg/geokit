@@ -577,7 +577,7 @@ def delete(request, layer_name):
     pages_to_delete = set()
 
     for v in Variable.objects.all():
-        if layer.pk in v.get_layers():
+        if layer.pk in v.root.get_layers():
             variables_to_delete.append(v)
 
     for v in variables_to_delete:

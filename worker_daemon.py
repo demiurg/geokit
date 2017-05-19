@@ -1,9 +1,10 @@
 #!/usr/bin/env python
-
 import os, subprocess, sys
 
+VIRTAUALENV = './.venv'
+
 _cwd = os.path.realpath(os.path.dirname(os.path.abspath(__file__)))
-activate_this = os.path.realpath(os.path.join(_cwd, './venv/bin/activate_this.py'))
+activate_this = os.path.realpath(os.path.join(_cwd, VIRTUALENV, 'bin/activate_this.py'))
 execfile(activate_this, dict(__file__=activate_this))
 
 manage = os.path.realpath(os.path.join(_cwd, './manage.py'))

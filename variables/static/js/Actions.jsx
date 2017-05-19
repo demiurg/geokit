@@ -154,14 +154,17 @@ function receiveInputVariables(input_variables) {
       spatial_domain: null
     };
   } else {
-    var last_input_var = input_variables[input_variables.length - 1];
-
-    var input_var_layers = treeToNode(last_input_var).layers,
-        spatial_domain = null;
-    if (input_var_layers) {
-      spatial_domain = input_var_layers[input_var_layers.length - 1].operand.id;
+    var last_input_var = null;
+    var spatial_domain = null;
+    var input_nodes = [];
+    for (let i=input_variables.length-1; i >= 0; i--){
+      let ivnode = treeToNode(input_variables[i]);
+      let layers = ivnode.layers;
+      if (layers.length > 0) {
+        spatial_domain = layers[layers.length - 1].operand.id;
+        break;
+      }
     }
-
     return {
       type: RECEIVE_INPUT_VARIABLES,
       input_variables: input_variables,

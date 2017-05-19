@@ -237,7 +237,7 @@ def delete(request, table_name):
     pages_to_delete = set()
 
     for v in Variable.objects.all():
-        if table.pk in v.get_tables():
+        if table.pk in v.root.get_tables():
             variables_to_delete.append(v)
 
     for v in variables_to_delete:

@@ -44,9 +44,30 @@ def get_raster_catalog():
     return None
 
 
+def get_raster_statuses(variable):
+    rasters = variable.get_rasters()
+    statuses = {}
+
+    for r in rasters:
+        vector = r.get_layers().pop()
+        try:
+            job_request = RasterRequest.objects.get(
+                raster_id=r.raster['id'],
+                dates=r.dates,
+                vector=vector
+            )
+            statuses[r.raster['id']] = job_request.status
+        except RasterRequest.DoesNotExist:
+            statuses[r.raster['id']] = None
+
+    return statuses
+
+
 def index(request):
     variables = Variable.objects.all().order_by('-modified')
-    return render(request, 'variables/index.html', {"variables": variables})
+    raster_statuses = [get_raster_statuses(v) for v in variables]
+    variables_and_statuses = zip(variables, raster_statuses)
+    return render(request, 'variables/index.html', {"variables_and_statuses": variables_and_statuses})
 
 
 def site_guide(request):
@@ -106,7 +127,6 @@ def data_json(request, variable_id):
 
     if "space" in variable.dimensions:
         layers = variable.get_layers()
-        layers = Layer.objects.filter(pk__in=layers)
         text += '"layers": [' + ','.join(map(lambda l: str(l.pk), layers)) + '], '
         text += '"bounds": [' + ','.join(map(lambda l: str(l.bounds), layers)) + '], '
         text += '"data": {'

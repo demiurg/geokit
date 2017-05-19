@@ -343,7 +343,10 @@ class VariableTable extends React.Component {
           </thead>
           <tbody>
             {this.props.input_variables.map((item, i) => {
-              var node = treeToNode(item);
+              var node = item;
+              if (!DataNode.isDataNode(item)){
+                node = treeToNode(item);
+              }
 
               return (
                 <tr>

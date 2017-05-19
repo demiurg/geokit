@@ -3,12 +3,28 @@
 {% block titletag %}Variables{% endblock %}
 {% block bodyclass %}menu-variables{% endblock %}
 
+{% block extra_css %}
+<style>
+.raster-status.done {
+    color: #148744;
+}
+
+.raster-status.working {
+    color: #b7a500;
+}
+
+.raster-status.bad {
+    color: #840d00;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 {% include "wagtailadmin/shared/header.html" with title="Variables" icon="placeholder" add_link="variables:add" add_text="Create Variable" %}
 
 <div class="nice-padding">
     <div id="variables-results" class="variables">
-        {% if variables.exists %}
+        {% if variables_and_statuses %}
         <table class="listing">
             <col />
             <col />
@@ -22,11 +38,11 @@
                     <th>Dimensions</th>
                     <th>Bounds</th>
                     <th>Last Modified</th>
-                    <th>Rasters</th>
+                    <th>Inputs</th>
                 </tr>
             </thead>
             <tbody>
-                {% for variable in variables %}
+                {% for variable, statuses in variables_and_statuses %}
                 <tr>
                     <td class="title">
                         <a href="{% url 'variables:edit' variable.pk %}">
@@ -46,14 +62,46 @@
                         {{ variable.modified }}
                     </td>
                     <td>
-                        {% for raster in variable.get_rasters %}
-                            {% if forloop.first %}
-                                {{raster.get_string}}
-                            {% else %}
-                                , {{raster.get_string}}
-                            {% endif %}
-                        {% endfor %}
-
+                        <table>
+                            <tr>
+                                <th>Rasters</th>
+                                <td>
+                                    {% for raster, status in statuses.iteritems %}
+                                    <span class="raster-status {% if status == 0 %}done{% elif status == 1 %}working{% else %}bad{% endif %}">
+                                        {% if forloop.first %}
+                                            {{ raster }}
+                                        {% else %}
+                                            , {{ raster }} {% if not status %}&#10003;{% else %}&#128473;{% endif %}
+                                        {% endif %}
+                                    </span>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Layers</th>
+                                <td>
+                                    {% for layer in variable.get_layers %}
+                                        {% if forloop.first %}
+                                            {{ layer.name }}
+                                        {% else %}
+                                            , {{ layer.name }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Tables</th>
+                                <td>
+                                    {% for table in variable.get_tables %}
+                                        {% if forloop.first %}
+                                            {{ table.name }}
+                                        {% else %}
+                                            {{ table.name }}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                        </table>
                     </td>
                 </tr>
                 {% endfor %}
