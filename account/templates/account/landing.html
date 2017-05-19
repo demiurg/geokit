@@ -56,13 +56,11 @@
   .nav-geokit > li > .dropdown-menu a:hover {
     background-color: rgba(94,115,96, 0.55);
   }
-  
   .nav-geokit input.textInput {
     background-color: rgba(255, 255, 255, 0.85);
     border: 0;
     box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.50);
   }
-  
   .nav-geokit input.textInput:focus, .nav-geokit input:active {
     background-color: rgba(255, 255, 255, 1.00);
     outline: 0;
@@ -343,17 +341,6 @@
 </style>
 
 <script type="text/javascript">
-      /*
-      function setNavBackgroundColor() {
-        if ($(document).scrollTop() > 0) {
-          if ($(".navbar-default").css("background-color") == "transparent" || $(".navbar-default").css("background-color") == "rgba(0, 0, 0, 0)") {
-            $(".navbar-default").css("background-color", "rgba(112, 87, 91, 1.00)");
-          }
-        } else if ($(document).scrollTop() == 0 && $("#search").height() && $("nav").css("background-color") != "transparent") {
-          $("nav").css("background-color", "transparent");
-        }
-      }
-      */
       function searchSite() {
         if ($("#search-input").val() != "") {
           $.ajax({
@@ -366,13 +353,13 @@
               if (data.available === true) {
                 $("#schema_name").val(data.site_name);
                 $("#name").val(data.site_name);
-                $(".signup-form-site-notification h1").html("<i class='fa fa-check-circle'></i> Your site name is available. Finish signing up to get started.");
+                $(".signup-form-site-notification h1").html("<i class='fa fa-check-circle' style='color: rgba(100, 255, 100, 0.70);'></i> \"" + data.site_name + "\" is available! Complete and submit the sign up form to get started.");
                 $(".signup-form-site-notification").css("display", "block");
                 $("#search-form").css("display", "none");
                 $("#get-started-information").css("display", "none");
                 $("#signup-form").css("display", "inline-block");
               } else {
-                $(".signup-form-site-notification h1").html("<i class='fa fa-times-circle'></i> That name is currently in use.");
+                $(".signup-form-site-notification h1").html("<i class='fa fa-times-circle' style='color: rgba(255, 100, 100, 0.70);'></i> \"" + data.site_name + "\" is already being used.");
                 $(".signup-form-site-notification").css("display", "block");
                 $('html, body').animate({
                   scrollTop: $("#signup").offset().top
@@ -386,7 +373,7 @@
             });
         } else {
           $(".search-alert").css("display", "block");
-          $(".search-alert p").text("Enter a site name to search.");
+          $(".search-alert p").text("Enter a site name to search for availability.");
         }
       }
       function searchSiteSignup() {
@@ -398,10 +385,10 @@
           })
             .done(function(data) {
               if (data.available === true) {
-                $(".signup-form-site-notification h1").html("<i class='fa fa-check-circle'></i> Your site name is available. Finish signing up to get started.");
+                $(".signup-form-site-notification h1").html("<i class='fa fa-check-circle' style='color: rgba(100, 255, 100, 0.70);'></i> \"" + data.site_name + "\" is available! Complete and submit the sign up form to get started.");
                 $(".signup-form-site-notification").css("display", "block");
               } else {
-                $(".signup-form-site-notification h1").html("<i class='fa fa-times-circle'></i> That name is currently in use.");
+                $(".signup-form-site-notification h1").html("<i class='fa fa-times-circle' style='color: rgba(255, 100, 100, 0.70);'></i> \"" + data.site_name + "\" is already being used.");
                 $(".signup-form-site-notification").css("display", "block");
               }
             });
