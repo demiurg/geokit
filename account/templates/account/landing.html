@@ -53,63 +53,51 @@
     background-color: rgba(94,115,96, 0.55);
   }
 
-  #signup {
-    background-color: rgba(250, 242, 225, 1.00);
-    font-size: 28px;
-    padding-top: 70px;
-    padding-bottom: 70px;
-  }
-  #signup h1 {
-    color: rgba(131, 107, 100, 1.00);
-  }
-  #signup p {
-    color: rgba(64, 64, 64, 0.65);
-  }
   .signup-form {
-    border-bottom: 1px solid #a8958c;
-    border-right: 0
+    display: none;
+    text-align: center;
+    vertical-align: middle;
     font-size: .8em;
     padding-bottom: 25px;
   }
   .signup-form input {
-    border: 1px solid #ffffff;
+    background-color: rgba(255, 255, 255, 0.85);
+    border: none;
     border-radius: 10px;
-    box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25);
+    box-shadow: 2px 2px 1px rgba(0, 0, 0, 0.35);
     color: rgba(0, 0, 0, 0.65);
-    display: block;
     height: 50px;
-    margin-bottom: 50px;
-    padding-left: 10%;
-    width: 100%;
+    width: 400px;
   }
   input:focus, select:focus, textarea:focus, button:focus, .btn:focus, .btn-primary:focus {
     outline: 0;
   }
-  .signup-form input:focus, .form-control:focus {
-    border: 1px solid rgba(131, 107, 100, 1.00);
+  .signup-form-site-notification h1 {
+    font-size: 2em;
+  }
+  .signup-form input:focus, .form-control:focus, .signup-form input:active {
+    background-color: rgba(255, 255, 255, 1.00);
     box-shadow: none;
-    box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25);
+    box-shadow: 4px 4px 1px rgba(0, 0, 0, 0.40);
   }
   .signup-form button, .signup-form .btn, .signup-form .btn-primary {
-    background-color: rgba(131, 107, 100, 1.00);
+    background-color: rgba(125, 137, 167, 0.85);
     border: 0;
     border-radius: 10px;
     color: rgba(255, 255, 255, 1.00);
     box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.25);
     display: block;
     height: 50px;
-    width: 100%;
+    width: 400px;
   }
-  .signup-form button:active, .signup-form .btn:active, .signup-form .btn-primary:active {
-    background-color: rgba(101, 87, 80, 1.00);
+  .signup-form button:active, .signup-form .btn:active, .signup-form .btn-primary:active, .signup-form .btn-primary:focus {
+    background-color: rgba(125, 137, 167, 1.00);
+    border: 0;
+    box-shadow: 4px 4px 1px rgba(0, 0, 0, 0.40);
+    outline: none;
   }
   .signup-form-site-notification {
     display: none;
-  }
-  #signup .signup-form-site-notification p {
-    color: rgba(117, 127, 100, 1.00);
-    font-size: .75em;
-    margin: 0 25px 25px 25px;
   }
   .carousel {
     height: 100vh;
@@ -138,14 +126,13 @@
   }
   .get-started {
     display: table-cell;
-    min-width: 500px;
     text-align: center;
     vertical-align: middle;
   }
-  .get-started h1 {
+  .get-started h1, .signup-form-site-notification {
     color: #fffeed;
     font-weight: lighter;
-    margin-bottom: 60px;
+    margin-bottom: 30px;
     text-shadow: 1px 1px 1px #000000;
   }
   .get-started .search-alert {
@@ -163,7 +150,7 @@
     margin-left: auto;
   }
   .get-started input {
-    background-color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.85);
     border: 0;
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
@@ -175,8 +162,11 @@
     height: 45px;
     width: 400px;
   }
+  .get-started input:focus, .get-started input:active {
+    background-color: rgba(255, 255, 255, 1.00);
+  }
   .get-started button {
-    background-color: #707277;
+    background-color: rgba(125, 137, 167, 0.85);
     border: 0;
     border-top-right-radius: 5px;
     border-bottom-right-radius: 5px;
@@ -186,53 +176,48 @@
     padding: 0 15px 0 15px;
     height: 45px;
   }
+  .get-started button:active {
+    background-color: rgba(125, 137, 167, 1.00);
+  }
   .help-block {
     display: none;
   }
   #name {
     display: none;
   }
-  @media (min-width: 768px) {
-    .signup-form {
-      border-bottom: 0;
-      border-right: 1px solid #a8958c;
-      padding-right: 15px;
-      padding-bottom: 0;
-    }
-  }
   @media (max-width: 768px) {
-      .get-started {
-        min-width: 60vw;
-        text-align: center;
-        vertical-align: middle;
-      }
-      .get-started .search-form {
-        border-radius: 5px;
-        box-shadow: 1px 1px 3px 0px rgba(0,0,0,0.25);
-        display: inline-block;
-        margin-right: auto;
-        margin-left: auto;
-        width: 60vw;
-      }
-      #search-input {
-        border-top-left-radius: 5px;
-        border-top-right-radius: 5px;
-        border-bottom-left-radius: 0;
-        width: 60vw;
-      }
-      #search-submit {
-        border-bottom-left-radius: 5px;
-        border-bottom-right-radius: 5px;
-        border-top-right-radius: 0;
-        display: block
-        margin-top: 0;
-        overflow: hidden;
-        width: 60vw;
-      }
+    .get-started {
+      text-align: center;
+      vertical-align: middle;
+    }
+    .get-started .search-form {
+      border-radius: 5px;
+      box-shadow: 1px 1px 3px 0px rgba(0,0,0,0.25);
+      display: inline-block;
+      margin-right: auto;
+      margin-left: auto;
+    }
+    #search-input {
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      width: 60vw;
+    }
+    #search-submit {
+      border-bottom-left-radius: 5px;
+      border-bottom-right-radius: 5px;
+      border-top-right-radius: 0;
+      display: block
+      margin-top: 0;
+      overflow: hidden;
+      width: 60vw;
+    }
   }
 </style>
 
 <script type="text/javascript">
+      /*
       function setNavBackgroundColor() {
         if ($(document).scrollTop() > 0) {
           if ($(".navbar-default").css("background-color") == "transparent" || $(".navbar-default").css("background-color") == "rgba(0, 0, 0, 0)") {
@@ -242,6 +227,7 @@
           $("nav").css("background-color", "transparent");
         }
       }
+      */
       function searchSite() {
         if ($("#search-input").val() != "") {
           $.ajax({
@@ -254,20 +240,13 @@
               if (data.available === true) {
                 $("#schema_name").val(data.site_name);
                 $("#name").val(data.site_name);
-                $(".signup-form-site-notification p").css("color", "rgba(117, 127, 100, 1.00)");
-                $(".signup-form-site-notification p").html("<i class='fa fa-check-circle'></i> Your site name is available. Finish signing up to get started.");
+                $(".signup-form-site-notification h1").html("<i class='fa fa-check-circle'></i> Your site name is available. Finish signing up to get started.");
                 $(".signup-form-site-notification").css("display", "block");
-                $('html, body').animate({
-                  scrollTop: $("#signup").offset().top
-                }, {
-                  duration: 500,
-                  complete: function() {
-                    $("#email1").focus();
-                  }
-                });
+                $("#search-form").css("display", "none");
+                $("#get-started-information").css("display", "none");
+                $("#signup-form").css("display", "inline-block");
               } else {
-                $(".signup-form-site-notification p").css("color", "rgba(131, 107, 100, 1.00)");
-                $(".signup-form-site-notification p").html("<i class='fa fa-times-circle'></i> That name is currently in use.");
+                $(".signup-form-site-notification h1").html("<i class='fa fa-times-circle'></i> That name is currently in use.");
                 $(".signup-form-site-notification").css("display", "block");
                 $('html, body').animate({
                   scrollTop: $("#signup").offset().top
@@ -293,17 +272,15 @@
           })
             .done(function(data) {
               if (data.available === true) {
-                $(".signup-form-site-notification p").css("color", "rgba(117, 127, 100, 1.00)");
-                $(".signup-form-site-notification p").html("<i class='fa fa-check-circle'></i> Your site name is available. Finish signing up to get started.");
+                $(".signup-form-site-notification h1").html("<i class='fa fa-check-circle'></i> Your site name is available. Finish signing up to get started.");
                 $(".signup-form-site-notification").css("display", "block");
               } else {
-                $(".signup-form-site-notification p").css("color", "rgba(131, 107, 100, 1.00)");
-                $(".signup-form-site-notification p").html("<i class='fa fa-times-circle'></i> That name is currently in use.");
+                $(".signup-form-site-notification h1").html("<i class='fa fa-times-circle'></i> That name is currently in use.");
                 $(".signup-form-site-notification").css("display", "block");
               }
             });
         } else {
-          $(".signup-form-site-notification p").html("<i class='fa fa-info-circle'></i> Enter a site name to begin registration.");
+          $(".signup-form-site-notification h1").html("<i class='fa fa-info-circle'></i> Enter a site name to begin registration.");
           $(".signup-form-site-notification").css("display", "block");
         }
       }
@@ -356,48 +333,24 @@
     </div>
   </div>
   <div id="search" class="cover">
-    <div class="get-started">
-      <h1>Get started with site creation.</h1>
-      <div class="search-alert">
-        <p></p>
+    <div id="get-started" class="get-started">
+      <div id="get-started-information">
+        <h1>Get started with site creation.</h1>
+        <div class="search-alert">
+          <p></p>
+        </div>
       </div>
-      <div class="search-form">
+      <div id="search-form" class="search-form">
         <form id="search-site" name="search-site" method="post" action="">
           {% csrf_token %}
           <input type="text" name="search-input" id="search-input" placeholder="Check availability of your site name" /><button type="submit" id="search-submit" onclick="searchSite()">Let's go</button>
         </form>
       </div>
-    </div>
-  </div>
-  <div id="signup" class="container-fluid">
-    <div class="row">
-      <div class="col-sm-4 col-lg-3">
-        <div class="signup-form">
-          <div class="signup-form-site-notification">
-            <p></p>
-          </div>
-          {% crispy form_body_signup %}
-        </div>
+      <div class="signup-form-site-notification">
+        <h1></h1>
       </div>
-      <div class="col-sm-8 col-lg-9">
-        <div class="row">
-          <div class="col-md-12 col-lg-6">
-            <h1>Need custom features?</h1>
-            <p>Interdum et malesuada fames ac ante ipsum primis in faucibus. Suspendisse et felis semper, tempus enim et, aliquam dolor. Cras.</p>
-          </div>
-          <div class="col-md-12 col-lg-6">
-            <div style="background-color: #ffffff; box-shadow: 1px 1px 1px rgba(131, 107, 100, 0.25); padding: 10px;">
-              <img src="{% static 'img/graph.png' %}" style="width: 100%;" />
-            </div>
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-md-12 col-lg-8 pull-right">
-            <div class="text-right">
-              <h1>Have custom products?</h1>
-              <p>Aenean sit amet luctus turpis. Nulla consequat feugiat tempus. Phasellus tempor eu sem vitae porttitor. Cras ac dui ipsum. Vivamus.</p>
-            </div>
-          </div>
+      <div id="signup-form" class="signup-form">
+        {% crispy form_body_signup %}
       </div>
     </div>
   </div>
