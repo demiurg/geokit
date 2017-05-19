@@ -196,11 +196,16 @@ function addInputVariable(node) {
 }
 
 function editInputVariable(node, i) {
-  console.log(node);
+  var name = null;
+  if (node.type == 'named') {
+    node = node.value_operand;
+    name = node.name;
+  }
+
   return function (dispatch) {
     if (node.type == "join") {
       dispatch(updateTabularData({
-        name: node.name,
+        name: name,
         source1: node.left,
         source2: node.right,
         isEditing: true,
@@ -209,16 +214,20 @@ function editInputVariable(node, i) {
     } else if (node.type == "raster") {
       dispatch(updateSpatialDomain(node.layer.id));
       dispatch(updateRasterData({
-        name: node.name,
-        raster: node.product,
-        temporalRangeStart: node.start,
-        temporalRangeEnd: node.end,
-        isEditing: true,
-        index: i
+        name: name,
+        raster: node,
+        product: node.product,
+        date_start: node.start,
+        date_end: node.end,
+        date_range: node.range,
+        editing: true,
+        index: i,
+        valid: true,
+        errors: {}
       }));
     } else {
       dispatch(updateExpressionData({
-        name: node.name,
+        name: name,
         index: i,
         isEditing: true,
         node: node
@@ -1766,8 +1775,7 @@ var RasterDataSource = function (_React$Component2) {
     return JSON.stringify(source);
   };
 
-  RasterDataSource.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
-    // If raster is set and if new raster is different than previous raster
+  RasterDataSource.prototype.mountCalendars = function mountCalendars() {
     var self = this;
     var cal_format = {
       toDisplay: function toDisplay(date, format, language) {
@@ -1780,25 +1788,38 @@ var RasterDataSource = function (_React$Component2) {
         return d;
       }
     };
+
+    var r = self.props.node_editor.raster_data.raster;
+    // console.log('update', r.start_date, r.end_date);
+
+    $(self.startpicker).datepicker({
+      'format': cal_format,
+      'startDate': new Date(r.start_date),
+      'endDate': new Date(r.end_date)
+    }).on("changeDate", function (e) {
+      self.onChange();
+    });
+
+    $(self.endpicker).datepicker({
+      'format': cal_format,
+      'startDate': new Date(r.start_date),
+      'endDate': new Date(r.end_date)
+    }).on("changeDate", function (e) {
+      self.onChange();
+    });
+  };
+
+  RasterDataSource.prototype.componentDidMount = function componentDidMount() {
+    if (this.props.node_editor.raster_data.raster) {
+      this.mountCalendars();
+    }
+  };
+
+  RasterDataSource.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
+    // If raster is set and if new raster is different than previous raster
+    var self = this;
     if (self.props.node_editor.raster_data.raster && (!prevProps.node_editor.raster_data.raster || prevProps.node_editor.raster_data.raster.name != self.props.node_editor.raster_data.raster.name)) {
-      var r = self.props.node_editor.raster_data.raster;
-      // console.log('update', r.start_date, r.end_date);
-
-      $(self.startpicker).datepicker({
-        'format': cal_format,
-        'startDate': new Date(r.start_date),
-        'endDate': new Date(r.end_date)
-      }).on("changeDate", function (e) {
-        self.onChange();
-      });
-
-      $(self.endpicker).datepicker({
-        'format': cal_format,
-        'startDate': new Date(r.start_date),
-        'endDate': new Date(r.end_date)
-      }).on("changeDate", function (e) {
-        self.onChange();
-      });
+      self.mountCalendars();
     }
   };
 
@@ -1821,10 +1842,7 @@ var RasterDataSource = function (_React$Component2) {
       if (!date_start.match(/\d{4}-\d{3}/g)) {
         errors['date_start'] = "Start date must be entered in the form yyyy-ddd. ";
       } else {
-        var doy_start = parseInt(date_start.split('-')[1]);
-        var year_start = parseInt(date_start.split('-')[0]);
-        var date_start_date = new Date(year_start, 0);
-        date_start_date.setDate(doy_start);
+        var date_start_date = RasterOperator.julianToDate(date_start);
         if (date_start_date < raster_start_date) {
           errors['date_start'] = "Start date must be after " + raster_start_date.toDateString() + ". ";
         }
@@ -1837,11 +1855,7 @@ var RasterDataSource = function (_React$Component2) {
       if (!date_end.match(/\d{4}-\d{3}/g)) {
         errors['date_start'] = "End date must be entered in the form yyyy-ddd. ";
       } else {
-        var doy_end = parseInt(date_end.split('-')[1]);
-        var year_end = parseInt(date_end.split('-')[0]);
-        var date_end_date = new Date(year_end, 0);
-        date_end_date.setDate(doy_end);
-
+        var date_end_date = RasterOperator.julianToDate(date_end);
         if (date_end_date > raster_end_date) {
           errors['date_end'] = "End date must be before " + raster_end_date.toDateString() + ". ";
         }
@@ -1852,6 +1866,7 @@ var RasterDataSource = function (_React$Component2) {
       errors['name'] = "Name must be alphanumeric, without spaces.";
     }
 
+    console.log(range);
     var data = Object.assign({}, this.props.node_editor.raster_data, {
       name: name,
       date_start: date_start,
@@ -2375,6 +2390,7 @@ function node_editor() {
         raster_data: action.data ? action.data : {
           name: "",
           raster: false,
+          product: false,
           date_start: "",
           data_end: "",
           editing: false,
@@ -3550,9 +3566,19 @@ var RasterOperator = function (_DataNode7) {
     _this7._dimensions = 'spacetime';
     var range_arr = _this7.range.split(',');
     _this7.start = range_arr[0];
+    _this7.start_date = RasterOperator.julianToDate(_this7.start);
     _this7.end = range_arr[1];
+    _this7.end_date = RasterOperator.julianToDate(_this7.end);
     return _this7;
   }
+
+  RasterOperator.julianToDate = function julianToDate(str) {
+    var doy = parseInt(str.split('-')[1]);
+    var year = parseInt(str.split('-')[0]);
+    var date = new Date(year, 0);
+    date.setDate(doy);
+    return date;
+  };
 
   RasterOperator.prototype.render = function render() {
     return React.createElement(
@@ -3592,6 +3618,7 @@ var SourceOperator = function (_DataNode8) {
     } else {
       throw Error("Source type unknown");
     }
+    _this8['id'] = _this8.operand.id;
     return _this8;
   }
 
@@ -3661,6 +3688,9 @@ var NamedTree = function (_DataNode10) {
     return _this10;
   }
 
+  // If getting is removed, apparently it doesn't get inherited
+
+
   NamedTree.prototype.json = function json() {
     return ['named', [this.name_operand, this.valie_operand]];
   };
@@ -3680,12 +3710,6 @@ var NamedTree = function (_DataNode10) {
   };
 
   _createClass(NamedTree, [{
-    key: "type",
-    get: function get() {
-      var type = this.value_operand.type;
-      return type ? type : "named";
-    }
-  }, {
     key: "name",
     get: function get() {
       return this.name_operand;

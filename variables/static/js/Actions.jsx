@@ -199,29 +199,38 @@ function addInputVariable(node){
 }
 
 function editInputVariable(node, i){
+  var name = null;
+  if (node.type == 'named'){
+    node = node.value_operand;
+    name = node.name;
+  }
+
   return function(dispatch){
     if (node.type == "join"){
       dispatch(updateTabularData({
-        name: node.name,
+        name: name,
         source1: node.left,
         source2: node.right,
         isEditing: true,
         index: i
       }));
     } else if (node.type == "raster"){
-      console.log(node);
       dispatch(updateSpatialDomain(node.layer.id));
       dispatch(updateRasterData({
-        name: node.name,
-        raster: node.product,
-        temporalRangeStart: node.start,
-        temporalRangeEnd: node.end,
-        isEditing: true,
-        index: i
+        name: name,
+        raster: node,
+        product: node.product,
+        date_start: node.start,
+        date_end: node.end,
+        date_range: node.range,
+        editing: true,
+        index: i,
+        valid: true,
+        errors: {}
       }));
     } else {
       dispatch(updateExpressionData({
-        name: node.name,
+        name: name,
         index: i,
         isEditing: true,
         node: node

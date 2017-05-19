@@ -244,7 +244,17 @@ class RasterOperator extends DataNode {
     this._dimensions = 'spacetime';
     var range_arr = this.range.split(',');
     this.start = range_arr[0];
+    this.start_date = RasterOperator.julianToDate(this.start);
     this.end = range_arr[1];
+    this.end_date = RasterOperator.julianToDate(this.end);
+  }
+
+  static julianToDate(str){
+    var doy = parseInt(str.split('-')[1]);
+    var year = parseInt(str.split('-')[0]);
+    var date = new Date(year, 0);
+    date.setDate(doy);
+    return date;
   }
 
   render() {
@@ -256,7 +266,6 @@ class RasterOperator extends DataNode {
       </span>
     );
   }
-
 }
 
 class SourceOperator extends DataNode {
@@ -275,6 +284,7 @@ class SourceOperator extends DataNode {
     } else {
       throw Error("Source type unknown");
     }
+    this['id'] = this.operand.id;
   }
 
   render(){
@@ -324,11 +334,7 @@ class NamedTree extends DataNode {
     this._name = this.name_operand;
   }
 
-  get type(){
-    var type = this.value_operand.type;
-    return type ? type : "named";
-  }
-
+  // If getting is removed, apparently it doesn't get inherited
   get name(){
     return this.name_operand;
   }
