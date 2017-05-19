@@ -1,3 +1,10 @@
+# Data Handler
+
+GeoKit relies on an external data handler to perform all backend data functions.
+This should be installed before installing GeoKit. Instructions for installation
+of the data handler can be found here:
+https://github.com/Applied-GeoSolutions/gips/edit/batch-scheduler/INSTALL.md
+
 # Set up the host system
 On the host machine, edit the `/etc/hosts` file.
 Replace <HOSTNAME> with your hostname, ex: testserver, and <TEST_SITE> with the name of the site you will create.
@@ -54,7 +61,7 @@ http://oka.ags.io/geokit/database/geokit_database_latest.zip
 Unzip them to the geokit directory
 `unzip -d <path/to/geokit> geokit_database_latest.zip`
 
-Import the files into your databases
+https://github.com/Applied-GeoSolutions/gips/edit/batch-scheduler/INSTALL.mdImport the files into your databases
 `psql -U geokit geokits < geokits_deploy.psql -h localhost`
 `psql -U geokit geodata < geodata.psql -h localhost`
 
