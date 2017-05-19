@@ -9,7 +9,7 @@ class DataNode {
     this._operands = [];
 
     if (names) {
-      this.operand_names = names;
+      this._operand_names = names;
     }
 
     if (arity) {
@@ -29,9 +29,9 @@ class DataNode {
       }
     }
 
-    if(this.operand_names){
-      for (var i=0; i < this.operand_names.length; i++){
-        this[this.operand_names[i]] = this._operands[i];
+    if(this._operand_names){
+      for (var i=0; i < this._operand_names.length; i++){
+        this[this._operand_names[i]] = this._operands[i];
       }
     }
 
@@ -54,7 +54,6 @@ class DataNode {
 
   get layers() {
     var layers = [];
-    console.log(this);
     if (this.type == "source") {
       if (this.operand.type == "Layer") {
         layers = [this];
@@ -245,7 +244,17 @@ class RasterOperator extends DataNode {
     this._dimensions = 'spacetime';
     var range_arr = this.range.split(',');
     this.start = range_arr[0];
+    this.start_date = RasterOperator.julianToDate(this.start);
     this.end = range_arr[1];
+    this.end_date = RasterOperator.julianToDate(this.end);
+  }
+
+  static julianToDate(str){
+    var doy = parseInt(str.split('-')[1]);
+    var year = parseInt(str.split('-')[0]);
+    var date = new Date(year, 0);
+    date.setDate(doy);
+    return date;
   }
 
   render() {
@@ -257,7 +266,6 @@ class RasterOperator extends DataNode {
       </span>
     );
   }
-
 }
 
 class SourceOperator extends DataNode {
@@ -276,6 +284,7 @@ class SourceOperator extends DataNode {
     } else {
       throw Error("Source type unknown");
     }
+    this['id'] = this.operand.id;
   }
 
   render(){
@@ -317,15 +326,15 @@ class MathOperator extends DataNode {
 
 class NamedTree extends DataNode {
   constructor(args) {
-    super(args, ['name_operand', 'operand'], 2);
+    super(args, ['name_operand', 'value_operand'], 2);
+    let value = this.value_operand;
+    for (var i=0; i < value._operand_names.length; i++){
+      this[value._operand_names[i]] = value._operands[i];
+    }
     this._name = this.name_operand;
   }
 
-  get type(){
-    var type = this.operand.type;
-    return type ? type : "named";
-  }
-
+  // If getting is removed, apparently it doesn't get inherited
   get name(){
     return this.name_operand;
   }
@@ -335,15 +344,15 @@ class NamedTree extends DataNode {
   }
 
   get dimensions(){
-    return this.operand.dimensions;
+    return this.value_operand.dimensions;
   }
 
   json() {
-    return ['named', [this.name_operand, this.operand]];
+    return ['named', [this.name_operand, this.valie_operand]];
   }
 
   render() {
-    return <span>{this.operation}: {this.operand.render()}</span>;
+    return <span><strong>{this.name}</strong>: {this.value_operand.render()}</span>;
   }
 }
 

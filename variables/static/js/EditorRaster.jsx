@@ -139,8 +139,7 @@ class RasterDataSource extends React.Component {
     return JSON.stringify(source);
   }
 
-  componentDidUpdate(prevProps, prevState){
-    // If raster is set and if new raster is different than previous raster
+  mountCalendars(){
     var self = this;
     var cal_format = {
       toDisplay: function (date, format, language){
@@ -153,6 +152,36 @@ class RasterDataSource extends React.Component {
         return d;
       }
     };
+
+    var r = self.props.node_editor.raster_data.raster;
+    // console.log('update', r.start_date, r.end_date);
+
+    $(self.startpicker).datepicker({
+      'format': cal_format,
+      'startDate': new Date(r.start_date),
+      'endDate': new Date(r.end_date)
+    }).on("changeDate", (e) => {
+      self.onChange();
+    });
+
+    $(self.endpicker).datepicker({
+      'format': cal_format,
+      'startDate': new Date(r.start_date),
+      'endDate': new Date(r.end_date)
+    }).on("changeDate", (e) => {
+      self.onChange();
+    });
+  }
+
+  componentDidMount(){
+    if(this.props.node_editor.raster_data.raster){
+      this.mountCalendars();
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState){
+    // If raster is set and if new raster is different than previous raster
+    var self = this;
     if(
       self.props.node_editor.raster_data.raster &&
       (
@@ -163,24 +192,7 @@ class RasterDataSource extends React.Component {
         )
       )
     ){
-      var r = self.props.node_editor.raster_data.raster;
-      // console.log('update', r.start_date, r.end_date);
-
-      $(self.startpicker).datepicker({
-        'format': cal_format,
-        'startDate': new Date(r.start_date),
-        'endDate': new Date(r.end_date)
-      }).on("changeDate", (e) => {
-        self.onChange();
-      });
-
-      $(self.endpicker).datepicker({
-        'format': cal_format,
-        'startDate': new Date(r.start_date),
-        'endDate': new Date(r.end_date)
-      }).on("changeDate", (e) => {
-        self.onChange();
-      });
+      self.mountCalendars();
     }
   }
 
@@ -203,10 +215,7 @@ class RasterDataSource extends React.Component {
       if(!date_start.match(/\d{4}-\d{3}/g)){
         errors['date_start'] = "Start date must be entered in the form yyyy-ddd. ";
       }else{
-        var doy_start = parseInt(date_start.split('-')[1]);
-        var year_start = parseInt(date_start.split('-')[0]);
-        var date_start_date = new Date(year_start, 0);
-        date_start_date.setDate(doy_start);
+        var date_start_date = RasterOperator.julianToDate(date_start);
         if (date_start_date < raster_start_date){
           errors['date_start'] = (
             "Start date must be after " + raster_start_date.toDateString() + ". "
@@ -221,11 +230,7 @@ class RasterDataSource extends React.Component {
       if(!date_end.match(/\d{4}-\d{3}/g)){
         errors['date_start'] = "End date must be entered in the form yyyy-ddd. ";
       }else{
-        var doy_end = parseInt(date_end.split('-')[1]);
-        var year_end = parseInt(date_end.split('-')[0]);
-        var date_end_date = new Date(year_end, 0);
-        date_end_date.setDate(doy_end);
-
+        var date_end_date = RasterOperator.julianToDate(date_end);
         if (date_end_date > raster_end_date){
           errors['date_end'] = (
             "End date must be before " + raster_end_date.toDateString() + ". "
@@ -238,6 +243,7 @@ class RasterDataSource extends React.Component {
       errors['name'] = "Name must be alphanumeric, without spaces.";
     }
 
+    console.log(range);
     var data = Object.assign(
       {},
       this.props.node_editor.raster_data,

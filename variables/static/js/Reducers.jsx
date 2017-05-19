@@ -178,6 +178,7 @@ function node_editor(state={'mode': DEFAULT}, action){
         raster_data: action.data ? action.data : {
           name: "",
           raster: false,
+          product: false,
           date_start: "",
           data_end: "",
           editing: false,
