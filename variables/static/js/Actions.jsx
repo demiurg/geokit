@@ -235,7 +235,8 @@ function editInputVariable(node, i){
         editing: true,
         node: node,
         op: node.type,
-        operand_refs: null
+        operand_refs: null,
+        valid: false
       }));
     }
   }

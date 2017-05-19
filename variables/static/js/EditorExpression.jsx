@@ -42,8 +42,8 @@ class OperandChooser extends React.Component {
 class TreeViewer extends React.Component {
   render() {
     var tree = this.props.node_editor.expression_data.node;
-    if (!DataNode.isDataTree(tree)){
-      return <p>Select operation</p>;
+    if (!tree || !DataNode.isDataTree(tree)){
+      return <p>Select operation.</p>;
     }
 
     var operand_inputs = [];
@@ -158,13 +158,15 @@ class ExpressionEditor extends React.Component {
   }
 
   render() {
+    var data = this.props.node_editor.expression_data;
+
     return (
       <Panel header="Expression editor">
         <FormGroup controlId="name">
           <FormControl componentClass="input"
-            placeholder={this.props.node_editor.expression_data.default_name}
-            onChange={this.changeName.bind(this)}
-            value={this.props.node_editor.expression_data.name} />
+            placeholder={data.default_name}
+            onChange={() => this.changeName()}
+            value={data.name} />
         </FormGroup>
         <Panel>
           <div className="pull-right">
@@ -181,7 +183,7 @@ class ExpressionEditor extends React.Component {
         <Panel>
           <TreeViewer {...this.props} />
         </Panel>
-        <Button onClick={this.onSave.bind(this)}>Add</Button>
+        {data.valid ? <Button onClick={this.onSave.bind(this)}>Add</Button> : null}
         <Button onClick={this.props.onEditNothing}>Cancel</Button>
       </Panel>
     );
