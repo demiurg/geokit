@@ -32,7 +32,7 @@ postgresql-contrib postgis postgresql-9.5-postgis-2.2 redis-server nginx virtual
 Install uwsgi
 `sudo pip install uwsgi`
 
-Clone the GeoKit repositiory from Bitbucket
+Clone the GeoKit repositiory from GitHub
 `git clone https://github.com/Applied-GeoSolutions/geokit.git`
 
 # Create a virtual env in the project directory
