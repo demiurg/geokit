@@ -99,9 +99,6 @@ DEBUG = True
 
 ## Make sure this matches your domain
 SESSION_COOKIE_DOMAIN = '.geokit.testserver'
-
-## Change this if you deploy the data handler
-RPC_URL = 'http://dhprod.ags.io:8001'
 ```
 
 # Collect static files
@@ -123,10 +120,6 @@ Change the admin password
 Start redis server
 
 `sudo service redis start`
-
-Start nginx
-
-`sudo service nginx start`
 
 Ensure your nginx user has r/w access to project directory and static/media
 `sudo chown <YOUR_USER>:www-data -R geokit`
@@ -172,6 +165,10 @@ server {
 
 Symlink the configuration file in
 `etc/nginx/sites-available` to `/etc/nginx/sites-enabled`
+
+Start nginx
+
+`sudo service nginx start`
 
 Create an ini file for your uwsgi app in `/etc/uwsgi/apps-available/`
 
