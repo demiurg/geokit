@@ -99,9 +99,6 @@ DEBUG = True
 
 ## Make sure this matches your domain
 SESSION_COOKIE_DOMAIN = '.geokit.testserver'
-
-## Change this if you deploy the data handler
-RPC_URL = 'http://dhprod.ags.io:8001'
 ```
 
 # Collect static files
