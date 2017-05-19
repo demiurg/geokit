@@ -3,7 +3,7 @@
 GeoKit relies on an external data handler to perform all backend data functions.
 This should be installed before installing GeoKit. Instructions for installation
 of the data handler can be found here:
-https://github.com/Applied-GeoSolutions/gips/edit/batch-scheduler/INSTALL.md
+https://github.com/Applied-GeoSolutions/gips/blob/batch-scheduler/INSTALL.md
 
 # Set up the host system
 On the host machine, edit the `/etc/hosts` file.
