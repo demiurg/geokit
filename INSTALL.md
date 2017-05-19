@@ -121,10 +121,6 @@ Start redis server
 
 `sudo service redis start`
 
-Start nginx
-
-`sudo service nginx start`
-
 Ensure your nginx user has r/w access to project directory and static/media
 `sudo chown <YOUR_USER>:www-data -R geokit`
 `sudo chmod -R g+w geokit`
@@ -169,6 +165,10 @@ server {
 
 Symlink the configuration file in
 `etc/nginx/sites-available` to `/etc/nginx/sites-enabled`
+
+Start nginx
+
+`sudo service nginx start`
 
 Create an ini file for your uwsgi app in `/etc/uwsgi/apps-available/`
 
