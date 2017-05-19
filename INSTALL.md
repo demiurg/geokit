@@ -14,8 +14,13 @@ Now you can access your container and perform the rest of the install.
 Run apt-get update
 `sudo apt-get update`
 
-Install python, python-pip, libpq-dev, python-dev, postgresql, postgresql-contrib, postig, postgis, redis, nginx, and uwsgi
-`sudo apt-get install -y python python-pip libpq-dev python-dev postgresql postgresql-contrib postgis postgresql-9.5-postgis-2.2 redis-server nginx virtualenv`
+Install python, python-pip, libpq-dev, python-dev, postgresql, 
+postgresql-contrib, postig, postgis, redis, nginx, and uwsgi
+
+```
+sudo apt-get install -y python python-pip libpq-dev python-dev postgresql \
+postgresql-contrib postgis postgresql-9.5-postgis-2.2 redis-server nginx virtualenv
+```
 
 Install uqsgi
 `sudo pip install uwsgi`
@@ -33,7 +38,8 @@ Clone the GeoKit repositiory from Bitbucket
 # Postgresql
 
 Create postgresql user geokit
-`runuser postgres -c 'createuser -s -P geokit' # Make sure password matches in settings/base.py`
+`runuser postgres -c 'createuser -s -P geokit'`
+Make sure password matches in settings/base.py
 
 Create postgresql databases geokits and geodata
 `runuser postgres -c 'createdb -O geokit geokits'`
@@ -42,7 +48,13 @@ Create postgresql databases geokits and geodata
 Change the admin password
 `./manage.py changepassword admin
 
-Download and import template database data
+Download and import template database data from 
+`http://oka.ags.io/geokit/database/geokit_database_latest.zip`
+
+Unzip them to the geokit directory
+`unzip -d <path/to/geokit> geokit_database_latest.zip`
+
+Import the files into your databases
 `psql -U geokit geokits < geokits_deploy.psql -h localhost`
 `psql -U geokit geodata < geodata.psql -h localhost`
 
@@ -51,7 +63,8 @@ Download and import template database data
 Copy local settings file from example
 `cp geokit/settings/local_example.py geokit/settings/local.py`
 
-Configure hosts/session cookie domain in local.py, make sure this matches your domain
+Configure hosts/session cookie domain in local.py,
+make sure this matches your domain
 
 ```
 GEOKIT_HOSTS.append('geokit.testserver') # django's hostname in testing mode
@@ -129,9 +142,10 @@ server {
 }
 ```
 
-Symlink the configuration file in /etc/nginx/sites-available to /etc/nginx/sites-enabled
+Symlink the configuration file in
+`etc/nginx/sites-available to /etc/nginx/sites-enabled`
 
-Create an ini file for your uwsgi app in /etc/uwsgi/apps-available/
+Create an ini file for your uwsgi app in `/etc/uwsgi/apps-available/`
 
 ```
 [uwsgi]
@@ -183,5 +197,7 @@ systemctl start geokit@{1..5}.service
 ```
 
 # Log in to website
-The admin email address is "admin@geokit.localhost" and the password is whatever was set with the `./manage.py changepassword` command
+The admin email address is "admin@geokit.localhost" and the password is
+whatever was set with the `./manage.py changepassword` command
+
 The email address can be changed by logging in and navigating to 'geokit.<yourdoman>/admin'
