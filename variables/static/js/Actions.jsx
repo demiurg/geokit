@@ -199,7 +199,6 @@ function addInputVariable(node){
 }
 
 function editInputVariable(node, i){
-  console.log(node);
   return function(dispatch){
     if (node.type == "join"){
       dispatch(updateTabularData({
@@ -210,6 +209,7 @@ function editInputVariable(node, i){
         index: i
       }));
     } else if (node.type == "raster"){
+      console.log(node);
       dispatch(updateSpatialDomain(node.layer.id));
       dispatch(updateRasterData({
         name: node.name,
