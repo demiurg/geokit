@@ -61,10 +61,6 @@ Create postgresql databases geokits and geodata
 
 `sudo runuser postgres -c 'createdb -O geokit geodata'`
 
-Change the admin password
-
-`./manage.py changepassword admin`
-
 Download and import template database data from 
 http://oka.ags.io/geokit/database/geokit_database_latest.zip
 
@@ -117,6 +113,10 @@ source venv/bin/activate
 
 If it asks if you want to replace files, say yes. Make sure you run
 this as the same user uWSGI will run as.
+
+Change the admin password
+
+`./manage.py changepassword admin`
 
 # Web services
 
