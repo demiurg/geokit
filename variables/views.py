@@ -69,10 +69,6 @@ def index(request):
     return render(request, 'variables/index.html', {"variables_and_statuses": variables_and_statuses})
 
 
-def site_guide(request):
-    return render(request, 'variables/site_guide.html')
-
-
 def add(request):
     raster_catalog = get_raster_catalog()
     return render(request, 'variables/sieve.html', {

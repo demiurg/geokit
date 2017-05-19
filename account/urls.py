@@ -1,12 +1,22 @@
 from django.conf.urls import url, include
 from django.contrib import admin
+from django.shortcuts import redirect
 
 from django.contrib.auth import views as auth_views
 from . import views
 
+def redirect_to_home(request):
+    path = request.META['HTTP_HOST']
+    if request.tenant and path.startswith(request.tenant.schema_name):
+        import re
+        path = re.sub('^{}'.format(request.tenant.schema_name), 'www', path)
+        return redirect("http://" + path + '/')
+    return views.index(request)
+
 urlpatterns = [
-    url(r'^$', views.index, name='home'),
+    url(r'^$', redirect_to_home, name='home'),
     url(r'^about/?$', views.about, name='about'),
+    url(r'^site-guide/?$', views.site_guide, name='site_guide'),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^availability/(\w+)/', views.availability, name='availability'),
     url(r'^site/create/', views.site_create, name='site_create'),
