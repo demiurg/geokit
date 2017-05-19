@@ -15,14 +15,14 @@ Run apt-get update
 `sudo apt-get update`
 
 Install python, python-pip, libpq-dev, python-dev, postgresql, 
-postgresql-contrib, postig, postgis, redis, nginx, and uwsgi
+postgresql-contrib, postig, postgis, redis, and nginx
 
 ```
 sudo apt-get install -y python python-pip libpq-dev python-dev postgresql \
 postgresql-contrib postgis postgresql-9.5-postgis-2.2 redis-server nginx virtualenv
 ```
 
-Install uqsgi
+Install uwsgi
 `sudo pip install uwsgi`
 
 Clone the GeoKit repositiory from Bitbucket
