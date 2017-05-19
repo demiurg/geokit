@@ -243,7 +243,6 @@ class RasterDataSource extends React.Component {
       errors['name'] = "Name must be alphanumeric, without spaces.";
     }
 
-    console.log(range);
     var data = Object.assign(
       {},
       this.props.node_editor.raster_data,

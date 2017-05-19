@@ -181,7 +181,7 @@ class TemporalMeanOperator extends DataNode {
 
   validOperands(input_vars) {
     return input_vars.filter(input_var => {
-      return treeToNode(input_var.node).dimensions.includes('time');
+      return treeToNode(input_var).dimensions.includes('time');
     });
   }
 }
@@ -195,7 +195,7 @@ class SpatialMeanOperator extends DataNode {
 
   validOperands(input_vars) {
     return input_vars.filter(input_var => {
-      return treeToNode(input_var.node).dimensions.includes('space');
+      return treeToNode(input_var).dimensions.includes('space');
     });
   }
 }
@@ -316,9 +316,9 @@ class MathOperator extends DataNode {
     if (!other_op) {
       return input_vars;
     } else {
-      var other_op_node = treeToNode(other_op.node);
+      var other_op_node = treeToNode(other_op);
       return input_vars.filter(input_var => {
-        return treeToNode(input_var.node).dimensions == other_op_node.dimensions;
+        return treeToNode(input_var).dimensions == other_op_node.dimensions;
       });
     }
   }

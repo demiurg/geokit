@@ -7,6 +7,7 @@ from . import views
 urlpatterns = [
     url(r'^$', views.index, name='home'),
     url(r'^about/?$', views.about, name='about'),
+    url(r'^site-guide/?$', views.site_guide, name='site_guide'),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^availability/(\w+)/', views.availability, name='availability'),
     url(r'^site/create/', views.site_create, name='site_create'),

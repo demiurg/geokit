@@ -232,8 +232,10 @@ function editInputVariable(node, i){
       dispatch(updateExpressionData({
         name: name,
         index: i,
-        isEditing: true,
-        node: node
+        editing: true,
+        node: node,
+        op: node.type,
+        operand_refs: null
       }));
     }
   }
