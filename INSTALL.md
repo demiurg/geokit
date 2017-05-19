@@ -49,7 +49,7 @@ Change the admin password
 `./manage.py changepassword admin
 
 Download and import template database data from 
-`http://oka.ags.io/geokit/database/geokit_database_latest.zip`
+http://oka.ags.io/geokit/database/geokit_database_latest.zip
 
 Unzip them to the geokit directory
 `unzip -d <path/to/geokit> geokit_database_latest.zip`
@@ -92,7 +92,7 @@ source venv/bin/activate
 If it asks if you want to replace files, say yes. Make sure you run
 this as the same user uWSGI will run as.
 
-#Web services
+# Web services
 
 Start redis server
 `service redis start`
