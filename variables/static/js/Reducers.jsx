@@ -204,8 +204,10 @@ function node_editor(state={'mode': DEFAULT}, action){
         mode: action.mode,
         expression_data: action.data ? action.data : {
           name: "",
-          node: null,
-          operand_refs: []
+          default_name: null,
+          op: null,
+          operand_refs: [],
+          editing: false
         }
       });
     case DEFAULT:
