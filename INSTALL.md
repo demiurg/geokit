@@ -78,8 +78,12 @@ GEOKIT_HOSTS.append('geokit.testserver') # django's hostname in testing mode
 GEOKIT_HOSTS.append('.geokit.testserver')
 ALLOWED_HOSTS.append('geokit.testserver')
 ALLOWED_HOSTS.append('.geokit.testserver')
+
 DATABASES['default']['TEST'] = {'NAME': 'test_geokit' }
-	
+
+## Make sure this address points to your data handler
+RPC_URL = http://localhost:8001
+
 ## Ensure this is off in a production environment
 DEBUG = True
 
