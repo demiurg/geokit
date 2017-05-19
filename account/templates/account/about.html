@@ -1,0 +1,24 @@
+{% extends 'account/base.html' %}
+
+{% load static %}
+
+{% block body %}
+<h1>About</h1>
+
+<p>The Geospatial Decision Support Toolkit is an open source web based application that allows stakeholders and customers to build on-line geospatial decision support tools (DSTs) utilizing custom data sets derived from NASA remote sensing and other sources. The mission of Geokit is to reduce and eventually remove technical barriers that limit direct stakeholder control over the creation and management of geospatially enabled web applications. Geokit is composed of two loosely coupled components: (1) a geospatial-data enabled web content management system (the "Site Builder") and (2) an independent service API for processing requests involving data asset resources (e.g. remote sensing granules from NASA). These components can be used independently and are provided in two separate repositories (see link [<a href="/">on main page</a>])</p>
+
+<img src="{% static 'account/img/diagram.png' %}" />
+
+<h2>Applied GeoSolutions</h2>
+
+<p>Geokit was developed by Applied Geosolutions, LLC (AGS) with support from a NASA Small Business Innovative Research grant (SBIR), in two grant Phases, beginning January 2014. For more information about the company please contact <a href="info@ags.io">info@ags.io</a>, for more information about Geokit open source development contact <a href="mailto:developers@ags.io">developers@ags.io</a>.</p>
+
+<img src="{% static 'account/img/ags_logo.png' %}" />
+
+<h2>Source</h2>
+
+<ul>
+  <li><a href="#">User Guide</a></li>
+  <li><a href="https://drive.google.com/file/d/0B4tVuWFtId9GNkpoZFNKTzBrM3M/view">Intro Presentation</a></li>
+</ul>
+{% endblock %}

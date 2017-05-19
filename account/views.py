@@ -34,6 +34,24 @@ def index(request):
     )
 
 
+def about(request):
+    request.domain = request.META['HTTP_HOST'].replace('www.', '')
+    if request.user.is_authenticated():
+        sites = GeoKitSite.objects.filter(user=request.user)
+
+        return render(request, 'account/home.html', {
+            "sites": sites
+        })
+    else:
+        form_menu_login = LoginForm(form_action='/login/', no_labels=True, auto_id=False)
+        form_menu_signup = SignupForm(form_action='/signup/', no_labels=True, auto_id=False)
+
+    return render(request, 'account/about.html', {
+        'form_menu_login': form_menu_login,
+        'form_menu_signup': form_menu_signup,
+    })
+
+
 def site_creator(form, user):
     site = form.save(commit=False)
     site.user = user
