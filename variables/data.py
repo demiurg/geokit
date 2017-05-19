@@ -87,7 +87,7 @@ class DataNode(object):
         self.source_rasters = None
 
     def __unicode__(self):
-        return "[{}, [{}]".format(
+        return "['{}', [{}]".format(
             self.operation, ", ".join(map(unicode, self.operands))
         )
 
@@ -99,7 +99,6 @@ class DataNode(object):
             except AttributeError:
                 pass
         return dimensions
-
 
     @property
     def dimensions(self):
@@ -521,16 +520,22 @@ class RasterSource(DataNode):
     def get_string(self):
         return self.__str__()
 
+    def get_layer(self):
+        if type(self.vector) is int:
+            layer = self.vector
+        else:
+            layer = self.vector.get_layers().pop()
+
+        return layer
+
     def execute(self):
         conn = new_rpc_con()
         from variables.models import RasterRequest
 
-        layer = self.vector.get_layers().pop()
-
         job_request = RasterRequest.objects.get(
             raster_id=self.raster['id'],
             dates=self.dates,
-            vector=layer
+            vector=self.get_layer()
         )
         job_id = job_request.job_id
 
@@ -543,7 +548,7 @@ class RasterSource(DataNode):
         for r in results:
             date = r['date'].date()
             r['date_range'] = DateRange(date, date, '[]')
-            #r['shaid'] = r['shaid']
+            # r['shaid'] = r['shaid']
 
         df = DataFrame(data=results)
         # df = df.set_index('shaid')

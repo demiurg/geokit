@@ -49,12 +49,11 @@ def get_raster_statuses(variable):
     statuses = {}
 
     for r in rasters:
-        vector = r.get_layers().pop()
         try:
             job_request = RasterRequest.objects.get(
                 raster_id=r.raster['id'],
                 dates=r.dates,
-                vector=vector
+                vector=r.get_layer()
             )
             statuses[r.raster['id']] = job_request.status
         except RasterRequest.DoesNotExist:
