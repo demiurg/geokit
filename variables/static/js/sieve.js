@@ -229,8 +229,10 @@ function editInputVariable(node, i) {
       dispatch(updateExpressionData({
         name: name,
         index: i,
-        isEditing: true,
-        node: node
+        editing: true,
+        node: node,
+        op: node.type,
+        operand_refs: null
       }));
     }
   };
@@ -1379,23 +1381,101 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var ExpressionEditor = function (_React$Component) {
-  _inherits(ExpressionEditor, _React$Component);
+var OperandChooser = function (_React$Component) {
+  _inherits(OperandChooser, _React$Component);
+
+  function OperandChooser() {
+    _classCallCheck(this, OperandChooser);
+
+    return _possibleConstructorReturn(this, _React$Component.apply(this, arguments));
+  }
+
+  OperandChooser.prototype.changeOperand = function changeOperand(e) {
+    var operand_refs = this.props.node_editor.expression_data.operand_refs;
+
+    var operand_ref = e ? e.value : null;
+    operand_refs[this.props.operand_index] = operand_ref;
+
+    var expressionData = Object.assign({}, this.props.node_editor.expression_data, { operand_refs: operand_refs });
+    this.props.onUpdateExpressionData(expressionData);
+  };
+
+  OperandChooser.prototype.options = function options() {
+    var valid_input_vars = this.props.tree.validOperands(this.props.input_variables, this.props.node_editor.expression_data.operand_refs, this.props.operand_index);
+
+    return valid_input_vars.map(function (input_var) {
+      return { value: input_var.name, label: input_var.name };
+    });
+  };
+
+  OperandChooser.prototype.render = function render() {
+    return React.createElement(
+      'div',
+      { style: { display: "inline-block", width: 400 } },
+      React.createElement(Select, {
+        onChange: this.changeOperand.bind(this),
+        value: this.props.node_editor.expression_data.operand_refs[this.props.operand_index],
+        options: this.options(),
+        clearable: true
+      })
+    );
+  };
+
+  return OperandChooser;
+}(React.Component);
+
+var TreeViewer = function (_React$Component2) {
+  _inherits(TreeViewer, _React$Component2);
+
+  function TreeViewer() {
+    _classCallCheck(this, TreeViewer);
+
+    return _possibleConstructorReturn(this, _React$Component2.apply(this, arguments));
+  }
+
+  TreeViewer.prototype.render = function render() {
+    var tree = this.props.node_editor.expression_data.node;
+    if (!DataNode.isDataTree(tree)) {
+      return React.createElement(
+        'p',
+        null,
+        'Select operation'
+      );
+    }
+
+    var operand_inputs = [];
+    for (var i = 0; i < tree.arity; i++) {
+      operand_inputs.push(React.createElement(OperandChooser, _extends({}, this.props, { operand_index: i })));
+    }
+
+    return React.createElement(
+      'span',
+      null,
+      this.props.tree.name,
+      ' ( ',
+      operand_inputs,
+      ' )'
+    );
+  };
+
+  return TreeViewer;
+}(React.Component);
+
+var ExpressionEditor = function (_React$Component3) {
+  _inherits(ExpressionEditor, _React$Component3);
 
   function ExpressionEditor(props) {
     _classCallCheck(this, ExpressionEditor);
 
-    var _this = _possibleConstructorReturn(this, _React$Component.call(this, props));
+    var _this3 = _possibleConstructorReturn(this, _React$Component3.call(this, props));
 
-    var data = { defaultName: _this.generateName(props.input_variables) };
-    props.onUpdateExpressionData(data);
-    return _this;
+    _this3.props.onUpdateExpressionData(Object.assign({}, props.node_editor.expression_data.data, { default_name: _this3.generateName(props.input_variables) }));
+    return _this3;
   }
 
   ExpressionEditor.prototype.componentWillReceiveProps = function componentWillReceiveProps(newProps) {
-    if (!newProps.node_editor.expression_data.defaultName || newProps.input_variables != this.props.input_variables) {
-      var data = { defaultName: this.generateName(newProps.input_variables) };
-      this.props.onUpdateExpressionData(data);
+    if (!newProps.node_editor.expression_data.default_name || newProps.input_variables != this.props.input_variables) {
+      this.props.onUpdateExpressionData(Object.assign({}, props.node_editor.expression_data.data, { default_name: this.generateName(newProps.input_variables) }));
     }
   };
 
@@ -1423,21 +1503,21 @@ var ExpressionEditor = function (_React$Component) {
     this.props.onUpdateExpressionData(expression_data);
   };
 
-  ExpressionEditor.prototype.addOp = function addOp(op) {
-    var node_object = treeToNode(op);
-    var expression_data = Object.assign({}, this.props.node_editor.expression_data, { node: op, operand_refs: Array(node_object.arity) });
+  ExpressionEditor.prototype.addOp = function addOp(op, arity) {
+    var expression_data = Object.assign({}, this.props.node_editor.expression_data, { op: op, operand_refs: Array(arity) });
     this.props.onUpdateExpressionData(expression_data);
   };
 
   ExpressionEditor.prototype.populateOperands = function populateOperands(arity) {
-    var _this2 = this;
+    var _this4 = this;
 
     var operands = [];
 
     for (var i = 0; i < arity; i++) {
       var operand_tree = this.props.input_variables.filter(function (input_var) {
-        return input_var.name == _this2.props.node_editor.expression_data.operand_refs[i];
-      })[0].node;
+        // This relies on unique names in input variables table.
+        return input_var.name == _this4.props.node_editor.expression_data.operand_refs[i].name;
+      })[0];
 
       operands.push(operand_tree);
     }
@@ -1446,27 +1526,29 @@ var ExpressionEditor = function (_React$Component) {
   };
 
   ExpressionEditor.prototype.onSave = function onSave() {
-    var expression_data = this.props.node_editor.expression_data;
-    if (DataNode.isNode(expression_data.node)) {
-      if (!expression_data.name || expression_data.name == "") {
-        expression_data.name = expression_data.defaultName;
+    var data = this.props.node_editor.expression_data;
+    if (DataNode.isNode(data.node)) {
+      if (!data.name || data.name == "") {
+        data.name = data.default_name;
       }
 
-      var node = treeToNode(expression_data.node);
+      var node = treeToNode(data.node);
       if (node.type == 'named') {
-        node.name = expression_data.name;
+        node.name = data.name;
       } else {
-        node = DataNode.namedNode(expression_data.name, node);
+        node = DataNode.namedNode(data.name, node);
       }
-      expression_data.node[1] = this.populateOperands(node.arity);
+      data.node[1] = this.populateOperands(node.arity);
 
-      this.props.onUpdateExpressionData(node);
-      this.props.onAddInputVariable(expression_data);
+      this.props.onUpdateExpressionData(data);
+      this.props.onAddInputVariable(node);
       this.props.onEditNothing();
     }
   };
 
   ExpressionEditor.prototype.render = function render() {
+    var _this5 = this;
+
     return React.createElement(
       Panel,
       { header: 'Expression editor' },
@@ -1474,7 +1556,7 @@ var ExpressionEditor = function (_React$Component) {
         FormGroup,
         { controlId: 'name' },
         React.createElement(FormControl, { componentClass: 'input',
-          placeholder: this.props.node_editor.expression_data.defaultName,
+          placeholder: this.props.node_editor.expression_data.default_name,
           onChange: this.changeName.bind(this),
           value: this.props.node_editor.expression_data.name })
       ),
@@ -1489,32 +1571,44 @@ var ExpressionEditor = function (_React$Component) {
             null,
             React.createElement(
               Button,
-              { onClick: this.addOp.bind(this, ['+', [null, null]]) },
+              { onClick: function onClick(e) {
+                  return _this5.addOp('+', 2);
+                } },
               '+'
             ),
             React.createElement(
               Button,
-              { onClick: this.addOp.bind(this, ['-', [null, null]]) },
+              { onClick: function onClick(e) {
+                  return _this5.addOp('-', 2);
+                } },
               '-'
             ),
             React.createElement(
               Button,
-              { onClick: this.addOp.bind(this, ['*', [null, null]]) },
+              { onClick: function onClick(e) {
+                  return _this5.addOp('*', 2);
+                } },
               '*'
             ),
             React.createElement(
               Button,
-              { onClick: this.addOp.bind(this, ['/', [null, null]]) },
+              { onClick: function onClick(e) {
+                  return _this5.addOp('/', 2);
+                } },
               '/'
             ),
             React.createElement(
               Button,
-              { onClick: this.addOp.bind(this, ['tmean', [null]]) },
+              { onClick: function onClick(e) {
+                  return _this5.addOp('tmean', 1);
+                } },
               'Temporal Mean'
             ),
             React.createElement(
               Button,
-              { onClick: this.addOp.bind(this, ['smean', [null]]) },
+              { onClick: function onClick(e) {
+                  return _this5.addOp('smean', 1);
+                } },
               'Spatial Mean'
             )
           )
@@ -1523,7 +1617,7 @@ var ExpressionEditor = function (_React$Component) {
       React.createElement(
         Panel,
         null,
-        React.createElement(TreeViewer, _extends({}, this.props, { tree: treeToNode(this.props.node_editor.expression_data.node) }))
+        React.createElement(TreeViewer, this.props)
       ),
       React.createElement(
         Button,
@@ -1866,7 +1960,6 @@ var RasterDataSource = function (_React$Component2) {
       errors['name'] = "Name must be alphanumeric, without spaces.";
     }
 
-    console.log(range);
     var data = Object.assign({}, this.props.node_editor.raster_data, {
       name: name,
       date_start: date_start,
@@ -2416,8 +2509,10 @@ function node_editor() {
         mode: action.mode,
         expression_data: action.data ? action.data : {
           name: "",
-          node: null,
-          operand_refs: []
+          default_name: null,
+          op: null,
+          operand_refs: [],
+          editing: false
         }
       });
     case DEFAULT:
@@ -2429,8 +2524,6 @@ function node_editor() {
   }
 }
 "use strict";
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -2733,80 +2826,11 @@ var SpatialConfiguration = function (_React$Component) {
   return SpatialConfiguration;
 }(React.Component);
 
-var OperandChooser = function (_React$Component2) {
-  _inherits(OperandChooser, _React$Component2);
-
-  function OperandChooser() {
-    _classCallCheck(this, OperandChooser);
-
-    return _possibleConstructorReturn(this, _React$Component2.apply(this, arguments));
-  }
-
-  OperandChooser.prototype.changeOperand = function changeOperand(e) {
-    var operand_refs = this.props.node_editor.expression_data.operand_refs;
-
-    var operand_ref = e ? e.value : null;
-    operand_refs[this.props.operand_index] = operand_ref;
-
-    var expressionData = Object.assign({}, this.props.node_editor.expression_data, { operand_refs: operand_refs });
-    this.props.onUpdateExpressionData(expressionData);
-  };
-
-  OperandChooser.prototype.options = function options() {
-    var valid_input_vars = this.props.tree.validOperands(this.props.input_variables, this.props.node_editor.expression_data.operand_refs, this.props.operand_index);
-
-    return valid_input_vars.map(function (input_var) {
-      return { value: input_var.name, label: input_var.name };
-    });
-  };
-
-  OperandChooser.prototype.render = function render() {
-    return React.createElement(
-      "div",
-      { style: { display: "inline-block", width: 400 } },
-      React.createElement(Select, { onChange: this.changeOperand.bind(this),
-        value: this.props.node_editor.expression_data.operand_refs[this.props.operand_index],
-        options: this.options(),
-        clearable: true })
-    );
-  };
-
-  return OperandChooser;
-}(React.Component);
-
-var TreeViewer = function (_React$Component3) {
-  _inherits(TreeViewer, _React$Component3);
-
-  function TreeViewer() {
-    _classCallCheck(this, TreeViewer);
-
-    return _possibleConstructorReturn(this, _React$Component3.apply(this, arguments));
-  }
-
-  TreeViewer.prototype.render = function render() {
-    var operand_inputs = [];
-    for (var i = 0; i < this.props.tree.arity; i++) {
-      operand_inputs.push(React.createElement(OperandChooser, _extends({}, this.props, { operand_index: i })));
-    }
-
-    return React.createElement(
-      "span",
-      null,
-      this.props.tree.name,
-      " ( ",
-      operand_inputs,
-      " )"
-    );
-  };
-
-  return TreeViewer;
-}(React.Component);
-
-var VariableTable = function (_React$Component4) {
-  _inherits(VariableTable, _React$Component4);
+var VariableTable = function (_React$Component2) {
+  _inherits(VariableTable, _React$Component2);
 
   function VariableTable() {
-    var _temp, _this5, _ret;
+    var _temp, _this3, _ret;
 
     _classCallCheck(this, VariableTable);
 
@@ -2814,16 +2838,16 @@ var VariableTable = function (_React$Component4) {
       args[_key] = arguments[_key];
     }
 
-    return _ret = (_temp = (_this5 = _possibleConstructorReturn(this, _React$Component4.call.apply(_React$Component4, [this].concat(args))), _this5), _this5.useInputVariable = function (item, name) {
-      if (!_this5.props.name) {
-        _this5.props.onUpdateName(name);
+    return _ret = (_temp = (_this3 = _possibleConstructorReturn(this, _React$Component2.call.apply(_React$Component2, [this].concat(args))), _this3), _this3.useInputVariable = function (item, name) {
+      if (!_this3.props.name) {
+        _this3.props.onUpdateName(name);
       }
-      _this5.props.onUpdateTree(item);
-    }, _temp), _possibleConstructorReturn(_this5, _ret);
+      _this3.props.onUpdateTree(item);
+    }, _temp), _possibleConstructorReturn(_this3, _ret);
   }
 
   VariableTable.prototype.render = function render() {
-    var _this6 = this;
+    var _this4 = this;
 
     if (this.props.input_variables.length > 0) {
       var table = React.createElement(
@@ -2885,14 +2909,14 @@ var VariableTable = function (_React$Component4) {
                 React.createElement(
                   Button,
                   { onClick: function onClick() {
-                      return _this6.useInputVariable(item, node.name);
+                      return _this4.useInputVariable(item, node.name);
                     } },
                   "Use"
                 ),
                 React.createElement(
                   Button,
                   { onClick: function onClick() {
-                      return _this6.props.onEditInputVariable(node, i);
+                      return _this4.props.onEditInputVariable(node, i);
                     } },
                   "Edit"
                 )
@@ -2904,7 +2928,7 @@ var VariableTable = function (_React$Component4) {
                   Button,
                   {
                     onClick: function onClick() {
-                      _this6.props.onRemoveInputVariable(i);
+                      _this4.props.onRemoveInputVariable(i);
                     }
                   },
                   "Delete"
@@ -2927,7 +2951,7 @@ var VariableTable = function (_React$Component4) {
           Button,
           { disabled: !this.props.spatial_domain || this.props.input_variables.length == 0,
             onClick: function onClick() {
-              return _this6.props.onAddExpression();
+              return _this4.props.onAddExpression();
             } },
           "Add Expression"
         ),
@@ -2935,7 +2959,7 @@ var VariableTable = function (_React$Component4) {
           Button,
           { disabled: !this.props.spatial_domain,
             onClick: function onClick() {
-              return _this6.props.onAddDataSource();
+              return _this4.props.onAddDataSource();
             } },
           "Add Data Source"
         )
@@ -2966,17 +2990,17 @@ var node2tree = function node2tree(node) {
   return buildTree(node, [], node[0]);
 };
 
-var AddDataSourcePanel = function (_React$Component5) {
-  _inherits(AddDataSourcePanel, _React$Component5);
+var AddDataSourcePanel = function (_React$Component3) {
+  _inherits(AddDataSourcePanel, _React$Component3);
 
   function AddDataSourcePanel() {
     _classCallCheck(this, AddDataSourcePanel);
 
-    return _possibleConstructorReturn(this, _React$Component5.apply(this, arguments));
+    return _possibleConstructorReturn(this, _React$Component3.apply(this, arguments));
   }
 
   AddDataSourcePanel.prototype.render = function render() {
-    var _this8 = this;
+    var _this6 = this;
 
     return React.createElement(
       Panel,
@@ -2991,7 +3015,7 @@ var AddDataSourcePanel = function (_React$Component5) {
             Button,
             {
               onClick: function onClick() {
-                return _this8.props.onUpdateTabularData(null);
+                return _this6.props.onUpdateTabularData(null);
               },
               style: { width: '100%', margin: '0.83em 0' } },
             React.createElement(Glyphicon, { glyph: "user" }),
@@ -3033,7 +3057,7 @@ var AddDataSourcePanel = function (_React$Component5) {
             Button,
             {
               onClick: function onClick() {
-                return _this8.props.onUpdateRasterData(null);
+                return _this6.props.onUpdateRasterData(null);
               },
               style: { width: '100%', margin: '0.83em 0' } },
             React.createElement(Glyphicon, { glyph: "cloud" }),
@@ -3063,7 +3087,7 @@ var AddDataSourcePanel = function (_React$Component5) {
       React.createElement(
         Button,
         { onClick: function onClick() {
-            return _this8.props.onEditNothing();
+            return _this6.props.onEditNothing();
           } },
         "Cancel"
       )
@@ -3073,11 +3097,11 @@ var AddDataSourcePanel = function (_React$Component5) {
   return AddDataSourcePanel;
 }(React.Component);
 
-var SieveComponent = function (_React$Component6) {
-  _inherits(SieveComponent, _React$Component6);
+var SieveComponent = function (_React$Component4) {
+  _inherits(SieveComponent, _React$Component4);
 
   function SieveComponent() {
-    var _temp2, _this9, _ret2;
+    var _temp2, _this7, _ret2;
 
     _classCallCheck(this, SieveComponent);
 
@@ -3085,15 +3109,15 @@ var SieveComponent = function (_React$Component6) {
       args[_key2] = arguments[_key2];
     }
 
-    return _ret2 = (_temp2 = (_this9 = _possibleConstructorReturn(this, _React$Component6.call.apply(_React$Component6, [this].concat(args))), _this9), _this9.saveVariable = function () {
-      _this9.props.onSaveVariable({
-        id: _this9.props.id,
-        name: _this9.props.name,
-        tree: _this9.props.tree,
-        input_variables: _this9.props.input_variables,
-        description: _this9.props.description
-      }, _this9.props.created);
-    }, _temp2), _possibleConstructorReturn(_this9, _ret2);
+    return _ret2 = (_temp2 = (_this7 = _possibleConstructorReturn(this, _React$Component4.call.apply(_React$Component4, [this].concat(args))), _this7), _this7.saveVariable = function () {
+      _this7.props.onSaveVariable({
+        id: _this7.props.id,
+        name: _this7.props.name,
+        tree: _this7.props.tree,
+        input_variables: _this7.props.input_variables,
+        description: _this7.props.description
+      }, _this7.props.created);
+    }, _temp2), _possibleConstructorReturn(_this7, _ret2);
   }
 
   SieveComponent.prototype.renderMiddlePanel = function renderMiddlePanel() {
@@ -3114,7 +3138,7 @@ var SieveComponent = function (_React$Component6) {
   };
 
   SieveComponent.prototype.render = function render() {
-    var _this10 = this;
+    var _this8 = this;
 
     var final_render = null;
     var valid = !this.props.errors.name && !this.props.errors.tree;
@@ -3138,7 +3162,7 @@ var SieveComponent = function (_React$Component6) {
               placeholder: "Use alphanumeric name without spaces.",
               value: this.props.name ? this.props.name : null,
               onChange: function onChange(e) {
-                _this10.props.onUpdateName(e.target.value, 'name');
+                _this8.props.onUpdateName(e.target.value, 'name');
               }
             }),
             React.createElement(
@@ -3463,7 +3487,7 @@ var TemporalMeanOperator = function (_DataNode2) {
 
   TemporalMeanOperator.prototype.validOperands = function validOperands(input_vars) {
     return input_vars.filter(function (input_var) {
-      return treeToNode(input_var.node).dimensions.includes('time');
+      return treeToNode(input_var).dimensions.includes('time');
     });
   };
 
@@ -3485,7 +3509,7 @@ var SpatialMeanOperator = function (_DataNode3) {
 
   SpatialMeanOperator.prototype.validOperands = function validOperands(input_vars) {
     return input_vars.filter(function (input_var) {
-      return treeToNode(input_var.node).dimensions.includes('space');
+      return treeToNode(input_var).dimensions.includes('space');
     });
   };
 
@@ -3662,9 +3686,9 @@ var MathOperator = function (_DataNode9) {
     if (!other_op) {
       return input_vars;
     } else {
-      var other_op_node = treeToNode(other_op.node);
+      var other_op_node = treeToNode(other_op);
       return input_vars.filter(function (input_var) {
-        return treeToNode(input_var.node).dimensions == other_op_node.dimensions;
+        return treeToNode(input_var).dimensions == other_op_node.dimensions;
       });
     }
   };

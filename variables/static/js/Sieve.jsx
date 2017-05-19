@@ -269,58 +269,6 @@ class SpatialConfiguration extends React.Component {
   }
 }
 
-class OperandChooser extends React.Component {
-  changeOperand(e) {
-    var operand_refs = this.props.node_editor.expression_data.operand_refs;
-
-    var operand_ref = e ? e.value : null;
-    operand_refs[this.props.operand_index] = operand_ref;
-
-    var expressionData = Object.assign(
-      {},
-      this.props.node_editor.expression_data,
-      {operand_refs: operand_refs}
-    );
-    this.props.onUpdateExpressionData(expressionData);
-  }
-
-  options() {
-    var valid_input_vars = this.props.tree.validOperands(
-      this.props.input_variables,
-      this.props.node_editor.expression_data.operand_refs,
-      this.props.operand_index
-    );
-
-    return valid_input_vars.map(input_var => {
-      return {value: input_var.name, label: input_var.name};
-    });
-  }
-
-  render() {
-    return (
-      <div style={{display: "inline-block", width: 400}}>
-        <Select onChange={this.changeOperand.bind(this)}
-                value={this.props.node_editor.expression_data.operand_refs[this.props.operand_index]}
-                options={this.options()}
-                clearable={true} />
-      </div>
-    );
-  }
-}
-
-class TreeViewer extends React.Component {
-  render() {
-    var operand_inputs = [];
-    for (var i = 0; i < this.props.tree.arity; i++) {
-      operand_inputs.push(<OperandChooser {...this.props} operand_index={i} />);
-    }
-
-    return (
-      <span>{this.props.tree.name} ( {operand_inputs} )</span>
-    );
-  }
-}
-
 
 class VariableTable extends React.Component {
   useInputVariable = (item, name) => {

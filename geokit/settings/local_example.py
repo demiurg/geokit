@@ -6,6 +6,8 @@ from .base import DATABASES, GEOKIT_HOSTS, ALLOWED_HOSTS
 
 #DATABASES['default']['TEST'] = {'NAME': 'test_pavel_geokit_2' }
 
+#RPC_URL = http://localhost:8001
+
 ## Ensure this is off in a production environment
 #DEBUG = True
 

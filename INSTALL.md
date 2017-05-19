@@ -1,3 +1,10 @@
+# Data Handler
+
+GeoKit relies on an external data handler to perform all backend data functions.
+This should be installed before installing GeoKit. Instructions for installation
+of the data handler can be found here:
+https://github.com/Applied-GeoSolutions/gips/blob/batch-scheduler/INSTALL.md
+
 # Set up the host system
 On the host machine, edit the `/etc/hosts` file.
 Replace <HOSTNAME> with your hostname, ex: testserver, and <TEST_SITE> with the name of the site you will create.
@@ -25,7 +32,7 @@ postgresql-contrib postgis postgresql-9.5-postgis-2.2 redis-server nginx virtual
 Install uwsgi
 `sudo pip install uwsgi`
 
-Clone the GeoKit repositiory from Bitbucket
+Clone the GeoKit repositiory from GitHub
 `git clone https://github.com/Applied-GeoSolutions/geokit.git`
 
 # Create a virtual env in the project directory
@@ -54,7 +61,7 @@ http://oka.ags.io/geokit/database/geokit_database_latest.zip
 Unzip them to the geokit directory
 `unzip -d <path/to/geokit> geokit_database_latest.zip`
 
-Import the files into your databases
+https://github.com/Applied-GeoSolutions/gips/edit/batch-scheduler/INSTALL.mdImport the files into your databases
 `psql -U geokit geokits < geokits_deploy.psql -h localhost`
 `psql -U geokit geodata < geodata.psql -h localhost`
 
@@ -71,8 +78,12 @@ GEOKIT_HOSTS.append('geokit.testserver') # django's hostname in testing mode
 GEOKIT_HOSTS.append('.geokit.testserver')
 ALLOWED_HOSTS.append('geokit.testserver')
 ALLOWED_HOSTS.append('.geokit.testserver')
+
 DATABASES['default']['TEST'] = {'NAME': 'test_geokit' }
-	
+
+## Make sure this address points to your data handler
+RPC_URL = http://localhost:8001
+
 ## Ensure this is off in a production environment
 DEBUG = True
 
