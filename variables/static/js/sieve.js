@@ -196,6 +196,7 @@ function addInputVariable(node) {
 }
 
 function editInputVariable(node, i) {
+  console.log(node);
   return function (dispatch) {
     if (node.type == "join") {
       dispatch(updateTabularData({
@@ -3252,7 +3253,7 @@ var DataNode = function () {
     this._operands = [];
 
     if (names) {
-      this.operand_names = names;
+      this._operand_names = names;
     }
 
     if (arity) {
@@ -3272,9 +3273,9 @@ var DataNode = function () {
       }
     }
 
-    if (this.operand_names) {
-      for (var i = 0; i < this.operand_names.length; i++) {
-        this[this.operand_names[i]] = this._operands[i];
+    if (this._operand_names) {
+      for (var i = 0; i < this._operand_names.length; i++) {
+        this[this._operand_names[i]] = this._operands[i];
       }
     }
 
@@ -3370,7 +3371,6 @@ var DataNode = function () {
     key: "layers",
     get: function get() {
       var layers = [];
-      console.log(this);
       if (this.type == "source") {
         if (this.operand.type == "Layer") {
           layers = [this];
@@ -3651,30 +3651,38 @@ var NamedTree = function (_DataNode10) {
   function NamedTree(args) {
     _classCallCheck(this, NamedTree);
 
-    var _this10 = _possibleConstructorReturn(this, _DataNode10.call(this, args, ['name_operand', 'operand'], 2));
+    var _this10 = _possibleConstructorReturn(this, _DataNode10.call(this, args, ['name_operand', 'value_operand'], 2));
 
+    var value = _this10.value_operand;
+    for (var i = 0; i < value._operand_names.length; i++) {
+      _this10[value._operand_names[i]] = value._operands[i];
+    }
     _this10._name = _this10.name_operand;
     return _this10;
   }
 
   NamedTree.prototype.json = function json() {
-    return ['named', [this.name_operand, this.operand]];
+    return ['named', [this.name_operand, this.valie_operand]];
   };
 
   NamedTree.prototype.render = function render() {
     return React.createElement(
       "span",
       null,
-      this.operation,
+      React.createElement(
+        "strong",
+        null,
+        this.name
+      ),
       ": ",
-      this.operand.render()
+      this.value_operand.render()
     );
   };
 
   _createClass(NamedTree, [{
     key: "type",
     get: function get() {
-      var type = this.operand.type;
+      var type = this.value_operand.type;
       return type ? type : "named";
     }
   }, {
@@ -3688,7 +3696,7 @@ var NamedTree = function (_DataNode10) {
   }, {
     key: "dimensions",
     get: function get() {
-      return this.operand.dimensions;
+      return this.value_operand.dimensions;
     }
   }]);
 
