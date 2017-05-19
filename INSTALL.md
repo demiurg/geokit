@@ -3,7 +3,7 @@
 GeoKit relies on an external data handler to perform all backend data functions.
 This should be installed before installing GeoKit. Instructions for installation
 of the data handler can be found here:
-https://github.com/Applied-GeoSolutions/gips/blob/batch-scheduler/INSTALL.md
+https://github.com/Applied-GeoSolutions/gips/blob/datahandler/INSTALL.md
 
 # Set up the host system
 On the host machine, edit the `/etc/hosts` file.
@@ -19,6 +19,7 @@ Now you can access your container and perform the rest of the install.
 # Set up system
 
 Run apt-get update
+
 `sudo apt-get update`
 
 Install python, python-pip, libpq-dev, python-dev, postgresql, 
@@ -30,44 +31,53 @@ postgresql-contrib postgis postgresql-9.5-postgis-2.2 redis-server nginx virtual
 ```
 
 Install uwsgi
+
 `sudo pip install uwsgi`
 
 Clone the GeoKit repositiory from GitHub
+
 `git clone https://github.com/Applied-GeoSolutions/geokit.git`
 
 # Create a virtual env in the project directory
+
 `virtualenv venv`
 
 # Install dependancies
+
 `source venv/bin/actiavte`
+
 `pip install -r requirements.txt`
 
 # Postgresql
 
 Create postgresql user geokit
-`runuser postgres -c 'createuser -s -P geokit'`
+
+`sudo runuser postgres -c 'createuser -s -P geokit'`
 Make sure password matches in settings/base.py
 
 Create postgresql databases geokits and geodata
-`runuser postgres -c 'createdb -O geokit geokits'`
-`runuser postgres -c 'createdb -O geokit geodata'`
 
-Change the admin password
-`./manage.py changepassword admin
+`sudo runuser postgres -c 'createdb -O geokit geokits'`
+
+`sudo runuser postgres -c 'createdb -O geokit geodata'`
 
 Download and import template database data from 
 http://oka.ags.io/geokit/database/geokit_database_latest.zip
 
 Unzip them to the geokit directory
+
 `unzip -d <path/to/geokit> geokit_database_latest.zip`
 
-https://github.com/Applied-GeoSolutions/gips/edit/batch-scheduler/INSTALL.mdImport the files into your databases
-`psql -U geokit geokits < geokits_deploy.psql -h localhost`
-`psql -U geokit geodata < geodata.psql -h localhost`
+Import the files into your databases
+
+`psql -U geokit geokits < geokits_deploy.pgsql -h localhost`
+
+`psql -U geokit geodata < geodata.pgsql -h localhost`
 
 # Django
 
 Copy local settings file from example
+
 `cp geokit/settings/local_example.py geokit/settings/local.py`
 
 Configure hosts/session cookie domain in local.py,
@@ -95,6 +105,7 @@ RPC_URL = 'http://dhprod.ags.io:8001'
 ```
 
 # Collect static files
+
 ```
 source venv/bin/activate
 ./manage.py collectstatic -l
@@ -103,17 +114,23 @@ source venv/bin/activate
 If it asks if you want to replace files, say yes. Make sure you run
 this as the same user uWSGI will run as.
 
+Change the admin password
+
+`./manage.py changepassword admin`
+
 # Web services
 
 Start redis server
-`service redis start`
+
+`sudo service redis start`
 
 Start nginx
-`service nginx start`
+
+`sudo service nginx start`
 
 Ensure your nginx user has r/w access to project directory and static/media
-`chown <YOUR_USER>:www-data -R geokit`
-`chmod -R g+w geokit`
+`sudo chown <YOUR_USER>:www-data -R geokit`
+`sudo chmod -R g+w geokit`
 
 Create a configuration file for your site in /etc/nginx/sites-available/
 
@@ -154,7 +171,7 @@ server {
 ```
 
 Symlink the configuration file in
-`etc/nginx/sites-available to /etc/nginx/sites-enabled`
+`etc/nginx/sites-available` to `/etc/nginx/sites-enabled`
 
 Create an ini file for your uwsgi app in `/etc/uwsgi/apps-available/`
 
@@ -181,10 +198,12 @@ cheaper-step = 1
 Symlink the ini file in /etc/uwsgi/apps-available/ to /etc/uwsgi/apps-enabled/
 
 Start uwsgi daemons
+
 `uwsgi  --ini /etc/uwsgi/apps-enabled/geokit.ini --daemonize /var/log/uwsgi/app/geokit.log`
 
 Restart nginx
-`service nginx restart`
+
+`sudo service nginx restart`
 
 Start RPC worker (from Geokit README):
 
