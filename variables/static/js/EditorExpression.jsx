@@ -5,18 +5,20 @@ class OperandChooser extends React.Component {
     var operand_ref = e ? e.value : null;
     operand_refs[this.props.operand_index] = operand_ref;
 
-    var expressionData = Object.assign(
+    var data = Object.assign(
       {},
       this.props.node_editor.expression_data,
       {operand_refs: operand_refs}
     );
-    this.props.onUpdateExpressionData(expressionData);
+    this.props.onUpdateExpressionData(data);
   }
 
   options() {
-    var valid_input_vars = this.props.tree.validOperands(
+    var data = this.props.node_editor.expression_data;
+
+    var valid_input_vars = data.node.validOperands(
       this.props.input_variables,
-      this.props.node_editor.expression_data.operand_refs,
+      data.operand_refs,
       this.props.operand_index
     );
 
@@ -41,10 +43,12 @@ class OperandChooser extends React.Component {
 
 class TreeViewer extends React.Component {
   render() {
-    var tree = this.props.node_editor.expression_data.node;
-
+    var data = this.props.node_editor.expression_data;
+    if (!data.node){
+      return <p>Select operation above.</p>;
+    }
     var operand_inputs = [];
-    for (var i = 0; i < tree.arity; i++) {
+    for (var i = 0; i < data.node.arity; i++) {
       operand_inputs.push(<OperandChooser {...this.props} operand_index={i} />);
     }
 
@@ -110,11 +114,11 @@ class ExpressionEditor extends React.Component {
   }
 
   addOp(op) {
-    console.log(NODE_TYPES_IMPLEMENTED[op]._arity);
+    var node = treeToNode([op, []]);
     var expression_data = Object.assign(
       {},
       this.props.node_editor.expression_data,
-      {op: op, operand_refs: Array(arity)}
+      {op: op, operand_refs: Array(node.arity), node: node}
     );
     this.props.onUpdateExpressionData(expression_data);
   }
@@ -157,7 +161,7 @@ class ExpressionEditor extends React.Component {
 
   render() {
     var data = this.props.node_editor.expression_data;
-    console.log('test');
+
     return (
       <Panel header="Expression editor">
         <FormGroup controlId="name">
@@ -169,12 +173,12 @@ class ExpressionEditor extends React.Component {
         <Panel>
           <div className="pull-right">
             <ButtonGroup>
-              <Button onClick={(e) => { console.log(e); this.addOp('+'); }}>+</Button>
-              <Button onClick={(e) => { console.log(e); this.addOp('-'); }}>-</Button>
-              <Button onClick={(e) => { console.log(e); this.addOp('*'); }}>*</Button>
-              <Button onClick={(e) => { console.log(e); this.addOp('/'); }}>/</Button>
-              <Button onClick={(e) => { console.log(e); this.addOp('tmean'); }}>Temporal Mean</Button>
-              <Button onClick={(e) => { console.log(e); this.addOp('smean'); }}>Spatial Mean</Button>
+              <Button onClick={(e) => this.addOp('+')}>+</Button>
+              <Button onClick={(e) => this.addOp('-')}>-</Button>
+              <Button onClick={(e) => this.addOp('*')}>*</Button>
+              <Button onClick={(e) => this.addOp('/')}>/</Button>
+              <Button onClick={(e) => this.addOp('tmean')}>Temporal Mean</Button>
+              <Button onClick={(e) => this.addOp('smean')}>Spatial Mean</Button>
             </ButtonGroup>
           </div>
         </Panel>
