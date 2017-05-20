@@ -169,12 +169,12 @@ class ExpressionEditor extends React.Component {
         <Panel>
           <div className="pull-right">
             <ButtonGroup>
-              <Button onClick={(e) => this.addOp('+')}>+</Button>
-              <Button onClick={(e) => this.addOp('-')}>-</Button>
-              <Button onClick={(e) => this.addOp('*')}>*</Button>
-              <Button onClick={(e) => this.addOp('/')}>/</Button>
-              <Button onClick={(e) => this.addOp('tmean')}>Temporal Mean</Button>
-              <Button onClick={(e) => this.addOp('smean')}>Spatial Mean</Button>
+              <Button onClick={(e) => { console.log(e); this.addOp('+'); }}>+</Button>
+              <Button onClick={(e) => { console.log(e); this.addOp('-'); }}>-</Button>
+              <Button onClick={(e) => { console.log(e); this.addOp('*'); }}>*</Button>
+              <Button onClick={(e) => { console.log(e); this.addOp('/'); }}>/</Button>
+              <Button onClick={(e) => { console.log(e); this.addOp('tmean'); }}>Temporal Mean</Button>
+              <Button onClick={(e) => { console.log(e); this.addOp('smean'); }}>Spatial Mean</Button>
             </ButtonGroup>
           </div>
         </Panel>
