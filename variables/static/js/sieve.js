@@ -232,7 +232,8 @@ function editInputVariable(node, i) {
         editing: true,
         node: node,
         op: node.type,
-        operand_refs: null
+        operand_refs: null,
+        valid: false
       }));
     }
   };
@@ -1435,11 +1436,11 @@ var TreeViewer = function (_React$Component2) {
 
   TreeViewer.prototype.render = function render() {
     var tree = this.props.node_editor.expression_data.node;
-    if (!DataNode.isDataTree(tree)) {
+    if (!tree || !DataNode.isDataTree(tree)) {
       return React.createElement(
         'p',
         null,
-        'Select operation'
+        'Select operation.'
       );
     }
 
@@ -1549,6 +1550,8 @@ var ExpressionEditor = function (_React$Component3) {
   ExpressionEditor.prototype.render = function render() {
     var _this5 = this;
 
+    var data = this.props.node_editor.expression_data;
+
     return React.createElement(
       Panel,
       { header: 'Expression editor' },
@@ -1556,9 +1559,11 @@ var ExpressionEditor = function (_React$Component3) {
         FormGroup,
         { controlId: 'name' },
         React.createElement(FormControl, { componentClass: 'input',
-          placeholder: this.props.node_editor.expression_data.default_name,
-          onChange: this.changeName.bind(this),
-          value: this.props.node_editor.expression_data.name })
+          placeholder: data.default_name,
+          onChange: function onChange() {
+            return _this5.changeName();
+          },
+          value: data.name })
       ),
       React.createElement(
         Panel,
@@ -1619,11 +1624,11 @@ var ExpressionEditor = function (_React$Component3) {
         null,
         React.createElement(TreeViewer, this.props)
       ),
-      React.createElement(
+      data.valid ? React.createElement(
         Button,
         { onClick: this.onSave.bind(this) },
         'Add'
-      ),
+      ) : null,
       React.createElement(
         Button,
         { onClick: this.props.onEditNothing },
@@ -2511,8 +2516,10 @@ function node_editor() {
           name: "",
           default_name: null,
           op: null,
+          node: null,
           operand_refs: [],
-          editing: false
+          editing: false,
+          valid: false
         }
       });
     case DEFAULT:
@@ -3281,29 +3288,29 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var DataNode = function () {
-  function DataNode(args, names, arity) {
+  function DataNode(tree) {
     _classCallCheck(this, DataNode);
 
-    if (!Array.isArray(args)) {
+    this._arity = 0;
+    this._operand_names = [];
+
+    /// Consstructor is useless because it can't access subclass properties
+    this._tree = tree;
+  }
+
+  DataNode.prototype.parseTree = function parseTree() {
+    var tree = this._tree;
+
+    if (!Array.isArray(tree)) {
       throw Error("DataNode can only be initialized from Array.");
-    } else if (args.length != 2) {
+    } else if (tree.length != 2) {
       throw Error("DataNode needs 2 elements, operator and operand in Array.");
     }
-    this._operation = args[0];
+    this._operation = tree[0];
     this._operands = [];
 
-    if (names) {
-      this._operand_names = names;
-    }
-
-    if (arity) {
-      this.arity = arity;
-    } else {
-      this.arity = 0;
-    }
-
-    for (var i = 0; i < args[1].length; i++) {
-      var rand = args[1][i];
+    for (var i = 0; i < tree[1].length; i++) {
+      var rand = tree[1][i];
       if (DataNode.isDataTree(rand)) {
         this._operands.push(treeToNode(rand));
       } else if (this._operation != 'source' && this.isSource(rand)) {
@@ -3322,7 +3329,7 @@ var DataNode = function () {
     if (this._operands.length != this.arity) {
       throw Error(this.type + " node takes exactly " + this.arity + " operands");
     }
-  }
+  };
 
   DataNode.prototype.validOperands = function validOperands(input_vars, operand_refs, op_index) {
     return input_vars;
@@ -3393,9 +3400,19 @@ var DataNode = function () {
   };
 
   _createClass(DataNode, [{
+    key: "operand_names",
+    get: function get() {
+      return this._operand_names;
+    }
+  }, {
     key: "type",
     get: function get() {
       return this._operation;
+    }
+  }, {
+    key: "arity",
+    get: function get() {
+      return this._arity;
     }
   }, {
     key: "name",
@@ -3455,10 +3472,13 @@ var MeanOperator = function (_DataNode) {
   function MeanOperator(tree) {
     _classCallCheck(this, MeanOperator);
 
-    var _this = _possibleConstructorReturn(this, _DataNode.call(this, tree, ['left', 'right'], 2));
+    var _this = _possibleConstructorReturn(this, _DataNode.call(this, tree));
 
     _this._name = 'Mean';
+    _this._arity = 2;
+    _this._operand_names = ['left', 'right'];
 
+    _this.parseTree();
 
     if (_this.left.dimensions != _this.right.dimensions) {
       throw Error("Operands must have the same dimensions");
@@ -3477,11 +3497,14 @@ var TemporalMeanOperator = function (_DataNode2) {
   function TemporalMeanOperator(tree) {
     _classCallCheck(this, TemporalMeanOperator);
 
-    var _this2 = _possibleConstructorReturn(this, _DataNode2.call(this, tree, ['operand'], 1));
+    var _this2 = _possibleConstructorReturn(this, _DataNode2.call(this, tree));
 
-    var operands = _this2._operands;
+    _this2._arity = 1;
     _this2._name = 'Temporal Mean';
     _this2._dimensions = 'space';
+    _this2._operand_names = ['operand'];
+
+    _this2.parseTree();
     return _this2;
   }
 
@@ -3500,10 +3523,14 @@ var SpatialMeanOperator = function (_DataNode3) {
   function SpatialMeanOperator(tree) {
     _classCallCheck(this, SpatialMeanOperator);
 
-    var _this3 = _possibleConstructorReturn(this, _DataNode3.call(this, tree, ['operand'], 1));
+    var _this3 = _possibleConstructorReturn(this, _DataNode3.call(this, tree));
 
+    _this3._operand_names = ['operand'];
+    _this3._arity = 1;
     _this3._name = 'Spatial Mean';
     _this3._dimensions = 'time';
+
+    _this3.parseTree();
     return _this3;
   }
 
@@ -3522,9 +3549,13 @@ var SelectOperator = function (_DataNode4) {
   function SelectOperator(tree) {
     _classCallCheck(this, SelectOperator);
 
-    var _this4 = _possibleConstructorReturn(this, _DataNode4.call(this, tree, ['left', 'right'], 2));
+    var _this4 = _possibleConstructorReturn(this, _DataNode4.call(this, tree));
 
+    _this4._operand_names = ['left', 'right'];
+    _this4._arity = 2;
     _this4._name = 'Select';
+
+    _this4.parseTree();
     _this4.child_op = _this4._operands[0][0];
     _this4._dimensions = _this4.left.dimensions;
     return _this4;
@@ -3539,10 +3570,14 @@ var ExpressionOperator = function (_DataNode5) {
   function ExpressionOperator(tree) {
     _classCallCheck(this, ExpressionOperator);
 
-    var _this5 = _possibleConstructorReturn(this, _DataNode5.call(this, tree, ['operand'], 1));
+    var _this5 = _possibleConstructorReturn(this, _DataNode5.call(this, tree));
 
-    var operands = _this5._operands;
     _this5._name = 'Expression';
+    _this5._operand_names = ['operand'];
+    _this5._arity = 1;
+
+    _this5.parseTree();
+    var operands = _this5._operands;
     _this5._dimensions = _this5.operand.dimensions;
     return _this5;
   }
@@ -3556,10 +3591,13 @@ var JoinOperator = function (_DataNode6) {
   function JoinOperator(tree) {
     _classCallCheck(this, JoinOperator);
 
-    var _this6 = _possibleConstructorReturn(this, _DataNode6.call(this, tree, ['left', 'right'], 2));
+    var _this6 = _possibleConstructorReturn(this, _DataNode6.call(this, tree));
 
     _this6._name = 'Join';
+    _this6._operand_names = ['left', 'right'];
+    _this6._arity = 2;
 
+    _this6.parseTree();
 
     var dimensions = new Set();
     dimensions.add(_this6.left.dimensions);
@@ -3584,10 +3622,14 @@ var RasterOperator = function (_DataNode7) {
   function RasterOperator(tree) {
     _classCallCheck(this, RasterOperator);
 
-    var _this7 = _possibleConstructorReturn(this, _DataNode7.call(this, tree, ['product', 'layer', 'range'], 3));
+    var _this7 = _possibleConstructorReturn(this, _DataNode7.call(this, tree));
 
+    _this7._arity = 3;
+    _this7._operand_names = ['product', 'layer', 'range'];
     _this7._name = 'Raster';
     _this7._dimensions = 'spacetime';
+
+    _this7.parseTree();
     var range_arr = _this7.range.split(',');
     _this7.start = range_arr[0];
     _this7.start_date = RasterOperator.julianToDate(_this7.start);
@@ -3628,7 +3670,12 @@ var SourceOperator = function (_DataNode8) {
   function SourceOperator(tree) {
     _classCallCheck(this, SourceOperator);
 
-    var _this8 = _possibleConstructorReturn(this, _DataNode8.call(this, tree, ['operand'], 1));
+    var _this8 = _possibleConstructorReturn(this, _DataNode8.call(this, tree));
+
+    _this8._arity = 1;
+    _this8._operand_names = ['operand'];
+
+    _this8.parseTree();
 
     _this8._name = 'Source';
     if (!(_this8.isSource(_this8.operand) && _this8.operand.field)) {
@@ -3665,7 +3712,10 @@ var MathOperator = function (_DataNode9) {
   function MathOperator(tree) {
     _classCallCheck(this, MathOperator);
 
-    var _this9 = _possibleConstructorReturn(this, _DataNode9.call(this, tree, ['left', 'right'], 2));
+    var _this9 = _possibleConstructorReturn(this, _DataNode9.call(this, tree));
+
+    _this9._arity = 2;
+    _this9._operand_names = ['left', 'right'];
 
     _this9._name = _this9._operator;
 
@@ -3702,7 +3752,12 @@ var NamedTree = function (_DataNode10) {
   function NamedTree(args) {
     _classCallCheck(this, NamedTree);
 
-    var _this10 = _possibleConstructorReturn(this, _DataNode10.call(this, args, ['name_operand', 'value_operand'], 2));
+    var _this10 = _possibleConstructorReturn(this, _DataNode10.call(this, args));
+
+    _this10._arity = 2;
+    _this10._operand_names = ['name_operand', 'value_operand'];
+
+    _this10.parseTree();
 
     var value = _this10.value_operand;
     for (var i = 0; i < value._operand_names.length; i++) {
@@ -3757,9 +3812,11 @@ var EmptyTree = function (_DataNode11) {
   function EmptyTree(props) {
     _classCallCheck(this, EmptyTree);
 
-    var _this11 = _possibleConstructorReturn(this, _DataNode11.call(this, ['noop', []], [], 0));
+    var _this11 = _possibleConstructorReturn(this, _DataNode11.call(this, ['noop', []]));
 
     _this11._name = 'Empty';
+
+    _this11.parseTree();
     return _this11;
   }
 
