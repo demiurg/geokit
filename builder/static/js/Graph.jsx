@@ -62,6 +62,20 @@ class Graph extends React.Component {
         });
     }
 
+    extractTimeseries() {
+        if (this.props.current_feature) {
+            var x = Object.keys(this.state.ajax_data.data[this.props.current_feature]);
+            var y = x.map((key) => (
+                this.state.ajax_data.data[this.props.current_feature][key]
+            ));
+            data = {x: x, y: y}; 
+        } else {
+            var data = {x: [], y: []};
+        }
+
+        return data;
+    }
+
     componentDidUpdate(prevProps, prevState) {
         if (!this.state.error) {
             if (!prevState.data || prevProps.current_feature != this.props.current_feature) {
@@ -77,15 +91,7 @@ class Graph extends React.Component {
                     data = this.state.data;
                 } else if (this.props.dimensions == "spacetime") {
                     xaxis = {title: 'Date'};
-                    if (this.props.current_feature) {
-                        var x = Object.keys(this.state.ajax_data.data[this.props.current_feature]);
-                        var y = x.map((key) => (
-                            this.state.ajax_data.data[this.props.current_feature][key]
-                        ));
-                        data = {x: x, y: y}; 
-                    } else {
-                        var data = {x: [], y: []};
-                    }
+                    data = this.extractTimeseries();
                 }
 
                 if (data.x.length) {
@@ -173,13 +179,40 @@ class Graph extends React.Component {
                         Plotly.moveTraces('graph-'+this.props.unique_id, -1, 1);
                     });
                 }
-            } else if (this.props.time_range && prevProps.time_range) {
+            }
+            
+            if (this.props.time_range && prevProps.time_range) {
                 if (this.props.time_range.min.getTime() != prevProps.time_range.min.getTime() ||
                         this.props.time_range.max.getTime() != prevProps.time_range.max.getTime()) {
                     var update = {
                         'xaxis.range': [this.props.time_range.min.getTime(), this.props.time_range.max.getTime()]
                     };
                     Plotly.relayout('graph-'+this.props.unique_id, update);
+                }
+            }
+
+            if (this.props.current_time && prevProps.current_time) {
+                if (this.props.current_time != prevProps.current_time) {
+                    var data = this.extractTimeseries();
+
+                    var dateString = moment(this.props.current_time).format('YYYY-MM-DD'),
+                        index = data.x.indexOf(dateString);
+
+                    Plotly.deleteTraces('graph-'+this.props.unique_id, -2);
+                    Plotly.addTraces(
+                        'graph-'+this.props.unique_id,
+                        [{
+                            type: 'scatter',
+                            y: [data.y[index]],
+                            x: [this.props.current_time],
+                            marker: {
+                                size: 12,
+                                fillColor: "#f49542"
+                            },
+                            hoverinfo: 'none'
+                        }]
+                    );
+                    Plotly.moveTraces('graph-'+this.props.unique_id, -1, 1);
                 }
             }
         }
