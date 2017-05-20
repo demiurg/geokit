@@ -42,9 +42,6 @@ class OperandChooser extends React.Component {
 class TreeViewer extends React.Component {
   render() {
     var tree = this.props.node_editor.expression_data.node;
-    if (!tree || !DataNode.isDataTree(tree)){
-      return <p>Select operation.</p>;
-    }
 
     var operand_inputs = [];
     for (var i = 0; i < tree.arity; i++) {
@@ -52,7 +49,7 @@ class TreeViewer extends React.Component {
     }
 
     return (
-      <span>{this.props.tree.name} ( {operand_inputs} )</span>
+      <span>{this.props.op} ( {operand_inputs} )</span>
     );
   }
 }
@@ -112,7 +109,8 @@ class ExpressionEditor extends React.Component {
     this.props.onUpdateExpressionData(expression_data);
   }
 
-  addOp(op, arity) {
+  addOp(op) {
+    console.log(NODE_TYPES_IMPLEMENTED[op]._arity);
     var expression_data = Object.assign(
       {},
       this.props.node_editor.expression_data,
@@ -171,12 +169,12 @@ class ExpressionEditor extends React.Component {
         <Panel>
           <div className="pull-right">
             <ButtonGroup>
-              <Button onClick={(e) => this.addOp('+', 2)}>+</Button>
-              <Button onClick={(e) => this.addOp('-', 2)}>-</Button>
-              <Button onClick={(e) => this.addOp('*', 2)}>*</Button>
-              <Button onClick={(e) => this.addOp('/', 2)}>/</Button>
-              <Button onClick={(e) => this.addOp('tmean', 1)}>Temporal Mean</Button>
-              <Button onClick={(e) => this.addOp('smean', 1)}>Spatial Mean</Button>
+              <Button onClick={(e) => this.addOp('+')}>+</Button>
+              <Button onClick={(e) => this.addOp('-')}>-</Button>
+              <Button onClick={(e) => this.addOp('*')}>*</Button>
+              <Button onClick={(e) => this.addOp('/')}>/</Button>
+              <Button onClick={(e) => this.addOp('tmean')}>Temporal Mean</Button>
+              <Button onClick={(e) => this.addOp('smean')}>Spatial Mean</Button>
             </ButtonGroup>
           </div>
         </Panel>
