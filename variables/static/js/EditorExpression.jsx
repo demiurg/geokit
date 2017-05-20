@@ -157,7 +157,7 @@ class ExpressionEditor extends React.Component {
 
   render() {
     var data = this.props.node_editor.expression_data;
-
+    console.log('test');
     return (
       <Panel header="Expression editor">
         <FormGroup controlId="name">
