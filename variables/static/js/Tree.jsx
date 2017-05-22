@@ -44,6 +44,18 @@ class DataNode {
     return this._operation;
   }
 
+  operand_types(join){
+    var types = [];
+    for (let r of self._operands){
+      types.push(r.type);
+    }
+    if (join){
+      return types.join(join);
+    } else {
+      return types;
+    }
+  }
+
   get name(){
     return this._name ? this._name : this._operation;
   }
@@ -175,7 +187,7 @@ class MeanOperator extends DataNode {
 }
 
 class TemporalMeanOperator extends DataNode {
-  _arity = 1;
+  static arity = 1;
   _name = 'Temporal Mean';
   _dimensions = 'space';
   _operand_names = ['operand'];
@@ -193,7 +205,7 @@ class TemporalMeanOperator extends DataNode {
 
 class SpatialMeanOperator extends DataNode {
   _operand_names = ['operand'];
-  _arity = 1;
+  static arity = 1;
   _name = 'Spatial Mean';
   _dimensions = 'time';
   constructor(tree) {
@@ -223,7 +235,7 @@ class SelectOperator extends DataNode {
 class ExpressionOperator extends DataNode {
   _name = 'Expression';
   _operand_names = ['operand'];
-  _arity = 1;
+  static arity = 1;
   constructor(tree) {
     super(tree);
     this.parseTree();
@@ -256,7 +268,7 @@ class JoinOperator extends DataNode {
 }
 
 class RasterOperator extends DataNode {
-  _arity = 3;
+  static arity = 3;
   _operand_names = ['product', 'layer', 'range'];
   _name = 'Raster';
   _dimensions = 'spacetime';
@@ -290,7 +302,7 @@ class RasterOperator extends DataNode {
 }
 
 class SourceOperator extends DataNode {
-  _arity = 1;
+  static arity = 1;
   _operand_names = ['operand'];
   constructor(tree) {
     super(tree);
@@ -380,6 +392,10 @@ class NamedTree extends DataNode {
 
   get dimensions(){
     return this.value_operand.dimensions;
+  }
+
+  get type(){
+    return this.value_operand.type;
   }
 
   json() {

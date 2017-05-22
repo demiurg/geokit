@@ -53,7 +53,7 @@ class TreeViewer extends React.Component {
     }
 
     return (
-      <span>{this.props.op} ( {operand_inputs} )</span>
+      <span>{data.op} ( {operand_inputs} )</span>
     );
   }
 }
