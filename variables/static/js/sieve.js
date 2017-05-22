@@ -198,7 +198,7 @@ function addInputVariable(node) {
 function editInputVariable(node, i) {
   var name = null;
   if (node.type == 'named') {
-    node = node.value_operand;
+    node = node.value;
     name = node.name;
   }
 
@@ -2915,12 +2915,12 @@ var VariableTable = function (_React$Component2) {
               React.createElement(
                 "td",
                 null,
-                node.type
+                node.value.type
               ),
               React.createElement(
                 "td",
                 null,
-                node.dimensions
+                node.value.dimensions
               ),
               React.createElement(
                 "td",
@@ -3305,8 +3305,33 @@ var DataNode = function () {
 
     this._operand_names = [];
 
+    var self = this;
     /// Consstructor is useless because it can't access subclass properties
     this._tree = tree;
+    return new Proxy(this, {
+      get: function get(target, prop) {
+        // console.log('get', prop);
+        if (self.operand_names) {
+          var i = self.operand_names.indexOf(prop);
+          if (self.operand_names && i >= 0) {
+            return self._operands[i];
+          }
+        }
+        return target[prop];
+      },
+      set: function set(target, prop, value) {
+        // console.log('set', prop);
+        if (self.operand_names) {
+          var i = self.operand_names.indexOf(prop);
+          if (i >= 0) {
+            self._operands[i] = value;
+            return true;
+          }
+        }
+        target[prop] = value;
+        return true;
+      }
+    });
   }
 
   DataNode.prototype.parseTree = function parseTree() {
@@ -3320,7 +3345,7 @@ var DataNode = function () {
     this._operation = tree[0];
     this._operands = [];
 
-    for (var i = 0; i < this._operand_names.length; i++) {
+    for (var i = 0; i < this.operand_names.length; i++) {
       // Let rand be undefined, as long as we have right length _operands
       var rand = tree[1][i];
       if (DataNode.isDataTree(rand)) {
@@ -3329,20 +3354,6 @@ var DataNode = function () {
         this._operands.push(treeToNode(['source', [rand]]));
       } else {
         this._operands.push(rand);
-      }
-    }
-
-    if (this._operand_names) {
-      for (var i = 0; i < this._operand_names.length; i++) {
-        Object.defineProperty(this, this._operand_names[i], {
-          get: function get() {
-            return this._operands[i];
-          },
-          set: function set(value) {
-            this._operands[i] = value;
-          }
-        });
-        console.log(Object.getOwnPropertyDescriptor(this, this._operands[i]));
       }
     }
   };
@@ -3440,6 +3451,10 @@ var DataNode = function () {
     return NamedTree(['named', [name, node]]);
   };
 
+  DataNode.Class = function Class(name) {
+    return DataNode.TYPES[name];
+  };
+
   _createClass(DataNode, [{
     key: "operand_names",
     get: function get() {
@@ -3449,6 +3464,9 @@ var DataNode = function () {
     key: "type",
     get: function get() {
       return this._operation;
+    },
+    set: function set(type) {
+      throw Error('Can not set type, has to be constructed');
     }
   }, {
     key: "arity",
@@ -3459,11 +3477,17 @@ var DataNode = function () {
     key: "name",
     get: function get() {
       return this._name ? this._name : this._operation;
+    },
+    set: function set(value) {
+      this._name = value;
     }
   }, {
     key: "dimensions",
     get: function get() {
       return this._dimensions;
+    },
+    set: function set(value) {
+      this._dimensions = value;
     }
   }, {
     key: "layers",
@@ -3727,7 +3751,7 @@ var SourceOperator = function (_DataNode8) {
     _this8.parseTree();
 
     _this8._name = 'Source';
-    console.log(_this8.operand);
+
     if (!(_this8.isSource(_this8.operand) && _this8.operand.field)) {
       throw Error("Source node is missing some property (id, type, or field");
     }
@@ -3809,20 +3833,19 @@ var NamedTree = function (_DataNode10) {
 
     var _this10 = _possibleConstructorReturn(this, _DataNode10.call(this, args));
 
-    _this10._operand_names = ['name_operand', 'value_operand'];
+    _this10._operand_names = ['name_operand', 'value'];
 
     _this10.parseTree();
-
-    var value = _this10.value_operand;
-    for (var i = 0; i < value._operand_names.length; i++) {
-      _this10[value._operand_names[i]] = value._operands[i];
+    /*
+    let value = this.value_operand;
+    for (var i=0; i < value._operand_names.length; i++){
+      this[value._operand_names[i]] = value._operands[i];
     }
+    */
+    _this10.dimensions = _this10.value.dimensions;
     _this10._name = _this10.name_operand;
     return _this10;
   }
-
-  // If getting is removed, apparently it doesn't get inherited
-
 
   NamedTree.prototype.json = function json() {
     return ['named', [this.name_operand, this.valie_operand]];
@@ -3841,26 +3864,6 @@ var NamedTree = function (_DataNode10) {
       this.value_operand.render()
     );
   };
-
-  _createClass(NamedTree, [{
-    key: "name",
-    get: function get() {
-      return this.name_operand;
-    },
-    set: function set(str) {
-      this.name_operand = str;
-    }
-  }, {
-    key: "dimensions",
-    get: function get() {
-      return this.value_operand.dimensions;
-    }
-  }, {
-    key: "type",
-    get: function get() {
-      return this.value_operand.type;
-    }
-  }]);
 
   return NamedTree;
 }(DataNode);

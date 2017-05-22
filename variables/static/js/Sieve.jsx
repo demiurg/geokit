@@ -299,8 +299,8 @@ class VariableTable extends React.Component {
               return (
                 <tr>
                   <td>{node.name}</td>
-                  <td>{node.type}</td>
-                  <td>{node.dimensions}</td>
+                  <td>{node.value.type}</td>
+                  <td>{node.value.dimensions}</td>
                   <td>
                     <Button onClick={
                       () => this.useInputVariable(item, node.name)

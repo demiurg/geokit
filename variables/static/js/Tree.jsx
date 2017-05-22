@@ -6,21 +6,30 @@ class DataNode {
     let self = this;
     /// Consstructor is useless because it can't access subclass properties
     this._tree = tree;
+
+    // This is terribad form of immitatating dynamic setters and getters
     return new Proxy(this, {
       get(target, prop) {
-        let i = self._operand_names.indexOf(prop);
-        if (i >= 0){
-          return self._operand_names[i];
+        // console.log('get', prop);
+        if(self.operand_names){
+          let i = self.operand_names.indexOf(prop);
+          if (self.operand_names && i >= 0){
+            return self._operands[i];
+          }
         }
         return target[prop];
-      }
+      },
       set(target, prop, value){
-        let i = self._operand_names.indexOf(prop);
-        if (i >= 0){
-          self._operand_names[i] = value;
-        }else{
-          target[prop] = value;
+        // console.log('set', prop);
+        if(self.operand_names){
+          let i = self.operand_names.indexOf(prop);
+          if (i >= 0){
+            self._operands[i] = value;
+            return true;
+          }
         }
+        target[prop] = value;
+        return true;
       }
     });
   }
@@ -36,7 +45,7 @@ class DataNode {
     this._operation = tree[0];
     this._operands = [];
 
-    for (var i=0; i < this._operand_names.length; i++){
+    for (var i=0; i < this.operand_names.length; i++){
       // Let rand be undefined, as long as we have right length _operands
       var rand = tree[1][i];
       if (DataNode.isDataTree(rand)){
@@ -55,6 +64,10 @@ class DataNode {
 
   get type(){
     return this._operation;
+  }
+
+  set type(type){
+    throw Error('Can not set type, has to be constructed');
   }
 
   get arity(){
@@ -77,8 +90,16 @@ class DataNode {
     return this._name ? this._name : this._operation;
   }
 
+  set name(value){
+    this._name = value;
+  }
+
   get dimensions(){
     return this._dimensions;
+  }
+
+  set dimensions(value){
+    this._dimensions = value;
   }
 
   get layers() {
@@ -184,6 +205,10 @@ class DataNode {
 
   static nameNode(name, node){
     return NamedTree(['named', [name, node]]);
+  }
+
+  static Class(name){
+    return DataNode.TYPES[name];
   }
 }
 
@@ -326,7 +351,7 @@ class SourceOperator extends DataNode {
     this.parseTree();
 
     this._name = 'Source';
-    console.log(this.operand);
+
     if (!(this.isSource(this.operand) && this.operand.field)){
       throw Error("Source node is missing some property (id, type, or field");
     }
@@ -387,33 +412,18 @@ class MathOperator extends DataNode {
 
 class NamedTree extends DataNode {
   static arity = 2;
-  _operand_names = ['name_operand', 'value_operand'];
+  _operand_names = ['name_operand', 'value'];
   constructor(args) {
     super(args);
     this.parseTree();
-
+    /*
     let value = this.value_operand;
     for (var i=0; i < value._operand_names.length; i++){
       this[value._operand_names[i]] = value._operands[i];
     }
+    */
+    this.dimensions = this.value.dimensions;
     this._name = this.name_operand;
-  }
-
-  // If getting is removed, apparently it doesn't get inherited
-  get name(){
-    return this.name_operand;
-  }
-
-  set name(str){
-    this.name_operand = str;
-  }
-
-  get dimensions(){
-    return this.value_operand.dimensions;
-  }
-
-  get type(){
-    return this.value_operand.type;
   }
 
   json() {
