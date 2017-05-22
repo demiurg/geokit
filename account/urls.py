@@ -5,6 +5,7 @@ from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
 from . import views
 
+
 def redirect_to_home(request):
     path = request.META['HTTP_HOST']
     if request.tenant and path.startswith(request.tenant.schema_name):
@@ -12,6 +13,7 @@ def redirect_to_home(request):
         path = re.sub('^{}'.format(request.tenant.schema_name), 'www', path)
         return redirect("http://" + path + '/')
     return views.index(request)
+
 
 urlpatterns = [
     url(r'^$', redirect_to_home, name='home'),

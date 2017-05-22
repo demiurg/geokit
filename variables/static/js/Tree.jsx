@@ -1,25 +1,25 @@
 class DataNode {
-  constructor(args, names, arity){
-    if (!Array.isArray(args)){
+  static arity = 0;
+  _operand_names = [];
+
+  constructor(tree){
+    /// Consstructor is useless because it can't access subclass properties
+    this._tree = tree;
+  }
+
+  parseTree(){
+    var tree = this._tree;
+
+    if (!Array.isArray(tree)){
       throw Error("DataNode can only be initialized from Array.");
-    } else if (args.length != 2){
+    } else if (tree.length != 2){
       throw Error("DataNode needs 2 elements, operator and operand in Array.")
     }
-    this._operation = args[0];
+    this._operation = tree[0];
     this._operands = [];
 
-    if (names) {
-      this._operand_names = names;
-    }
-
-    if (arity) {
-      this.arity = arity;
-    } else {
-      this.arity = 0;
-    }
-
-    for (var i=0; i < args[1].length; i++){
-      var rand = args[1][i];
+    for (var i=0; i < tree[1].length; i++){
+      var rand = tree[1][i];
       if (DataNode.isDataTree(rand)){
         this._operands.push(treeToNode(rand));
       } else if (this._operation != 'source' && this.isSource(rand)){
@@ -34,10 +34,10 @@ class DataNode {
         this[this._operand_names[i]] = this._operands[i];
       }
     }
+  }
 
-    if (this._operands.length != this.arity) {
-      throw Error(`${this.type} node takes exactly ${this.arity} operands`);
-    }
+  get operand_names(){
+    return this._operand_names;
   }
 
   get type(){
@@ -133,14 +133,14 @@ class DataNode {
     return (
       Array.isArray(arg) &&
       arg.length == 2 &&
-      NODE_TYPES_IMPLEMENTED.hasOwnProperty(arg[0])
+      DataNode.TYPES.hasOwnProperty(arg[0])
     );
   }
 
   static isDataNode(node){
     return (
       node._operation &&
-      NODE_TYPES_IMPLEMENTED.hasOwnProperty(node._operation) &&
+      DataNode.TYPES.hasOwnProperty(node._operation) &&
       node._operands != undefined
     );
   }
@@ -160,8 +160,11 @@ class DataNode {
 
 class MeanOperator extends DataNode {
   _name = 'Mean';
+  static arity = 2;
+  _operand_names = ['left', 'right'];
   constructor(tree) {
-    super(tree, ['left', 'right'], 2);
+    super(tree);
+    this.parseTree();
 
     if (this.left.dimensions != this.right.dimensions) {
       throw Error("Operands must have the same dimensions");
@@ -172,11 +175,13 @@ class MeanOperator extends DataNode {
 }
 
 class TemporalMeanOperator extends DataNode {
+  _arity = 1;
+  _name = 'Temporal Mean';
+  _dimensions = 'space';
+  _operand_names = ['operand'];
   constructor(tree) {
-    super(tree, ['operand'], 1);
-    var operands = this._operands;
-    this._name = 'Temporal Mean';
-    this._dimensions = 'space';
+    super(tree);
+    this.parseTree();
   }
 
   validOperands(input_vars) {
@@ -187,10 +192,13 @@ class TemporalMeanOperator extends DataNode {
 }
 
 class SpatialMeanOperator extends DataNode {
+  _operand_names = ['operand'];
+  _arity = 1;
+  _name = 'Spatial Mean';
+  _dimensions = 'time';
   constructor(tree) {
-    super(tree, ['operand'], 1);
-    this._name = 'Spatial Mean';
-    this._dimensions = 'time';
+    super(tree);
+    this.parseTree();
   }
 
   validOperands(input_vars) {
@@ -201,27 +209,37 @@ class SpatialMeanOperator extends DataNode {
 }
 
 class SelectOperator extends DataNode {
+  _operand_names = ['left', 'right'];
+  static arity = 2;
+  _name = 'Select';
   constructor(tree) {
-    super(tree, ['left', 'right'], 2);
-    this._name = 'Select';
+    super(tree);
+    this.parseTree();
     this.child_op = this._operands[0][0];
     this._dimensions = this.left.dimensions;
   }
 }
 
 class ExpressionOperator extends DataNode {
+  _name = 'Expression';
+  _operand_names = ['operand'];
+  _arity = 1;
   constructor(tree) {
-    super(tree, ['operand'], 1);
+    super(tree);
+    this.parseTree();
     var operands = this._operands;
-    this._name = 'Expression';
     this._dimensions = this.operand.dimensions;
   }
 }
 
 class JoinOperator extends DataNode {
   _name = 'Join';
+  _operand_names = ['left', 'right'];
+  static arity = 2;
+
   constructor(tree) {
-    super(tree, ['left', 'right'], 2);
+    super(tree);
+    this.parseTree();
 
     var dimensions = new Set();
     dimensions.add(this.left.dimensions);
@@ -238,10 +256,13 @@ class JoinOperator extends DataNode {
 }
 
 class RasterOperator extends DataNode {
+  _arity = 3;
+  _operand_names = ['product', 'layer', 'range'];
+  _name = 'Raster';
+  _dimensions = 'spacetime';
   constructor(tree) {
-    super(tree, ['product', 'layer', 'range'], 3);
-    this._name = 'Raster';
-    this._dimensions = 'spacetime';
+    super(tree);
+    this.parseTree();
     var range_arr = this.range.split(',');
     this.start = range_arr[0];
     this.start_date = RasterOperator.julianToDate(this.start);
@@ -269,8 +290,11 @@ class RasterOperator extends DataNode {
 }
 
 class SourceOperator extends DataNode {
+  _arity = 1;
+  _operand_names = ['operand'];
   constructor(tree) {
-    super(tree, ['operand'], 1);
+    super(tree);
+    this.parseTree();
 
     this._name = 'Source';
     if (!(this.isSource(this.operand) && this.operand.field)){
@@ -296,11 +320,18 @@ class SourceOperator extends DataNode {
 }
 
 class MathOperator extends DataNode {
+  static arity = 2;
+  _operand_names = ['left', 'right'];
   constructor(tree) {
-    super(tree, ['left', 'right'], 2);
+    super(tree);
+    this.parseTree();
+
     this._name = this._operator;
 
-    if (this.left.dimensions != this.right.dimensions) {
+    if (
+        (this.left && this.right) &&
+        this.left.dimensions != this.right.dimensions
+    ) {
       throw Error("Operators must have the same dimensions");
     }
 
@@ -325,8 +356,12 @@ class MathOperator extends DataNode {
 }
 
 class NamedTree extends DataNode {
+  static arity = 2;
+  _operand_names = ['name_operand', 'value_operand'];
   constructor(args) {
-    super(args, ['name_operand', 'value_operand'], 2);
+    super(args);
+    this.parseTree();
+
     let value = this.value_operand;
     for (var i=0; i < value._operand_names.length; i++){
       this[value._operand_names[i]] = value._operands[i];
@@ -357,9 +392,11 @@ class NamedTree extends DataNode {
 }
 
 class EmptyTree extends DataNode {
+  _name = 'Empty';
+
   constructor(props) {
-    super(['noop', []], [], 0);
-    this._name = 'Empty';
+    super(['noop', []]);
+    this.parseTree();
   }
 
   render() {
@@ -368,16 +405,15 @@ class EmptyTree extends DataNode {
 }
 
 class ErrorTree extends DataNode {
+  static arity = 2;
+  _operand_names = ['data', 'error'];
   constructor(args, error){
-    super(
-      ['error', [args, error]],
-      ['data', 'error'],
-      2
-    );
+    super(['error', [args, error]]);
+    this.parseTree();
   }
 }
 
-var NODE_TYPES_IMPLEMENTED = {
+DataNode.TYPES = {
   'mean': MeanOperator,
   'tmean': TemporalMeanOperator,
   'smean': SpatialMeanOperator,
@@ -401,11 +437,15 @@ function treeToNode(tree){
   } else if (DataNode.isDataNode(tree)){
     return tree;
   } else {
-    if (!NODE_TYPES_IMPLEMENTED.hasOwnProperty(tree[0])){
+    if (!DataNode.TYPES.hasOwnProperty(tree[0])){
       throw Error("'" + tree[0] + "' is not a valid operator");
     } else {
-      var Operator = NODE_TYPES_IMPLEMENTED[tree[0]];
+      var Operator = DataNode.TYPES[tree[0]];
       return new Operator(tree);
     }
   }
+}
+
+function opArity(operation){
+  return DataNode.TYPES[operation].arity;
 }
