@@ -3,8 +3,26 @@ class DataNode {
   _operand_names = [];
 
   constructor(tree){
+    let self = this;
     /// Consstructor is useless because it can't access subclass properties
     this._tree = tree;
+    return new Proxy(this, {
+      get(target, prop) {
+        let i = self._operand_names.indexOf(prop);
+        if (i >= 0){
+          return self._operand_names[i];
+        }
+        return target[prop];
+      }
+      set(target, prop, value){
+        let i = self._operand_names.indexOf(prop);
+        if (i >= 0){
+          self._operand_names[i] = value;
+        }else{
+          target[prop] = value;
+        }
+      }
+    });
   }
 
   parseTree(){
@@ -27,16 +45,6 @@ class DataNode {
         this._operands.push(treeToNode(['source', [rand]]));
       } else {
         this._operands.push(rand);
-      }
-    }
-
-    if(this._operand_names){
-      for (var i=0; i < this._operand_names.length; i++){
-        Object.defineProperty(this, this._operand_names[i], {
-          get: function(){ return this._operands[i]; },
-          set: function(value){ this._operands[i] = value; }
-        });
-        console.log(Object.getOwnPropertyDescriptor(this, this._operands[i]));
       }
     }
   }
