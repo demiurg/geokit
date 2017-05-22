@@ -195,7 +195,8 @@ function node_editor(state={'mode': DEFAULT}, action){
           name: "",
           source1: "",
           source2: "",
-          isEditing: false,
+          default_name: null,
+          editing: false,
           index: -1
         }
       });

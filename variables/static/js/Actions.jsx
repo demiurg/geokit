@@ -211,7 +211,8 @@ function editInputVariable(node, i){
         name: name,
         source1: node.left,
         source2: node.right,
-        isEditing: true,
+        editing: true,
+        valid: true,
         index: i
       }));
     } else if (node.type == "raster"){
@@ -236,7 +237,7 @@ function editInputVariable(node, i){
         node: node,
         op: node.type,
         operand_refs: null,
-        valid: false
+        valid: true
       }));
     }
   }

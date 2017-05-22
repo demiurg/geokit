@@ -47,13 +47,14 @@ class TreeViewer extends React.Component {
     if (!data.node){
       return <p>Select operation above.</p>;
     }
+
     var operand_inputs = [];
     for (var i = 0; i < data.node.arity; i++) {
       operand_inputs.push(<OperandChooser {...this.props} operand_index={i} />);
     }
 
     return (
-      <span>{data.op} ( {operand_inputs} )</span>
+      <span>{data.op} ( <blockquote>{operand_inputs}</blockquote> )</span>
     );
   }
 }

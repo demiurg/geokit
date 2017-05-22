@@ -18,7 +18,8 @@ class DataNode {
     this._operation = tree[0];
     this._operands = [];
 
-    for (var i=0; i < tree[1].length; i++){
+    for (var i=0; i < this._operand_names.length; i++){
+      // Let rand be undefined, as long as we have right length _operands
       var rand = tree[1][i];
       if (DataNode.isDataTree(rand)){
         this._operands.push(treeToNode(rand));
@@ -31,7 +32,11 @@ class DataNode {
 
     if(this._operand_names){
       for (var i=0; i < this._operand_names.length; i++){
-        this[this._operand_names[i]] = this._operands[i];
+        Object.defineProperty(this, this._operand_names[i], {
+          get: function(){ return this._operands[i]; },
+          set: function(value){ this._operands[i] = value; }
+        });
+        console.log(Object.getOwnPropertyDescriptor(this, this._operands[i]));
       }
     }
   }
@@ -42,6 +47,10 @@ class DataNode {
 
   get type(){
     return this._operation;
+  }
+
+  get arity(){
+    return DataNode.TYPES[this._operation].arity;
   }
 
   operand_types(join){
@@ -309,6 +318,7 @@ class SourceOperator extends DataNode {
     this.parseTree();
 
     this._name = 'Source';
+    console.log(this.operand);
     if (!(this.isSource(this.operand) && this.operand.field)){
       throw Error("Source node is missing some property (id, type, or field");
     }

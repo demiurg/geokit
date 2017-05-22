@@ -208,7 +208,8 @@ function editInputVariable(node, i) {
         name: name,
         source1: node.left,
         source2: node.right,
-        isEditing: true,
+        editing: true,
+        valid: true,
         index: i
       }));
     } else if (node.type == "raster") {
@@ -233,7 +234,7 @@ function editInputVariable(node, i) {
         node: node,
         op: node.type,
         operand_refs: null,
-        valid: false
+        valid: true
       }));
     }
   };
@@ -1445,6 +1446,7 @@ var TreeViewer = function (_React$Component2) {
         'Select operation above.'
       );
     }
+
     var operand_inputs = [];
     for (var i = 0; i < data.node.arity; i++) {
       operand_inputs.push(React.createElement(OperandChooser, _extends({}, this.props, { operand_index: i })));
@@ -1455,7 +1457,11 @@ var TreeViewer = function (_React$Component2) {
       null,
       data.op,
       ' ( ',
-      operand_inputs,
+      React.createElement(
+        'blockquote',
+        null,
+        operand_inputs
+      ),
       ' )'
     );
   };
@@ -2116,17 +2122,19 @@ var TabularDataSource = function (_React$Component) {
   }
 
   TabularDataSource.prototype.onSave = function onSave() {
-    if (this.props.errors.tabularDataName) return; // Do not submit if there are errors
-    var name = this.props.node_editor.tabular_data.name;
+    var data = this.props.node_editor.tabular_data;
+
+    if (data.errors.name) return; // Do not submit if there are errors
+    var name = data.name;
     if (name == null || name.length == 0) {
-      name = this.props.node_editor.tabular_data.defaultName;
+      name = data.default_name;
     }
 
-    var variable = ['named', [name, ['join', [this.props.node_editor.tabular_data.source1, this.props.node_editor.tabular_data.source2]]]];
-    var index = this.props.node_editor.tabular_data.index;
-    var isEditing = this.props.node_editor.tabular_data.isEditing;
+    var variable = ['named', [name, ['join', [data.source1, data.source2]]]];
+    var index = data.index;
+    var editing = data.editing;
 
-    if (isEditing) {
+    if (editing) {
       this.props.onUpdateInputVariable(variable, index);
     } else {
       this.props.onAddInputVariable(variable);
@@ -2137,13 +2145,14 @@ var TabularDataSource = function (_React$Component) {
   };
 
   TabularDataSource.prototype.componentWillReceiveProps = function componentWillReceiveProps(newProps) {
-    if (!newProps.node_editor.tabular_data.defaultName || newProps.input_variables != this.props.input_variables) {
+    var data = this.props.node_editor.tabular_data;
+    if (!newProps.node_editor.tabular_data.default_name || newProps.input_variables != this.props.input_variables) {
       var t1 = newProps.tables.items[0];
       if (t1) {
         var source1 = { name: t1.name, field: t1.field_names[0] };
         var source2 = Object.assign({}, source1);
         var name = this.generateName(source1, source2, newProps.input_variables);
-        var data = Object.assign({}, newProps.node_editor.tabular_data, { defaultName: name });
+        var data = Object.assign({}, newProps.node_editor.tabular_data, { default_name: name });
 
         if (!this.props.node_editor.tabular_data.source1) {
           data.source1 = source1;
@@ -2185,18 +2194,16 @@ var TabularDataSource = function (_React$Component) {
   TabularDataSource.prototype.validate = function validate() {
     var form = $(this.form).serializeArray();
     var name = form[2]['value'];
-    if (name.length > 0) {
-      this.props.onUpdateName(name, "tabularDataName");
-    }
+
     var source1 = JSON.parse(form[0]['value']);
     var source2 = JSON.parse(form[1]['value']);
-    var defaultName = this.generateName(source1, source2);
+    var default_name = this.generateName(source1, source2);
 
     var data = Object.assign({}, this.props.node_editor.tabular_data, {
       name: name,
       source1: source1,
       source2: source2,
-      defaultName: defaultName
+      default_name: default_name
     });
 
     this.props.onUpdateTabularData(data);
@@ -2208,6 +2215,8 @@ var TabularDataSource = function (_React$Component) {
 
   TabularDataSource.prototype.render = function render() {
     var _this2 = this;
+
+    var data = this.props.node_editor.tabular_data;
 
     return React.createElement(
       Panel,
@@ -2258,7 +2267,7 @@ var TabularDataSource = function (_React$Component) {
         React.createElement(
           FormGroup,
           {
-            validationState: this.props.errors.tabularDataName ? 'error' : null,
+            validationState: data.errors.name ? 'error' : null,
             controlId: 'name' },
           React.createElement(
             ControlLabel,
@@ -2267,13 +2276,13 @@ var TabularDataSource = function (_React$Component) {
           ),
           React.createElement(FormControl, {
             name: 'name', type: 'text',
-            placeholder: this.props.node_editor.tabular_data.defaultName,
+            placeholder: this.props.node_editor.tabular_data.default_name,
             value: this.props.node_editor.tabular_data.name
           }),
           React.createElement(
             HelpBlock,
             null,
-            this.props.errors.tabularDataName ? this.props.errors.tabularDataName : "Name must be alphanumeric, without spaces."
+            data.errors.name ? data.errors.name : "Name must be alphanumeric, without spaces."
           )
         ),
         React.createElement(
@@ -2507,7 +2516,8 @@ function node_editor() {
           name: "",
           source1: "",
           source2: "",
-          isEditing: false,
+          default_name: null,
+          editing: false,
           index: -1
         }
       });
@@ -3310,7 +3320,8 @@ var DataNode = function () {
     this._operation = tree[0];
     this._operands = [];
 
-    for (var i = 0; i < tree[1].length; i++) {
+    for (var i = 0; i < this._operand_names.length; i++) {
+      // Let rand be undefined, as long as we have right length _operands
       var rand = tree[1][i];
       if (DataNode.isDataTree(rand)) {
         this._operands.push(treeToNode(rand));
@@ -3323,7 +3334,15 @@ var DataNode = function () {
 
     if (this._operand_names) {
       for (var i = 0; i < this._operand_names.length; i++) {
-        this[this._operand_names[i]] = this._operands[i];
+        Object.defineProperty(this, this._operand_names[i], {
+          get: function get() {
+            return this._operands[i];
+          },
+          set: function set(value) {
+            this._operands[i] = value;
+          }
+        });
+        console.log(Object.getOwnPropertyDescriptor(this, this._operands[i]));
       }
     }
   };
@@ -3430,6 +3449,11 @@ var DataNode = function () {
     key: "type",
     get: function get() {
       return this._operation;
+    }
+  }, {
+    key: "arity",
+    get: function get() {
+      return DataNode.TYPES[this._operation].arity;
     }
   }, {
     key: "name",
@@ -3703,6 +3727,7 @@ var SourceOperator = function (_DataNode8) {
     _this8.parseTree();
 
     _this8._name = 'Source';
+    console.log(_this8.operand);
     if (!(_this8.isSource(_this8.operand) && _this8.operand.field)) {
       throw Error("Source node is missing some property (id, type, or field");
     }

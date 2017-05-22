@@ -1,11 +1,13 @@
 
 class TabularDataSource extends React.Component {
   onSave() {
-    if (this.props.errors.tabularDataName)
+    var data = this.props.node_editor.tabular_data;
+
+    if (data.errors.name)
       return; // Do not submit if there are errors
-    var name = this.props.node_editor.tabular_data.name;
+    var name = data.name;
     if (name == null || name.length == 0){
-      name = this.props.node_editor.tabular_data.defaultName;
+      name = data.default_name;
     }
 
     var variable = ['named', [
@@ -13,15 +15,15 @@ class TabularDataSource extends React.Component {
       [
         'join',
         [
-          this.props.node_editor.tabular_data.source1,
-          this.props.node_editor.tabular_data.source2
+          data.source1,
+          data.source2
         ]
       ]]
     ];
-    var index = this.props.node_editor.tabular_data.index;
-    var isEditing = this.props.node_editor.tabular_data.isEditing;
+    var index = data.index;
+    var editing = data.editing;
 
-    if (isEditing){
+    if (editing){
       this.props.onUpdateInputVariable(variable, index);
     } else {
       this.props.onAddInputVariable(variable);
@@ -32,7 +34,8 @@ class TabularDataSource extends React.Component {
   }
 
   componentWillReceiveProps(newProps){
-    if (!newProps.node_editor.tabular_data.defaultName ||
+    var data = this.props.node_editor.tabular_data;
+    if (!newProps.node_editor.tabular_data.default_name ||
         newProps.input_variables != this.props.input_variables
       ){
       var t1 = newProps.tables.items[0];
@@ -43,7 +46,7 @@ class TabularDataSource extends React.Component {
         var data = Object.assign(
           {},
           newProps.node_editor.tabular_data,
-          {defaultName: name}
+          {default_name: name}
         );
 
         if (!this.props.node_editor.tabular_data.source1){
@@ -84,12 +87,10 @@ class TabularDataSource extends React.Component {
   validate() {
     var form = $(this.form).serializeArray();
     var name = form[2]['value'];
-    if (name.length > 0){
-      this.props.onUpdateName(name, "tabularDataName");
-    }
+
     var source1 = JSON.parse(form[0]['value']);
     var source2 = JSON.parse(form[1]['value']);
-    var defaultName = this.generateName(source1, source2);
+    var default_name = this.generateName(source1, source2);
 
     var data = Object.assign(
       {},
@@ -98,7 +99,7 @@ class TabularDataSource extends React.Component {
         name: name,
         source1: source1,
         source2: source2,
-        defaultName: defaultName
+        default_name: default_name
       }
     );
 
@@ -110,6 +111,8 @@ class TabularDataSource extends React.Component {
   }
 
   render() {
+    var data = this.props.node_editor.tabular_data;
+
     return (
       <Panel header="Tabular data">
         <form ref={(ref)=>{this.form=ref}} onChange={this.validate.bind(this)}>
@@ -147,17 +150,17 @@ class TabularDataSource extends React.Component {
             </FormControl>
           </FormGroup>
           <FormGroup
-          validationState={this.props.errors.tabularDataName ? 'error' : null}
+          validationState={data.errors.name ? 'error' : null}
           controlId="name">
             <ControlLabel>Name</ControlLabel>
             <FormControl
               name="name" type="text"
-              placeholder={this.props.node_editor.tabular_data.defaultName}
+              placeholder={this.props.node_editor.tabular_data.default_name}
               value={this.props.node_editor.tabular_data.name}
             />
             <HelpBlock>
-              {this.props.errors.tabularDataName ?
-                this.props.errors.tabularDataName :
+              {data.errors.name ?
+                data.errors.name :
                 "Name must be alphanumeric, without spaces."}
             </HelpBlock>
           </FormGroup>
