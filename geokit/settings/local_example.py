@@ -14,9 +14,6 @@ from .base import DATABASES, GEOKIT_HOSTS, ALLOWED_HOSTS
 ## Make sure this matches your domain
 #SESSION_COOKIE_DOMAIN = '.testserver'
 
-## Default Data Handler port is 8001
-#RPC_URL = 'http://schedtst.ags.io:8001'
-
 #MEDIA_ROOT = '/net/oka/web/geokit/media'
 
 # Add any site administrators here
