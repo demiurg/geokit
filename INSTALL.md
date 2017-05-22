@@ -194,6 +194,13 @@ cheaper-step = 1
 
 Symlink the ini file in /etc/uwsgi/apps-available/ to /etc/uwsgi/apps-enabled/
 
+Create the directories for the logs and PID files
+
+```
+sudo mkdir /var/log/uwsgi/app
+sudo mkdir /run/uwsgi
+```
+
 Start uwsgi daemons
 
 `uwsgi  --ini /etc/uwsgi/apps-enabled/geokit.ini --daemonize /var/log/uwsgi/app/geokit.log`
