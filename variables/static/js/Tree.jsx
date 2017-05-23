@@ -24,7 +24,10 @@ class DataNode {
       var rand_object = null;
       if (DataNode.isDataTree(rand)){
         rand_object = treeToNode(rand);
-      } else if (this._operation != 'source' && this.isSource(rand)){
+      } else if (
+        this._operation != 'source' && this.isSource(rand) &&
+        !DataNode.isDataNode(rand)
+      ){
         rand_object = treeToNode(['source', [rand]]);
       } else {
         rand_object = rand;
@@ -414,7 +417,6 @@ class NamedTree extends DataNode {
 
 class EmptyTree extends DataNode {
   _name = 'Empty';
-
   constructor(props) {
     super(['noop', []]);
     this.parseTree();

@@ -23,6 +23,7 @@ class OperandChooser extends React.Component {
     );
 
     return valid_input_vars.map((input_var) => {
+      console.log(input_var, input_var.name);
       return {value: input_var.name, label: input_var.name};
     });
   }

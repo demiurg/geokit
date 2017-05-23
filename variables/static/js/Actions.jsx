@@ -156,18 +156,20 @@ function receiveInputVariables(input_variables) {
   } else {
     var last_input_var = null;
     var spatial_domain = null;
-    var input_nodes = [];
+    var input_nodes = Array(input_variables.length);
     for (let i=input_variables.length-1; i >= 0; i--){
       let ivnode = treeToNode(input_variables[i]);
-      let layers = ivnode.layers;
-      if (layers.length > 0) {
-        spatial_domain = layers[layers.length - 1].operand.id;
-        break;
+      input_nodes[i] = ivnode;
+      if (!spatial_domain){
+        let layers = ivnode.layers;
+        if(layers.length > 0) {
+          spatial_domain = layers[layers.length - 1].operand.id;
+        }
       }
     }
     return {
       type: RECEIVE_INPUT_VARIABLES,
-      input_variables: input_variables,
+      input_variables: input_nodes,
       spatial_domain: spatial_domain
     };
   }

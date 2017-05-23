@@ -71,7 +71,7 @@ function sieveApp(state=initialState, action){
     case UPDATE_TREE:
       return Object.assign({}, state, {
         changed: true,
-        tree: action.tree,
+        tree: action.tree.json ? action.tree.json : action.tree,
         errors: Object.assign({}, state.errors, {tree: action.error})
       });
     case UPDATE_ERRORS:
@@ -290,12 +290,7 @@ class VariableTable extends React.Component {
             </tr>
           </thead>
           <tbody>
-            {this.props.input_variables.map((item, i) => {
-              var node = item;
-              if (!DataNode.isDataNode(item)){
-                node = treeToNode(item);
-              }
-
+            {this.props.input_variables.map((node, i) => {
               return (
                 <tr>
                   <td>{node.name}</td>
@@ -303,7 +298,7 @@ class VariableTable extends React.Component {
                   <td>{node.value.dimensions}</td>
                   <td>
                     <Button onClick={
-                      () => this.useInputVariable(item, node.name)
+                      () => this.useInputVariable(node.json(), node.name)
                     }>Use</Button>
                     <Button onClick={
                       () => this.props.onEditInputVariable(node, i)

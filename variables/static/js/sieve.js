@@ -153,18 +153,20 @@ function receiveInputVariables(input_variables) {
   } else {
     var last_input_var = null;
     var spatial_domain = null;
-    var input_nodes = [];
+    var input_nodes = Array(input_variables.length);
     for (var i = input_variables.length - 1; i >= 0; i--) {
       var ivnode = treeToNode(input_variables[i]);
-      var layers = ivnode.layers;
-      if (layers.length > 0) {
-        spatial_domain = layers[layers.length - 1].operand.id;
-        break;
+      input_nodes[i] = ivnode;
+      if (!spatial_domain) {
+        var layers = ivnode.layers;
+        if (layers.length > 0) {
+          spatial_domain = layers[layers.length - 1].operand.id;
+        }
       }
     }
     return {
       type: RECEIVE_INPUT_VARIABLES,
-      input_variables: input_variables,
+      input_variables: input_nodes,
       spatial_domain: spatial_domain
     };
   }
@@ -1409,6 +1411,7 @@ var OperandChooser = function (_React$Component) {
     var valid_input_vars = data.node.validOperands(this.props.input_variables, data.operand_refs, this.props.operand_index);
 
     return valid_input_vars.map(function (input_var) {
+      console.log(input_var, input_var.name);
       return { value: input_var.name, label: input_var.name };
     });
   };
@@ -2641,7 +2644,7 @@ function sieveApp() {
     case UPDATE_TREE:
       return Object.assign({}, state, {
         changed: true,
-        tree: action.tree,
+        tree: action.tree.json ? action.tree.json : action.tree,
         errors: Object.assign({}, state.errors, { tree: action.error })
       });
     case UPDATE_ERRORS:
@@ -2899,12 +2902,7 @@ var VariableTable = function (_React$Component2) {
         React.createElement(
           "tbody",
           null,
-          this.props.input_variables.map(function (item, i) {
-            var node = item;
-            if (!DataNode.isDataNode(item)) {
-              node = treeToNode(item);
-            }
-
+          this.props.input_variables.map(function (node, i) {
             return React.createElement(
               "tr",
               null,
@@ -2929,7 +2927,7 @@ var VariableTable = function (_React$Component2) {
                 React.createElement(
                   Button,
                   { onClick: function onClick() {
-                      return _this4.useInputVariable(item, node.name);
+                      return _this4.useInputVariable(node.json(), node.name);
                     } },
                   "Use"
                 ),
@@ -3327,7 +3325,7 @@ var DataNode = function () {
       var rand_object = null;
       if (DataNode.isDataTree(rand)) {
         rand_object = treeToNode(rand);
-      } else if (this._operation != 'source' && this.isSource(rand)) {
+      } else if (this._operation != 'source' && this.isSource(rand) && !DataNode.isDataNode(rand)) {
         rand_object = treeToNode(['source', [rand]]);
       } else {
         rand_object = rand;
@@ -3828,7 +3826,7 @@ var NamedTree = function (_DataNode10) {
   }
 
   NamedTree.prototype.json = function json() {
-    return ['named', [this.name_operand, this.valie_operand]];
+    return ['named', [this._name, this.value.json ? this.value.json() : this.value]];
   };
 
   NamedTree.prototype.render = function render() {
@@ -3841,7 +3839,7 @@ var NamedTree = function (_DataNode10) {
         this.name
       ),
       ": ",
-      this.value_operand.render()
+      this.value.render()
     );
   };
 
