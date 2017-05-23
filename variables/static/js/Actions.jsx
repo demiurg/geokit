@@ -205,6 +205,8 @@ function editInputVariable(node, i){
     name = node.name_operand;
   }
 
+  console.log(name);
+
   return function(dispatch){
     if (node.type == "join"){
       dispatch(updateTabularData({
