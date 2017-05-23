@@ -940,7 +940,12 @@ var Map = function (_React$Component) {
             var fdata = self.state.data[feature.properties.shaid];
             var color = "#000";
             var opacity = 0.1;
-            var weight = 1;
+
+            if (_this.props.current_feature == feature.properties.shaid) {
+                var weight = 3;
+            } else {
+                var weight = 1;
+            }
 
             if (fdata) {
                 var value;
@@ -980,17 +985,15 @@ var Map = function (_React$Component) {
                 },
                 click: function click(e) {
                     var feature = e.target.feature;
-                    console.log(layer);
                     layer.setStyle(self.getStyle(true, feature));
                     if (feature.properties) {
                         self.props.changeFeature(feature.properties.shaid);
-                        var popupString = '<div class="popup">';
-                        for (var k in feature.properties) {
-                            var v = feature.properties[k];
-                            popupString += k + ': ' + v + '<br />';
-                        }
-                        popupString += '</div>';
-                        layer.bindPopup(popupString).openPopup();
+
+                        self.layers.forEach(function (layer) {
+                            layer.geojsonLayer.eachLayer(function (l) {
+                                l.setStyle(self.getStyle(false, l.feature));
+                            });
+                        });
                     }
                 }
             });
