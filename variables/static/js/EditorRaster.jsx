@@ -125,6 +125,8 @@ class RasterDataSource extends React.Component {
       ]
     ]];
 
+    variable = DataNode.toNode(variable);
+
     if (data.editing){
       this.props.onUpdateInputVariable(variable, data.index);
     } else {

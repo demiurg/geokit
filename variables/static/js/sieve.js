@@ -1872,6 +1872,8 @@ var RasterDataSource = function (_React$Component2) {
 
     var variable = ['named', [name, ['raster', [data.product, ['source', [layer]], data.date_range]]]];
 
+    variable = DataNode.toNode(variable);
+
     if (data.editing) {
       this.props.onUpdateInputVariable(variable, data.index);
     } else {
@@ -3132,7 +3134,9 @@ var SieveComponent = function (_React$Component4) {
         id: _this7.props.id,
         name: _this7.props.name,
         tree: _this7.props.tree,
-        input_variables: _this7.props.input_variables,
+        input_variables: _this7.props.input_variables.map(function (v) {
+          return DataNode.toTree(v);
+        }),
         description: _this7.props.description
       }, _this7.props.created);
     }, _temp2), _possibleConstructorReturn(_this7, _ret2);
@@ -3430,6 +3434,22 @@ var DataNode = function () {
 
   DataNode.Class = function Class(name) {
     return DataNode.TYPES[name];
+  };
+
+  DataNode.toNode = function toNode(arg) {
+    if (!DataNode.isDataNode(arg) && DataNode.isDataTree(arg)) {
+      return treeToNode(arg);
+    } else {
+      return arg;
+    }
+  };
+
+  DataNode.toTree = function toTree(arg) {
+    if (DataNode.isDataNode(arg) && !DataNode.isDataTree(arg)) {
+      return arg.json();
+    } else {
+      return arg;
+    }
   };
 
   _createClass(DataNode, [{

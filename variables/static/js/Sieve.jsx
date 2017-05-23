@@ -402,7 +402,7 @@ class SieveComponent extends React.Component {
       id: this.props.id,
       name: this.props.name,
       tree: this.props.tree,
-      input_variables: this.props.input_variables,
+      input_variables: this.props.input_variables.map((v) => DataNode.toTree(v)),
       description: this.props.description
     }, this.props.created);
   };

@@ -190,6 +190,22 @@ class DataNode {
   static Class(name){
     return DataNode.TYPES[name];
   }
+
+  static toNode(arg){
+    if (!DataNode.isDataNode(arg) && DataNode.isDataTree(arg)){
+      return treeToNode(arg);
+    }else{
+      return arg;
+    }
+  }
+
+  static toTree(arg){
+    if (DataNode.isDataNode(arg) && !DataNode.isDataTree(arg)){
+      return arg.json();
+    }else{
+      return arg;
+    }
+  }
 }
 
 class MeanOperator extends DataNode {
