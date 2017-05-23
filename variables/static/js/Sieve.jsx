@@ -431,7 +431,7 @@ class SieveComponent extends React.Component {
     this.props.name;
     if (this.props.tree && this.props.tree.length) {
       var final = treeToNode(this.props.tree);
-      final_render = <div>
+      final_render = (<div>
         <form>
           <FormGroup controlId="range"
             validationState={this.props.errors.name ? "error" : null}
@@ -452,13 +452,32 @@ class SieveComponent extends React.Component {
         <p>{final.render()}</p>
         <p>
           {(this.props.changed && valid) ?
-            <button className='button button-secondary' onClick={this.saveVariable}>Save Changes</button>
+            <button
+              className='button'
+              onClick={this.saveVariable}
+            >
+              Save Changes
+            </button>
           : null}
           {this.props.id ?
-            <a href={`/admin/variables/delete/${this.props.id}`} className='button serious'>Delete</a>
+            <div className='pull-right'>
+              <a
+                href={`/admin/variables/delete/${this.props.id}`}
+                className='button serious'
+              >
+                Delete
+              </a>
+            </div>
           : null}
         </p>
-      </div>;
+        <p>
+          <dl>
+            <dt>Created</dt> <dd>{this.props.created}</dd>
+            <dt>Last modified</dt> <dd>{this.props.modified}</dd>
+            <dt>Layers users</dt> <dd>{final.layers.map(l => [l.render(), <br/>])}</dd>
+          </dl>
+        </p>
+      </div>);
     } else {
       final_render = <p>Use controls to build and use the variable</p>;
     }

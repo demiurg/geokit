@@ -3204,14 +3204,67 @@ var SieveComponent = function (_React$Component4) {
           null,
           this.props.changed && valid ? React.createElement(
             "button",
-            { className: "button button-secondary", onClick: this.saveVariable },
+            {
+              className: "button",
+              onClick: this.saveVariable
+            },
             "Save Changes"
           ) : null,
           this.props.id ? React.createElement(
-            "a",
-            { href: "/admin/variables/delete/" + this.props.id, className: "button serious" },
-            "Delete"
+            "div",
+            { className: "pull-right" },
+            React.createElement(
+              "a",
+              {
+                href: "/admin/variables/delete/" + this.props.id,
+                className: "button serious"
+              },
+              "Delete"
+            )
           ) : null
+        ),
+        React.createElement(
+          "p",
+          null,
+          React.createElement(
+            "dl",
+            null,
+            React.createElement(
+              "dt",
+              null,
+              "Created"
+            ),
+            " ",
+            React.createElement(
+              "dd",
+              null,
+              this.props.created
+            ),
+            React.createElement(
+              "dt",
+              null,
+              "Last modified"
+            ),
+            " ",
+            React.createElement(
+              "dd",
+              null,
+              this.props.modified
+            ),
+            React.createElement(
+              "dt",
+              null,
+              "Layers users"
+            ),
+            " ",
+            React.createElement(
+              "dd",
+              null,
+              final.layers.map(function (l) {
+                return [l.render(), React.createElement("br", null)];
+              })
+            )
+          )
         )
       );
     } else {
@@ -3330,8 +3383,10 @@ var DataNode = function () {
       if (DataNode.isDataTree(rand)) {
         rand_object = treeToNode(rand);
       } else if (this._operation != 'source' && this.isSource(rand) && !DataNode.isDataNode(rand)) {
+        console.log(rand);
         rand_object = treeToNode(['source', [rand]]);
       } else {
+        console.log(rand);
         rand_object = rand;
       }
       this._operands.push(rand_object);
@@ -3421,7 +3476,7 @@ var DataNode = function () {
   };
 
   DataNode.isSource = function isSource(obj) {
-    return obj && obj.id && obj.type;
+    return obj && obj.id && obj.type && (obj.type == 'Layer' || obj.type == 'Table');
   };
 
   DataNode.prototype.isSource = function isSource(obj) {
@@ -3687,82 +3742,32 @@ var JoinOperator = function (_DataNode6) {
 
 JoinOperator.arity = 2;
 
-var RasterOperator = function (_DataNode7) {
-  _inherits(RasterOperator, _DataNode7);
-
-  function RasterOperator(tree) {
-    _classCallCheck(this, RasterOperator);
-
-    var _this7 = _possibleConstructorReturn(this, _DataNode7.call(this, tree));
-
-    _this7._operand_names = ['product', 'layer', 'range'];
-    _this7._name = 'Raster';
-    _this7._dimensions = 'spacetime';
-
-    _this7.parseTree();
-    var range_arr = _this7.range.split(',');
-    _this7.start = range_arr[0];
-    _this7.start_date = RasterOperator.julianToDate(_this7.start);
-    _this7.end = range_arr[1];
-    _this7.end_date = RasterOperator.julianToDate(_this7.end);
-    return _this7;
-  }
-
-  RasterOperator.julianToDate = function julianToDate(str) {
-    var doy = parseInt(str.split('-')[1]);
-    var year = parseInt(str.split('-')[0]);
-    var date = new Date(year, 0);
-    date.setDate(doy);
-    return date;
-  };
-
-  RasterOperator.prototype.render = function render() {
-    return React.createElement(
-      "span",
-      null,
-      "Raster product ",
-      this.product.name,
-      "\xA0 using ",
-      this.layer.render(),
-      "in the time span of ",
-      this.start,
-      " - ",
-      this.end
-    );
-  };
-
-  return RasterOperator;
-}(DataNode);
-
-RasterOperator.arity = 3;
-
-var SourceOperator = function (_DataNode8) {
-  _inherits(SourceOperator, _DataNode8);
+var SourceOperator = function (_DataNode7) {
+  _inherits(SourceOperator, _DataNode7);
 
   function SourceOperator(tree) {
     _classCallCheck(this, SourceOperator);
 
-    var _this8 = _possibleConstructorReturn(this, _DataNode8.call(this, tree));
+    var _this7 = _possibleConstructorReturn(this, _DataNode7.call(this, tree));
 
-    _this8._operand_names = ['operand'];
+    _this7._operand_names = ['operand'];
+    _this7._name = 'Source';
 
-    _this8.parseTree();
+    _this7.parseTree();
 
-    _this8._name = 'Source';
-
-    if (!(_this8.isSource(_this8.operand) && _this8.operand.field)) {
+    if (!(_this7.isSource(_this7.operand) && _this7.operand.field)) {
       throw Error("Source node is missing some property (id, type, or field");
     }
 
-    if (_this8.operand.type == 'Layer') {
-      _this8._dimensions = 'space';
-    } else if (_this8.operand.type == 'Table') {
-      _this8._dimensions = 'time';
+    if (_this7.operand.type == 'Layer') {
+      _this7._dimensions = 'space';
+    } else if (_this7.operand.type == 'Table') {
+      _this7._dimensions = 'time';
     } else {
       throw Error("Source type unknown");
     }
-    _this8['id'] = _this8.operand.id;
-    return _this8;
+    _this7['id'] = _this7.operand.id;
+    return _this7;
   }
 
   SourceOperator.prototype.render = function render() {
@@ -3779,6 +3784,61 @@ var SourceOperator = function (_DataNode8) {
 }(DataNode);
 
 SourceOperator.arity = 1;
+
+var RasterOperator = function (_DataNode8) {
+  _inherits(RasterOperator, _DataNode8);
+
+  function RasterOperator(tree) {
+    _classCallCheck(this, RasterOperator);
+
+    var _this8 = _possibleConstructorReturn(this, _DataNode8.call(this, tree));
+
+    _this8._operand_names = ['product', 'layer', 'range'];
+    _this8._name = 'Raster';
+    _this8._dimensions = 'spacetime';
+
+    _this8.parseTree();
+    var range_arr = _this8.range.split(',');
+    _this8.start = range_arr[0];
+    _this8.start_date = RasterOperator.julianToDate(_this8.start);
+    _this8.end = range_arr[1];
+    _this8.end_date = RasterOperator.julianToDate(_this8.end);
+    return _this8;
+  }
+
+  RasterOperator.julianToDate = function julianToDate(str) {
+    var doy = parseInt(str.split('-')[1]);
+    var year = parseInt(str.split('-')[0]);
+    var date = new Date(year, 0);
+    date.setDate(doy);
+    return date;
+  };
+
+  RasterOperator.prototype.render = function render() {
+    var layer = "no layer";
+    if (this.layer.render) {
+      layer = this.layer.render();
+    } else {
+      console.log(this.layer, this.layer.json);
+    }
+    return React.createElement(
+      "span",
+      null,
+      "Raster product ",
+      this.product.name,
+      "\xA0 using ",
+      layer,
+      "\xA0 in the time span of ",
+      this.start,
+      " - ",
+      this.end
+    );
+  };
+
+  return RasterOperator;
+}(DataNode);
+
+RasterOperator.arity = 3;
 
 var MathOperator = function (_DataNode9) {
   _inherits(MathOperator, _DataNode9);
@@ -3834,12 +3894,6 @@ var NamedTree = function (_DataNode10) {
     _this10._operand_names = ['name_operand', 'value'];
 
     _this10.parseTree();
-    /*
-    let value = this.value_operand;
-    for (var i=0; i < value._operand_names.length; i++){
-      this[value._operand_names[i]] = value._operands[i];
-    }
-    */
     _this10.dimensions = _this10.value.dimensions;
     _this10._name = _this10.name_operand;
     return _this10;

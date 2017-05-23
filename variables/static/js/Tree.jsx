@@ -176,7 +176,7 @@ class DataNode {
   }
 
   static isSource(obj){
-    return (obj && (obj.id && obj.type));
+    return (obj && (obj.id && obj.type && (obj.type == 'Layer' || obj.type == 'Table')));
   }
 
   isSource(obj){
@@ -305,6 +305,38 @@ class JoinOperator extends DataNode {
   }
 }
 
+class SourceOperator extends DataNode {
+  static arity = 1;
+  _operand_names = ['operand'];
+  _name = 'Source';
+  constructor(tree) {
+    super(tree);
+    this.parseTree();
+
+    if (!(this.isSource(this.operand) && this.operand.field)){
+      throw Error("Source node is missing some property (id, type, or field");
+    }
+
+    if (this.operand.type == 'Layer') {
+      this._dimensions = 'space';
+    } else if (this.operand.type == 'Table') {
+      this._dimensions = 'time';
+    } else {
+      throw Error("Source type unknown");
+    }
+    this['id'] = this.operand.id;
+  }
+
+  render(){
+    var o = this.operand;
+    return (
+      <span>
+        {o.type + "/" + o.name + ( o.field ? "/" + o.field : "")}&nbsp;
+      </span>
+    );
+  }
+}
+
 class RasterOperator extends DataNode {
   static arity = 3;
   _operand_names = ['product', 'layer', 'range'];
@@ -329,44 +361,19 @@ class RasterOperator extends DataNode {
   }
 
   render() {
+    var layer = "no layer";
+    if (this.layer.render){
+      layer = this.layer.render();
+    }else{
+      console.log(this.layer, this.layer.json);
+    }
     return (
       <span>
         Raster product {this.product.name}&nbsp;
-        using {this.layer.render()}
+        using {layer}&nbsp;
         in the time span of {this.start} - {this.end}
       </span>
     );
-  }
-}
-
-class SourceOperator extends DataNode {
-  static arity = 1;
-  _operand_names = ['operand'];
-  constructor(tree) {
-    super(tree);
-    this.parseTree();
-
-    this._name = 'Source';
-
-    if (!(this.isSource(this.operand) && this.operand.field)){
-      throw Error("Source node is missing some property (id, type, or field");
-    }
-
-    if (this.operand.type == 'Layer') {
-      this._dimensions = 'space';
-    } else if (this.operand.type == 'Table') {
-      this._dimensions = 'time';
-    } else {
-      throw Error("Source type unknown");
-    }
-    this['id'] = this.operand.id;
-  }
-
-  render(){
-    var o = this.operand;
-    return <span>
-      {o.type + "/" + o.name + ( o.field ? "/" + o.field : "")}&nbsp;
-    </span>;
   }
 }
 
@@ -412,12 +419,6 @@ class NamedTree extends DataNode {
   constructor(args) {
     super(args);
     this.parseTree();
-    /*
-    let value = this.value_operand;
-    for (var i=0; i < value._operand_names.length; i++){
-      this[value._operand_names[i]] = value._operands[i];
-    }
-    */
     this.dimensions = this.value.dimensions;
     this._name = this.name_operand;
   }
