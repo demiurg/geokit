@@ -82,7 +82,11 @@ function getCookie(name) {
 {% endblock %}
 
 {% block content %}
+{% if variable.name %}
+{% include "wagtailadmin/shared/header.html" with title="Edit variable" icon="placeholder" add_link="variables:add" add_text="Add Variable" %}
+{% else %}
 {% include "wagtailadmin/shared/header.html" with title="Add new variable" icon="placeholder" add_link="variables:add" add_text="Add Variable" %}
+{% endif %}
 
 <div class="nice-padding">
     <div id="sieve-container"></div>
