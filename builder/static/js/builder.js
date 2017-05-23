@@ -957,12 +957,17 @@ var Map = function (_React$Component) {
                     value = fdata[date];
                     opacity = 0.7;
                 }
-                color = self.color_scale(value);
+                if (!value) {
+                    color = "#000";
+                    opacity = 0;
+                } else {
+                    color = self.color_scale(value);
+                }
             } else {
                 //console.log('no ' + feature.properties.shaid);
             }
 
-            if (active) {
+            if (active && value) {
                 opacity = 0.9;
             }
 
