@@ -92,7 +92,7 @@ ALLOWED_HOSTS.append('.geokit.testserver')
 DATABASES['default']['TEST'] = {'NAME': 'test_geokit' }
 
 ## Make sure this address points to your data handler
-RPC_URL = http://localhost:8001
+RPC_URL = 'http://localhost:8001'
 
 ## Ensure this is off in a production environment
 DEBUG = True
@@ -193,6 +193,13 @@ cheaper-step = 1
 ```
 
 Symlink the ini file in /etc/uwsgi/apps-available/ to /etc/uwsgi/apps-enabled/
+
+Create the directories for the logs and PID files
+
+```
+sudo mkdir /var/log/uwsgi/app
+sudo mkdir /run/uwsgi
+```
 
 Start uwsgi daemons
 

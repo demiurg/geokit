@@ -48,6 +48,9 @@ def get_raster_statuses(variable):
     rasters = variable.get_rasters()
     statuses = {}
 
+    from variables.data import new_rpc_con
+    conn = new_rpc_con()
+
     for r in rasters:
         try:
             job_request = RasterRequest.objects.get(
@@ -55,7 +58,7 @@ def get_raster_statuses(variable):
                 dates=r.dates,
                 vector=r.get_layer()
             )
-            statuses[r.raster['id']] = job_request.status
+            statuses[r.raster['id']] = conn.get_status(job_request.job_id)[0]
         except RasterRequest.DoesNotExist:
             statuses[r.raster['id']] = None
 
@@ -65,6 +68,7 @@ def get_raster_statuses(variable):
 def index(request):
     variables = Variable.objects.all().order_by('-modified')
     raster_statuses = [get_raster_statuses(v) for v in variables]
+    print(raster_statuses)
     variables_and_statuses = zip(variables, raster_statuses)
     return render(request, 'variables/index.html', {"variables_and_statuses": variables_and_statuses})
 
