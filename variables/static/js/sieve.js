@@ -158,6 +158,7 @@ function receiveInputVariables(input_variables) {
       var ivnode = treeToNode(input_variables[i]);
       input_nodes[i] = ivnode;
       if (!spatial_domain) {
+        console.log(ivnode);
         var layers = ivnode.layers;
         if (layers.length > 0) {
           spatial_domain = layers[layers.length - 1].operand.id;
@@ -1401,7 +1402,12 @@ var OperandChooser = function (_React$Component) {
     var operand_ref = e ? e.value : null;
     operand_refs[this.props.operand_index] = operand_ref;
 
-    var data = Object.assign({}, this.props.node_editor.expression_data, { operand_refs: operand_refs });
+    var data = Object.assign({}, this.props.node_editor.expression_data, {
+      operand_refs: operand_refs,
+      valid: operand_refs.reduce(function (acc, val) {
+        return acc && val;
+      })
+    });
     this.props.onUpdateExpressionData(data);
   };
 
@@ -1411,17 +1417,20 @@ var OperandChooser = function (_React$Component) {
     var valid_input_vars = data.node.validOperands(this.props.input_variables, data.operand_refs, this.props.operand_index);
 
     return valid_input_vars.map(function (input_var) {
-      console.log(input_var, input_var.name);
       return { value: input_var.name, label: input_var.name };
     });
   };
 
   OperandChooser.prototype.render = function render() {
+    var _this2 = this;
+
     return React.createElement(
       'div',
       { style: { display: "inline-block", width: 400 } },
       React.createElement(Select, {
-        onChange: this.changeOperand.bind(this),
+        onChange: function onChange(e) {
+          return _this2.changeOperand(e);
+        },
         value: this.props.node_editor.expression_data.operand_refs[this.props.operand_index],
         options: this.options(),
         clearable: true
@@ -1479,15 +1488,15 @@ var ExpressionEditor = function (_React$Component3) {
   function ExpressionEditor(props) {
     _classCallCheck(this, ExpressionEditor);
 
-    var _this3 = _possibleConstructorReturn(this, _React$Component3.call(this, props));
+    var _this4 = _possibleConstructorReturn(this, _React$Component3.call(this, props));
 
-    _this3.props.onUpdateExpressionData(Object.assign({}, props.node_editor.expression_data.data, { default_name: _this3.generateName(props.input_variables) }));
-    return _this3;
+    _this4.props.onUpdateExpressionData(Object.assign({}, _this4.props.node_editor.expression_data.data, { default_name: _this4.generateName(props.input_variables) }));
+    return _this4;
   }
 
   ExpressionEditor.prototype.componentWillReceiveProps = function componentWillReceiveProps(newProps) {
     if (!newProps.node_editor.expression_data.default_name || newProps.input_variables != this.props.input_variables) {
-      this.props.onUpdateExpressionData(Object.assign({}, props.node_editor.expression_data.data, { default_name: this.generateName(newProps.input_variables) }));
+      this.props.onUpdateExpressionData(Object.assign({}, this.props.node_editor.expression_data.data, { default_name: this.generateName(newProps.input_variables) }));
     }
   };
 
@@ -1516,20 +1525,20 @@ var ExpressionEditor = function (_React$Component3) {
   };
 
   ExpressionEditor.prototype.addOp = function addOp(op) {
-    var node = treeToNode([op, []]);
+    var node = DataNode.Class(op);
     var expression_data = Object.assign({}, this.props.node_editor.expression_data, { op: op, operand_refs: Array(node.arity), node: node });
     this.props.onUpdateExpressionData(expression_data);
   };
 
   ExpressionEditor.prototype.populateOperands = function populateOperands(arity) {
-    var _this4 = this;
+    var _this5 = this;
 
     var operands = [];
 
     for (var i = 0; i < arity; i++) {
       var operand_tree = this.props.input_variables.filter(function (input_var) {
         // This relies on unique names in input variables table.
-        return input_var.name == _this4.props.node_editor.expression_data.operand_refs[i].name;
+        return input_var.name == _this5.props.node_editor.expression_data.operand_refs[i].name;
       })[0];
 
       operands.push(operand_tree);
@@ -1560,7 +1569,7 @@ var ExpressionEditor = function (_React$Component3) {
   };
 
   ExpressionEditor.prototype.render = function render() {
-    var _this5 = this;
+    var _this6 = this;
 
     var data = this.props.node_editor.expression_data;
 
@@ -1573,7 +1582,7 @@ var ExpressionEditor = function (_React$Component3) {
         React.createElement(FormControl, { componentClass: 'input',
           placeholder: data.default_name,
           onChange: function onChange() {
-            return _this5.changeName();
+            return _this6.changeName();
           },
           value: data.name })
       ),
@@ -1589,42 +1598,49 @@ var ExpressionEditor = function (_React$Component3) {
             React.createElement(
               Button,
               { onClick: function onClick(e) {
-                  return _this5.addOp('+');
+                  return _this6.addOp('+');
                 } },
               '+'
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
-                  return _this5.addOp('-');
+                  return _this6.addOp('-');
                 } },
               '-'
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
-                  return _this5.addOp('*');
+                  return _this6.addOp('*');
                 } },
               '*'
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
-                  return _this5.addOp('/');
+                  return _this6.addOp('/');
                 } },
               '/'
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
-                  return _this5.addOp('tmean');
+                  return _this6.addOp('mean');
+                } },
+              'Arithmetic Mean'
+            ),
+            React.createElement(
+              Button,
+              { onClick: function onClick(e) {
+                  return _this6.addOp('tmean');
                 } },
               'Temporal Mean'
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
-                  return _this5.addOp('smean');
+                  return _this6.addOp('smean');
                 } },
               'Spatial Mean'
             )
@@ -3200,8 +3216,8 @@ var SieveComponent = function (_React$Component4) {
           final.render()
         ),
         React.createElement(
-          "p",
-          null,
+          "div",
+          { className: "btn-group" },
           this.props.changed && valid ? React.createElement(
             "button",
             {
@@ -3211,16 +3227,12 @@ var SieveComponent = function (_React$Component4) {
             "Save Changes"
           ) : null,
           this.props.id ? React.createElement(
-            "div",
-            { className: "pull-right" },
-            React.createElement(
-              "a",
-              {
-                href: "/admin/variables/delete/" + this.props.id,
-                className: "button serious"
-              },
-              "Delete"
-            )
+            "a",
+            {
+              href: "/admin/variables/delete/" + this.props.id,
+              className: "button serious pull-right"
+            },
+            "Delete"
           ) : null
         ),
         React.createElement(
@@ -3254,14 +3266,14 @@ var SieveComponent = function (_React$Component4) {
             React.createElement(
               "dt",
               null,
-              "Layers users"
+              "Rasters used"
             ),
             " ",
             React.createElement(
               "dd",
               null,
-              final.layers.map(function (l) {
-                return [l.render(), React.createElement("br", null)];
+              final.products.map(function (r) {
+                return [r.render(), React.createElement("br", null)];
               })
             )
           )
@@ -3380,13 +3392,11 @@ var DataNode = function () {
       // Let rand be undefined, as long as we have right length _operands
       var rand = tree[1][i];
       var rand_object = null;
-      if (DataNode.isDataTree(rand)) {
+      if (DataNode.isTree(rand)) {
         rand_object = treeToNode(rand);
-      } else if (this._operation != 'source' && this.isSource(rand) && !DataNode.isDataNode(rand)) {
-        console.log(rand);
+      } else if (this._operation != 'source' && this.isSource(rand) && !DataNode.isNode(rand)) {
         rand_object = treeToNode(['source', [rand]]);
       } else {
-        console.log(rand);
         rand_object = rand;
       }
       this._operands.push(rand_object);
@@ -3427,7 +3437,7 @@ var DataNode = function () {
     var rands = [];
     for (var i = 0; i < this._operands.length; i++) {
       var rand = this._operands[i];
-      if (DataNode.isDataTree(rand)) {
+      if (DataNode.isTree(rand)) {
         rands.push(rand.json());
       } else {
         rands.push(rand);
@@ -3445,7 +3455,7 @@ var DataNode = function () {
     var rands = null;
     if (this._operands.length) {
       rands = this._operands.map(function (o, i) {
-        if (DataNode.isDataNode(o)) {
+        if (DataNode.isNode(o)) {
           return o.render();
         } else {
           return o + ", ";
@@ -3467,11 +3477,11 @@ var DataNode = function () {
     );
   };
 
-  DataNode.isDataTree = function isDataTree(arg) {
+  DataNode.isTree = function isTree(arg) {
     return Array.isArray(arg) && arg.length == 2 && DataNode.TYPES.hasOwnProperty(arg[0]);
   };
 
-  DataNode.isDataNode = function isDataNode(node) {
+  DataNode.isNode = function isNode(node) {
     return node._operation && DataNode.TYPES.hasOwnProperty(node._operation) && node._operands != undefined;
   };
 
@@ -3492,7 +3502,7 @@ var DataNode = function () {
   };
 
   DataNode.toNode = function toNode(arg) {
-    if (!DataNode.isDataNode(arg) && DataNode.isDataTree(arg)) {
+    if (!DataNode.isNode(arg) && DataNode.isTree(arg)) {
       return treeToNode(arg);
     } else {
       return arg;
@@ -3500,7 +3510,7 @@ var DataNode = function () {
   };
 
   DataNode.toTree = function toTree(arg) {
-    if (DataNode.isDataNode(arg) && !DataNode.isDataTree(arg)) {
+    if (DataNode.isNode(arg) && !DataNode.isTree(arg)) {
       return arg.json();
     } else {
       return arg;
@@ -3599,13 +3609,29 @@ var MeanOperator = function (_DataNode) {
 
     _this.parseTree();
 
+    // congratulations! (undefined == undefined) == true
     if (_this.left.dimensions != _this.right.dimensions) {
       throw Error("Operands must have the same dimensions");
     }
 
-    _this._dimensions = _this.left.dimensions;
+    _this._dimensions = _this.left ? _this.left.dimensions : null;
     return _this;
   }
+
+  MeanOperator.validOperands = function validOperands(input_vars, operand_refs, op_index) {
+    var other_op_index = op_index == 0 ? 1 : 0;
+    var other_op = input_vars.filter(function (input_var) {
+      return input_var.name == operand_refs[other_op_index].name;
+    })[0];
+
+    if (!other_op) {
+      return input_vars;
+    } else {
+      return input_vars.filter(function (input_var) {
+        return input_var.dimensions == other_op.dimensions;
+      });
+    }
+  };
 
   return MeanOperator;
 }(DataNode);
@@ -3628,9 +3654,9 @@ var TemporalMeanOperator = function (_DataNode2) {
     return _this2;
   }
 
-  TemporalMeanOperator.prototype.validOperands = function validOperands(input_vars) {
+  TemporalMeanOperator.validOperands = function validOperands(input_vars) {
     return input_vars.filter(function (input_var) {
-      return treeToNode(input_var).dimensions.includes('time');
+      return input_var.dimensions.includes('time');
     });
   };
 
@@ -3655,9 +3681,9 @@ var SpatialMeanOperator = function (_DataNode3) {
     return _this3;
   }
 
-  SpatialMeanOperator.prototype.validOperands = function validOperands(input_vars) {
+  SpatialMeanOperator.validOperands = function validOperands(input_vars) {
     return input_vars.filter(function (input_var) {
-      return treeToNode(input_var).dimensions.includes('space');
+      return input_var.dimensions.includes('space');
     });
   };
 
@@ -3678,7 +3704,6 @@ var SelectOperator = function (_DataNode4) {
     _this4._name = 'Select';
 
     _this4.parseTree();
-    _this4.child_op = _this4._operands[0][0];
     _this4._dimensions = _this4.left.dimensions;
     return _this4;
   }
@@ -3700,7 +3725,6 @@ var ExpressionOperator = function (_DataNode5) {
     _this5._operand_names = ['operand'];
 
     _this5.parseTree();
-    var operands = _this5._operands;
     _this5._dimensions = _this5.operand.dimensions;
     return _this5;
   }
@@ -3855,6 +3879,7 @@ var MathOperator = function (_DataNode9) {
     _this9._name = _this9._operator;
 
     if (_this9.left && _this9.right && _this9.left.dimensions != _this9.right.dimensions) {
+      // Great how this passes when both are undefined
       throw Error("Operators must have the same dimensions");
     }
 
@@ -3862,18 +3887,17 @@ var MathOperator = function (_DataNode9) {
     return _this9;
   }
 
-  MathOperator.prototype.validOperands = function validOperands(input_vars, operand_refs, op_index) {
+  MathOperator.validOperands = function validOperands(input_vars, operand_refs, op_index) {
     var other_op_index = op_index == 0 ? 1 : 0;
-    var other_op = input_vars.filter(function (input_var) {
-      return input_var.name == operand_refs[other_op_index];
-    })[0];
+    var other_op = operand_refs[other_op_index] ? input_vars.filter(function (input_var) {
+      return input_var.name == operand_refs[other_op_index].name;
+    })[0] : false;
 
     if (!other_op) {
       return input_vars;
     } else {
-      var other_op_node = treeToNode(other_op);
       return input_vars.filter(function (input_var) {
-        return treeToNode(input_var).dimensions == other_op_node.dimensions;
+        return input_var.dimensions == other_op.dimensions;
       });
     }
   };
@@ -3988,7 +4012,7 @@ DataNode.TYPES = {
 function treeToNode(tree) {
   if (!tree || Object.keys(tree).length == 0) {
     return new EmptyTree();
-  } else if (DataNode.isDataNode(tree)) {
+  } else if (DataNode.isNode(tree)) {
     return tree;
   } else {
     if (!DataNode.TYPES.hasOwnProperty(tree[0])) {

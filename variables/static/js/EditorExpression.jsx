@@ -8,7 +8,10 @@ class OperandChooser extends React.Component {
     var data = Object.assign(
       {},
       this.props.node_editor.expression_data,
-      {operand_refs: operand_refs}
+      {
+        operand_refs: operand_refs,
+        valid: operand_refs.reduce((acc, val) => acc && val)
+      }
     );
     this.props.onUpdateExpressionData(data);
   }
@@ -23,7 +26,6 @@ class OperandChooser extends React.Component {
     );
 
     return valid_input_vars.map((input_var) => {
-      console.log(input_var, input_var.name);
       return {value: input_var.name, label: input_var.name};
     });
   }
@@ -32,7 +34,7 @@ class OperandChooser extends React.Component {
     return (
       <div style={{display: "inline-block", width: 400}}>
         <Select
-          onChange={this.changeOperand.bind(this)}
+          onChange={(e) => this.changeOperand(e)}
           value={this.props.node_editor.expression_data.operand_refs[this.props.operand_index]}
           options={this.options()}
           clearable={true}
@@ -68,7 +70,7 @@ class ExpressionEditor extends React.Component {
     this.props.onUpdateExpressionData(
       Object.assign(
         {},
-        props.node_editor.expression_data.data,
+        this.props.node_editor.expression_data.data,
         {default_name: this.generateName(props.input_variables)}
       )
     );
@@ -82,7 +84,7 @@ class ExpressionEditor extends React.Component {
       this.props.onUpdateExpressionData(
         Object.assign(
           {},
-          props.node_editor.expression_data.data,
+          this.props.node_editor.expression_data.data,
           {default_name: this.generateName(newProps.input_variables)}
         )
       );
@@ -116,7 +118,7 @@ class ExpressionEditor extends React.Component {
   }
 
   addOp(op) {
-    var node = treeToNode([op, []]);
+    var node = DataNode.Class(op);
     var expression_data = Object.assign(
       {},
       this.props.node_editor.expression_data,
@@ -179,6 +181,7 @@ class ExpressionEditor extends React.Component {
               <Button onClick={(e) => this.addOp('-')}>-</Button>
               <Button onClick={(e) => this.addOp('*')}>*</Button>
               <Button onClick={(e) => this.addOp('/')}>/</Button>
+              <Button onClick={(e) => this.addOp('mean')}>Arithmetic Mean</Button>
               <Button onClick={(e) => this.addOp('tmean')}>Temporal Mean</Button>
               <Button onClick={(e) => this.addOp('smean')}>Spatial Mean</Button>
             </ButtonGroup>

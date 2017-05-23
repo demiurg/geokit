@@ -450,7 +450,7 @@ class SieveComponent extends React.Component {
           </FormGroup>
         </form>
         <p>{final.render()}</p>
-        <p>
+        <div className='btn-group'>
           {(this.props.changed && valid) ?
             <button
               className='button'
@@ -460,21 +460,19 @@ class SieveComponent extends React.Component {
             </button>
           : null}
           {this.props.id ?
-            <div className='pull-right'>
-              <a
-                href={`/admin/variables/delete/${this.props.id}`}
-                className='button serious'
-              >
-                Delete
-              </a>
-            </div>
+            <a
+              href={`/admin/variables/delete/${this.props.id}`}
+              className='button serious pull-right'
+            >
+              Delete
+            </a>
           : null}
-        </p>
+        </div>
         <p>
           <dl>
             <dt>Created</dt> <dd>{this.props.created}</dd>
             <dt>Last modified</dt> <dd>{this.props.modified}</dd>
-            <dt>Layers users</dt> <dd>{final.layers.map(l => [l.render(), <br/>])}</dd>
+            <dt>Rasters used</dt> <dd>{final.products.map(r => [r.render(), <br/>])}</dd>
           </dl>
         </p>
       </div>);
