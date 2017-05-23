@@ -199,7 +199,7 @@ function editInputVariable(node, i) {
   var name = null;
   if (node.type == 'named') {
     node = node.value;
-    name = node.name;
+    name = node.name_operand;
   }
 
   return function (dispatch) {
@@ -3305,33 +3305,8 @@ var DataNode = function () {
 
     this._operand_names = [];
 
-    var self = this;
     /// Consstructor is useless because it can't access subclass properties
     this._tree = tree;
-    return new Proxy(this, {
-      get: function get(target, prop) {
-        // console.log('get', prop);
-        if (self.operand_names) {
-          var i = self.operand_names.indexOf(prop);
-          if (self.operand_names && i >= 0) {
-            return self._operands[i];
-          }
-        }
-        return target[prop];
-      },
-      set: function set(target, prop, value) {
-        // console.log('set', prop);
-        if (self.operand_names) {
-          var i = self.operand_names.indexOf(prop);
-          if (i >= 0) {
-            self._operands[i] = value;
-            return true;
-          }
-        }
-        target[prop] = value;
-        return true;
-      }
-    });
   }
 
   DataNode.prototype.parseTree = function parseTree() {
@@ -3348,13 +3323,16 @@ var DataNode = function () {
     for (var i = 0; i < this.operand_names.length; i++) {
       // Let rand be undefined, as long as we have right length _operands
       var rand = tree[1][i];
+      var rand_object = null;
       if (DataNode.isDataTree(rand)) {
-        this._operands.push(treeToNode(rand));
+        rand_object = treeToNode(rand);
       } else if (this._operation != 'source' && this.isSource(rand)) {
-        this._operands.push(treeToNode(['source', [rand]]));
+        rand_object = treeToNode(['source', [rand]]);
       } else {
-        this._operands.push(rand);
+        rand_object = rand;
       }
+      this._operands.push(rand_object);
+      this[this.operand_names[i]] = rand_object;
     }
   };
 
@@ -3493,12 +3471,13 @@ var DataNode = function () {
     key: "layers",
     get: function get() {
       var layers = [];
-      if (this.type == "source") {
-        if (this.operand.type == "Layer") {
+      var self = this;
+      if (self.type == "source") {
+        if (self.operand.type == "Layer") {
           layers = [this];
         }
       } else {
-        this._operands.forEach(function (operand) {
+        self._operands.forEach(function (operand) {
           var rand_layers = operand.layers;
           if (rand_layers && rand_layers.length > 0) {
             layers = layers.concat(rand_layers);

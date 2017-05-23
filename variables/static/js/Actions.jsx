@@ -202,7 +202,7 @@ function editInputVariable(node, i){
   var name = null;
   if (node.type == 'named'){
     node = node.value;
-    name = node.name;
+    name = node.name_operand;
   }
 
   return function(dispatch){

@@ -3,35 +3,8 @@ class DataNode {
   _operand_names = [];
 
   constructor(tree){
-    let self = this;
     /// Consstructor is useless because it can't access subclass properties
     this._tree = tree;
-
-    // This is terribad form of immitatating dynamic setters and getters
-    return new Proxy(this, {
-      get(target, prop) {
-        // console.log('get', prop);
-        if(self.operand_names){
-          let i = self.operand_names.indexOf(prop);
-          if (self.operand_names && i >= 0){
-            return self._operands[i];
-          }
-        }
-        return target[prop];
-      },
-      set(target, prop, value){
-        // console.log('set', prop);
-        if(self.operand_names){
-          let i = self.operand_names.indexOf(prop);
-          if (i >= 0){
-            self._operands[i] = value;
-            return true;
-          }
-        }
-        target[prop] = value;
-        return true;
-      }
-    });
   }
 
   parseTree(){
@@ -48,13 +21,16 @@ class DataNode {
     for (var i=0; i < this.operand_names.length; i++){
       // Let rand be undefined, as long as we have right length _operands
       var rand = tree[1][i];
+      var rand_object = null;
       if (DataNode.isDataTree(rand)){
-        this._operands.push(treeToNode(rand));
+        rand_object = treeToNode(rand);
       } else if (this._operation != 'source' && this.isSource(rand)){
-        this._operands.push(treeToNode(['source', [rand]]));
+        rand_object = treeToNode(['source', [rand]]);
       } else {
-        this._operands.push(rand);
+        rand_object = rand;
       }
+      this._operands.push(rand_object);
+      this[this.operand_names[i]] = rand_object;
     }
   }
 
@@ -104,12 +80,13 @@ class DataNode {
 
   get layers() {
     var layers = [];
-    if (this.type == "source") {
-      if (this.operand.type == "Layer") {
+    var self = this;
+    if (self.type == "source") {
+      if (self.operand.type == "Layer") {
         layers = [this];
       }
     } else {
-      this._operands.forEach((operand) => {
+      self._operands.forEach((operand) => {
         let rand_layers = operand.layers;
         if(rand_layers && rand_layers.length > 0){
           layers = layers.concat(rand_layers);
