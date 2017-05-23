@@ -523,6 +523,8 @@ class RasterSource(DataNode):
     def get_layer(self):
         if type(self.vector) is int:
             layer = self.vector
+        elif type(self.vector) is dict:
+            layer = self.vector['id']
         else:
             layer = self.vector.get_layers().pop()
 
