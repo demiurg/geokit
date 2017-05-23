@@ -200,12 +200,11 @@ function addInputVariable(node){
 
 function editInputVariable(node, i){
   var name = null;
-  if (node.type == 'named'){
-    node = node.value;
-    name = node.name_operand;
-  }
 
-  console.log(name);
+  if (node.type == 'named'){
+    name = node.name_operand;
+    node = node.value;
+  }
 
   return function(dispatch){
     if (node.type == "join"){
