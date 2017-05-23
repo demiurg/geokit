@@ -219,7 +219,7 @@ Restart nginx
 
 `sudo service nginx restart`
 
-Start RPC worker (from Geokit README):
+Start RPC worker:
 
 Ensure that the VIRTUALENV variable in worker_daemon.py matches your virtualenv path
 
@@ -227,7 +227,8 @@ A template is provided for running works as systemd services. In order to use sy
 copy `geokit@.service.example` to `/etc/systemd/system/geokit@.service`. Then uncomment the lines
 for `ExecStart` and `PIDFile` in the unit file, making sure to replace the paths with the absolute
 path of your GeoKit installation. Create an empty `pidfiles/` directory in your GeoKit installation
-directory. Finally, you can start and stop a worker using systemd:
+directory. Make sure that the VIRTUALENV variable in your worker_daemon.py file points to your
+virtual environment. Finally, you can start and stop a worker using systemd:
 
 ```
 systemctl start geokit@1.service
