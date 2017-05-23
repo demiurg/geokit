@@ -84,21 +84,31 @@ Configure hosts/session cookie domain in local.py,
 make sure this matches your domain
 
 ```
-GEOKIT_HOSTS.append('geokit.testserver') # django's hostname in testing mode
-GEOKIT_HOSTS.append('.geokit.testserver')
-ALLOWED_HOSTS.append('geokit.testserver')
-ALLOWED_HOSTS.append('.geokit.testserver')
+## Add your domain to this list
+#GEOKIT_HOSTS.append('testserver') # django's hostname in testing mode
+#GEOKIT_HOSTS.append('geokit.testserver')
+#GEOKIT_HOSTS.append('.geokit.testserver')
 
-DATABASES['default']['TEST'] = {'NAME': 'test_geokit' }
+#ALLOWED_HOSTS.append('testserver')
+#ALLOWED_HOSTS.append('geokit.testserver')
+#ALLOWED_HOSTS.append('.geokit.testserver')
 
-## Make sure this address points to your data handler
-RPC_URL = 'http://localhost:8001'
+#DATABASES['default']['TEST'] = {'NAME': 'test_pavel_geokit_2' }
+
+#RPC_URL = 'http://localhost:8001'
 
 ## Ensure this is off in a production environment
-DEBUG = True
+#DEBUG = True
 
 ## Make sure this matches your domain
-SESSION_COOKIE_DOMAIN = '.geokit.testserver'
+#SESSION_COOKIE_DOMAIN = 'geokit.testserver'
+
+#MEDIA_ROOT = '/web/geokit/media'
+
+# Add any site administrators here
+#ADMINS = [
+#    ('You',   'you@your_email.com'),
+#]
 ```
 
 # Collect static files
@@ -209,7 +219,7 @@ Restart nginx
 
 `sudo service nginx restart`
 
-Start RPC worker (from Geokit README):
+Start RPC worker:
 
 Ensure that the VIRTUALENV variable in worker_daemon.py matches your virtualenv path
 
@@ -217,7 +227,8 @@ A template is provided for running works as systemd services. In order to use sy
 copy `geokit@.service.example` to `/etc/systemd/system/geokit@.service`. Then uncomment the lines
 for `ExecStart` and `PIDFile` in the unit file, making sure to replace the paths with the absolute
 path of your GeoKit installation. Create an empty `pidfiles/` directory in your GeoKit installation
-directory. Finally, you can start and stop a worker using systemd:
+directory. Make sure that the VIRTUALENV variable in your worker_daemon.py file points to your
+virtual environment. Finally, you can start and stop a worker using systemd:
 
 ```
 systemctl start geokit@1.service

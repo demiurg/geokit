@@ -2,7 +2,12 @@ from .base import DATABASES, GEOKIT_HOSTS, ALLOWED_HOSTS
 
 ## Add your domain to this list
 #GEOKIT_HOSTS.append('testserver') # django's hostname in testing mode
+#GEOKIT_HOSTS.append('geokit.testserver')
+#GEOKIT_HOSTS.append('.geokit.testserver')
+
 #ALLOWED_HOSTS.append('testserver')
+#ALLOWED_HOSTS.append('geokit.testserver')
+#ALLOWED_HOSTS.append('.geokit.testserver')
 
 #DATABASES['default']['TEST'] = {'NAME': 'test_pavel_geokit_2' }
 
@@ -12,9 +17,9 @@ from .base import DATABASES, GEOKIT_HOSTS, ALLOWED_HOSTS
 #DEBUG = True
 
 ## Make sure this matches your domain
-#SESSION_COOKIE_DOMAIN = '.testserver'
+#SESSION_COOKIE_DOMAIN = 'geokit.testserver'
 
-#MEDIA_ROOT = '/net/oka/web/geokit/media'
+#MEDIA_ROOT = '/web/geokit/media'
 
 # Add any site administrators here
 #ADMINS = [
