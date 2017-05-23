@@ -7,9 +7,7 @@ from rest_framework import viewsets, permissions
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 from wagtail.wagtailadmin import messages
-from wagtail.wagtailcore.models import Page
 
-from layers.models import Feature, Layer
 from variables.models import Variable, RasterRequest
 from variables.serializers import VariableSerializer, RasterRequestSerializer
 from variables.data import NODE_TYPES, JobIncompleteException, rpc_con
@@ -19,6 +17,7 @@ from django.utils.functional import curry
 from datetime import date, timedelta
 import json
 from psycopg2.extras import DateRange
+from numpy import isnan
 
 json.dumps = curry(json.dumps, cls=DjangoJSONEncoder)
 
@@ -48,6 +47,9 @@ def get_raster_statuses(variable):
     rasters = variable.get_rasters()
     statuses = {}
 
+    from variables.data import new_rpc_con
+    conn = new_rpc_con()
+
     for r in rasters:
         try:
             job_request = RasterRequest.objects.get(
@@ -55,7 +57,7 @@ def get_raster_statuses(variable):
                 dates=r.dates,
                 vector=r.get_layer()
             )
-            statuses[r.raster['id']] = job_request.status
+            statuses[r.raster['id']] = conn.get_status(job_request.job_id)[0]
         except RasterRequest.DoesNotExist:
             statuses[r.raster['id']] = None
 
@@ -133,12 +135,19 @@ def data_json(request, variable_id):
                         column = str(column.lower)
                     else:
                         column = variable.name
+
+                    if isnan(value):
+                        value = "null"
                     text += '"{}": {},'.format(column, value)
                 text = text[:-1]
                 text += '},'
         else:
             for shaid, item in data_frame.iteritems():
                 text += '"' + shaid + '": {'
+
+                if isnan(item):
+                    item = "null"
+
                 text += '"{}": {}'.format(variable.name, item)
                 text += '},'
         text = text[:-1]
@@ -151,6 +160,8 @@ def data_json(request, variable_id):
             iterable = data_frame.iteritems()
 
         for daterange, value in iterable:
+            if isnan(value):
+                value = "null"
             text += '"' + str(daterange.lower) + '": ' + str(value) + ','
 
         text = text[:-1]
