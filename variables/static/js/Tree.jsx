@@ -404,11 +404,11 @@ class NamedTree extends DataNode {
   }
 
   json() {
-    return ['named', [this.name_operand, this.valie_operand]];
+    return ['named', [this._name, this.value.json ? this.value.json() : this.value]];
   }
 
   render() {
-    return <span><strong>{this.name}</strong>: {this.value_operand.render()}</span>;
+    return <span><strong>{this.name}</strong>: {this.value.render()}</span>;
   }
 }
 
