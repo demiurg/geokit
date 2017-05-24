@@ -44,7 +44,7 @@ def get_raster_catalog():
 
 
 def get_raster_statuses(variable):
-    rasters = variable.get_rasters()
+    rasters = variable.get_rasters
     statuses = {}
 
     from variables.data import new_rpc_con
@@ -68,7 +68,9 @@ def index(request):
     variables = Variable.objects.all().order_by('-modified')
     raster_statuses = [get_raster_statuses(v) for v in variables]
     variables_and_statuses = zip(variables, raster_statuses)
-    return render(request, 'variables/index.html', {"variables_and_statuses": variables_and_statuses})
+    return render(request, 'variables/index.html',
+        {"variables_and_statuses": variables_and_statuses}
+    )
 
 
 def add(request):

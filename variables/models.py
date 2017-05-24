@@ -70,12 +70,15 @@ class Variable(models.Model):
     def input_variables_json(self):
         return json.dumps(self.input_variables)
 
+    @cached_property
     def get_layers(self):
         return Layer.objects.filter(pk__in=self.root.get_layers())
 
+    @cached_property
     def get_tables(self):
         return GeoKitTable.objects.filter(pk__in=self.root.get_tables())
 
+    @cached_property
     def get_rasters(self):
         return self.root.get_rasters()
 
