@@ -73,10 +73,10 @@ class ExpressionEditor extends React.Component {
     let data = this.props.node_editor.expression_data;
     var operand_refs = [];
     if (data.operand_refs == null && data.node){
-      var operands = node.operands();
-      for (let op of operands){
+      var operands = data.node.operands();
+      for (let onode of operands){
         for (let i=0; i<this.props.input_variables.length; i++){
-          if (op.isEquivalent(this.props.input_variables[i].value)){
+          if (onode.isEquivalent(this.props.input_variables[i].value)){
             operand_refs.push(this.props.input_variables[i].name_operand);
             if (operand_refs.length == data.node_class.arity){
               break;

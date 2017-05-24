@@ -18,10 +18,10 @@ var initialState = Object.assign({
   created: null,
   changed: false,
   node_editor: {mode: DEFAULT},
-  tabularData: {},
+  tabular_data: {},
   raster_data: {},
   expression_data: {},
-  operandSelections: {}
+  operandSelections: {},
 }, window.sieve_props);
 
 
@@ -323,7 +323,7 @@ class VariableTable extends React.Component {
     return (
       <Panel header="Variables">
         <div className="pull-right">
-          <Button disabled={!this.props.spatial_domain || this.props.input_variables.length == 0}
+          <Button disabled={this.props.input_variables.length == 0}
                   onClick={() => this.props.onAddExpression()}>
             Add Expression
           </Button>
@@ -408,7 +408,13 @@ class SieveComponent extends React.Component {
   };
 
   renderMiddlePanel() {
-    if (this.props.spatial_domain) {
+    if (
+      this.props.spatial_domain ||
+      (
+        this.props.input_variables.length
+        && this.props.node_editor.mode == EDITING_EXPRESSION
+      )
+    ){
       switch (this.props.node_editor.mode) {
         case EDITING_EXPRESSION:
           return <ExpressionEditor {...this.props} />;

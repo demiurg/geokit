@@ -1499,7 +1499,7 @@ var ExpressionEditor = function (_React$Component3) {
     var data = _this4.props.node_editor.expression_data;
     var operand_refs = [];
     if (data.operand_refs == null && data.node) {
-      var operands = node.operands();
+      var operands = data.node.operands();
       for (var _iterator = operands, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
         var _ref;
 
@@ -1512,10 +1512,10 @@ var ExpressionEditor = function (_React$Component3) {
           _ref = _i.value;
         }
 
-        var op = _ref;
+        var onode = _ref;
 
         for (var i = 0; i < _this4.props.input_variables.length; i++) {
-          if (op.isEquivalent(_this4.props.input_variables[i].value)) {
+          if (onode.isEquivalent(_this4.props.input_variables[i].value)) {
             operand_refs.push(_this4.props.input_variables[i].name_operand);
             if (operand_refs.length == data.node_class.arity) {
               break;
@@ -2682,7 +2682,7 @@ var initialState = Object.assign({
   created: null,
   changed: false,
   node_editor: { mode: DEFAULT },
-  tabularData: {},
+  tabular_data: {},
   raster_data: {},
   expression_data: {},
   operandSelections: {}
@@ -3060,7 +3060,7 @@ var VariableTable = function (_React$Component2) {
         { className: "pull-right" },
         React.createElement(
           Button,
-          { disabled: !this.props.spatial_domain || this.props.input_variables.length == 0,
+          { disabled: this.props.input_variables.length == 0,
             onClick: function onClick() {
               return _this4.props.onAddExpression();
             } },
@@ -3234,7 +3234,7 @@ var SieveComponent = function (_React$Component4) {
   }
 
   SieveComponent.prototype.renderMiddlePanel = function renderMiddlePanel() {
-    if (this.props.spatial_domain) {
+    if (this.props.spatial_domain || this.props.input_variables.length && this.props.node_editor.mode == EDITING_EXPRESSION) {
       switch (this.props.node_editor.mode) {
         case EDITING_EXPRESSION:
           return React.createElement(ExpressionEditor, this.props);
