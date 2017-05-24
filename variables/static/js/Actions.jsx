@@ -234,13 +234,14 @@ function editInputVariable(node, i){
         errors: {}
       }));
     } else {
+      var Cls = DataNode.Class(node.type);
       dispatch(updateExpressionData({
         name: name,
         index: i,
         editing: true,
-        node_class: DataNode.Class(node.type),
+        node_class: Cls,
         op: node.type,
-        operand_refs: null,
+        operand_refs: Array(Cls.arity),
         valid: true
       }));
     }

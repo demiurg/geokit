@@ -15,10 +15,15 @@ product_name = 'modis_indices_ndvi'
 check_count, wait_time_between_checks = 10, 60 # one check per minute for ten minutes
 logger_name = 'dailydh'
 
+
 def failure(message):
     logging.getLogger(logger_name).error(message)
-    mail.mail_admins(subject='Problem in daily geokit-datahandler joint exercise',
-                     message=message, fail_silently=False)
+    mail.mail_admins(
+        subject='Problem in daily geokit-datahandler joint exercise',
+        message=message,
+        fail_silently=False
+    )
+
 
 def main(gips_shp_path):
     """Start a pre-defined DH run, then watch for a result until a timeout.
@@ -30,8 +35,11 @@ def main(gips_shp_path):
 
     # don't need to be exact with respect to leap years ---------------vvv
     four_years_ago = datetime.datetime.now() - datetime.timedelta(days=365*4)
-    args = ('test', product_name,
-            {'site': gips_shp_path, 'key': 'shaid'}, {'dates': four_years_ago.strftime('%Y-%j')})
+    args = (
+        'test', product_name,
+        {'site': gips_shp_path, 'key': 'shaid'},
+        {'dates': four_years_ago.strftime('%Y-%j')}
+    )
     log.debug('submitting job, args: {}'.format(args))
     job_id = rpc_con().submit_request(*args)
 
@@ -40,7 +48,11 @@ def main(gips_shp_path):
     # check periodically for a result
     for cnt in range(1, check_count + 1):
         time.sleep(wait_time_between_checks)
-        log.debug('Check {}; elapsed time {}s'.format(cnt, cnt * wait_time_between_checks))
+        log.debug(
+            'Check {}; elapsed time {}s'.format(
+                cnt, cnt * wait_time_between_checks
+            )
+        )
         results = rpc_con().get_results(job_id)
         if results:
             log.info('Successful datahandler run: {}'.format(results))
@@ -57,8 +69,10 @@ if __name__ == "__main__":
     django.setup()
 
     if len(sys.argv) != 2:
-        failure('Wrong number of arguments;'
-                ' expected absolute path to shapefile for spatial extent.')
+        failure(
+            'Wrong number of arguments;'
+            ' expected absolute path to shapefile for spatial extent.'
+        )
 
     try:
         main(sys.argv[1])
