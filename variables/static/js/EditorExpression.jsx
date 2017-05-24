@@ -31,11 +31,13 @@ class OperandChooser extends React.Component {
   }
 
   render() {
+    var data = this.props.node_editor.expression_data;
+
     return (
       <div style={{display: "inline-block", width: 400}}>
         <Select
           onChange={(e) => this.changeOperand(e)}
-          value={this.props.node_editor.expression_data.operand_refs[this.props.operand_index]}
+          value={data.operand_refs[this.props.operand_index]}
           options={this.options()}
           clearable={true}
         />
@@ -47,6 +49,7 @@ class OperandChooser extends React.Component {
 class TreeViewer extends React.Component {
   render() {
     var data = this.props.node_editor.expression_data;
+
     if (!data.node_class){
       return <p>Select operation above.</p>;
     }
@@ -67,11 +70,31 @@ class ExpressionEditor extends React.Component {
   constructor(props) {
     super(props);
 
+    let data = this.props.node_editor.expression_data;
+    var operand_refs = [];
+    if (data.operand_refs == null && data.node){
+      var operands = node.operands();
+      for (let op of operands){
+        for (let i=0; i<this.props.input_variables.length; i++){
+          if (op.isEquivalent(this.props.input_variables[i].value)){
+            operand_refs.push(this.props.input_variables[i].name_operand);
+            if (operand_refs.length == data.node_class.arity){
+              break;
+            }
+          }
+        }
+      }
+    }
+
     this.props.onUpdateExpressionData(
       Object.assign(
         {},
-        this.props.node_editor.expression_data.data,
-        {default_name: this.generateName(props.input_variables)}
+        data,
+        {
+          default_name: this.generateName(props.input_variables),
+          operand_refs: operand_refs,
+          valid: data.node_class && operand_refs.length == data.node_class.arity
+        }
       )
     );
   }
@@ -84,7 +107,7 @@ class ExpressionEditor extends React.Component {
       this.props.onUpdateExpressionData(
         Object.assign(
           {},
-          this.props.node_editor.expression_data.data,
+          this.props.node_editor.expression_data,
           {default_name: this.generateName(newProps.input_variables)}
         )
       );
@@ -109,12 +132,25 @@ class ExpressionEditor extends React.Component {
   }
 
   changeName(e) {
-    var expression_data = Object.assign(
+    var data = this.props.node_editor.expression_data;
+    var errors = {};
+    var name = e.target.value;
+
+    if((name && name.length > 0) && !name.match(/^[a-zA-Z0-9-]+$/)){
+      errors['name'] = "Name must be alphanumeric, without spaces.";
+    }else {
+      var names = this.props.input_variables.map(v => v.name_operand);
+      var i = names.indexOf(name);
+      if(i > -1 && !(data.editing && data.index == i)){
+        errors['name'] = "Name must not alread be used."
+      }
+    }
+    var data = Object.assign(
       {},
-      this.props.node_editor.expression_data,
-      {name: e.target.value}
+      data,
+      {name: name, errors: errors, valid: Object.keys(errors).length == 0}
     );
-    this.props.onUpdateExpressionData(expression_data);
+    this.props.onUpdateExpressionData(data);
   }
 
   addOp(op) {

@@ -231,14 +231,17 @@ function editInputVariable(node, i) {
         errors: {}
       }));
     } else {
+      var Cls = DataNode.Class(node.type);
       dispatch(updateExpressionData({
         name: name,
         index: i,
         editing: true,
         node_class: DataNode.Class(node.type),
+        node: node,
         op: node.type,
         operand_refs: null,
-        valid: true
+        valid: true,
+        errors: {}
       }));
     }
   };
@@ -1424,6 +1427,8 @@ var OperandChooser = function (_React$Component) {
   OperandChooser.prototype.render = function render() {
     var _this2 = this;
 
+    var data = this.props.node_editor.expression_data;
+
     return React.createElement(
       'div',
       { style: { display: "inline-block", width: 400 } },
@@ -1431,7 +1436,7 @@ var OperandChooser = function (_React$Component) {
         onChange: function onChange(e) {
           return _this2.changeOperand(e);
         },
-        value: this.props.node_editor.expression_data.operand_refs[this.props.operand_index],
+        value: data.operand_refs[this.props.operand_index],
         options: this.options(),
         clearable: true
       })
@@ -1452,6 +1457,7 @@ var TreeViewer = function (_React$Component2) {
 
   TreeViewer.prototype.render = function render() {
     var data = this.props.node_editor.expression_data;
+
     if (!data.node_class) {
       return React.createElement(
         'p',
@@ -1490,13 +1496,46 @@ var ExpressionEditor = function (_React$Component3) {
 
     var _this4 = _possibleConstructorReturn(this, _React$Component3.call(this, props));
 
-    _this4.props.onUpdateExpressionData(Object.assign({}, _this4.props.node_editor.expression_data.data, { default_name: _this4.generateName(props.input_variables) }));
+    var data = _this4.props.node_editor.expression_data;
+    var operand_refs = [];
+    if (data.operand_refs == null && data.node) {
+      var operands = node.operands();
+      for (var _iterator = operands, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+        var _ref;
+
+        if (_isArray) {
+          if (_i >= _iterator.length) break;
+          _ref = _iterator[_i++];
+        } else {
+          _i = _iterator.next();
+          if (_i.done) break;
+          _ref = _i.value;
+        }
+
+        var op = _ref;
+
+        for (var i = 0; i < _this4.props.input_variables.length; i++) {
+          if (op.isEquivalent(_this4.props.input_variables[i].value)) {
+            operand_refs.push(_this4.props.input_variables[i].name_operand);
+            if (operand_refs.length == data.node_class.arity) {
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    _this4.props.onUpdateExpressionData(Object.assign({}, data, {
+      default_name: _this4.generateName(props.input_variables),
+      operand_refs: operand_refs,
+      valid: data.node_class && operand_refs.length == data.node_class.arity
+    }));
     return _this4;
   }
 
   ExpressionEditor.prototype.componentWillReceiveProps = function componentWillReceiveProps(newProps) {
     if (!newProps.node_editor.expression_data.default_name || newProps.input_variables != this.props.input_variables) {
-      this.props.onUpdateExpressionData(Object.assign({}, this.props.node_editor.expression_data.data, { default_name: this.generateName(newProps.input_variables) }));
+      this.props.onUpdateExpressionData(Object.assign({}, this.props.node_editor.expression_data, { default_name: this.generateName(newProps.input_variables) }));
     }
   };
 
@@ -1520,8 +1559,23 @@ var ExpressionEditor = function (_React$Component3) {
   };
 
   ExpressionEditor.prototype.changeName = function changeName(e) {
-    var expression_data = Object.assign({}, this.props.node_editor.expression_data, { name: e.target.value });
-    this.props.onUpdateExpressionData(expression_data);
+    var data = this.props.node_editor.expression_data;
+    var errors = {};
+    var name = e.target.value;
+
+    if (name && name.length > 0 && !name.match(/^[a-zA-Z0-9-]+$/)) {
+      errors['name'] = "Name must be alphanumeric, without spaces.";
+    } else {
+      var names = this.props.input_variables.map(function (v) {
+        return v.name_operand;
+      });
+      var i = names.indexOf(name);
+      if (i > -1 && !(data.editing && data.index == i)) {
+        errors['name'] = "Name must not alread be used.";
+      }
+    }
+    var data = Object.assign({}, data, { name: name, errors: errors, valid: Object.keys(errors).length == 0 });
+    this.props.onUpdateExpressionData(data);
   };
 
   ExpressionEditor.prototype.addOp = function addOp(op) {
@@ -1533,33 +1587,33 @@ var ExpressionEditor = function (_React$Component3) {
   ExpressionEditor.prototype.onSave = function onSave() {
     var data = this.props.node_editor.expression_data;
     var rands = [];
-    for (var _iterator = data.operand_refs, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-      var _ref;
+    for (var _iterator2 = data.operand_refs, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
+      var _ref2;
 
-      if (_isArray) {
-        if (_i >= _iterator.length) break;
-        _ref = _iterator[_i++];
+      if (_isArray2) {
+        if (_i2 >= _iterator2.length) break;
+        _ref2 = _iterator2[_i2++];
       } else {
-        _i = _iterator.next();
-        if (_i.done) break;
-        _ref = _i.value;
+        _i2 = _iterator2.next();
+        if (_i2.done) break;
+        _ref2 = _i2.value;
       }
 
-      var name = _ref;
+      var name = _ref2;
 
-      for (var _iterator2 = this.props.input_variables, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
-        var _ref2;
+      for (var _iterator3 = this.props.input_variables, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
+        var _ref3;
 
-        if (_isArray2) {
-          if (_i2 >= _iterator2.length) break;
-          _ref2 = _iterator2[_i2++];
+        if (_isArray3) {
+          if (_i3 >= _iterator3.length) break;
+          _ref3 = _iterator3[_i3++];
         } else {
-          _i2 = _iterator2.next();
-          if (_i2.done) break;
-          _ref2 = _i2.value;
+          _i3 = _iterator3.next();
+          if (_i3.done) break;
+          _ref3 = _i3.value;
         }
 
-        var ivar = _ref2;
+        var ivar = _ref3;
 
         if (name == ivar.name) {
           // access named operand value here, throwing away name
@@ -2006,6 +2060,14 @@ var RasterDataSource = function (_React$Component2) {
 
     if (name && name.length > 0 && !name.match(/^[a-zA-Z0-9-]+$/)) {
       errors['name'] = "Name must be alphanumeric, without spaces.";
+    } else {
+      var names = this.props.input_variables.map(function (v) {
+        return v.name_operand;
+      });
+      var i = names.indexOf(name);
+      if (i > -1 && !(data.editing && data.index == i)) {
+        errors['name'] = "Name must not alread be used.";
+      }
     }
 
     var data = Object.assign({}, this.props.node_editor.raster_data, {
@@ -2564,7 +2626,7 @@ function node_editor() {
           default_name: null,
           op: null,
           node_class: null,
-          operand_refs: [],
+          operand_refs: null,
           editing: false,
           valid: false
         }
@@ -3372,6 +3434,8 @@ function sieve(el) {
 }
 "use strict";
 
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -3440,6 +3504,10 @@ var DataNode = function () {
     } else {
       return types;
     }
+  };
+
+  DataNode.prototype.operands = function operands() {
+    return this._operands;
   };
 
   DataNode.prototype.validOperands = function validOperands(input_vars, operand_refs, op_index) {
@@ -3530,12 +3598,46 @@ var DataNode = function () {
     }
   };
 
-  _createClass(DataNode, [{
-    key: "operand_names",
-    get: function get() {
-      return this._operand_names;
+  DataNode.prototype.isEquivalent = function isEquivalent(node) {
+    if (this._operation && node._operation && this._operation == node._operation && this._operands && node._operands && this._operands.length == node._operands.length) {
+      for (var i = 0; i < this._operands.length; i++) {
+        var a = this._operands[i];
+        var b = node._operands[i];
+        if (DataNode.isNode(a) && DataNode.isNode(b)) {
+          if (!a.isEquivalent(b)) {
+            return false;
+          }
+        } else {
+          if ((typeof a === "undefined" ? "undefined" : _typeof(a)) != (typeof b === "undefined" ? "undefined" : _typeof(b))) {
+            return false;
+          } else {
+            if ((typeof a === "undefined" ? "undefined" : _typeof(a)) == Object) {
+              if (!Object.keys(a).reduce(function (acc, k) {
+                return a[k] == b[k] && acc;
+              })) {
+                return false;
+              }
+            } else if ((typeof a === "undefined" ? "undefined" : _typeof(a)) == Array) {
+              if (!Array.keys(a).reduce(function (acc, i) {
+                return a[i] == b[i] && acc;
+              })) {
+                return false;
+              }
+            } else {
+              if (a != b) {
+                return false;
+              }
+            }
+          }
+        }
+      }
+      return true;
+    } else {
+      return false;
     }
-  }, {
+  };
+
+  _createClass(DataNode, [{
     key: "type",
     get: function get() {
       return this._operation;
@@ -3547,6 +3649,11 @@ var DataNode = function () {
     key: "arity",
     get: function get() {
       return DataNode.TYPES[this._operation].arity;
+    }
+  }, {
+    key: "operand_names",
+    get: function get() {
+      return this._operand_names;
     }
   }, {
     key: "name",

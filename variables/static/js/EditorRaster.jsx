@@ -243,6 +243,12 @@ class RasterDataSource extends React.Component {
 
     if((name && name.length > 0) && !name.match(/^[a-zA-Z0-9-]+$/)){
       errors['name'] = "Name must be alphanumeric, without spaces.";
+    }else {
+      var names = this.props.input_variables.map(v => v.name_operand);
+      var i = names.indexOf(name);
+      if(i > -1 && !(data.editing && data.index == i)){
+        errors['name'] = "Name must not alread be used."
+      }
     }
 
     var data = Object.assign(

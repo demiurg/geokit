@@ -239,10 +239,12 @@ function editInputVariable(node, i){
         name: name,
         index: i,
         editing: true,
-        node_class: Cls,
+        node_class: DataNode.Class(node.type),
+        node: node,
         op: node.type,
-        operand_refs: Array(Cls.arity),
-        valid: true
+        operand_refs: null,
+        valid: true,
+        errors: {}
       }));
     }
   }

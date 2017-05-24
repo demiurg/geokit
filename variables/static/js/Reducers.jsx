@@ -208,7 +208,7 @@ function node_editor(state={'mode': DEFAULT}, action){
           default_name: null,
           op: null,
           node_class: null,
-          operand_refs: [],
+          operand_refs: null,
           editing: false,
           valid: false
         }

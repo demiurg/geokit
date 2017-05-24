@@ -37,10 +37,6 @@ class DataNode {
     }
   }
 
-  get operand_names(){
-    return this._operand_names;
-  }
-
   get type(){
     return this._operation;
   }
@@ -53,6 +49,10 @@ class DataNode {
     return DataNode.TYPES[this._operation].arity;
   }
 
+  get operand_names(){
+    return this._operand_names;
+  }
+
   operand_types(join){
     var types = [];
     for (let r of self._operands){
@@ -63,6 +63,10 @@ class DataNode {
     } else {
       return types;
     }
+  }
+
+  operands(){
+    return this._operands;
   }
 
   get name(){
@@ -204,6 +208,46 @@ class DataNode {
       return arg.json();
     }else{
       return arg;
+    }
+  }
+
+  isEquivalent(node){
+    if (
+      (this._operation && node._operation) &&
+      (this._operation == node._operation) &&
+      (this._operands && node._operands) &&
+      (this._operands.length == node._operands.length)
+    ){
+      for (let i=0; i < this._operands.length; i++){
+        var a = this._operands[i];
+        var b = node._operands[i];
+        if (DataNode.isNode(a) && DataNode.isNode(b)){
+          if (!a.isEquivalent(b)){
+            return false;
+          }
+        }else{
+          if (typeof a != typeof b){
+            return false;
+          }else{
+            if (typeof a == Object){
+              if (!Object.keys(a).reduce((acc, k) => a[k] == b[k] && acc)){
+                return false;
+              }
+            }else if (typeof a == Array){
+              if (!Array.keys(a).reduce((acc, i) => a[i] == b[i] && acc)){
+                return false;
+              }
+            }else{
+              if (a != b){
+                return false;
+              }
+            }
+          }
+        }
+      }
+      return true;
+    }else{
+      return false;
     }
   }
 }
