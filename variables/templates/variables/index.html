@@ -6,15 +6,15 @@
 {% block extra_css %}
 <style>
 .raster-status.done {
-    color: #148744;
+  color: #148744;
 }
 
 .raster-status.working {
-    color: #b7a500;
+  color: #b7a500;
 }
 
 .raster-status.bad {
-    color: #840d00;
+  color: #840d00;
 }
 </style>
 {% endblock %}
@@ -23,93 +23,93 @@
 {% include "wagtailadmin/shared/header.html" with title="Variables" icon="placeholder" add_link="variables:add" add_text="Create Variable" %}
 
 <div class="nice-padding">
-    <div id="variables-results" class="variables">
-        {% if variables_and_statuses %}
-        <table class="listing">
-            <col />
-            <col />
-            <col />
-            <col />
-            <col />
-            <thead>
-                <tr class="table-headers">
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Dimensions</th>
-                    <th>Bounds</th>
-                    <th>Last Modified</th>
-                    <th>Inputs</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for variable, statuses in variables_and_statuses %}
-                <tr>
-                    <td class="title">
-                        <a href="{% url 'variables:edit' variable.pk %}">
-                            {{ variable.name }}
-                        </a>
-                    </td>
-                    <td class="description">
-                        {{ variable.description }}
-                    </td>
-                    <td class="spatial_domain">
-                        {{ variable.saved_dimensions }}
-                    </td>
-                    <td class='bounds'>
-                        {{ variable.bounds }}
-                    </td>
-                    <td>
-                        {{ variable.modified }}
-                    </td>
-                    <td>
-                        <table>
-                            <tr>
-                                <th>Rasters</th>
-                                <td>
-                                    {% for raster, status in statuses.iteritems %}
-                                    <span class="raster-status {% if status == 'complete' %}done{% elif status == 'failed' %}bad{% else %}working{% endif %}">
-                                        {% if forloop.first %}
-                                            {{ raster }} (<em>{{ status }}</em>)
-                                        {% else %}
-                                            , {{ raster }} (<em>{{ status }}</em>
-                                        {% endif %}
-                                    </span>
-                                    {% endfor %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>Layers</th>
-                                <td>
-                                    {% for layer in variable.get_layers %}
-                                        {% if forloop.first %}
-                                            {{ layer.name }}
-                                        {% else %}
-                                            , {{ layer.name }}
-                                        {% endif %}
-                                    {% endfor %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>Tables</th>
-                                <td>
-                                    {% for table in variable.get_tables %}
-                                        {% if forloop.first %}
-                                            {{ table.name }}
-                                        {% else %}
-                                            {{ table.name }}
-                                        {% endif %}
-                                    {% endfor %}
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
+  <div id="variables-results" class="variables">
+    {% if variables_and_statuses %}
+    <table class="listing">
+      <col />
+      <col />
+      <col />
+      <col />
+      <col />
+      <thead>
+        <tr class="table-headers">
+          <th>Name</th>
+          <th>Description</th>
+          <th>Dimensions</th>
+          <th>Bounds</th>
+          <th>Last Modified</th>
+          <th>Inputs</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for variable, statuses in variables_and_statuses %}
+        <tr>
+          <td class="title">
+            <a href="{% url 'variables:edit' variable.pk %}">
+              {{ variable.name }}
+            </a>
+          </td>
+          <td class="description">
+            {{ variable.description }}
+          </td>
+          <td class="spatial_domain">
+            {{ variable.saved_dimensions }}
+          </td>
+          <td class='bounds'>
+            {{ variable.bounds }}
+          </td>
+          <td>
+            {{ variable.modified }}
+          </td>
+          <td>
+            <dl>
+              {% if statuses %}
+              <dt>Rasters</dt>
+              <dd>
+                {% for raster, status in statuses.iteritems %}
+                <span class="raster-status {% if status == 'complete' %}done{% elif status == 'failed' %}bad{% else %}working{% endif %}">
+                  {% if forloop.first %}
+                    {{ raster }} (<em>{{ status }}</em>)
+                  {% else %}
+                    , {{ raster }} (<em>{{ status }}</em>)
+                  {% endif %}
+                </span>
                 {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <p>You haven't created any variables yet.</p>
-        {% endif %}
-    </div>
+              </dd>
+              {% endif %}
+              {% if variable.get_layers %}
+              <dt>Layers</dt>
+              <dd>
+                {% for layer in variable.get_layers %}
+                  {% if forloop.first %}
+                    {{ layer.name }}
+                  {% else %}
+                    , {{ layer.name }}
+                  {% endif %}
+                {% endfor %}
+              </dd>
+              {% endif %}
+              {% if variable.get_tables %}
+              <dt>Tables</dt>
+              <dd>
+                {% for table in variable.get_tables %}
+                  {% if forloop.first %}
+                    {{ table.name }}
+                  {% else %}
+                    {{ table.name }}
+                  {% endif %}
+                {% endfor %}
+              </dd>
+              {% endif %}
+            </dl>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p>You haven't created any variables yet.</p>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}
