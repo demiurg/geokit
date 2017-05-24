@@ -184,7 +184,7 @@ class DataNode {
   }
 
   static nameNode(name, node){
-    return NamedTree(['named', [name, node]]);
+    return new NamedTree(['named', [name, node]]);
   }
 
   static Class(name){
@@ -227,7 +227,7 @@ class MeanOperator extends DataNode {
   static validOperands(input_vars, operand_refs, op_index) {
     var other_op_index = op_index == 0 ? 1 : 0;
     var other_op = input_vars.filter(input_var => {
-      return input_var.name == operand_refs[other_op_index].name;
+      return input_var.name == operand_refs[other_op_index];
     })[0];
 
     if (!other_op) {
@@ -415,7 +415,7 @@ class MathOperator extends DataNode {
   static validOperands(input_vars, operand_refs, op_index) {
     var other_op_index = op_index == 0 ? 1 : 0;
     var other_op = operand_refs[other_op_index] ? input_vars.filter(input_var => {
-      return input_var.name == operand_refs[other_op_index].name;
+      return input_var.name == operand_refs[other_op_index];
     })[0] : false;
 
     if (!other_op) {

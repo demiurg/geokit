@@ -235,7 +235,7 @@ function editInputVariable(node, i) {
         name: name,
         index: i,
         editing: true,
-        node: node,
+        node_class: DataNode.Class(node.type),
         op: node.type,
         operand_refs: null,
         valid: true
@@ -1414,7 +1414,7 @@ var OperandChooser = function (_React$Component) {
   OperandChooser.prototype.options = function options() {
     var data = this.props.node_editor.expression_data;
 
-    var valid_input_vars = data.node.validOperands(this.props.input_variables, data.operand_refs, this.props.operand_index);
+    var valid_input_vars = data.node_class.validOperands(this.props.input_variables, data.operand_refs, this.props.operand_index);
 
     return valid_input_vars.map(function (input_var) {
       return { value: input_var.name, label: input_var.name };
@@ -1452,7 +1452,7 @@ var TreeViewer = function (_React$Component2) {
 
   TreeViewer.prototype.render = function render() {
     var data = this.props.node_editor.expression_data;
-    if (!data.node) {
+    if (!data.node_class) {
       return React.createElement(
         'p',
         null,
@@ -1461,7 +1461,7 @@ var TreeViewer = function (_React$Component2) {
     }
 
     var operand_inputs = [];
-    for (var i = 0; i < data.node.arity; i++) {
+    for (var i = 0; i < data.node_class.arity; i++) {
       operand_inputs.push(React.createElement(OperandChooser, _extends({}, this.props, { operand_index: i })));
     }
 
@@ -1525,51 +1525,64 @@ var ExpressionEditor = function (_React$Component3) {
   };
 
   ExpressionEditor.prototype.addOp = function addOp(op) {
-    var node = DataNode.Class(op);
-    var expression_data = Object.assign({}, this.props.node_editor.expression_data, { op: op, operand_refs: Array(node.arity), node: node });
+    var node_class = DataNode.Class(op);
+    var expression_data = Object.assign({}, this.props.node_editor.expression_data, { op: op, operand_refs: Array(node_class.arity), node_class: node_class });
     this.props.onUpdateExpressionData(expression_data);
-  };
-
-  ExpressionEditor.prototype.populateOperands = function populateOperands(arity) {
-    var _this5 = this;
-
-    var operands = [];
-
-    for (var i = 0; i < arity; i++) {
-      var operand_tree = this.props.input_variables.filter(function (input_var) {
-        // This relies on unique names in input variables table.
-        return input_var.name == _this5.props.node_editor.expression_data.operand_refs[i].name;
-      })[0];
-
-      operands.push(operand_tree);
-    }
-
-    return operands;
   };
 
   ExpressionEditor.prototype.onSave = function onSave() {
     var data = this.props.node_editor.expression_data;
-    if (DataNode.isNode(data.node)) {
-      if (!data.name || data.name == "") {
-        data.name = data.default_name;
-      }
+    var rands = [];
+    for (var _iterator = data.operand_refs, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+      var _ref;
 
-      var node = treeToNode(data.node);
-      if (node.type == 'named') {
-        node.name = data.name;
+      if (_isArray) {
+        if (_i >= _iterator.length) break;
+        _ref = _iterator[_i++];
       } else {
-        node = DataNode.namedNode(data.name, node);
+        _i = _iterator.next();
+        if (_i.done) break;
+        _ref = _i.value;
       }
-      data.node[1] = this.populateOperands(node.arity);
 
-      this.props.onUpdateExpressionData(data);
-      this.props.onAddInputVariable(node);
-      this.props.onEditNothing();
+      var name = _ref;
+
+      for (var _iterator2 = this.props.input_variables, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
+        var _ref2;
+
+        if (_isArray2) {
+          if (_i2 >= _iterator2.length) break;
+          _ref2 = _iterator2[_i2++];
+        } else {
+          _i2 = _iterator2.next();
+          if (_i2.done) break;
+          _ref2 = _i2.value;
+        }
+
+        var ivar = _ref2;
+
+        if (name == ivar.name) {
+          // access named operand value here, throwing away name
+          rands.push(ivar.value);
+          break; // Just in case names are not unique now, this needs validation
+        }
+      }
     }
+
+    var node = new data.node_class([data.op, rands]);
+    if (!data.name || data.name == "") {
+      data.name = data.default_name;
+    }
+
+    node = DataNode.nameNode(data.name, node);
+
+    this.props.onUpdateExpressionData(data);
+    this.props.onAddInputVariable(node);
+    this.props.onEditNothing();
   };
 
   ExpressionEditor.prototype.render = function render() {
-    var _this6 = this;
+    var _this5 = this;
 
     var data = this.props.node_editor.expression_data;
 
@@ -1582,7 +1595,7 @@ var ExpressionEditor = function (_React$Component3) {
         React.createElement(FormControl, { componentClass: 'input',
           placeholder: data.default_name,
           onChange: function onChange() {
-            return _this6.changeName();
+            return _this5.changeName();
           },
           value: data.name })
       ),
@@ -1598,49 +1611,49 @@ var ExpressionEditor = function (_React$Component3) {
             React.createElement(
               Button,
               { onClick: function onClick(e) {
-                  return _this6.addOp('+');
+                  return _this5.addOp('+');
                 } },
               '+'
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
-                  return _this6.addOp('-');
+                  return _this5.addOp('-');
                 } },
               '-'
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
-                  return _this6.addOp('*');
+                  return _this5.addOp('*');
                 } },
               '*'
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
-                  return _this6.addOp('/');
+                  return _this5.addOp('/');
                 } },
               '/'
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
-                  return _this6.addOp('mean');
+                  return _this5.addOp('mean');
                 } },
               'Arithmetic Mean'
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
-                  return _this6.addOp('tmean');
+                  return _this5.addOp('tmean');
                 } },
               'Temporal Mean'
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
-                  return _this6.addOp('smean');
+                  return _this5.addOp('smean');
                 } },
               'Spatial Mean'
             )
@@ -2550,7 +2563,7 @@ function node_editor() {
           name: "",
           default_name: null,
           op: null,
-          node: null,
+          node_class: null,
           operand_refs: [],
           editing: false,
           valid: false
@@ -3494,7 +3507,7 @@ var DataNode = function () {
   };
 
   DataNode.nameNode = function nameNode(name, node) {
-    return NamedTree(['named', [name, node]]);
+    return new NamedTree(['named', [name, node]]);
   };
 
   DataNode.Class = function Class(name) {
@@ -3621,7 +3634,7 @@ var MeanOperator = function (_DataNode) {
   MeanOperator.validOperands = function validOperands(input_vars, operand_refs, op_index) {
     var other_op_index = op_index == 0 ? 1 : 0;
     var other_op = input_vars.filter(function (input_var) {
-      return input_var.name == operand_refs[other_op_index].name;
+      return input_var.name == operand_refs[other_op_index];
     })[0];
 
     if (!other_op) {
@@ -3890,7 +3903,7 @@ var MathOperator = function (_DataNode9) {
   MathOperator.validOperands = function validOperands(input_vars, operand_refs, op_index) {
     var other_op_index = op_index == 0 ? 1 : 0;
     var other_op = operand_refs[other_op_index] ? input_vars.filter(function (input_var) {
-      return input_var.name == operand_refs[other_op_index].name;
+      return input_var.name == operand_refs[other_op_index];
     })[0] : false;
 
     if (!other_op) {

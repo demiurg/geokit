@@ -238,7 +238,7 @@ function editInputVariable(node, i){
         name: name,
         index: i,
         editing: true,
-        node: node,
+        node_class: DataNode.Class(node.type),
         op: node.type,
         operand_refs: null,
         valid: true
