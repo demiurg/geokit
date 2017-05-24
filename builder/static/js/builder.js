@@ -463,7 +463,7 @@ var Graph = function (_React$Component) {
                         hoverinfo: 'none'
                     }], {
                         xaxis: xaxis,
-                        yaxis: { title: this.props.variable_name },
+                        yaxis: { title: this.props.variable_name + ' (' + this.state.ajax_data.units + ')' },
                         hovermode: 'x',
                         showlegend: false
                     });

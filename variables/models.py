@@ -8,7 +8,7 @@ from wagtail.wagtailcore.models import Page
 
 from geokit_tables.models import GeoKitTable
 from layers.models import Layer
-from data import treeToNode, wrapJoins, wrapRasters
+from data import treeToNode, wrapJoins, wrapRasters, new_rpc_con
 import json
 
 
@@ -63,6 +63,26 @@ class Variable(models.Model):
     @cached_property
     def dimensions(self):
         return self.root.dimensions
+
+    @cached_property
+    def units(self):
+        '''
+        For now, assume that there is only one raster product, use its units.
+
+        TODO: Add `units` property to DataNode, do unit math to combine units
+        of all sources.
+        '''
+        rasters = self.get_rasters()
+
+        if not rasters:
+            return None
+
+        conn = new_rpc_con()
+        catalog = conn.get_catalog()
+        raster = list(rasters)[0].raster
+        units = [p['units'] for p in catalog if p['name'] == raster['id']][0]
+
+        return units
 
     def tree_json(self):
         return json.dumps(self.tree)
