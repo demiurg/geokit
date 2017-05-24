@@ -159,7 +159,12 @@ class Map extends React.Component {
         let fdata = self.state.data[feature.properties.shaid];
         var color = "#000";
         var opacity = 0.1;
-        var weight = 1;
+
+        if (this.props.current_feature == feature.properties.shaid) {
+            var weight = 3;
+        } else {
+            var weight = 1;
+        }
 
         if (fdata){
             var value;
@@ -171,12 +176,17 @@ class Map extends React.Component {
                 value = fdata[date];
                 opacity = 0.7;
             }
-            color = self.color_scale(value);
+            if (!value) {
+                color = "#000";
+                opacity = 0;
+            } else {
+                color = self.color_scale(value);
+            }
         } else {
             //console.log('no ' + feature.properties.shaid);
         }
 
-        if (active) {
+        if (active && value) {
             opacity = 0.9;
         }
 
@@ -199,17 +209,15 @@ class Map extends React.Component {
             },
             click: function(e) {
                 var feature = e.target.feature;
-                console.log(layer);
                 layer.setStyle(self.getStyle(true, feature));
                 if (feature.properties) {
                     self.props.changeFeature(feature.properties.shaid);
-                    var popupString = '<div class="popup">';
-                    for (var k in feature.properties) {
-                        var v = feature.properties[k];
-                        popupString += k + ': ' + v + '<br />';
-                    }
-                    popupString += '</div>';
-                    layer.bindPopup(popupString).openPopup();
+
+                    self.layers.forEach((layer) => {
+                        layer.geojsonLayer.eachLayer((l) => {
+                            l.setStyle(self.getStyle(false, l.feature));
+                        });
+                    });
                 }
             }
         });
