@@ -10,7 +10,7 @@ from geokit_tables import admin_urls
 @hooks.register('register_admin_urls')
 def register_admin_urls():
     return [
-        url('^tables/', include(admin_urls, namespace='geokit_tables', app_name='layers')),
+        url('^tables/', include(admin_urls, namespace='geokit_tables', app_name='tables')),
     ]
 
 

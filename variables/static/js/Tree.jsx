@@ -22,11 +22,11 @@ class DataNode {
       // Let rand be undefined, as long as we have right length _operands
       var rand = tree[1][i];
       var rand_object = null;
-      if (DataNode.isDataTree(rand)){
+      if (DataNode.isTree(rand)){
         rand_object = treeToNode(rand);
       } else if (
         this._operation != 'source' && this.isSource(rand) &&
-        !DataNode.isDataNode(rand)
+        !DataNode.isNode(rand)
       ){
         rand_object = treeToNode(['source', [rand]]);
       } else {
@@ -125,7 +125,7 @@ class DataNode {
     var rands = [];
     for (var i = 0; i < this._operands.length; i++){
       var rand = this._operands[i];
-      if (DataNode.isDataTree(rand)){
+      if (DataNode.isTree(rand)){
         rands.push(rand.json());
       } else {
         rands.push(rand);
@@ -144,7 +144,7 @@ class DataNode {
     if (this._operands.length){
       rands = this._operands.map(
         (o, i) => {
-          if(DataNode.isDataNode(o)){
+          if(DataNode.isNode(o)){
             return o.render();
           } else {
             return (o + ", ");
@@ -159,7 +159,7 @@ class DataNode {
     );
   }
 
-  static isDataTree(arg){
+  static isTree(arg){
     return (
       Array.isArray(arg) &&
       arg.length == 2 &&
@@ -167,7 +167,7 @@ class DataNode {
     );
   }
 
-  static isDataNode(node){
+  static isNode(node){
     return (
       node._operation &&
       DataNode.TYPES.hasOwnProperty(node._operation) &&
@@ -176,7 +176,7 @@ class DataNode {
   }
 
   static isSource(obj){
-    return (obj && (obj.id && obj.type));
+    return (obj && (obj.id && obj.type && (obj.type == 'Layer' || obj.type == 'Table')));
   }
 
   isSource(obj){
@@ -184,7 +184,7 @@ class DataNode {
   }
 
   static nameNode(name, node){
-    return NamedTree(['named', [name, node]]);
+    return new NamedTree(['named', [name, node]]);
   }
 
   static Class(name){
@@ -192,7 +192,7 @@ class DataNode {
   }
 
   static toNode(arg){
-    if (!DataNode.isDataNode(arg) && DataNode.isDataTree(arg)){
+    if (!DataNode.isNode(arg) && DataNode.isTree(arg)){
       return treeToNode(arg);
     }else{
       return arg;
@@ -200,7 +200,7 @@ class DataNode {
   }
 
   static toTree(arg){
-    if (DataNode.isDataNode(arg) && !DataNode.isDataTree(arg)){
+    if (DataNode.isNode(arg) && !DataNode.isTree(arg)){
       return arg.json();
     }else{
       return arg;
@@ -216,11 +216,27 @@ class MeanOperator extends DataNode {
     super(tree);
     this.parseTree();
 
+    // congratulations! (undefined == undefined) == true
     if (this.left.dimensions != this.right.dimensions) {
       throw Error("Operands must have the same dimensions");
     }
 
-    this._dimensions = this.left.dimensions;
+    this._dimensions = this.left ? this.left.dimensions : null;
+  }
+
+  static validOperands(input_vars, operand_refs, op_index) {
+    var other_op_index = op_index == 0 ? 1 : 0;
+    var other_op = input_vars.filter(input_var => {
+      return input_var.name == operand_refs[other_op_index];
+    })[0];
+
+    if (!other_op) {
+      return input_vars;
+    } else {
+      return input_vars.filter(input_var => {
+        return input_var.dimensions == other_op.dimensions;
+      });
+    }
   }
 }
 
@@ -234,9 +250,9 @@ class TemporalMeanOperator extends DataNode {
     this.parseTree();
   }
 
-  validOperands(input_vars) {
+  static validOperands(input_vars) {
     return input_vars.filter(input_var => {
-      return treeToNode(input_var).dimensions.includes('time');
+      return input_var.dimensions.includes('time');
     });
   }
 }
@@ -251,9 +267,9 @@ class SpatialMeanOperator extends DataNode {
     this.parseTree();
   }
 
-  validOperands(input_vars) {
+  static validOperands(input_vars) {
     return input_vars.filter(input_var => {
-      return treeToNode(input_var).dimensions.includes('space');
+      return input_var.dimensions.includes('space');
     });
   }
 }
@@ -265,7 +281,6 @@ class SelectOperator extends DataNode {
   constructor(tree) {
     super(tree);
     this.parseTree();
-    this.child_op = this._operands[0][0];
     this._dimensions = this.left.dimensions;
   }
 }
@@ -277,7 +292,6 @@ class ExpressionOperator extends DataNode {
   constructor(tree) {
     super(tree);
     this.parseTree();
-    var operands = this._operands;
     this._dimensions = this.operand.dimensions;
   }
 }
@@ -305,6 +319,38 @@ class JoinOperator extends DataNode {
   }
 }
 
+class SourceOperator extends DataNode {
+  static arity = 1;
+  _operand_names = ['operand'];
+  _name = 'Source';
+  constructor(tree) {
+    super(tree);
+    this.parseTree();
+
+    if (!(this.isSource(this.operand) && this.operand.field)){
+      throw Error("Source node is missing some property (id, type, or field");
+    }
+
+    if (this.operand.type == 'Layer') {
+      this._dimensions = 'space';
+    } else if (this.operand.type == 'Table') {
+      this._dimensions = 'time';
+    } else {
+      throw Error("Source type unknown");
+    }
+    this['id'] = this.operand.id;
+  }
+
+  render(){
+    var o = this.operand;
+    return (
+      <span>
+        {o.type + "/" + o.name + ( o.field ? "/" + o.field : "")}&nbsp;
+      </span>
+    );
+  }
+}
+
 class RasterOperator extends DataNode {
   static arity = 3;
   _operand_names = ['product', 'layer', 'range'];
@@ -329,50 +375,26 @@ class RasterOperator extends DataNode {
   }
 
   render() {
+    var layer = "no layer";
+    if (this.layer.render){
+      layer = this.layer.render();
+    }else{
+      console.log(this.layer, this.layer.json);
+    }
     return (
       <span>
         Raster product {this.product.name}&nbsp;
-        using {this.layer.render()}
+        using {layer}&nbsp;
         in the time span of {this.start} - {this.end}
       </span>
     );
   }
 }
 
-class SourceOperator extends DataNode {
-  static arity = 1;
-  _operand_names = ['operand'];
-  constructor(tree) {
-    super(tree);
-    this.parseTree();
-
-    this._name = 'Source';
-
-    if (!(this.isSource(this.operand) && this.operand.field)){
-      throw Error("Source node is missing some property (id, type, or field");
-    }
-
-    if (this.operand.type == 'Layer') {
-      this._dimensions = 'space';
-    } else if (this.operand.type == 'Table') {
-      this._dimensions = 'time';
-    } else {
-      throw Error("Source type unknown");
-    }
-    this['id'] = this.operand.id;
-  }
-
-  render(){
-    var o = this.operand;
-    return <span>
-      {o.type + "/" + o.name + ( o.field ? "/" + o.field : "")}&nbsp;
-    </span>;
-  }
-}
-
 class MathOperator extends DataNode {
   static arity = 2;
   _operand_names = ['left', 'right'];
+
   constructor(tree) {
     super(tree);
     this.parseTree();
@@ -383,24 +405,24 @@ class MathOperator extends DataNode {
         (this.left && this.right) &&
         this.left.dimensions != this.right.dimensions
     ) {
+      // Great how this passes when both are undefined
       throw Error("Operators must have the same dimensions");
     }
 
     this._dimensions = this.left ? this.left.dimensions : null;
   }
 
-  validOperands(input_vars, operand_refs, op_index) {
+  static validOperands(input_vars, operand_refs, op_index) {
     var other_op_index = op_index == 0 ? 1 : 0;
-    var other_op = input_vars.filter(input_var => {
+    var other_op = operand_refs[other_op_index] ? input_vars.filter(input_var => {
       return input_var.name == operand_refs[other_op_index];
-    })[0];
+    })[0] : false;
 
     if (!other_op) {
       return input_vars;
     } else {
-      var other_op_node = treeToNode(other_op);
       return input_vars.filter(input_var => {
-        return treeToNode(input_var).dimensions == other_op_node.dimensions;
+        return input_var.dimensions == other_op.dimensions;
       });
     }
   }
@@ -412,12 +434,6 @@ class NamedTree extends DataNode {
   constructor(args) {
     super(args);
     this.parseTree();
-    /*
-    let value = this.value_operand;
-    for (var i=0; i < value._operand_names.length; i++){
-      this[value._operand_names[i]] = value._operands[i];
-    }
-    */
     this.dimensions = this.value.dimensions;
     this._name = this.name_operand;
   }
@@ -473,7 +489,7 @@ DataNode.TYPES = {
 function treeToNode(tree){
   if (!tree || Object.keys(tree).length == 0) {
     return new EmptyTree();
-  } else if (DataNode.isDataNode(tree)){
+  } else if (DataNode.isNode(tree)){
     return tree;
   } else {
     if (!DataNode.TYPES.hasOwnProperty(tree[0])){

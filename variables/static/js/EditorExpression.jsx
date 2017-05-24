@@ -8,7 +8,10 @@ class OperandChooser extends React.Component {
     var data = Object.assign(
       {},
       this.props.node_editor.expression_data,
-      {operand_refs: operand_refs}
+      {
+        operand_refs: operand_refs,
+        valid: operand_refs.reduce((acc, val) => acc && val)
+      }
     );
     this.props.onUpdateExpressionData(data);
   }
@@ -16,14 +19,13 @@ class OperandChooser extends React.Component {
   options() {
     var data = this.props.node_editor.expression_data;
 
-    var valid_input_vars = data.node.validOperands(
+    var valid_input_vars = data.node_class.validOperands(
       this.props.input_variables,
       data.operand_refs,
       this.props.operand_index
     );
 
     return valid_input_vars.map((input_var) => {
-      console.log(input_var, input_var.name);
       return {value: input_var.name, label: input_var.name};
     });
   }
@@ -32,7 +34,7 @@ class OperandChooser extends React.Component {
     return (
       <div style={{display: "inline-block", width: 400}}>
         <Select
-          onChange={this.changeOperand.bind(this)}
+          onChange={(e) => this.changeOperand(e)}
           value={this.props.node_editor.expression_data.operand_refs[this.props.operand_index]}
           options={this.options()}
           clearable={true}
@@ -45,12 +47,12 @@ class OperandChooser extends React.Component {
 class TreeViewer extends React.Component {
   render() {
     var data = this.props.node_editor.expression_data;
-    if (!data.node){
+    if (!data.node_class){
       return <p>Select operation above.</p>;
     }
 
     var operand_inputs = [];
-    for (var i = 0; i < data.node.arity; i++) {
+    for (var i = 0; i < data.node_class.arity; i++) {
       operand_inputs.push(<OperandChooser {...this.props} operand_index={i} />);
     }
 
@@ -68,7 +70,7 @@ class ExpressionEditor extends React.Component {
     this.props.onUpdateExpressionData(
       Object.assign(
         {},
-        props.node_editor.expression_data.data,
+        this.props.node_editor.expression_data.data,
         {default_name: this.generateName(props.input_variables)}
       )
     );
@@ -82,7 +84,7 @@ class ExpressionEditor extends React.Component {
       this.props.onUpdateExpressionData(
         Object.assign(
           {},
-          props.node_editor.expression_data.data,
+          this.props.node_editor.expression_data.data,
           {default_name: this.generateName(newProps.input_variables)}
         )
       );
@@ -116,49 +118,38 @@ class ExpressionEditor extends React.Component {
   }
 
   addOp(op) {
-    var node = treeToNode([op, []]);
+    var node_class = DataNode.Class(op);
     var expression_data = Object.assign(
       {},
       this.props.node_editor.expression_data,
-      {op: op, operand_refs: Array(node.arity), node: node}
+      {op: op, operand_refs: Array(node_class.arity), node_class: node_class}
     );
     this.props.onUpdateExpressionData(expression_data);
   }
 
-  populateOperands(arity) {
-    var operands = [];
-
-    for (var i = 0; i < arity; i++) {
-      var operand_tree = this.props.input_variables.filter((input_var) => {
-        // This relies on unique names in input variables table.
-        return input_var.name == this.props.node_editor.expression_data.operand_refs[i].name;
-      })[0];
-
-      operands.push(operand_tree);
-    }
-
-    return operands;
-  }
-
   onSave() {
     var data = this.props.node_editor.expression_data;
-    if (DataNode.isNode(data.node)) {
-      if (!data.name || data.name == "") {
-        data.name = data.default_name;
+    var rands = [];
+    for (let name of data.operand_refs){
+      for (let ivar of this.props.input_variables){
+        if (name == ivar.name){
+          // access named operand value here, throwing away name
+          rands.push(ivar.value);
+          break; // Just in case names are not unique now, this needs validation
+        }
       }
-
-      var node = treeToNode(data.node);
-      if (node.type == 'named'){
-        node.name = data.name;
-      }else{
-        node = DataNode.namedNode(data.name, node);
-      }
-      data.node[1] = this.populateOperands(node.arity);
-
-      this.props.onUpdateExpressionData(data);
-      this.props.onAddInputVariable(node);
-      this.props.onEditNothing();
     }
+
+    var node = new data.node_class([data.op, rands]);
+    if (!data.name || data.name == "") {
+      data.name = data.default_name;
+    }
+
+    node = DataNode.nameNode(data.name, node);
+
+    this.props.onUpdateExpressionData(data);
+    this.props.onAddInputVariable(node);
+    this.props.onEditNothing();
   }
 
   render() {
@@ -179,6 +170,7 @@ class ExpressionEditor extends React.Component {
               <Button onClick={(e) => this.addOp('-')}>-</Button>
               <Button onClick={(e) => this.addOp('*')}>*</Button>
               <Button onClick={(e) => this.addOp('/')}>/</Button>
+              <Button onClick={(e) => this.addOp('mean')}>Arithmetic Mean</Button>
               <Button onClick={(e) => this.addOp('tmean')}>Temporal Mean</Button>
               <Button onClick={(e) => this.addOp('smean')}>Spatial Mean</Button>
             </ButtonGroup>
