@@ -44,13 +44,12 @@ def get_raster_catalog():
 
 
 def get_raster_statuses(variable):
-    rasters = variable.get_rasters
     statuses = {}
 
     from variables.data import new_rpc_con
     conn = new_rpc_con()
 
-    for r in rasters:
+    for r in variable.rasters:
         try:
             job_request = RasterRequest.objects.get(
                 raster_id=r.raster['id'],

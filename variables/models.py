@@ -71,14 +71,23 @@ class Variable(models.Model):
         return json.dumps(self.input_variables)
 
     @cached_property
+    def layers(self):
+        return self.get_layers()
+
     def get_layers(self):
         return Layer.objects.filter(pk__in=self.root.get_layers())
 
     @cached_property
+    def tables(self):
+        return self.get_tables
+
     def get_tables(self):
         return GeoKitTable.objects.filter(pk__in=self.root.get_tables())
 
     @cached_property
+    def rasters(self):
+        return self.get_rasters()
+
     def get_rasters(self):
         return self.root.get_rasters()
 

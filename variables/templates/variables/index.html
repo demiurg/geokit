@@ -77,10 +77,10 @@
                 {% endfor %}
               </dd>
               {% endif %}
-              {% if variable.get_layers %}
+              {% if variable.layers %}
               <dt>Layers</dt>
               <dd>
-                {% for layer in variable.get_layers %}
+                {% for layer in variable.layers %}
                   {% if forloop.first %}
                     {{ layer.name }}
                   {% else %}
@@ -89,10 +89,10 @@
                 {% endfor %}
               </dd>
               {% endif %}
-              {% if variable.get_tables %}
+              {% if variable.tables %}
               <dt>Tables</dt>
               <dd>
-                {% for table in variable.get_tables %}
+                {% for table in variable.tables %}
                   {% if forloop.first %}
                     {{ table.name }}
                   {% else %}
