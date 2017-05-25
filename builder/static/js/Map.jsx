@@ -157,14 +157,11 @@ class Map extends React.Component {
     getStyle = (active, feature) => {
         var self = this;
         let fdata = self.state.data[feature.properties.shaid];
+        var fillColor = "#000";
         var color = "#000";
         var opacity = 0.1;
+        var dashArray = '3';
 
-        if (this.props.current_feature == feature.properties.shaid) {
-            var weight = 3;
-        } else {
-            var weight = 1;
-        }
 
         if (fdata){
             var value;
@@ -177,10 +174,10 @@ class Map extends React.Component {
                 opacity = 0.7;
             }
             if (!value) {
-                color = "#000";
+                fillColor = "#000";
                 opacity = 0;
             } else {
-                color = self.color_scale(value);
+                fillColor = self.color_scale(value);
             }
         } else {
             //console.log('no ' + feature.properties.shaid);
@@ -190,10 +187,18 @@ class Map extends React.Component {
             opacity = 0.9;
         }
 
+        if (this.props.current_feature == feature.properties.shaid) {
+            var weight = 3;
+            dashArray = '0';
+        } else {
+            var weight = 1;
+        }
+
         return {
-            color: "#000",
+            color: color,
+            dashArray: dashArray,
             weight: weight,
-            fillColor: color,
+            fillColor: fillColor,
             fillOpacity: opacity
         };
     }
