@@ -123,6 +123,8 @@ def data_json(request, variable_id):
 
     text = '{"dimensions": "' + variable.dimensions + '", '
 
+    text += '"units": "' + variable.units + '", '
+
     if "space" in variable.dimensions:
         layers = variable.get_layers()
         text += '"layers": [' + ','.join(map(lambda l: str(l.pk), layers)) + '], '
