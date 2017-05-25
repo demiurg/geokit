@@ -155,8 +155,14 @@ class RasterDataSource extends React.Component {
       }
     };
 
-    var r = self.props.node_editor.raster_data.raster;
+    //var r = self.props.node_editor.raster_data.raster;
     // console.log('update', r.start_date, r.end_date);
+    
+    var r = this.props.raster_catalog.items.filter((raster) => {
+      return raster.name == this.props.node_editor.raster_data.product.id;
+    })[0];
+
+    //console.log(r, raster_info);
 
     $(self.startpicker).datepicker({
       'format': cal_format,
@@ -206,8 +212,12 @@ class RasterDataSource extends React.Component {
     var range = date_start + ',' + date_end;
 
     var data = this.props.node_editor.raster_data;
-    var raster_start_date = new Date(data.raster.start_date);
-    var raster_end_date = new Date(data.raster.end_date);
+    var raster = this.props.raster_catalog.items.filter((raster) => {
+      return raster.name == this.props.node_editor.raster_data.product.id;
+    })[0];
+
+    var raster_start_date = new Date(raster.start_date);
+    var raster_end_date = new Date(raster.end_date);
 
     var errors = {};
 
