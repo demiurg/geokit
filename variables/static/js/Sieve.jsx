@@ -398,11 +398,12 @@ class AddDataSourcePanel extends React.Component {
 
 class SieveComponent extends React.Component {
   saveVariable = () => {
+    var ivs = this.props.input_variables.map((v) => DataNode.toTree(v))
     this.props.onSaveVariable({
       id: this.props.id,
       name: this.props.name,
-      tree: this.props.tree,
-      input_variables: this.props.input_variables.map((v) => DataNode.toTree(v)),
+      tree: DataNode.toTree(this.props.tree),
+      input_variables: ivs,
       description: this.props.description
     }, this.props.created);
   };

@@ -129,12 +129,13 @@ class DataNode {
     var rands = [];
     for (var i = 0; i < this._operands.length; i++){
       var rand = this._operands[i];
-      if (DataNode.isTree(rand)){
+      if (DataNode.isNode(rand)){
         rands.push(rand.json());
       } else {
         rands.push(rand);
       }
     }
+    console.log('json', this._operation, rand);
     return [this._operation, rands];
   }
 

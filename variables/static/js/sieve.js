@@ -158,7 +158,6 @@ function receiveInputVariables(input_variables) {
       var ivnode = treeToNode(input_variables[i]);
       input_nodes[i] = ivnode;
       if (!spatial_domain) {
-        console.log(ivnode);
         var layers = ivnode.layers;
         if (layers.length > 0) {
           spatial_domain = layers[layers.length - 1].operand.id;
@@ -3221,13 +3220,14 @@ var SieveComponent = function (_React$Component4) {
     }
 
     return _ret2 = (_temp2 = (_this7 = _possibleConstructorReturn(this, _React$Component4.call.apply(_React$Component4, [this].concat(args))), _this7), _this7.saveVariable = function () {
+      var ivs = _this7.props.input_variables.map(function (v) {
+        return DataNode.toTree(v);
+      });
       _this7.props.onSaveVariable({
         id: _this7.props.id,
         name: _this7.props.name,
-        tree: _this7.props.tree,
-        input_variables: _this7.props.input_variables.map(function (v) {
-          return DataNode.toTree(v);
-        }),
+        tree: DataNode.toTree(_this7.props.tree),
+        input_variables: ivs,
         description: _this7.props.description
       }, _this7.props.created);
     }, _temp2), _possibleConstructorReturn(_this7, _ret2);
@@ -3518,12 +3518,13 @@ var DataNode = function () {
     var rands = [];
     for (var i = 0; i < this._operands.length; i++) {
       var rand = this._operands[i];
-      if (DataNode.isTree(rand)) {
+      if (DataNode.isNode(rand)) {
         rands.push(rand.json());
       } else {
         rands.push(rand);
       }
     }
+    console.log('json', this._operation, rand);
     return [this._operation, rands];
   };
 

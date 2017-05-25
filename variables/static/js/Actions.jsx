@@ -161,7 +161,6 @@ function receiveInputVariables(input_variables) {
       let ivnode = treeToNode(input_variables[i]);
       input_nodes[i] = ivnode;
       if (!spatial_domain){
-        console.log(ivnode);
         let layers = ivnode.layers;
         if(layers.length > 0) {
           spatial_domain = layers[layers.length - 1].operand.id;
