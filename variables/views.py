@@ -71,7 +71,7 @@ def raster_statuses(request):
 
 
 def variable_raster_status(request, pk):
-    v = Variable.objects.get_object_or_404(pk=pk)
+    v = get_object_or_404(Variable, pk=pk)
     return HttpResponse(json.dumps(get_raster_status(v)))
 
 

@@ -62,7 +62,7 @@
             {{ variable.modified }}
           </td>
           <td>
-            <dl class='variable-status' id='status-{{variable.pk}}'>
+            <dl class='variable-status' data-vpk='{{variable.pk}}'>
               {% if variable.layers %}
               <dt>Layers</dt>
               <dd>
@@ -99,21 +99,34 @@
   </div>
   <script>
   $('.variable-status').each(function(idx, el){
-    /*       {% if statuses %}
-              <dt>Rasters</dt>
-              <dd>
-                {% for raster, status in statuses.iteritems %}
-                <span class="raster-status {% if status == 'complete' %}done{% elif status == 'failed' %}bad{% else %}working{% endif %}">
-                  {% if forloop.first %}
-                    {{ raster }} (<em>{{ status }}</em>)
-                  {% else %}
-                    , {{ raster }} (<em>{{ status }}</em>)
-                  {% endif %}
-                </span>
-                {% endfor %}
-              </dd>
-              {% endif %}
-    */
+    $.getJSON(
+      '/variables/variable_raster_status_'+$(el).data('vpk')+'.json',
+      function(data){
+        if(data){
+          var html = '<dt>Rasters</dt>';
+          html += '<dd>';
+          var any = false;
+          $.each(data, function(status, raster){
+              html += '<span class="raster-status ';
+              if (status == 'complete'){
+                html += 'done';
+              } else if (status == 'failed'){
+                html += 'bad';
+              } else {
+                html += 'working';
+              }
+              html += '">';
+              html += raster + '&nbsp;(<em>' + status + '</em>)';
+              html += '</span><br/>';
+              any = true;
+          });
+          html += '</dd>';
+          if (any){
+            $(el).append(html);
+          }
+        }
+      }
+    );
   });
   </script>
 </div>
