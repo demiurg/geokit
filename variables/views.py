@@ -43,12 +43,10 @@ def get_raster_catalog():
     return None
 
 
-def get_raster_statuses(variable):
+def get_raster_status(variable):
     statuses = {}
-
     from variables.data import new_rpc_con
     conn = new_rpc_con()
-
     for r in variable.rasters:
         try:
             job_request = RasterRequest.objects.get(
@@ -63,13 +61,25 @@ def get_raster_statuses(variable):
     return statuses
 
 
+def raster_statuses(request):
+    variables = Variable.objects.all().order_by('-modified')
+    raster_statuses = [get_raster_status(v) for v in variables]
+    variables_and_statuses = zip(
+        variables.values(), raster_statuses
+    )
+    return HttpResponse(json.dumps(variables_and_statuses))
+
+
+def variable_raster_status(request, pk):
+    v = Variable.objects.get_object_or_404(pk=pk)
+    return HttpResponse(json.dumps(get_raster_status(v)))
+
+
 def index(request):
     variables = Variable.objects.all().order_by('-modified')
-    raster_statuses = [get_raster_statuses(v) for v in variables]
-    variables_and_statuses = zip(variables, raster_statuses)
-    return render(request, 'variables/index.html',
-        {"variables_and_statuses": variables_and_statuses}
-    )
+    return render(request, 'variables/index.html', {
+        "variables": variables
+    })
 
 
 def add(request):

@@ -24,7 +24,7 @@
 
 <div class="nice-padding">
   <div id="variables-results" class="variables">
-    {% if variables_and_statuses %}
+    {% if variables %}
     <table class="listing">
       <col />
       <col />
@@ -38,15 +38,15 @@
           <th>Dimensions</th>
           <th>Bounds</th>
           <th>Last Modified</th>
-          <th>Inputs</th>
+          <th>Inputs Used</th>
         </tr>
       </thead>
       <tbody>
-        {% for variable, statuses in variables_and_statuses %}
+        {% for variable in variables %}
         <tr>
           <td class="title">
             <a href="{% url 'variables:edit' variable.pk %}">
-              {{ variable.name }}
+              <h2>{{ variable.name }}</h2>
             </a>
           </td>
           <td class="description">
@@ -62,21 +62,7 @@
             {{ variable.modified }}
           </td>
           <td>
-            <dl>
-              {% if statuses %}
-              <dt>Rasters</dt>
-              <dd>
-                {% for raster, status in statuses.iteritems %}
-                <span class="raster-status {% if status == 'complete' %}done{% elif status == 'failed' %}bad{% else %}working{% endif %}">
-                  {% if forloop.first %}
-                    {{ raster }} (<em>{{ status }}</em>)
-                  {% else %}
-                    , {{ raster }} (<em>{{ status }}</em>)
-                  {% endif %}
-                </span>
-                {% endfor %}
-              </dd>
-              {% endif %}
+            <dl class='variable-status' id='status-{{variable.pk}}'>
               {% if variable.layers %}
               <dt>Layers</dt>
               <dd>
@@ -111,5 +97,24 @@
     <p>You haven't created any variables yet.</p>
     {% endif %}
   </div>
+  <script>
+  $('.variable-status').each(function(idx, el){
+    /*       {% if statuses %}
+              <dt>Rasters</dt>
+              <dd>
+                {% for raster, status in statuses.iteritems %}
+                <span class="raster-status {% if status == 'complete' %}done{% elif status == 'failed' %}bad{% else %}working{% endif %}">
+                  {% if forloop.first %}
+                    {{ raster }} (<em>{{ status }}</em>)
+                  {% else %}
+                    , {{ raster }} (<em>{{ status }}</em>)
+                  {% endif %}
+                </span>
+                {% endfor %}
+              </dd>
+              {% endif %}
+    */
+  });
+  </script>
 </div>
 {% endblock %}
