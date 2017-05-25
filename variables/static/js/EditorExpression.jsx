@@ -33,16 +33,20 @@ class OperandChooser extends React.Component {
   render() {
     var data = this.props.node_editor.expression_data;
 
-    return (
-      <div style={{display: "inline-block", width: 400}}>
-        <Select
-          onChange={(e) => this.changeOperand(e)}
-          value={data.operand_refs[this.props.operand_index]}
-          options={this.options()}
-          clearable={true}
-        />
-      </div>
-    );
+    if (data.operand_refs) {
+      return (
+        <div style={{display: "inline-block", width: 400}}>
+          <Select
+            onChange={(e) => this.changeOperand(e)}
+            value={data.operand_refs[this.props.operand_index]}
+            options={this.options()}
+            clearable={true}
+          />
+        </div>
+      );
+    } else {
+      return null;
+    }
   }
 }
 
@@ -92,7 +96,7 @@ class ExpressionEditor extends React.Component {
         data,
         {
           default_name: this.generateName(props.input_variables),
-          operand_refs: operand_refs,
+          operand_refs: data.operand_refs ? data.operand_refs : operand_refs,
           valid: data.node_class && operand_refs.length == data.node_class.arity
         }
       )

@@ -197,7 +197,8 @@ function node_editor(state={'mode': DEFAULT}, action){
           source2: "",
           default_name: null,
           editing: false,
-          index: -1
+          index: -1,
+          errors: {}
         }
       });
     case EDITING_EXPRESSION:

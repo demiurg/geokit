@@ -1428,18 +1428,22 @@ var OperandChooser = function (_React$Component) {
 
     var data = this.props.node_editor.expression_data;
 
-    return React.createElement(
-      'div',
-      { style: { display: "inline-block", width: 400 } },
-      React.createElement(Select, {
-        onChange: function onChange(e) {
-          return _this2.changeOperand(e);
-        },
-        value: data.operand_refs[this.props.operand_index],
-        options: this.options(),
-        clearable: true
-      })
-    );
+    if (data.operand_refs) {
+      return React.createElement(
+        'div',
+        { style: { display: "inline-block", width: 400 } },
+        React.createElement(Select, {
+          onChange: function onChange(e) {
+            return _this2.changeOperand(e);
+          },
+          value: data.operand_refs[this.props.operand_index],
+          options: this.options(),
+          clearable: true
+        })
+      );
+    } else {
+      return null;
+    }
   };
 
   return OperandChooser;
@@ -1526,7 +1530,7 @@ var ExpressionEditor = function (_React$Component3) {
 
     _this4.props.onUpdateExpressionData(Object.assign({}, data, {
       default_name: _this4.generateName(props.input_variables),
-      operand_refs: operand_refs,
+      operand_refs: data.operand_refs ? data.operand_refs : operand_refs,
       valid: data.node_class && operand_refs.length == data.node_class.arity
     }));
     return _this4;
@@ -2628,7 +2632,8 @@ function node_editor() {
           source2: "",
           default_name: null,
           editing: false,
-          index: -1
+          index: -1,
+          errors: {}
         }
       });
     case EDITING_EXPRESSION:
