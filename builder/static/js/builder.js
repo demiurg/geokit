@@ -938,14 +938,10 @@ var Map = function (_React$Component) {
         _this.getStyle = function (active, feature) {
             var self = _this;
             var fdata = self.state.data[feature.properties.shaid];
+            var fillColor = "#000";
             var color = "#000";
             var opacity = 0.1;
-
-            if (_this.props.current_feature == feature.properties.shaid) {
-                var weight = 3;
-            } else {
-                var weight = 1;
-            }
+            var dashArray = '3';
 
             if (fdata) {
                 var value;
@@ -958,10 +954,10 @@ var Map = function (_React$Component) {
                     opacity = 0.7;
                 }
                 if (!value) {
-                    color = "#000";
+                    fillColor = "#000";
                     opacity = 0;
                 } else {
-                    color = self.color_scale(value);
+                    fillColor = self.color_scale(value);
                 }
             } else {
                 //console.log('no ' + feature.properties.shaid);
@@ -971,10 +967,18 @@ var Map = function (_React$Component) {
                 opacity = 0.9;
             }
 
+            if (_this.props.current_feature == feature.properties.shaid) {
+                var weight = 3;
+                dashArray = '0';
+            } else {
+                var weight = 1;
+            }
+
             return {
-                color: "#000",
+                color: color,
+                dashArray: dashArray,
                 weight: weight,
-                fillColor: color,
+                fillColor: fillColor,
                 fillOpacity: opacity
             };
         };
