@@ -12,6 +12,8 @@ ALLOWED_HOSTS.append('.geokit.testserver')
 
 DATABASES['default']['TEST'] = {'NAME': 'test_pavel_geokit_2' }
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
 RPC_URL = 'http://localhost:8001'
 
 # Ensure this is off in a production environment
