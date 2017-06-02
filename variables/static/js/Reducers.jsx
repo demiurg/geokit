@@ -193,8 +193,9 @@ function node_editor(state={'mode': DEFAULT}, action){
         mode: action.mode,
         tabular_data: action.data ? action.data : {
           name: "",
-          source1: "",
-          source2: "",
+          layer_field: "",
+          table: "",
+          table_field: "",
           default_name: null,
           editing: false,
           index: -1,

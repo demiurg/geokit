@@ -135,7 +135,6 @@ class DataNode {
         rands.push(rand);
       }
     }
-    console.log('json', this._operation, rand);
     return [this._operation, rands];
   }
 

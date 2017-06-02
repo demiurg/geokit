@@ -3,7 +3,7 @@ class TabularDataSource extends React.Component {
   onSave() {
     var data = this.props.node_editor.tabular_data;
 
-    if (data.errors.name)
+    if (data.errors.name || data.errors.table || data.errors.layer_field || data.errors.table_field)
       return; // Do not submit if there are errors
     var name = data.name;
     if (name == null || name.length == 0){
@@ -15,13 +15,15 @@ class TabularDataSource extends React.Component {
       [
         'join',
         [
-          data.source1,
-          data.source2
+          {'type': 'Layer', 'id': this.props.spatial_domain, 'field': data.layer_field},
+          {'type': 'Table', 'id': data.table, 'field': data.table_field}
         ]
       ]]
     ];
     var index = data.index;
     var editing = data.editing;
+
+    variable = DataNode.toNode(variable);
 
     if (editing){
       this.props.onUpdateInputVariable(variable, index);
@@ -42,7 +44,7 @@ class TabularDataSource extends React.Component {
       if (t1){
         var source1 = {name: t1.name, field: t1.field_names[0]};
         var source2 = Object.assign({}, source1);
-        var name = this.generateName(source1, source2, newProps.input_variables);
+        var name = this.generateName(newProps.node_editor.tabular_data.table, newProps.input_variables);
         var data = Object.assign(
           {},
           newProps.node_editor.tabular_data,
@@ -60,11 +62,23 @@ class TabularDataSource extends React.Component {
     }
   }
 
-  generateName(source1, source2, var_list=null) {
-    if (source1.name == source2.name){
-      var name = source1.name + '-' + source1.field + '-' + source2.field;
+  layerIdToName(layer_id) {
+    return this.props.layers.items.filter((layer) => {
+      return layer.id == layer_id;
+    })[0].name;
+  }
+
+  tableIdToName(table_id) {
+    return this.props.tables.items.filter((table) => {
+      return table.id == table_id;
+    })[0].name;
+  }
+
+  generateName(table, var_list=null) {
+    if (table) {
+      var name = `${this.layerIdToName(this.props.spatial_domain)}-${this.tableIdToName(table)}`;
     } else {
-      var name = source1.name + '-' + source2.name;
+      return this.layerIdToName(this.props.spatial_domain) + '-';
     }
     name = name.replace(/_/g, "-");
     var i = 1;
@@ -86,19 +100,40 @@ class TabularDataSource extends React.Component {
 
   validate() {
     var form = $(this.form).serializeArray();
-    var name = form[2]['value'];
 
-    var source1 = JSON.parse(form[0]['value']);
-    var source2 = JSON.parse(form[1]['value']);
-    var default_name = this.generateName(source1, source2);
+    var layer_field = form[0]['value'];
+    var table = form[1]['value'];
+
+    if (form.length == 4) {
+      var table_field = form[2]['value'];
+      var name = form[3]['value'];
+    } else {
+      var table_field = null;
+      var name = form[2]['value'];
+    }
+
+    var default_name = this.generateName(table);
+
+    var errors = {};
+    if (!layer_field) {
+      errors.layer_field = "Must select a layer field";
+    }
+    if (!table) {
+      errors.table = "Must select a table";
+    }
+    if (!table_field) {
+      errors.table_field = "Must select a table field";
+    }
 
     var data = Object.assign(
       {},
       this.props.node_editor.tabular_data,
       {
         name: name,
-        source1: source1,
-        source2: source2,
+        errors: errors,
+        layer_field: layer_field,
+        table: table,
+        table_field: table_field,
         default_name: default_name
       }
     );
@@ -116,53 +151,75 @@ class TabularDataSource extends React.Component {
     return (
       <Panel header="Tabular data">
         <form ref={(ref)=>{this.form=ref}} onChange={this.validate.bind(this)}>
-          <FormGroup controlId="formSelectSource">
-            <ControlLabel>Source 1</ControlLabel>
+          <FormGroup controlId="formSelectLayerField"
+            validationState={data.errors.layer_field ? 'error' : null}>
+            <ControlLabel>Layer Field</ControlLabel>
             <FormControl
               componentClass="select"
               placeholder="select"
-              value={this.sourceToString(this.props.node_editor.tabular_data.source1)}
+              value={data.layer_field}
+              name="layer-field"
+            >
+              <option value={null}></option>
+              {
+                this.props.layers.items.filter((layer) => {
+                  return layer.id == this.props.spatial_domain;
+                })[0].field_names.map((field) => {
+                  return <option value={field}>{field}</option>;
+                })
+              }
+            </FormControl>
+          </FormGroup>
+          <FormGroup controlId="formSelectTable"
+            validationState={data.errors.table ? 'error' : null}>
+            <ControlLabel>Table</ControlLabel>
+            <FormControl
+              componentClass="select"
+              placeholder="select"
               name="table"
+              value={data.table}
             >
+              <option value={null}></option>
               {
-                this.props.tables.items.map(i2o('Table')
-                ).concat(
-                  this.props.layers.items.map(i2o('Layer'))
-                )
+                this.props.tables.items.map((table) => {
+                  return <option value={table.id}>{table.name}</option>;
+                })
               }
             </FormControl>
           </FormGroup>
-          <FormGroup controlId="formSelectDest">
-            <ControlLabel>Source 2</ControlLabel>
-            <FormControl
-              componentClass="select"
-              placeholder="select"
-              name="layer"
-              value={this.sourceToString(this.props.node_editor.tabular_data.source2)}
-            >
-              {
-                this.props.tables.items.map(
-                  i2o('Table')
-                ).concat(
-                  this.props.layers.items.map(i2o('Layer'))
-                )
-              }
-            </FormControl>
-          </FormGroup>
+          {this.props.node_editor.tabular_data.table ?
+            <FormGroup controlId="formSelectTableField"
+              validationState={data.errors.table_field ? 'error' : null}>
+              <ControlLabel>Table Field</ControlLabel>
+              <FormControl
+                componentClass="select"
+                placeholder="select"
+                value={data.table_field}
+                name="table-field">
+                <option value={null}></option>
+                {
+                  this.props.tables.items.filter((table) => {
+                    return table.id == this.props.node_editor.tabular_data.table;
+                  })[0].field_names.map((field) => {
+                    return <option value={field}>{field}</option>;
+                  })
+                }
+              </FormControl>
+            </FormGroup> : null}
           <FormGroup
-          validationState={data.errors.name ? 'error' : null}
-          controlId="name">
-            <ControlLabel>Name</ControlLabel>
-            <FormControl
-              name="name" type="text"
-              placeholder={this.props.node_editor.tabular_data.default_name}
-              value={this.props.node_editor.tabular_data.name}
-            />
-            <HelpBlock>
-              {data.errors.name ?
-                data.errors.name :
-                "Name must be alphanumeric, without spaces."}
-            </HelpBlock>
+            validationState={data.errors.name ? 'error' : null}
+            controlId="name">
+              <ControlLabel>Name</ControlLabel>
+              <FormControl
+                name="name" type="text"
+                placeholder={data.default_name}
+                value={data.name}
+              />
+              <HelpBlock>
+                {data.errors.name ?
+                  data.errors.name :
+                  "Name must be alphanumeric, without spaces."}
+              </HelpBlock>
           </FormGroup>
           <Button onClick={this.onSave.bind(this)}>Add</Button>
           <Button onClick={this.props.onEditNothing}>Cancel</Button>

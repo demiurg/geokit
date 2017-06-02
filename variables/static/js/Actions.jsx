@@ -212,8 +212,10 @@ function editInputVariable(node, i){
     if (node.type == "join"){
       dispatch(updateTabularData({
         name: name,
-        source1: node.left,
-        source2: node.right,
+        errors: {},
+        layer_field: node.left.operand.field,
+        table: node.right.operand.id,
+        table_field: node.right.operand.field,
         editing: true,
         valid: true,
         index: i
