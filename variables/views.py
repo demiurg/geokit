@@ -133,7 +133,7 @@ def data_json(request, variable_id):
 
     text = '{"dimensions": "' + variable.dimensions + '", '
 
-    text += '"units": "' + variable.units + '", '
+    text += '"units": "' + str(variable.units) + '", '
 
     if "space" in variable.dimensions:
         layers = variable.get_layers()
@@ -154,7 +154,7 @@ def data_json(request, variable_id):
                     text += '"{}": {},'.format(column, value)
                 text = text[:-1]
                 text += '},'
-        else:
+        elif hasattr(data_frame, 'iteritems'):
             for shaid, item in data_frame.iteritems():
                 text += '"' + shaid + '": {'
 
@@ -163,6 +163,8 @@ def data_json(request, variable_id):
 
                 text += '"{}": {}'.format(variable.name, item)
                 text += '},'
+        else:
+            print 'No data, probably just a layer'
         text = text[:-1]
         text += "}"
     elif "time" == variable.dimensions:
@@ -171,6 +173,9 @@ def data_json(request, variable_id):
             iterable = data_frame.iterrows()
         elif hasattr(data_frame, 'iteritems'):
             iterable = data_frame.iteritems()
+        else:
+            iterable = {}
+            print 'No data, probably just a table'
 
         for daterange, value in iterable:
             if isnan(value):

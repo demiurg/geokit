@@ -169,7 +169,13 @@ def signup(request):
 
                 return redirect('home')
             else:
-                form.add_error('password', 'Internal error logging in. Check email for password and try to login.')
+                form.add_error(
+                    'password',
+                    (
+                        'Internal error logging in.'
+                        'Check email for password and try to login.'
+                    )
+                )
 
             return redirect('home')
     else:
@@ -205,7 +211,6 @@ def login(request):
 
     else:
         form = LoginForm(wagtail_submit=True)
-        print form
 
     return render(request, 'account/form.html', {
         'title': 'Log in',
