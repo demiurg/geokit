@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import unicode_literals
 
 from django.db import models
@@ -56,8 +58,8 @@ class Variable(models.Model):
             return self.name
         return "{} {}{}".format(
             self.name,
-            'S' if 's' in self.saved_dimensions else '',
-            'T' if 't' in self.saved_dimensions else ''
+            u'🌐' if 's' in self.saved_dimensions else '', #🌐
+            u'🕐' if 't' in self.saved_dimensions else '' #🕐
         )
 
     @cached_property

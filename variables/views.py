@@ -164,6 +164,7 @@ def data_json(request, variable_id):
                 text += '"{}": {}'.format(variable.name, item)
                 text += '},'
         else:
+            text += ','
             print 'No data, probably just a layer'
         text = text[:-1]
         text += "}"
