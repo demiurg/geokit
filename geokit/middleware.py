@@ -55,11 +55,7 @@ class TenantMiddleware(object):
         try:
             from wagtail.wagtailcore.models import Site
             site = Site.find_for_request(request)
-            site.pk = None
-            site.hostname = hostname
             request.site = site
-            # request.site.hostname = hostname
-            # print request.site.hostname
         except Site.DoesNotExist:
             request.site = None
 
