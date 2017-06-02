@@ -79,7 +79,7 @@ TENANT_APPS = [
     'wagtail.contrib.wagtailsearchpromotions',
     'wagtail.contrib.wagtailstyleguide',
     'wagtail.contrib.settings',
-    # 'wagtail.wagtailsites',
+    'wagtail.wagtailsites',
 
     'search',
     'builder',

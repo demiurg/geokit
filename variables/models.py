@@ -58,8 +58,8 @@ class Variable(models.Model):
             return self.name
         return "{} {}{}".format(
             self.name,
-            u'🌐' if 's' in self.saved_dimensions else '', #🌐
-            u'🕐' if 't' in self.saved_dimensions else '' #🕐
+            u'🌐' if 's' in self.saved_dimensions else '',  # 🌐 S
+            u'🕐' if 't' in self.saved_dimensions else ''  # 🕐 T
         )
 
     @cached_property
