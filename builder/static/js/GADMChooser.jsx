@@ -258,7 +258,7 @@ class GADMChooser extends React.Component {
                         <li>
                             <Select value={this.state.layer}
                                     options={this.props.layers.map((layer) => {
-                                        return {value: layer, label: layer};
+                                        return {value: layer, label: this.props.names[layer]};
                                     })}
                                     onChange={this.changeLayer.bind(this)} />
                             <div id="map" style={{height: 400}}></div>

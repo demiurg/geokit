@@ -4,6 +4,8 @@ import glob
 import hashlib
 import json
 import os
+from collections import OrderedDict
+
 
 from django.shortcuts import redirect, render, get_object_or_404
 from django.core.urlresolvers import reverse
@@ -717,23 +719,26 @@ def gadm_layer_features_from_bbox(level, bbox):
     return ids
 
 
-VECTOR_LAYERS = {
-    'gadm_0': {
+VECTOR_LAYERS = OrderedDict([
+    ('gadm_0', {
+        'name': "Global Administrative Areas Level 0",
         'tile_layer': lambda r, z, x, y: gadm_tile_json(r, 0, z, x, y),
         'retrieve_geometries_by_id': lambda features: gadm_layer_geometries(0, features),
         'retrieve_features_by_bbox': lambda bbox: gadm_layer_features_from_bbox(0, bbox),
-    },
-    'gadm_1': {
+    }),
+    ('gadm_1', {
+        'name': "Global Administrative Areas Level 1",
         'tile_layer': lambda r, z, x, y: gadm_tile_json(r, 1, z, x, y),
         'retrieve_geometries_by_id': lambda features: gadm_layer_geometries(1, features),
         'retrieve_features_by_bbox': lambda bbox: gadm_layer_features_from_bbox(1, bbox),
-    },
-    'gadm_2': {
+    }),
+    ('gadm_2', {
+        'name': "Global Administrative Areas Level 2",
         'tile_layer': lambda r, z, x, y: gadm_tile_json(r, 2, z, x, y),
         'retrieve_geometries_by_id': lambda features: gadm_layer_geometries(2, features),
         'retrieve_features_by_bbox': lambda bbox: gadm_layer_features_from_bbox(2, bbox),
-    },
-}
+    }),
+])
 
 
 def vector_catalog_save_layer(tenant, layer, vector_layer, features):
@@ -795,7 +800,8 @@ def vector_catalog_translate_features(request, old_layer, new_layer):
 
 class VectorCatalogView(views.APIView):
     def get(self, request):
-        vector_layers = VECTOR_LAYERS.keys()
+        vector_layers = {"layers": VECTOR_LAYERS.keys()}
+        vector_layers['names'] = {k: l['name'] for k, l in VECTOR_LAYERS.items()}
         return Response(vector_layers)
 
     def post(self, request):

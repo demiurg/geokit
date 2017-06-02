@@ -247,6 +247,8 @@ var GADMChooser = function (_React$Component) {
     };
 
     GADMChooser.prototype.render = function render() {
+        var _this5 = this;
+
         if (this.state.loading) {
             return React.createElement(
                 'div',
@@ -296,7 +298,7 @@ var GADMChooser = function (_React$Component) {
                         null,
                         React.createElement(Select, { value: this.state.layer,
                             options: this.props.layers.map(function (layer) {
-                                return { value: layer, label: layer };
+                                return { value: layer, label: _this5.props.names[layer] };
                             }),
                             onChange: this.changeLayer.bind(this) }),
                         React.createElement('div', { id: 'map', style: { height: 400 } })

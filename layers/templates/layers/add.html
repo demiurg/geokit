@@ -79,9 +79,7 @@ $.ajax('/layers/vector-catalog/', {
         ReactDOM.render(
             React.createElement(
                 GADMChooser,
-                {
-                    layers: data
-                },
+                data,
                 []
             ),
             document.getElementById("gadm-field")
