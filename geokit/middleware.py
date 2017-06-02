@@ -54,7 +54,8 @@ class TenantMiddleware(object):
         # Fix ignore wagtail sites
         try:
             from wagtail.wagtailcore.models import Site
-            request.site = Site.find_for_request(request)
+            site = Site.find_for_request(request)
+            request.site = site
         except Site.DoesNotExist:
             request.site = None
 
