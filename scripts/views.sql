@@ -1,3 +1,4 @@
+SET search_path=test,public;
 
 --- Definition
 CREATE VIEW auth_user_groups AS
@@ -20,7 +21,8 @@ UNION
 
 --- Definition for site model
 
-DROP TABLE wagtailcore_site CASCADE;
+DROP TABLE IF EXISTS wagtailcore_site CASCADE;
+DROP VIEW IF EXISTS wagtailcore_site CASCADE;
 CREATE VIEW wagtailcore_site AS
 
  SELECT 2 AS id,
