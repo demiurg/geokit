@@ -702,7 +702,8 @@ def gadm_layer_features_from_bbox(level, bbox):
                     ST_GeomFromText(%s, 4326),
                     geometry
                 )
-            GROUP BY """ + names, [bbox])
+            GROUP BY """ + names, [bbox]
+    )
 
     cursor.execute(SELECT)
 
@@ -723,20 +724,20 @@ VECTOR_LAYERS = OrderedDict([
     ('gadm_0', {
         'name': "Global Administrative Areas Level 0",
         'tile_layer': lambda r, z, x, y: gadm_tile_json(r, 0, z, x, y),
-        'retrieve_geometries_by_id': lambda features: gadm_layer_geometries(0, features),
-        'retrieve_features_by_bbox': lambda bbox: gadm_layer_features_from_bbox(0, bbox),
+        'geometries_by_id': lambda features: gadm_layer_geometries(0, features),
+        'features_by_bbox': lambda bbox: gadm_layer_features_from_bbox(0, bbox),
     }),
     ('gadm_1', {
         'name': "Global Administrative Areas Level 1",
         'tile_layer': lambda r, z, x, y: gadm_tile_json(r, 1, z, x, y),
-        'retrieve_geometries_by_id': lambda features: gadm_layer_geometries(1, features),
-        'retrieve_features_by_bbox': lambda bbox: gadm_layer_features_from_bbox(1, bbox),
+        'geometries_by_id': lambda features: gadm_layer_geometries(1, features),
+        'features_by_bbox': lambda bbox: gadm_layer_features_from_bbox(1, bbox),
     }),
     ('gadm_2', {
         'name': "Global Administrative Areas Level 2",
         'tile_layer': lambda r, z, x, y: gadm_tile_json(r, 2, z, x, y),
-        'retrieve_geometries_by_id': lambda features: gadm_layer_geometries(2, features),
-        'retrieve_features_by_bbox': lambda bbox: gadm_layer_features_from_bbox(2, bbox),
+        'geometries_by_id': lambda features: gadm_layer_geometries(2, features),
+        'features_by_bbox': lambda bbox: gadm_layer_features_from_bbox(2, bbox),
     }),
 ])
 
@@ -745,7 +746,7 @@ def vector_catalog_save_layer(tenant, layer, vector_layer, features):
     connection.close()
     connection.set_schema(tenant)
 
-    geometries = VECTOR_LAYERS[vector_layer]['retrieve_geometries_by_id'](features)
+    geometries = VECTOR_LAYERS[vector_layer]['geometries_by_id'](features)
 
     with transaction.atomic():
         union = GEOSGeometry('POINT EMPTY')
@@ -785,11 +786,18 @@ def vector_catalog_tile_json(request, layer, z, x, y):
 @api_view(['POST'])
 def vector_catalog_translate_features(request, old_layer, new_layer):
     first = timeit.timeit()
-    geometries = VECTOR_LAYERS[old_layer]['retrieve_geometries_by_id'](request.data['features'])
+    geometries = VECTOR_LAYERS[old_layer]['geometries_by_id'](
+        request.data['features']
+    )
     second = timeit.timeit()
-    bbox = GeometryCollection(*geometries).unary_union.envelope
+    geoms = GeometryCollection(*geometries).unary_union
+    bbox = geoms.envelope
     third = timeit.timeit()
-    response = Response(VECTOR_LAYERS[new_layer]['retrieve_features_by_bbox'](bbox.wkt))
+    response = Response(
+        VECTOR_LAYERS[new_layer]['features_by_bbox'](
+            bbox.wkt
+        )
+    )
     fourth = timeit.timeit()
 
     print "retrieve geoms: ", second - first
