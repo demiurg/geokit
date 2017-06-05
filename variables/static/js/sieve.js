@@ -209,8 +209,10 @@ function editInputVariable(node, i) {
     if (node.type == "join") {
       dispatch(updateTabularData({
         name: name,
-        source1: node.left,
-        source2: node.right,
+        errors: {},
+        layer_field: node.left.operand.field,
+        table: node.right.operand.id,
+        table_field: node.right.operand.field,
         editing: true,
         valid: true,
         index: i
@@ -2238,15 +2240,17 @@ var TabularDataSource = function (_React$Component) {
   TabularDataSource.prototype.onSave = function onSave() {
     var data = this.props.node_editor.tabular_data;
 
-    if (data.errors.name) return; // Do not submit if there are errors
+    if (data.errors.name || data.errors.table || data.errors.layer_field || data.errors.table_field) return; // Do not submit if there are errors
     var name = data.name;
     if (name == null || name.length == 0) {
       name = data.default_name;
     }
 
-    var variable = ['named', [name, ['join', [data.source1, data.source2]]]];
+    var variable = ['named', [name, ['join', [{ 'type': 'Layer', 'id': this.props.spatial_domain, 'field': data.layer_field }, { 'type': 'Table', 'id': data.table, 'field': data.table_field }]]]];
     var index = data.index;
     var editing = data.editing;
+
+    variable = DataNode.toNode(variable);
 
     if (editing) {
       this.props.onUpdateInputVariable(variable, index);
@@ -2265,7 +2269,7 @@ var TabularDataSource = function (_React$Component) {
       if (t1) {
         var source1 = { name: t1.name, field: t1.field_names[0] };
         var source2 = Object.assign({}, source1);
-        var name = this.generateName(source1, source2, newProps.input_variables);
+        var name = this.generateName(newProps.node_editor.tabular_data.table, newProps.input_variables);
         var data = Object.assign({}, newProps.node_editor.tabular_data, { default_name: name });
 
         if (!this.props.node_editor.tabular_data.source1) {
@@ -2279,13 +2283,25 @@ var TabularDataSource = function (_React$Component) {
     }
   };
 
-  TabularDataSource.prototype.generateName = function generateName(source1, source2) {
-    var var_list = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+  TabularDataSource.prototype.layerIdToName = function layerIdToName(layer_id) {
+    return this.props.layers.items.filter(function (layer) {
+      return layer.id == layer_id;
+    })[0].name;
+  };
 
-    if (source1.name == source2.name) {
-      var name = source1.name + '-' + source1.field + '-' + source2.field;
+  TabularDataSource.prototype.tableIdToName = function tableIdToName(table_id) {
+    return this.props.tables.items.filter(function (table) {
+      return table.id == table_id;
+    })[0].name;
+  };
+
+  TabularDataSource.prototype.generateName = function generateName(table) {
+    var var_list = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
+    if (table) {
+      var name = this.layerIdToName(this.props.spatial_domain) + '-' + this.tableIdToName(table);
     } else {
-      var name = source1.name + '-' + source2.name;
+      return this.layerIdToName(this.props.spatial_domain) + '-';
     }
     name = name.replace(/_/g, "-");
     var i = 1;
@@ -2307,16 +2323,37 @@ var TabularDataSource = function (_React$Component) {
 
   TabularDataSource.prototype.validate = function validate() {
     var form = $(this.form).serializeArray();
-    var name = form[2]['value'];
 
-    var source1 = JSON.parse(form[0]['value']);
-    var source2 = JSON.parse(form[1]['value']);
-    var default_name = this.generateName(source1, source2);
+    var layer_field = form[0]['value'];
+    var table = form[1]['value'];
+
+    if (form.length == 4) {
+      var table_field = form[2]['value'];
+      var name = form[3]['value'];
+    } else {
+      var table_field = null;
+      var name = form[2]['value'];
+    }
+
+    var default_name = this.generateName(table);
+
+    var errors = {};
+    if (!layer_field) {
+      errors.layer_field = "Must select a layer field";
+    }
+    if (!table) {
+      errors.table = "Must select a table";
+    }
+    if (!table_field) {
+      errors.table_field = "Must select a table field";
+    }
 
     var data = Object.assign({}, this.props.node_editor.tabular_data, {
       name: name,
-      source1: source1,
-      source2: source2,
+      errors: errors,
+      layer_field: layer_field,
+      table: table,
+      table_field: table_field,
       default_name: default_name
     });
 
@@ -2342,42 +2379,88 @@ var TabularDataSource = function (_React$Component) {
           }, onChange: this.validate.bind(this) },
         React.createElement(
           FormGroup,
-          { controlId: 'formSelectSource' },
+          { controlId: 'formSelectLayerField',
+            validationState: data.errors.layer_field ? 'error' : null },
           React.createElement(
             ControlLabel,
             null,
-            'Source 1'
+            'Layer Field'
           ),
           React.createElement(
             FormControl,
             {
               componentClass: 'select',
               placeholder: 'select',
-              value: this.sourceToString(this.props.node_editor.tabular_data.source1),
-              name: 'table'
+              value: data.layer_field,
+              name: 'layer-field'
             },
-            this.props.tables.items.map(i2o('Table')).concat(this.props.layers.items.map(i2o('Layer')))
+            React.createElement('option', { value: null }),
+            this.props.layers.items.filter(function (layer) {
+              return layer.id == _this2.props.spatial_domain;
+            })[0].field_names.map(function (field) {
+              return React.createElement(
+                'option',
+                { value: field },
+                field
+              );
+            })
           )
         ),
         React.createElement(
           FormGroup,
-          { controlId: 'formSelectDest' },
+          { controlId: 'formSelectTable',
+            validationState: data.errors.table ? 'error' : null },
           React.createElement(
             ControlLabel,
             null,
-            'Source 2'
+            'Table'
           ),
           React.createElement(
             FormControl,
             {
               componentClass: 'select',
               placeholder: 'select',
-              name: 'layer',
-              value: this.sourceToString(this.props.node_editor.tabular_data.source2)
+              name: 'table',
+              value: data.table
             },
-            this.props.tables.items.map(i2o('Table')).concat(this.props.layers.items.map(i2o('Layer')))
+            React.createElement('option', { value: null }),
+            this.props.tables.items.map(function (table) {
+              return React.createElement(
+                'option',
+                { value: table.id },
+                table.name
+              );
+            })
           )
         ),
+        this.props.node_editor.tabular_data.table ? React.createElement(
+          FormGroup,
+          { controlId: 'formSelectTableField',
+            validationState: data.errors.table_field ? 'error' : null },
+          React.createElement(
+            ControlLabel,
+            null,
+            'Table Field'
+          ),
+          React.createElement(
+            FormControl,
+            {
+              componentClass: 'select',
+              placeholder: 'select',
+              value: data.table_field,
+              name: 'table-field' },
+            React.createElement('option', { value: null }),
+            this.props.tables.items.filter(function (table) {
+              return table.id == _this2.props.node_editor.tabular_data.table;
+            })[0].field_names.map(function (field) {
+              return React.createElement(
+                'option',
+                { value: field },
+                field
+              );
+            })
+          )
+        ) : null,
         React.createElement(
           FormGroup,
           {
@@ -2390,8 +2473,8 @@ var TabularDataSource = function (_React$Component) {
           ),
           React.createElement(FormControl, {
             name: 'name', type: 'text',
-            placeholder: this.props.node_editor.tabular_data.default_name,
-            value: this.props.node_editor.tabular_data.name
+            placeholder: data.default_name,
+            value: data.name
           }),
           React.createElement(
             HelpBlock,
@@ -2628,8 +2711,9 @@ function node_editor() {
         mode: action.mode,
         tabular_data: action.data ? action.data : {
           name: "",
-          source1: "",
-          source2: "",
+          layer_field: "",
+          table: "",
+          table_field: "",
           default_name: null,
           editing: false,
           index: -1,
@@ -3543,7 +3627,6 @@ var DataNode = function () {
         rands.push(rand);
       }
     }
-    console.log('json', this._operation, rand);
     return [this._operation, rands];
   };
 
