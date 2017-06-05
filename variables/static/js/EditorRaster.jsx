@@ -150,8 +150,10 @@ class RasterDataSource extends React.Component {
         return dateToDOY(d);
       },
       toValue: function (date, format, language){
-        var d = new Date(date);
-        return d;
+        if (!/\d{4}-\d{3}/g.test(date)) {
+          return null;
+        }
+        return RasterOperator.julianToDate(date);
       }
     };
 
@@ -240,7 +242,7 @@ class RasterDataSource extends React.Component {
       errors['date_end'] = "End date is required. ";
     }else{
       if(!date_end.match(/\d{4}-\d{3}/g)){
-        errors['date_start'] = "End date must be entered in the form yyyy-ddd. ";
+        errors['date_end'] = "End date must be entered in the form yyyy-ddd. ";
       }else{
         var date_end_date = RasterOperator.julianToDate(date_end);
         if (date_end_date > raster_end_date){
@@ -248,6 +250,13 @@ class RasterDataSource extends React.Component {
             "End date must be before " + raster_end_date.toDateString() + ". "
           );
         }
+
+        if (date_start_date && date_start_date >= date_end_date) {
+          errors['date_end'] = (
+            "End date must be after start date."
+          );
+        }
+
       }
     }
 
@@ -328,7 +337,7 @@ class RasterDataSource extends React.Component {
             ) : null
           }
           <FormGroup controlId="name"
-            validationState={this.props.errors.name ? 'error' : null}>
+            validationState={data.errors.name ? 'error' : null}>
             <ControlLabel>Name</ControlLabel>
             <FormControl
               name="name" type="text"
