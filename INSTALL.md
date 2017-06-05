@@ -74,6 +74,11 @@ Import the files into your databases
 
 `psql -U geokit geodata < geodata.pgsql -h localhost`
 
+Edit the `scripts/views.sql` file to replace '.geokit.io' with your domain
+name, then run the scripts:
+
+`psql -U geokit -h localhost -d geokits -f scripts/views.sql`
+
 # Django
 
 Copy local settings file from example
