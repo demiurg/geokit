@@ -26,7 +26,7 @@ CREATE VIEW wagtailcore_site AS
  SELECT 2 AS id,
     ( SELECT account_geokitsite.schema_name
            FROM account_geokitsite
-          WHERE account_geokitsite.schema_name::name = "current_schema"()) AS hostname,
+          WHERE account_geokitsite.schema_name::name = "current_schema"()) || '.geokit.io' AS hostname,
     ( SELECT account_geokitsite.name
            FROM account_geokitsite
           WHERE account_geokitsite.schema_name::name = "current_schema"()) AS site_name,
