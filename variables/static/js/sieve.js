@@ -328,7 +328,7 @@ function recieveVariable(json) {
 }
 
 function updateErrors() {
-  var errors = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { "name": null, "tree": null };
+  var errors = arguments.length <= 0 || arguments[0] === undefined ? { "name": null, "tree": null } : arguments[0];
 
   return {
     type: UPDATE_ERRORS,
@@ -337,7 +337,7 @@ function updateErrors() {
 }
 
 function updateModified() {
-  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
   return {
     type: UPDATE_MODIFIED,
@@ -346,7 +346,7 @@ function updateModified() {
 }
 
 function updateCreated() {
-  var time = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+  var time = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
   return {
     type: UPDATE_CREATED,
@@ -453,7 +453,7 @@ function editNothing() {
 }
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -1269,7 +1269,7 @@ var FilterListItem = function (_React$Component12) {
           {
             bsSize: "xsmall",
             onClick: this.props.removeFilter.bind(null, this.props.filter.key) },
-          "\xA0x\xA0"
+          " x "
         )
       )
     );
@@ -1381,7 +1381,7 @@ var Aggregate = function (_React$Component13) {
 
   return Aggregate;
 }(React.Component);
-'use strict';
+"use strict";
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
@@ -1394,10 +1394,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var OperandChooser = function (_React$Component) {
   _inherits(OperandChooser, _React$Component);
 
-  function OperandChooser() {
+  function OperandChooser(props) {
     _classCallCheck(this, OperandChooser);
 
-    return _possibleConstructorReturn(this, _React$Component.apply(this, arguments));
+    return _possibleConstructorReturn(this, _React$Component.call(this, props));
   }
 
   OperandChooser.prototype.changeOperand = function changeOperand(e) {
@@ -1411,6 +1411,14 @@ var OperandChooser = function (_React$Component) {
       valid: operand_refs.reduce(function (acc, val) {
         return acc && val;
       })
+    });
+    this.props.onUpdateExpressionData(data);
+  };
+
+  OperandChooser.prototype.changeNumeric = function changeNumeric(e) {
+    var data = Object.assign({}, this.props.node_editor.expression_data, {
+      numeric_operand: Number.parseFloat(e.target.value),
+      valid: e.target.value
     });
     this.props.onUpdateExpressionData(data);
   };
@@ -1430,9 +1438,13 @@ var OperandChooser = function (_React$Component) {
 
     var data = this.props.node_editor.expression_data;
 
-    if (data.operand_refs) {
+    if (data.op == 'numeric') {
+      return React.createElement("input", { type: "number", value: data.numeric_operand, onChange: function onChange(e) {
+          return _this2.changeNumeric(e);
+        } });
+    } else if (data.operand_refs) {
       return React.createElement(
-        'div',
+        "div",
         { style: { display: "inline-block", width: 400 } },
         React.createElement(Select, {
           onChange: function onChange(e) {
@@ -1465,9 +1477,9 @@ var TreeViewer = function (_React$Component2) {
 
     if (!data.node_class) {
       return React.createElement(
-        'p',
+        "p",
         null,
-        'Select operation above.'
+        "Select operation above."
       );
     }
 
@@ -1477,16 +1489,16 @@ var TreeViewer = function (_React$Component2) {
     }
 
     return React.createElement(
-      'span',
+      "span",
       null,
       data.op,
-      ' ( ',
+      " ( ",
       React.createElement(
-        'blockquote',
+        "blockquote",
         null,
         operand_inputs
       ),
-      ' )'
+      " )"
     );
   };
 
@@ -1502,39 +1514,47 @@ var ExpressionEditor = function (_React$Component3) {
     var _this4 = _possibleConstructorReturn(this, _React$Component3.call(this, props));
 
     var data = _this4.props.node_editor.expression_data;
-    var operand_refs = [];
-    if (data.operand_refs == null && data.node) {
-      var operands = data.node.operands();
-      for (var _iterator = operands, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-        var _ref;
 
-        if (_isArray) {
-          if (_i >= _iterator.length) break;
-          _ref = _iterator[_i++];
-        } else {
-          _i = _iterator.next();
-          if (_i.done) break;
-          _ref = _i.value;
-        }
+    if (data.op == 'numeric') {
+      _this4.props.onUpdateExpressionData(Object.assign({}, data, {
+        default_name: _this4.generateName(props.input_variables),
+        numeric_operand: data.node.operand
+      }));
+    } else {
+      var operand_refs = [];
+      if (data.operand_refs == null && data.node) {
+        var operands = data.node.operands();
+        for (var _iterator = operands, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
+          var _ref;
 
-        var onode = _ref;
+          if (_isArray) {
+            if (_i >= _iterator.length) break;
+            _ref = _iterator[_i++];
+          } else {
+            _i = _iterator.next();
+            if (_i.done) break;
+            _ref = _i.value;
+          }
 
-        for (var i = 0; i < _this4.props.input_variables.length; i++) {
-          if (onode.isEquivalent(_this4.props.input_variables[i].value)) {
-            operand_refs.push(_this4.props.input_variables[i].name_operand);
-            if (operand_refs.length == data.node_class.arity) {
-              break;
+          var onode = _ref;
+
+          for (var i = 0; i < _this4.props.input_variables.length; i++) {
+            if (onode.isEquivalent(_this4.props.input_variables[i].value)) {
+              operand_refs.push(_this4.props.input_variables[i].name_operand);
+              if (operand_refs.length == data.node_class.arity) {
+                break;
+              }
             }
           }
         }
       }
-    }
 
-    _this4.props.onUpdateExpressionData(Object.assign({}, data, {
-      default_name: _this4.generateName(props.input_variables),
-      operand_refs: data.operand_refs ? data.operand_refs : operand_refs,
-      valid: data.node_class && operand_refs.length == data.node_class.arity
-    }));
+      _this4.props.onUpdateExpressionData(Object.assign({}, data, {
+        default_name: _this4.generateName(props.input_variables),
+        operand_refs: data.operand_refs ? data.operand_refs : operand_refs,
+        valid: data.node_class && operand_refs.length == data.node_class.arity
+      }));
+    }
     return _this4;
   }
 
@@ -1545,7 +1565,7 @@ var ExpressionEditor = function (_React$Component3) {
   };
 
   ExpressionEditor.prototype.generateName = function generateName() {
-    var var_list = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+    var var_list = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
     var i = 1;
     var input_variables = [];
@@ -1591,39 +1611,44 @@ var ExpressionEditor = function (_React$Component3) {
 
   ExpressionEditor.prototype.onSave = function onSave() {
     var data = this.props.node_editor.expression_data;
-    var rands = [];
-    for (var _iterator2 = data.operand_refs, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
-      var _ref2;
 
-      if (_isArray2) {
-        if (_i2 >= _iterator2.length) break;
-        _ref2 = _iterator2[_i2++];
-      } else {
-        _i2 = _iterator2.next();
-        if (_i2.done) break;
-        _ref2 = _i2.value;
-      }
+    if (data.op == 'numeric') {
+      var rands = [data.numeric_operand];
+    } else {
+      var rands = [];
+      for (var _iterator2 = data.operand_refs, _isArray2 = Array.isArray(_iterator2), _i2 = 0, _iterator2 = _isArray2 ? _iterator2 : _iterator2[Symbol.iterator]();;) {
+        var _ref2;
 
-      var name = _ref2;
-
-      for (var _iterator3 = this.props.input_variables, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
-        var _ref3;
-
-        if (_isArray3) {
-          if (_i3 >= _iterator3.length) break;
-          _ref3 = _iterator3[_i3++];
+        if (_isArray2) {
+          if (_i2 >= _iterator2.length) break;
+          _ref2 = _iterator2[_i2++];
         } else {
-          _i3 = _iterator3.next();
-          if (_i3.done) break;
-          _ref3 = _i3.value;
+          _i2 = _iterator2.next();
+          if (_i2.done) break;
+          _ref2 = _i2.value;
         }
 
-        var ivar = _ref3;
+        var name = _ref2;
 
-        if (name == ivar.name) {
-          // access named operand value here, throwing away name
-          rands.push(ivar.value);
-          break; // Just in case names are not unique now, this needs validation
+        for (var _iterator3 = this.props.input_variables, _isArray3 = Array.isArray(_iterator3), _i3 = 0, _iterator3 = _isArray3 ? _iterator3 : _iterator3[Symbol.iterator]();;) {
+          var _ref3;
+
+          if (_isArray3) {
+            if (_i3 >= _iterator3.length) break;
+            _ref3 = _iterator3[_i3++];
+          } else {
+            _i3 = _iterator3.next();
+            if (_i3.done) break;
+            _ref3 = _i3.value;
+          }
+
+          var ivar = _ref3;
+
+          if (name == ivar.name) {
+            // access named operand value here, throwing away name
+            rands.push(ivar.value);
+            break; // Just in case names are not unique now, this needs validation
+          }
         }
       }
     }
@@ -1647,14 +1672,14 @@ var ExpressionEditor = function (_React$Component3) {
 
     return React.createElement(
       Panel,
-      { header: 'Expression editor' },
+      { header: "Expression editor" },
       React.createElement(
         FormGroup,
-        { controlId: 'name' },
-        React.createElement(FormControl, { componentClass: 'input',
+        { controlId: "name" },
+        React.createElement(FormControl, { componentClass: "input",
           placeholder: data.default_name,
-          onChange: function onChange() {
-            return _this5.changeName();
+          onChange: function onChange(e) {
+            return _this5.changeName(e);
           },
           value: data.name })
       ),
@@ -1662,8 +1687,8 @@ var ExpressionEditor = function (_React$Component3) {
         Panel,
         null,
         React.createElement(
-          'div',
-          { className: 'pull-right' },
+          "div",
+          { className: "pull-right" },
           React.createElement(
             ButtonGroup,
             null,
@@ -1672,49 +1697,56 @@ var ExpressionEditor = function (_React$Component3) {
               { onClick: function onClick(e) {
                   return _this5.addOp('+');
                 } },
-              '+'
+              "+"
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
                   return _this5.addOp('-');
                 } },
-              '-'
+              "-"
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
                   return _this5.addOp('*');
                 } },
-              '*'
+              "*"
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
                   return _this5.addOp('/');
                 } },
-              '/'
+              "/"
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
                   return _this5.addOp('mean');
                 } },
-              'Arithmetic Mean'
+              "Arithmetic Mean"
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
                   return _this5.addOp('tmean');
                 } },
-              'Temporal Mean'
+              "Temporal Mean"
             ),
             React.createElement(
               Button,
               { onClick: function onClick(e) {
                   return _this5.addOp('smean');
                 } },
-              'Spatial Mean'
+              "Spatial Mean"
+            ),
+            React.createElement(
+              Button,
+              { onClick: function onClick(e) {
+                  return _this5.addOp('numeric');
+                } },
+              "Numeric"
             )
           )
         )
@@ -1727,12 +1759,12 @@ var ExpressionEditor = function (_React$Component3) {
       data.valid ? React.createElement(
         Button,
         { onClick: this.onSave.bind(this) },
-        'Add'
+        "Add"
       ) : null,
       React.createElement(
         Button,
         { onClick: this.props.onEditNothing },
-        'Cancel'
+        "Cancel"
       )
     );
   };
@@ -1772,7 +1804,7 @@ var RasterProductTable = function (_React$Component) {
   }
 
   RasterProductTable.prototype.generateName = function generateName(id) {
-    var var_list = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+    var var_list = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
 
     var name = id.replace(/_/g, "-");
     var i = 1;
@@ -2155,7 +2187,7 @@ var RasterDataSource = function (_React$Component2) {
           React.createElement(
             ControlLabel,
             null,
-            "Temporal\xA0Range"
+            "Temporal Range"
           ),
           React.createElement(
             "div",
@@ -2302,7 +2334,7 @@ var TabularDataSource = function (_React$Component) {
   };
 
   TabularDataSource.prototype.generateName = function generateName(table) {
-    var var_list = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+    var var_list = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
 
     if (table) {
       var name = this.layerIdToName(this.props.spatial_domain) + '-' + this.tableIdToName(table);
@@ -2507,12 +2539,12 @@ var TabularDataSource = function (_React$Component) {
 'use strict';
 
 function layers() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     name: 'Layers',
     isFetching: false,
     didInvalidate: false,
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -2534,12 +2566,12 @@ function layers() {
 }
 
 function tables() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     name: 'Tables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -2561,9 +2593,9 @@ function tables() {
 }
 
 function rasterCatalog() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -2578,12 +2610,12 @@ function rasterCatalog() {
 }
 
 function variables() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {
     name: 'Variables',
     isFetching: false,
     didInvalidate: false,
     items: []
-  };
+  } : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -2605,7 +2637,7 @@ function variables() {
 }
 
 function input_variables() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  var state = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -2638,7 +2670,7 @@ function separateOperands(operands, tree) {
 }
 
 function tree() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -2669,7 +2701,7 @@ function tree() {
 function operandSelections() {
   var _Object$assign;
 
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -2688,7 +2720,7 @@ var EDITING_RASTER_DATA = 'EDITING_RASTER_DATA';
 var EDITING_EXPRESSION = 'EDITING_EXPRESSION';
 
 function node_editor() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : { 'mode': DEFAULT };
+  var state = arguments.length <= 0 || arguments[0] === undefined ? { 'mode': DEFAULT } : arguments[0];
   var action = arguments[1];
 
   switch (action.mode) {
@@ -2755,26 +2787,26 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var _ReactBootstrap = ReactBootstrap,
-    Panel = _ReactBootstrap.Panel,
-    ButtonGroup = _ReactBootstrap.ButtonGroup,
-    ButtonToolbar = _ReactBootstrap.ButtonToolbar,
-    ButtonInput = _ReactBootstrap.ButtonInput,
-    Button = _ReactBootstrap.Button,
-    Row = _ReactBootstrap.Row,
-    Col = _ReactBootstrap.Col,
-    Alert = _ReactBootstrap.Alert,
-    Tabs = _ReactBootstrap.Tabs,
-    Tab = _ReactBootstrap.Tab,
-    DropdownButton = _ReactBootstrap.DropdownButton,
-    MenuItem = _ReactBootstrap.MenuItem,
-    Table = _ReactBootstrap.Table,
-    Glyphicon = _ReactBootstrap.Glyphicon,
-    Modal = _ReactBootstrap.Modal,
-    FormControl = _ReactBootstrap.FormControl,
-    ControlLabel = _ReactBootstrap.ControlLabel,
-    FormGroup = _ReactBootstrap.FormGroup,
-    HelpBlock = _ReactBootstrap.HelpBlock;
+var _ReactBootstrap = ReactBootstrap;
+var Panel = _ReactBootstrap.Panel;
+var ButtonGroup = _ReactBootstrap.ButtonGroup;
+var ButtonToolbar = _ReactBootstrap.ButtonToolbar;
+var ButtonInput = _ReactBootstrap.ButtonInput;
+var Button = _ReactBootstrap.Button;
+var Row = _ReactBootstrap.Row;
+var Col = _ReactBootstrap.Col;
+var Alert = _ReactBootstrap.Alert;
+var Tabs = _ReactBootstrap.Tabs;
+var Tab = _ReactBootstrap.Tab;
+var DropdownButton = _ReactBootstrap.DropdownButton;
+var MenuItem = _ReactBootstrap.MenuItem;
+var Table = _ReactBootstrap.Table;
+var Glyphicon = _ReactBootstrap.Glyphicon;
+var Modal = _ReactBootstrap.Modal;
+var FormControl = _ReactBootstrap.FormControl;
+var ControlLabel = _ReactBootstrap.ControlLabel;
+var FormGroup = _ReactBootstrap.FormGroup;
+var HelpBlock = _ReactBootstrap.HelpBlock;
 
 /* app */
 
@@ -2797,7 +2829,7 @@ var initialState = Object.assign({
 }, window.sieve_props);
 
 function sieveApp() {
-  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
+  var state = arguments.length <= 0 || arguments[0] === undefined ? initialState : arguments[0];
   var action = arguments[1];
 
   switch (action.type) {
@@ -3543,7 +3575,7 @@ function sieve(el) {
 }
 "use strict";
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -3857,7 +3889,7 @@ var MeanOperator = function (_DataNode) {
       return input_vars;
     } else {
       return input_vars.filter(function (input_var) {
-        return input_var.dimensions == other_op.dimensions;
+        return input_var.dimensions == other_op.dimensions || input_var.dimensions == 'scalar';
       });
     }
   };
@@ -4029,7 +4061,7 @@ var SourceOperator = function (_DataNode7) {
       "span",
       null,
       o.type + "/" + o.name + (o.field ? "/" + o.field : ""),
-      "\xA0"
+      " "
     );
   };
 
@@ -4079,9 +4111,9 @@ var RasterOperator = function (_DataNode8) {
       null,
       "Raster product ",
       this.product.name,
-      "\xA0 using ",
+      "  using ",
       layer,
-      "\xA0 in the time span of ",
+      "  in the time span of ",
       this.start,
       " - ",
       this.end
@@ -4126,7 +4158,7 @@ var MathOperator = function (_DataNode9) {
       return input_vars;
     } else {
       return input_vars.filter(function (input_var) {
-        return input_var.dimensions == other_op.dimensions;
+        return input_var.dimensions == other_op.dimensions || input_var.dimensions == 'scalar';
       });
     }
   };
@@ -4136,20 +4168,55 @@ var MathOperator = function (_DataNode9) {
 
 MathOperator.arity = 2;
 
-var NamedTree = function (_DataNode10) {
-  _inherits(NamedTree, _DataNode10);
+var NumericOperator = function (_DataNode10) {
+  _inherits(NumericOperator, _DataNode10);
+
+  function NumericOperator(tree) {
+    _classCallCheck(this, NumericOperator);
+
+    var _this10 = _possibleConstructorReturn(this, _DataNode10.call(this, tree));
+
+    _this10._operand_names = ['operand'];
+    _this10._name = 'Numeric';
+    _this10._dimensions = 'spacetime';
+
+
+    _this10.parseTree();
+    return _this10;
+  }
+
+  NumericOperator.validOperands = function validOperands(input_vars, operand_ref, op_index) {
+    console.log(input_vars);
+    return input_vars;
+  };
+
+  NumericOperator.prototype.render = function render() {
+    return React.createElement(
+      "span",
+      null,
+      this.operand
+    );
+  };
+
+  return NumericOperator;
+}(DataNode);
+
+NumericOperator.arity = 1;
+
+var NamedTree = function (_DataNode11) {
+  _inherits(NamedTree, _DataNode11);
 
   function NamedTree(args) {
     _classCallCheck(this, NamedTree);
 
-    var _this10 = _possibleConstructorReturn(this, _DataNode10.call(this, args));
+    var _this11 = _possibleConstructorReturn(this, _DataNode11.call(this, args));
 
-    _this10._operand_names = ['name_operand', 'value'];
+    _this11._operand_names = ['name_operand', 'value'];
 
-    _this10.parseTree();
-    _this10.dimensions = _this10.value.dimensions;
-    _this10._name = _this10.name_operand;
-    return _this10;
+    _this11.parseTree();
+    _this11.dimensions = _this11.value.dimensions;
+    _this11._name = _this11.name_operand;
+    return _this11;
   }
 
   NamedTree.prototype.json = function json() {
@@ -4175,18 +4242,18 @@ var NamedTree = function (_DataNode10) {
 
 NamedTree.arity = 2;
 
-var EmptyTree = function (_DataNode11) {
-  _inherits(EmptyTree, _DataNode11);
+var EmptyTree = function (_DataNode12) {
+  _inherits(EmptyTree, _DataNode12);
 
   function EmptyTree(props) {
     _classCallCheck(this, EmptyTree);
 
-    var _this11 = _possibleConstructorReturn(this, _DataNode11.call(this, ['noop', []]));
+    var _this12 = _possibleConstructorReturn(this, _DataNode12.call(this, ['noop', []]));
 
-    _this11._name = 'Empty';
+    _this12._name = 'Empty';
 
-    _this11.parseTree();
-    return _this11;
+    _this12.parseTree();
+    return _this12;
   }
 
   EmptyTree.prototype.render = function render() {
@@ -4200,18 +4267,18 @@ var EmptyTree = function (_DataNode11) {
   return EmptyTree;
 }(DataNode);
 
-var ErrorTree = function (_DataNode12) {
-  _inherits(ErrorTree, _DataNode12);
+var ErrorTree = function (_DataNode13) {
+  _inherits(ErrorTree, _DataNode13);
 
   function ErrorTree(args, error) {
     _classCallCheck(this, ErrorTree);
 
-    var _this12 = _possibleConstructorReturn(this, _DataNode12.call(this, ['error', [args, error]]));
+    var _this13 = _possibleConstructorReturn(this, _DataNode13.call(this, ['error', [args, error]]));
 
-    _this12._operand_names = ['data', 'error'];
+    _this13._operand_names = ['data', 'error'];
 
-    _this12.parseTree();
-    return _this12;
+    _this13.parseTree();
+    return _this13;
   }
 
   return ErrorTree;
@@ -4233,6 +4300,7 @@ DataNode.TYPES = {
   '-': MathOperator,
   '*': MathOperator,
   '/': MathOperator,
+  'numeric': NumericOperator,
   'named': NamedTree,
   'noop': EmptyTree,
   'error': ErrorTree
