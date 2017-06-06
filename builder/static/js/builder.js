@@ -194,7 +194,7 @@ var GADMChooser = function (_React$Component) {
     GADMChooser.prototype.changeLayer = function changeLayer(newSelection) {
         var _this4 = this;
 
-        if (this.state.layer && this.state.featureIds.length != 0) {
+        if (this.state.layer && newSelection && this.state.featureIds.length != 0) {
             $.ajax('/layers/vector-catalog/translate/' + this.state.layer + '/' + newSelection.value, {
                 dataType: 'json',
                 contentType: 'application/json',
@@ -213,7 +213,7 @@ var GADMChooser = function (_React$Component) {
             });
         } else {
             this.setState({
-                layer: newSelection.value
+                layer: newSelection ? newSelection.value : ""
             });
         }
     };
@@ -301,6 +301,11 @@ var GADMChooser = function (_React$Component) {
                                 return { value: layer, label: _this5.props.names[layer] };
                             }),
                             onChange: this.changeLayer.bind(this) }),
+                        React.createElement(
+                            'p',
+                            { className: 'help' },
+                            'If you have selected a geometry, when you change a layer, the new layer will have geometries selected that overlap the previously selected geometry.'
+                        ),
                         React.createElement('div', { id: 'map', style: { height: 400 } })
                     ),
                     React.createElement(

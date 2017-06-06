@@ -84,7 +84,7 @@ def tile_json(request, layer_name, z, x, y):
         try:
             props['properties']['id'] = props['__id__']
         except Exception as e:
-            print(e)
+            print('tile_json', e)
 
         feature = '{ "type": "Feature", "geometry": ' + geom.json + ","
         feature += ' "properties": {}'.format(json.dumps(props['properties']))
@@ -118,9 +118,11 @@ def gadm_tile_json(request, level, z, x, y):
         geom = GEOSGeometry(buffer(wkb))
 
         try:
-            props['id'] = ".".join([props['name_%s' % l] for l in range(level + 1)])
+            props['id'] = u".".join(
+                [unicode(props['name_%s' % l]) for l in range(level + 1)]
+            )
         except Exception as e:
-            print(e)
+            print('gadm tile json', e)
 
         feature = '{ "type": "Feature", "geometry": ' + geom.json + ","
         feature += ' "properties": {}'.format(json.dumps(props))
@@ -683,14 +685,14 @@ def gadm_layer_geometries(level, features):
     columns = [col[0] for col in cursor.description]
 
     data = [
-        (bytes(row[0]), dict(zip(columns[1:], row[1:])),)
+        (GEOSGeometry(bytes(row[0])), dict(zip(columns[1:], row[1:])),)
         for row in cursor.fetchall()
     ]
 
-    return [GEOSGeometry(d[0]) for d in data]
+    return data
 
 
-def gadm_layer_features_from_bbox(level, bbox):
+def gadm_layer_features_from_wkt(level, wkt):
     cursor = connections['geodata'].cursor()
 
     names = ",".join(['name_%s' % l for l in range(level + 1)])
@@ -702,7 +704,7 @@ def gadm_layer_features_from_bbox(level, bbox):
                     ST_GeomFromText(%s, 4326),
                     geometry
                 )
-            GROUP BY """ + names, [bbox]
+            GROUP BY """ + names, [wkt]
     )
 
     cursor.execute(SELECT)
@@ -722,22 +724,22 @@ def gadm_layer_features_from_bbox(level, bbox):
 
 VECTOR_LAYERS = OrderedDict([
     ('gadm_0', {
-        'name': "Global Administrative Areas Level 0",
+        'name': "Global Administrative Areas Level 0 (Country)",
         'tile_layer': lambda r, z, x, y: gadm_tile_json(r, 0, z, x, y),
         'geometries_by_id': lambda features: gadm_layer_geometries(0, features),
-        'features_by_bbox': lambda bbox: gadm_layer_features_from_bbox(0, bbox),
+        'features_by_wkt': lambda wkt: gadm_layer_features_from_wkt(0, wkt),
     }),
     ('gadm_1', {
-        'name': "Global Administrative Areas Level 1",
+        'name': "Global Administrative Areas Level 1 (State/Province)",
         'tile_layer': lambda r, z, x, y: gadm_tile_json(r, 1, z, x, y),
         'geometries_by_id': lambda features: gadm_layer_geometries(1, features),
-        'features_by_bbox': lambda bbox: gadm_layer_features_from_bbox(1, bbox),
+        'features_by_wkt': lambda wkt: gadm_layer_features_from_wkt(1, wkt),
     }),
     ('gadm_2', {
-        'name': "Global Administrative Areas Level 2",
+        'name': "Global Administrative Areas Level 2 (County/Subprovince)",
         'tile_layer': lambda r, z, x, y: gadm_tile_json(r, 2, z, x, y),
         'geometries_by_id': lambda features: gadm_layer_geometries(2, features),
-        'features_by_bbox': lambda bbox: gadm_layer_features_from_bbox(2, bbox),
+        'features_by_wkt': lambda wkt: gadm_layer_features_from_wkt(2, wkt),
     }),
 ])
 
@@ -746,11 +748,11 @@ def vector_catalog_save_layer(tenant, layer, vector_layer, features):
     connection.close()
     connection.set_schema(tenant)
 
-    geometries = VECTOR_LAYERS[vector_layer]['geometries_by_id'](features)
+    features = VECTOR_LAYERS[vector_layer]['geometries_by_id'](features)
 
     with transaction.atomic():
         union = GEOSGeometry('POINT EMPTY')
-        for g in geometries:
+        for g, props in features:
             union = union.union(g)
             g.transform(3857)
 
@@ -786,16 +788,21 @@ def vector_catalog_tile_json(request, layer, z, x, y):
 @api_view(['POST'])
 def vector_catalog_translate_features(request, old_layer, new_layer):
     first = timeit.timeit()
-    geometries = VECTOR_LAYERS[old_layer]['geometries_by_id'](
+    features = VECTOR_LAYERS[old_layer]['geometries_by_id'](
         request.data['features']
     )
+    geometries = [g for g, props in features]
     second = timeit.timeit()
-    geoms = GeometryCollection(*geometries).unary_union
-    bbox = geoms.envelope
+    union = GeometryCollection(*geometries).unary_union
+    bbox = union.envelope
+    import math
+    unit = math.sqrt(bbox.area) / 40
+    simpler = union.buffer(unit)
+    # print bbox, unit, union.area, len(union.wkt), len(simpler.wkt)
     third = timeit.timeit()
     response = Response(
-        VECTOR_LAYERS[new_layer]['features_by_bbox'](
-            bbox.wkt
+        VECTOR_LAYERS[new_layer]['features_by_wkt'](
+            simpler.wkt  # bbox.wkt
         )
     )
     fourth = timeit.timeit()
