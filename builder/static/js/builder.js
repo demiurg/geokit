@@ -76,7 +76,9 @@ var GADMChooser = function (_React$Component) {
         if (this.geojsonTileLayer) {
             this.map.removeLayer(this.geojsonTileLayer);
         }
-
+        if (!layer_name) {
+            return;
+        }
         this.geojsonURL = '/layers/vector-catalog/' + layer_name + '/{z}/{x}/{y}.json';
         this.geojsonTileLayer = new L.TileLayer.GeoJSON(this.geojsonURL, {
             clipTiles: true,

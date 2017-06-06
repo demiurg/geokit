@@ -670,15 +670,17 @@ def gadm_layer_geometries(level, features):
     for f in features:
         names = f.split('.')
         for i, name in enumerate(names):
-            where_clause_values['name_%s' % i].add(name)
+            key = 'name_{}'.format(i)
+            if key in where_clause_values:
+                where_clause_values[key].add(name)
 
     WHERE = ""
     for col, val in where_clause_values.iteritems():
         WHERE += "%s IN %s AND " % (col, cursor.mogrify("%s", [tuple(val)]))
     WHERE = WHERE[0:-5]  # Remove final `AND<space>`
 
-    SELECT = """SELECT ST_UNARYUNION(ST_COLLECT(geometry)) FROM gadm28
-        WHERE %s GROUP BY %s""" % (WHERE, group_by_names)
+    SELECT = """SELECT ST_UNARYUNION(ST_COLLECT(geometry)), %s FROM gadm28
+        WHERE %s GROUP BY %s""" % (group_by_names, WHERE, group_by_names)
 
     cursor.execute(SELECT)
 
@@ -752,23 +754,29 @@ def vector_catalog_save_layer(tenant, layer, vector_layer, features):
 
     with transaction.atomic():
         union = GEOSGeometry('POINT EMPTY')
+        keys = None
         for g, props in features:
+            if not keys:
+                keys = props.keys()
+
             union = union.union(g)
             g.transform(3857)
 
             s = hashlib.sha1()
             s.update(GeometryCollection(g).ewkb)
-            properties = {'shaid': s.hexdigest()}
+            props['shaid'] = s.hexdigest()
             f = Feature(
                 layer=layer,
                 geometry=GeometryCollection(g),
-                properties=properties
+                properties=props
             )
             f.save()
 
         envelope = union.envelope.coords[0]
         layer.bounds = envelope[2] + envelope[0]
         layer.status = 0
+        layer.field_names = list(set(layer.field_names).union(set(keys)))
+        layer.schema['properties'] = {n: "str" for n in layer.field_names}
         layer.save()
 
 
