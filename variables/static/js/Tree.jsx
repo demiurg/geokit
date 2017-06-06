@@ -278,7 +278,7 @@ class MeanOperator extends DataNode {
       return input_vars;
     } else {
       return input_vars.filter(input_var => {
-        return input_var.dimensions == other_op.dimensions;
+        return (input_var.dimensions == other_op.dimensions || input_var.dimensions == 'scalar');
       });
     }
   }
@@ -466,9 +466,31 @@ class MathOperator extends DataNode {
       return input_vars;
     } else {
       return input_vars.filter(input_var => {
-        return input_var.dimensions == other_op.dimensions;
+        return (input_var.dimensions == other_op.dimensions || input_var.dimensions == 'scalar');
       });
     }
+  }
+}
+
+class NumericOperator extends DataNode {
+  static arity = 1;
+  _operand_names = ['operand'];
+  _name = 'Numeric';
+  _dimensions = 'spacetime';  // Technically should be scalar, but this is correct enough for now.
+
+  constructor(tree) {
+    super(tree);
+
+    this.parseTree();
+  }
+
+  static validOperands(input_vars, operand_ref, op_index) {
+    console.log(input_vars);
+    return input_vars;
+  }
+
+  render() {
+    return <span>{this.operand}</span>;
   }
 }
 
@@ -525,6 +547,7 @@ DataNode.TYPES = {
   '-': MathOperator,
   '*': MathOperator,
   '/': MathOperator,
+  'numeric': NumericOperator,
   'named': NamedTree,
   'noop': EmptyTree,
   'error': ErrorTree

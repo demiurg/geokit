@@ -1,4 +1,8 @@
 class OperandChooser extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
   changeOperand(e) {
     var operand_refs = this.props.node_editor.expression_data.operand_refs;
 
@@ -16,6 +20,18 @@ class OperandChooser extends React.Component {
     this.props.onUpdateExpressionData(data);
   }
 
+  changeNumeric(e) {
+    var data = Object.assign(
+      {},
+      this.props.node_editor.expression_data,
+      {
+        numeric_operand: Number.parseFloat(e.target.value),
+        valid: e.target.value
+      }
+    );
+    this.props.onUpdateExpressionData(data);
+  }
+
   options() {
     var data = this.props.node_editor.expression_data;
 
@@ -23,8 +39,8 @@ class OperandChooser extends React.Component {
       this.props.input_variables,
       data.operand_refs,
       this.props.operand_index
-    );
-
+    )
+   
     return valid_input_vars.map((input_var) => {
       return {value: input_var.name, label: input_var.name};
     });
@@ -33,7 +49,9 @@ class OperandChooser extends React.Component {
   render() {
     var data = this.props.node_editor.expression_data;
 
-    if (data.operand_refs) {
+    if (data.op == 'numeric') {
+      return <input type="number" value={data.numeric_operand} onChange={(e) => this.changeNumeric(e)} />;
+    } else if (data.operand_refs) {
       return (
         <div style={{display: "inline-block", width: 400}}>
           <Select
@@ -75,32 +93,46 @@ class ExpressionEditor extends React.Component {
     super(props);
 
     let data = this.props.node_editor.expression_data;
-    var operand_refs = [];
-    if (data.operand_refs == null && data.node){
-      var operands = data.node.operands();
-      for (let onode of operands){
-        for (let i=0; i<this.props.input_variables.length; i++){
-          if (onode.isEquivalent(this.props.input_variables[i].value)){
-            operand_refs.push(this.props.input_variables[i].name_operand);
-            if (operand_refs.length == data.node_class.arity){
-              break;
+
+    if (data.op == 'numeric') {
+      this.props.onUpdateExpressionData(
+        Object.assign(
+          {},
+          data,
+          {
+            default_name: this.generateName(props.input_variables),
+            numeric_operand: data.node.operand
+          }
+        )
+      );
+    } else {
+      var operand_refs = [];
+      if (data.operand_refs == null && data.node){
+        var operands = data.node.operands();
+        for (let onode of operands){
+          for (let i=0; i<this.props.input_variables.length; i++){
+            if (onode.isEquivalent(this.props.input_variables[i].value)){
+              operand_refs.push(this.props.input_variables[i].name_operand);
+              if (operand_refs.length == data.node_class.arity){
+                break;
+              }
             }
           }
         }
       }
-    }
 
-    this.props.onUpdateExpressionData(
-      Object.assign(
-        {},
-        data,
-        {
-          default_name: this.generateName(props.input_variables),
-          operand_refs: data.operand_refs ? data.operand_refs : operand_refs,
-          valid: data.node_class && operand_refs.length == data.node_class.arity
-        }
-      )
-    );
+      this.props.onUpdateExpressionData(
+        Object.assign(
+          {},
+          data,
+          {
+            default_name: this.generateName(props.input_variables),
+            operand_refs: data.operand_refs ? data.operand_refs : operand_refs,
+            valid: data.node_class && operand_refs.length == data.node_class.arity
+          }
+        )
+      );
+    }
   }
 
   componentWillReceiveProps(newProps) {
@@ -169,13 +201,18 @@ class ExpressionEditor extends React.Component {
 
   onSave() {
     var data = this.props.node_editor.expression_data;
-    var rands = [];
-    for (let name of data.operand_refs){
-      for (let ivar of this.props.input_variables){
-        if (name == ivar.name){
-          // access named operand value here, throwing away name
-          rands.push(ivar.value);
-          break; // Just in case names are not unique now, this needs validation
+
+    if (data.op == 'numeric') {
+      var rands = [data.numeric_operand];
+    } else {
+      var rands = [];
+      for (let name of data.operand_refs){
+        for (let ivar of this.props.input_variables){
+          if (name == ivar.name){
+            // access named operand value here, throwing away name
+            rands.push(ivar.value);
+            break; // Just in case names are not unique now, this needs validation
+          }
         }
       }
     }
@@ -200,7 +237,7 @@ class ExpressionEditor extends React.Component {
         <FormGroup controlId="name">
           <FormControl componentClass="input"
             placeholder={data.default_name}
-            onChange={() => this.changeName()}
+            onChange={(e) => this.changeName(e)}
             value={data.name} />
         </FormGroup>
         <Panel>
@@ -213,6 +250,7 @@ class ExpressionEditor extends React.Component {
               <Button onClick={(e) => this.addOp('mean')}>Arithmetic Mean</Button>
               <Button onClick={(e) => this.addOp('tmean')}>Temporal Mean</Button>
               <Button onClick={(e) => this.addOp('smean')}>Spatial Mean</Button>
+              <Button onClick={(e) => this.addOp('numeric')}>Numeric</Button>
             </ButtonGroup>
           </div>
         </Panel>
