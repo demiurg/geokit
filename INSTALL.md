@@ -29,6 +29,15 @@ postgresql-contrib, postig, postgis, redis, and nginx
 sudo apt-get install -y python python-pip libpq-dev python-dev postgresql \
 postgresql-contrib postgis postgresql-9.5-postgis-2.2 redis-server nginx virtualenv
 ```
+Note, redis-server installation might fail in a container on Ubuntu 16.04, which requires a workaround:
+https://bugs.launchpad.net/ubuntu/+source/redis/+bug/1663911
+```
+   $ sudo su
+    $ mkdir /etc/systemd/system/redis-server.service.d/
+    $ cd /etc/systemd/system/redis-server.service.d/
+    $ echo '[Service]' > redis.override.conf
+    $ echo 'PrivateDevices=no' >> redis.override.conf
+```
 
 Install uwsgi
 
